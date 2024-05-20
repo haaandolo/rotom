@@ -7,14 +7,13 @@ pub mod poloniex_data {
     use tokio::time::{sleep, Duration};
     use tokio_tungstenite::tungstenite::Message;
     use tokio_tungstenite::{connect_async, WebSocketStream};
-    // use tokio::sync::mpsc;
 
     async fn send_ping(
         write: &mut SplitSink<WebSocketStream<impl AsyncRead + AsyncWrite + Unpin>, Message>,
     ) {
         let ping = json!({ "event": "ping" });
         loop {
-            sleep(Duration::from_secs(20)).await;
+            sleep(Duration::from_secs(25)).await;
             write
                 .send(Message::Text(ping.to_string()))
                 .await
@@ -38,25 +37,24 @@ pub mod poloniex_data {
         }
     }
 
-    // async fn write_to_socket(tx: mpsc::UnboundedSender<Message>, msg: Value) {
-    //     tx.send(Message::Text(msg.to_string()));
-    // }
+    async fn write_socket(write: &mut SplitSink<WebSocketStream<impl AsyncRead + AsyncWrite + Unpin>, Message>, msg: Value) {
+        write.send(Message::Text(msg.to_string())).await.expect("Failed to send message")
+    }
 
     pub async fn stream_data(tickers: Vec<&str>, channels: Vec<&str>) {
+        // payloads
         let url = "wss://ws.poloniex.com/ws/public";
         let payload = json!({
             "event": "subscribe",
             "channel": channels,
             "symbols": tickers
         });
-        // let (tx, rx) = mpsc::unbounded_channel();
+
+        // let (tx, mut rx) = mpsc::unbounded_channel();
         let (ws_stream, _) = connect_async(url).await.expect("Failed to connect to ws");
         let (mut write, read) = ws_stream.split();
 
-        write
-            .send(Message::Text(payload.to_string()))
-            .await
-            .expect("Failed to send message");
+        write_socket(&mut write, payload).await;
 
         tokio::select! {
             _ = event_read_handler(read) => (),
