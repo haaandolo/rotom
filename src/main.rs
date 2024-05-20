@@ -1,8 +1,8 @@
-use arb_bot::poloniex_interface::PoloniexInterface;
+use arb_bot::exchange_data::poloniex::poloniex_data;
 
 #[tokio::main]
 async fn main() {
     let tickers = vec!["btc_usdt", "arb_usdt"];
-    let poloniex_interface = PoloniexInterface::new();
-    let _ = poloniex_interface.stream_data(tickers).await;
+    let channels = vec!["book_lv2", "trades"];
+    let _ = poloniex_data::stream_data(tickers, channels).await;
 }
