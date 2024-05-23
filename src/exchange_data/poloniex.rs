@@ -21,14 +21,14 @@ pub mod poloniex_data {
         }
     }
 
-    async fn event_read_handler(
+    async fn read_stream(
         mut read: SplitStream<WebSocketStream<impl AsyncRead + AsyncWrite + Unpin>>,
     ) {
         while let Some(msg) = &read.next().await {
             match msg {
                 Ok(Message::Text(stream)) => {
-                    let stream: Value =
-                        serde_json::from_str(stream).expect("Failed to convert Message to Json");
+                    // let stream: Value =
+                    //     serde_json::from_str(stream).expect("Failed to convert Message to Json");
                     println!("{:#?}", stream) // stream["channel"]
                 }
                 Ok(Message::Ping(_)) => {}
@@ -37,28 +37,37 @@ pub mod poloniex_data {
         }
     }
 
-    async fn write_socket(write: &mut SplitSink<WebSocketStream<impl AsyncRead + AsyncWrite + Unpin>, Message>, msg: Value) {
-        write.send(Message::Text(msg.to_string())).await.expect("Failed to send message")
+    async fn write_socket(
+        write: &mut SplitSink<WebSocketStream<impl AsyncRead + AsyncWrite + Unpin>, Message>,
+        msg: Value,
+    ) {
+        write
+            .send(Message::Text(msg.to_string()))
+            .await
+            .expect("Failed to send message")
     }
 
     pub async fn stream_data(tickers: Vec<&str>, channels: Vec<&str>) {
-        // payloads
         let url = "wss://ws.poloniex.com/ws/public";
         let payload = json!({
             "event": "subscribe",
             "channel": channels,
             "symbols": tickers
         });
-
-        // let (tx, mut rx) = mpsc::unbounded_channel();
         let (ws_stream, _) = connect_async(url).await.expect("Failed to connect to ws");
         let (mut write, read) = ws_stream.split();
 
         write_socket(&mut write, payload).await;
 
-        tokio::select! {
-            _ = event_read_handler(read) => (),
-            _ = send_ping(&mut write) => (),
-        };
+        let ping = tokio::spawn(async move {
+            send_ping(&mut write).await;
+        });
+
+        let read = tokio::spawn(async move {
+            read_stream(read).await;
+        });
+
+        let _ = tokio::try_join!(ping, read);
+
     }
 }

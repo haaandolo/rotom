@@ -1,2 +1,2 @@
 pub mod poloniex;
-pub mod ws_base;
+pub mod ws;

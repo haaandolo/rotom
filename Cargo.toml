@@ -12,3 +12,4 @@ serde_json = "*"
 futures-util = { version = "0.3.28", default-features = false, features = ["sink", "std"] }
 serde = { version = "1.0.197", features = ["derive"] }
 csv = "1.3.0"
+tracing = "0.1.40"
