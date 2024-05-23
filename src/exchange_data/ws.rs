@@ -13,7 +13,6 @@ pub enum SocketError {
 }
 
 
-
 /// Connect asynchronously to a [`WebSocket`] server.
 pub async fn connect<R>(request: R) -> Result<WebSocket, SocketError>
 where
