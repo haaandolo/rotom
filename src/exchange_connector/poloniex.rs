@@ -47,7 +47,7 @@ pub mod poloniex_data {
             .expect("Failed to send message")
     }
 
-    pub async fn stream_data(tickers: Vec<&str>, channels: Vec<&str>) {
+    pub async fn stream_data(tickers: Vec<&str>, channels: Vec<&str>) -> Vec<tokio::task::JoinHandle<()>>{
         let url = "wss://ws.poloniex.com/ws/public";
         let payload = json!({
             "event": "subscribe",
@@ -67,7 +67,9 @@ pub mod poloniex_data {
             read_stream(read).await;
         });
 
-        let _ = tokio::try_join!(ping, read);
+        // let _ = tokio::try_join!(ping, read);
+
+        vec![ping, read]
 
     }
 }
