@@ -1,8 +1,6 @@
 use crate::error::CustomErrors;
 use futures::{
-    channel::mpsc::UnboundedReceiver,
-    stream::{SplitSink, SplitStream},
-    SinkExt, StreamExt,
+    future::join_all, stream::{SplitSink, SplitStream}, SinkExt, StreamExt
 };
 use serde_json::{json, Value};
 use tokio::{
@@ -16,61 +14,84 @@ pub type WebSocket = tokio_tungstenite::WebSocketStream<MaybeTlsStream<TcpStream
 pub type WsRead = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 pub type WsWrite = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
 
-pub struct WebSocketBase {
-    pub ws: WebSocket,
-    pub is_connected: bool,
+#[derive(Clone)]
+pub struct WebSocketPayload {
+    pub url: String,
+    pub subscription: Option<Value>,
+    pub ping_interval: Option<PingInterval>
 }
 
+#[derive(Clone)]
+pub struct PingInterval {
+    pub time: u64,
+    pub message: Value
+}
+
+pub struct WebSocketBase;
+
 impl WebSocketBase {
-    pub async fn connect(url: &str, payload: Value) {
-        let ws = connect_async(url)
+    pub async fn connect(payload: WebSocketPayload) {
+        // try make socket connection
+        let mut tasks = Vec::new();
+        let ws = connect_async(payload.url)
             .await
             .map(|(ws, _)| ws)
             .map_err(CustomErrors::WebSocketConnectionError);
 
-        let (mut ws_sink, ws_stream) = ws.unwrap().split();
-        // // let (ws_sink_tx, ws_sink_rx) = mpsc::unbounded_channel();
+        // split socket into read and write and make channels 
+        let (mut ws_sink, mut ws_stream) = ws.unwrap().split();
+        let (ws_sink_tx, mut ws_sink_rx) = mpsc::unbounded_channel();
 
-        ws_sink
-            .send(Message::text(payload.to_string()))
+
+        // if payload exists send paylaod to write stream
+        if let Some(subscription) = payload.subscription {
+           ws_sink
+            .send(Message::text(subscription.to_string()))
             .await
-            .unwrap();
-
-        let ping_handle = tokio::spawn(schedule_pings_to_exchange(ws_sink));
-        let read_handle = tokio::spawn(read_stream(ws_stream));
-        // let write_handle = tokio::spawn(write_stream(ws_sink_rx, ws_sink));
-
-        let _ = tokio::try_join!(ping_handle, read_handle);
-    }
-}
-
-pub async fn schedule_pings_to_exchange(mut ws_sink: WsWrite) {
-    loop {
-        sleep(Duration::from_secs(20)).await;
-        let ping = json!({"event": "ping"});
-        ws_sink
-            .send(Message::text(ping.to_string()))
-            .await
-            .expect("Failed to send message");
-    }
-}
-
-pub async fn read_stream(mut read: WsRead) {
-    while let Some(msg) = &read.next().await {
-        match msg {
-            Ok(Message::Text(stream)) => {
-                // let stream: Value =
-                //     serde_json::from_str(stream).expect("Failed to convert Message to Json");
-                println!("{:#?}", stream) // stream["channel"]
-            }
-            Ok(Message::Ping(_)) => {}
-            _ => (),
+            .expect("Failed to send payload to WS");         
         }
+
+        // if custom ping needs to be sent
+        if let Some(ping_interval) = payload.ping_interval {
+            let ping_interval = tokio::spawn(schedule_pings_to_exchange(ws_sink_tx, ping_interval));
+            tasks.push(ping_interval)
+        }
+
+        let write_handle = tokio::spawn(async move {
+            while let Some(msg) = ws_sink_rx.recv().await {
+                ws_sink.send(msg).await.expect("Failed to send message");
+            }
+        });
+        tasks.push(write_handle);
+
+        let read_handle = tokio::spawn(async move {
+            while let Some(msg) = ws_stream.next().await {
+                match msg {
+                    Ok(Message::Text(stream)) => {
+                        // let stream: Value =
+                        //     serde_json::from_str(stream).expect("Failed to convert Message to Json");
+                        println!("{:#?}", stream) // stream["channel"]
+                    }
+                    Ok(Message::Ping(_)) => {}
+                    _ => (),
+                }
+            }
+        });
+        tasks.push(read_handle);
+
+        let _ = join_all(tasks).await;
+
+        // let ping_handle = tokio::spawn(schedule_pings_to_exchange(ws_sink_tx));
+
+        // let _ = tokio::try_join!(vec![read_handle, write_handle);
     }
 }
 
-// pub async fn write_stream(ws_sink_rx: mpsc::UnboundedReceiver<Message>, mut write: WsWrite) {
-//     while let Some(msg) = ws_sink_rx.next().await {
-//         write.send(msg)
-//     }
-// }
+pub async fn schedule_pings_to_exchange(ws_sink_tx: mpsc::UnboundedSender<Message>, ping_interval: PingInterval) {
+    loop {
+        sleep(Duration::from_secs(ping_interval.time)).await;
+        ws_sink_tx
+            .send(Message::Text(ping_interval.message.to_string()))
+            .unwrap();
+    }
+}

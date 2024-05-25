@@ -1,27 +1,31 @@
-use arb_bot::exchange_connector::poloniex::poloniex_data;
-use arb_bot::exchange_connector::ws::WebSocketBase;
-use futures::future::join_all;
+// use arb_bot::exchange_connector::poloniex::poloniex_data;
+use arb_bot::exchange_connector::ws::{PingInterval, WebSocketBase, WebSocketPayload};
 use serde_json::json;
-use tokio::task;
-
 
 #[tokio::main]
 async fn main() {
-    let url = "wss://ws.poloniex.com/ws/public";
+    let poloniex_url = "wss://ws.poloniex.com/ws/public";
     let tickers = vec!["btc_usdt", "arb_usdt"];
     let channels = vec!["book_lv2", "trades"];
-    let payload = json!({
+    let poloniex_sub = json!({
         "event": "subscribe",
         "channel": channels,
         "symbols": tickers
     });
-    
-    let _ = WebSocketBase::connect(url, payload).await;
 
-//    let tickers = vec!["btc_usdt", "arb_usdt"];
-//    let channels = vec!["book_lv2", "trades"];
-//    let handles = poloniex_data::stream_data(tickers, channels).await;
-//    let _ = join_all(handles).await;
+    let poloniex_ping_interval = PingInterval {
+        time: 20,
+        message: json!({"event": "ping"})
+    };
+
+    // payload with ping 
+    let poloniex_payload = WebSocketPayload {
+        url: poloniex_url.to_string().clone(),
+        subscription: Some(poloniex_sub.clone()),
+        ping_interval: Some(poloniex_ping_interval)
+    };
+
+    let _ = WebSocketBase::connect(poloniex_payload).await;
 }
 
 // https://betterprogramming.pub/a-simple-guide-to-using-thiserror-crate-in-rust-eee6e442409b
