@@ -1,1 +1,66 @@
 /target
+
+# General macOS files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.fseventsd/
+.Spotlight-V100
+.Trashes
+
+# Compiled binaries
+*.dylib
+*.dSYM/
+
+# Compiled dynamic libraries
+*.so
+*.so.*
+*.dylib
+
+# Local database files
+*.sqlite3
+*.sqlite
+*.db
+*.log
+
+# Compiled Python bytecode
+*.pyc
+
+# macOS metadata
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.fseventsd/
+.Spotlight-V100
+.Trashes
+
+# Compiled binaries
+*.dylib
+*.dSYM/
+
+# Compiled dynamic libraries
+*.so
+*.so.*
+*.dylib
+
+# Compiled static libraries
+*.lib
+*.a
+
+# Executables
+*.exe
+*.out
+
+# Package files
+*.pkg
+*.dmg
