@@ -1,4 +1,4 @@
-use crate::error::CustomErrors;
+use crate::error::{NetworkErrors, Result};
 use futures::{
     stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
@@ -31,23 +31,22 @@ pub struct PingInterval {
 pub struct WebSocketBase;
 
 impl WebSocketBase {
-    pub async fn connect(payload: WebSocketPayload) -> WsRead {
+    pub async fn connect(payload: WebSocketPayload) -> Result<WsRead> {
         // Make connection
         let ws = connect_async(payload.url)
             .await
             .map(|(ws, _)| ws)
-            .map_err(CustomErrors::WebSocketConnectionError);
+            .map_err(NetworkErrors::WebSocketConnectionError);
 
         // Split WS and make channels
-        let (mut ws_sink, ws_stream) = ws.unwrap().split();
+        let (mut ws_write, ws_stream) = ws?.split();
         let (ws_sink_tx, mut ws_sink_rx) = mpsc::unbounded_channel();
 
         // Handle subscription
         if let Some(subscription) = payload.subscription {
-            ws_sink
+            ws_write
                 .send(Message::text(subscription.to_string()))
-                .await
-                .expect("Failed to send payload to WS");
+                .await?
         }
 
         // Handle custom ping
@@ -58,11 +57,14 @@ impl WebSocketBase {
         // Hand writes using channel
         tokio::spawn(async move {
             while let Some(msg) = ws_sink_rx.recv().await {
-                ws_sink.send(msg).await.expect("Failed to send message");
+                let _ = ws_write
+                    .send(msg)
+                    .await
+                    .map_err(NetworkErrors::WebSocketConnectionError);
             }
         });
 
-        ws_stream
+        Ok(ws_stream)
     }
 }
 
