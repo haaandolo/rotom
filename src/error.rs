@@ -6,5 +6,8 @@ pub type Error = Box<dyn std::error::Error>;
 #[derive(Debug, Error)]
 pub enum NetworkErrors {
     #[error("WebSocket error: {0}")]
-    WebSocketConnectionError(#[from] tokio_tungstenite::tungstenite::Error)
+    WebSocketConnectionError(#[from] tokio_tungstenite::tungstenite::Error),
+
+    #[error("Parsing error")]
+    ParsingError(String)
 }
