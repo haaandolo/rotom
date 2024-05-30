@@ -1,6 +1,8 @@
 pub mod ws;
 pub mod poloniex;
+pub mod binance;
 
+use ws::WsRead;
 
 pub enum Exchange {
     Binance,
@@ -28,4 +30,9 @@ pub struct Subscription {
     pub quote: String,
     pub market: MarketType,
     pub stream: StreamType 
+}
+
+pub struct ExchangeStream {
+    pub exchange: Exchange,
+    pub stream: WsRead
 }

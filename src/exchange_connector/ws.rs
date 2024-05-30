@@ -16,8 +16,8 @@ pub type WsRead = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 pub type WsWrite = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
 
 #[derive(Clone)]
-pub struct WebSocketPayload {
-    pub url: String,
+pub struct WebSocketPayload<'a> {
+    pub url: &'a str,
     pub subscription: Option<Value>,
     pub ping_interval: Option<PingInterval>,
 }
@@ -31,7 +31,7 @@ pub struct PingInterval {
 pub struct WebSocketBase;
 
 impl WebSocketBase {
-    pub async fn connect(payload: WebSocketPayload) -> Result<WsRead> {
+    pub async fn connect(payload: WebSocketPayload<'_>) -> Result<WsRead> {
         // Make connection
         let ws = connect_async(payload.url)
             .await

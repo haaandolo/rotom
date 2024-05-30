@@ -2,15 +2,18 @@ use std::collections::HashSet;
 
 use serde_json::json;
 
-use crate::error::{NetworkErrors, Result};
-use crate::exchange_connector::ws::WebSocketBase;
+use crate::error::Result;
+use crate::exchange_connector::ws::{PingInterval, WebSocketBase, WebSocketPayload};
 use crate::exchange_connector::{StreamType, Subscription};
+
+use super::ExchangeStream;
 
 // CHANNELS
 #[derive(Debug)]
 pub struct PoloniexChannel(pub &'static str);
 
 impl PoloniexChannel {
+    pub const WS_URL: Self = Self("wss://ws.poloniex.com/ws/public");
     pub const TRADES: Self = Self("trades");
     pub const ORDER_BOOK_L2: Self = Self("book_lv2");
 }
@@ -21,23 +24,11 @@ impl AsRef<str> for PoloniexChannel {
     }
 }
 
-pub trait Identifier<T> {
-    fn id(&self) -> T;
-}
+pub struct PoloniexInterface;
 
-impl Identifier<PoloniexChannel> for Subscription {
-    fn id(&self) -> PoloniexChannel {
-        PoloniexChannel::TRADES
-    }
-}
+impl PoloniexInterface {
 
-// INTERFACE STRUCT
-pub struct PoloniexExchangeInterface;
-
-impl PoloniexExchangeInterface {
-    pub async fn get_stream(sub: Vec<Subscription>) -> Result<()> {
-        let ws_url = "wss://ws.poloniex.com/ws/public";
-
+    pub async fn get_stream(&self, sub: Vec<Subscription>) -> Result<ExchangeStream> {
         let channels = sub
             .iter()
             .map(|s| {
@@ -59,15 +50,32 @@ impl PoloniexExchangeInterface {
             .into_iter()
             .collect::<Vec<_>>();
 
-        println!("{:#?}", channels);
-        println!("{:#?}", tickers);
-
         let poloniex_sub = json!({
             "event": "subscribe",
             "channel": channels,
             "symbols": tickers
         });
 
-        Ok(())
+        let ws_payload = WebSocketPayload {
+            url: PoloniexChannel::WS_URL.as_ref(),
+            subscription: Some(poloniex_sub),
+            ping_interval: Some(self.get_ping_interval()),
+        };
+
+        let ws = WebSocketBase::connect(ws_payload).await?;
+
+        let exchange_ws = ExchangeStream {
+            exchange: super::Exchange::Poloniex,
+            stream: ws,
+        };
+
+        Ok(exchange_ws)
+    }
+
+    pub fn get_ping_interval(&self) -> PingInterval {
+        PingInterval {
+            time: 20,
+            message: json!({"event": "ping"}),
+        }
     }
 }

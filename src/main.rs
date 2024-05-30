@@ -3,41 +3,77 @@
 // use futures::StreamExt;
 // use serde_json::json;
 
-use arb_bot::exchange_connector::poloniex::PoloniexExchangeInterface;
+use arb_bot::exchange_connector::poloniex::PoloniexInterface;
 use arb_bot::exchange_connector::{Exchange, MarketType, StreamType, Subscription};
+use futures::StreamExt;
 
 #[tokio::main]
 async fn main() {
-    // Poloniex sub
+    // Binance sub
     let mut subs = Vec::new();
-    let poloniex_sub1 = Subscription {
-        exchange: Exchange::Poloniex,
+    let binance_sub1 = Subscription {
+        exchange: Exchange::Binance,
         base: "arb".to_string(),
         quote: "usdt".to_string(),
         market: MarketType::Spot,
         stream: StreamType::L2
     };
-    subs.push(poloniex_sub1);
+    subs.push(binance_sub1);
 
-    let poloniex_sub2 = Subscription {
-        exchange: Exchange::Poloniex,
+    let binance_sub2 = Subscription {
+        exchange: Exchange::Binance,
         base: "arb".to_string(),
         quote: "usdt".to_string(),
         market: MarketType::Spot,
         stream: StreamType::Trades
     };
-    subs.push(poloniex_sub2);
+    subs.push(binance_sub2);
 
-    let poloniex_sub3 = Subscription {
-        exchange: Exchange::Poloniex,
+    let binance_sub3 = Subscription {
+        exchange: Exchange::Binance,
         base: "sui".to_string(),
         quote: "usdt".to_string(),
         market: MarketType::Spot,
         stream: StreamType::Trades
     };
-    subs.push(poloniex_sub3);
+    subs.push(binance_sub3);
 
-    let _ = PoloniexExchangeInterface::get_stream(subs).await;
+    /*-------------------------------------------------- */
+    // // Poloniex sub
+    // let mut subs = Vec::new();
+    // let poloniex_sub1 = Subscription {
+    //     exchange: Exchange::Poloniex,
+    //     base: "arb".to_string(),
+    //     quote: "usdt".to_string(),
+    //     market: MarketType::Spot,
+    //     stream: StreamType::L2
+    // };
+    // subs.push(poloniex_sub1);
+
+    // let poloniex_sub2 = Subscription {
+    //     exchange: Exchange::Poloniex,
+    //     base: "arb".to_string(),
+    //     quote: "usdt".to_string(),
+    //     market: MarketType::Spot,
+    //     stream: StreamType::Trades
+    // };
+    // subs.push(poloniex_sub2);
+
+    // let poloniex_sub3 = Subscription {
+    //     exchange: Exchange::Poloniex,
+    //     base: "sui".to_string(),
+    //     quote: "usdt".to_string(),
+    //     market: MarketType::Spot,
+    //     stream: StreamType::Trades
+    // };
+    // subs.push(poloniex_sub3);
+
+    // let mut polo_stream = PoloniexInterface.get_stream(subs).await.unwrap();
+
+    // while let Some(Ok(msg)) = polo_stream.stream.next().await {
+    //     println!("{:#?}", msg)
+
+    // }
 
     /*-------------------------------------------------------- */
     // Poloniex
