@@ -13,7 +13,7 @@ use super::ExchangeStream;
 pub struct PoloniexChannel(pub &'static str);
 
 impl PoloniexChannel {
-    pub const WS_URL: Self = Self("wss://ws.poloniex.com/ws/public");
+    pub const SPOT_WS_URL: Self = Self("wss://ws.poloniex.com/ws/public");
     pub const TRADES: Self = Self("trades");
     pub const ORDER_BOOK_L2: Self = Self("book_lv2");
 }
@@ -27,7 +27,6 @@ impl AsRef<str> for PoloniexChannel {
 pub struct PoloniexInterface;
 
 impl PoloniexInterface {
-
     pub async fn get_stream(&self, sub: Vec<Subscription>) -> Result<ExchangeStream> {
         let channels = sub
             .iter()
@@ -57,7 +56,7 @@ impl PoloniexInterface {
         });
 
         let ws_payload = WebSocketPayload {
-            url: PoloniexChannel::WS_URL.as_ref(),
+            url: PoloniexChannel::SPOT_WS_URL.as_ref(),
             subscription: Some(poloniex_sub),
             ping_interval: Some(self.get_ping_interval()),
         };

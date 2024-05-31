@@ -21,8 +21,6 @@ async fn main() {
         println!("{:#?}", msg)
     }
 
-
-
     // POLONIEX
     // let sub1 = Subscription::new(Exchange::Binance, "arb".to_string(), "usdt".to_string, MarketType::Spot, StreamType::L2);
     // let sub2 = Subscription::new(Exchange::Binance, "arb".to_string(), "usdt".to_string, MarketType::Spot, StreamType::Trades);

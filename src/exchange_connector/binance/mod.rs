@@ -8,7 +8,7 @@ use super::{ws::WebSocketBase, ExchangeStream, StreamType, Subscription};
 pub struct BinanceChannel(pub &'static str);
 
 impl BinanceChannel {
-    pub const WS_URL: Self = Self("wss://stream.binance.com:9443/stream?streams=");
+    pub const SPOT_WS_URL: Self = Self("wss://stream.binance.com:9443/stream?streams=");
     pub const TRADES: Self = Self("@trade");
     pub const ORDER_BOOK_L1: Self = Self("@bookTicker");
     pub const ORDER_BOOK_L2: Self = Self("@depth@100ms");
@@ -40,7 +40,7 @@ impl BinanceInterface {
             .into_iter()
             .collect::<Vec<_>>();
 
-        let _url = format!("{}{}", BinanceChannel::WS_URL.as_ref(), channels.join("/"));
+        let _url = format!("{}{}", BinanceChannel::SPOT_WS_URL.as_ref(), channels.join("/"));
 
         let ws_payload = WebSocketPayload {
             url: &_url,
