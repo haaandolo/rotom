@@ -55,18 +55,6 @@ pub struct ExchangeStream {
     pub stream: WsRead,
 }
 
-pub struct Instruments {
-    pub base: String,
-    pub quote: String,
-    pub instrument_kind: MarketType,
-}
-
-pub struct ExchangeSub<Exchange, Channel, Market> {
-    pub exchange: Exchange,
-    pub channel: Channel,
-    pub market: Market,
-}
-
 pub trait Identifier<T> {
     fn id(&self) -> T;
 }
