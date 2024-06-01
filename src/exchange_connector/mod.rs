@@ -4,8 +4,6 @@ pub mod protocols;
 
 use protocols::ws::{FuturesTokio, PingInterval, WsMessage, WsRead};
 
-use crate::error::SocketError;
-
 #[derive(Debug)]
 pub enum Exchange {
     Binance,
