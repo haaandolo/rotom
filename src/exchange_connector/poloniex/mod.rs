@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use serde_json::json;
 
-use crate::error::Result;
+use crate::error::SocketError;
 use crate::exchange_connector::protocols::ws::{PingInterval, WebSocketBase, WebSocketPayload};
 use crate::exchange_connector::{StreamType, Subscription};
 
@@ -27,7 +27,7 @@ impl AsRef<str> for PoloniexChannel {
 pub struct PoloniexInterface;
 
 impl PoloniexInterface {
-    pub async fn get_stream(&self, sub: Vec<Subscription>) -> Result<ExchangeStream> {
+    pub async fn get_stream(&self, sub: Vec<Subscription>) -> Result<ExchangeStream, SocketError> {
         let channels = sub
             .iter()
             .map(|s| {

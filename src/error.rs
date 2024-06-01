@@ -1,7 +1,7 @@
 use thiserror::Error;
 
-pub type Result<T> = core::result::Result<T, SocketError>;
-pub type Error = Box<dyn std::error::Error>;
+// pub type Result<T> = core::result::Result<T, SocketError>;
+// pub type Error = Box<dyn std::error::Error>;
 
 #[derive(Debug, Error)]
 pub enum SocketError {

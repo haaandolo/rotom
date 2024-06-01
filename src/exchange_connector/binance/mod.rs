@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use crate::{error::Result, exchange_connector::protocols::ws::WebSocketPayload};
+use crate::{error::SocketError, exchange_connector::protocols::ws::WebSocketPayload};
 
 use super::{protocols::ws::WebSocketBase, ExchangeStream, StreamType, Subscription};
 
@@ -24,7 +24,7 @@ impl AsRef<str> for BinanceChannel {
 pub struct BinanceInterface;
 
 impl BinanceInterface {
-    pub async fn get_stream(&self, sub: Vec<Subscription>) -> Result<ExchangeStream> {
+    pub async fn get_stream(&self, sub: Vec<Subscription>) -> Result<ExchangeStream, SocketError> {
         let channels = sub
             .iter()
             .map(|s| {
