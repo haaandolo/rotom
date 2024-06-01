@@ -1,42 +1,34 @@
-use std::collections::HashSet;
+pub mod channel;
 
+use std::collections::HashSet;
+use channel::PoloniexChannel;
 use serde_json::json;
 
+use super::protocols::ws::WsMessage;
+use super::{Connector, ExchangeStream};
 use crate::error::SocketError;
 use crate::exchange_connector::protocols::ws::{PingInterval, WebSocketBase, WebSocketPayload};
 use crate::exchange_connector::{StreamType, Subscription};
 
-use super::ExchangeStream;
-
-// CHANNELS
-#[derive(Debug)]
-pub struct PoloniexChannel(pub &'static str);
-
-impl PoloniexChannel {
-    pub const SPOT_WS_URL: Self = Self("wss://ws.poloniex.com/ws/public");
-    pub const TRADES: Self = Self("trades");
-    pub const ORDER_BOOK_L2: Self = Self("book_lv2");
-}
-
-impl AsRef<str> for PoloniexChannel {
-    fn as_ref(&self) -> &str {
-        self.0
-    }
-}
-
 pub struct PoloniexInterface;
 
 impl PoloniexInterface {
-    pub async fn get_stream(&self, sub: Vec<Subscription>) -> Result<ExchangeStream, SocketError> {
+    fn get_ping_interval(&self) -> PingInterval {
+        PingInterval {
+            time: 20,
+            message: json!({"event": "ping"}),
+        }
+    }
+
+    fn requests(&self, sub: &[Subscription]) -> WsMessage {
         let channels = sub
             .iter()
             .map(|s| {
-                let stream = match s.stream {
+                match s.stream {
                     StreamType::L2 => PoloniexChannel::ORDER_BOOK_L2.as_ref(),
                     StreamType::Trades => PoloniexChannel::TRADES.as_ref(),
                     _ => "Invalid Stream", // CHANGE
-                };
-                stream
+                }
             })
             .collect::<HashSet<_>>()
             .into_iter()
@@ -55,27 +47,81 @@ impl PoloniexInterface {
             "symbols": tickers
         });
 
+        WsMessage::text(poloniex_sub.to_string())
+    }
+
+    fn build_ws_payload(&self, sub: &[Subscription]) -> Result<WebSocketPayload, SocketError> {
+        let poloniex_sub = self.requests(sub);
         let ws_payload = WebSocketPayload {
-            url: PoloniexChannel::SPOT_WS_URL.as_ref(),
+            url: PoloniexChannel::SPOT_WS_URL.as_ref().to_string(),
             subscription: Some(poloniex_sub),
             ping_interval: Some(self.get_ping_interval()),
         };
 
+        Ok(ws_payload)
+    }
+
+    pub async fn get_stream(&self, sub: Vec<Subscription>) -> Result<ExchangeStream, SocketError> {
+        let ws_payload = self.build_ws_payload(&sub)?;
         let ws_and_tasks = WebSocketBase::connect(ws_payload).await?;
 
         let exchange_ws = ExchangeStream {
             exchange: super::Exchange::Poloniex,
             stream: ws_and_tasks.0,
-            tasks: ws_and_tasks.1
+            tasks: ws_and_tasks.1,
         };
 
         Ok(exchange_ws)
     }
+}
 
-    pub fn get_ping_interval(&self) -> PingInterval {
-        PingInterval {
+
+/*------------------------------------------- */
+//Connector implenation
+/*------------------------------------------- */
+
+
+pub struct Poloniex;
+
+impl Connector for Poloniex {
+    fn url() -> String {
+        PoloniexChannel::SPOT_WS_URL.as_ref().to_string()
+    }
+
+    fn requests(sub: &[Subscription]) -> WsMessage {
+        let channels = sub
+            .iter()
+            .map(|s| {
+                match s.stream {
+                    StreamType::L2 => PoloniexChannel::ORDER_BOOK_L2.as_ref(),
+                    StreamType::Trades => PoloniexChannel::TRADES.as_ref(),
+                    _ => "Invalid Stream", // CHANGE
+                }
+            })
+            .collect::<HashSet<_>>()
+            .into_iter()
+            .collect::<Vec<_>>();
+
+        let tickers = sub
+            .iter()
+            .map(|s| format!("{}_{}", s.base, s.quote))
+            .collect::<HashSet<_>>()
+            .into_iter()
+            .collect::<Vec<_>>();
+
+        let poloniex_sub = json!({
+            "event": "subscribe",
+            "channel": channels,
+            "symbols": tickers
+        });
+
+        WsMessage::text(poloniex_sub.to_string())
+    }
+
+    fn ping_interval() -> Option<PingInterval> {
+        Some(PingInterval {
             time: 20,
             message: json!({"event": "ping"}),
-        }
+        })
     }
 }

@@ -26,12 +26,11 @@ pub type WsRead = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 pub type WsWrite = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, WsMessage>;
 pub type FuturesTokio = tokio::task::JoinHandle<()>;
 
-
 // Websocket base
 #[derive(Clone)]
-pub struct WebSocketPayload<'a> {
-    pub url: &'a str,
-    pub subscription: Option<Value>,
+pub struct WebSocketPayload {
+    pub url: String,
+    pub subscription: Option<WsMessage>,
     pub ping_interval: Option<PingInterval>,
 }
 
@@ -45,7 +44,7 @@ pub struct WebSocketBase;
 
 impl WebSocketBase {
     pub async fn connect(
-        payload: WebSocketPayload<'_>,
+        payload: WebSocketPayload,
     ) -> Result<(WsRead, Vec<FuturesTokio>), SocketError> {
         // Vec of futures to run
         let mut tasks = Vec::new();
@@ -63,7 +62,7 @@ impl WebSocketBase {
         // Handle subscription
         if let Some(subscription) = payload.subscription {
             ws_write
-                .send(WsMessage::text(subscription.to_string()))
+                .send(subscription)
                 .await?
         }
 
@@ -136,6 +135,23 @@ impl StreamParser for WebSocketBase {
     }
 }
 
+// pub fn parse<Output>(input: Result<WsMessage, WsError>) -> Option<Result<Output, SocketError>>
+// where
+//     Output: DeserializeOwned,
+// {
+//     match input {
+//         Ok(ws_message) => match ws_message {
+//             WsMessage::Text(text) => process_text(text),
+//             WsMessage::Binary(binary) => process_binary(binary),
+//             WsMessage::Ping(ping) => process_ping(ping),
+//             WsMessage::Pong(pong) => process_pong(pong),
+//             WsMessage::Close(close_frame) => process_close_frame(close_frame),
+//             WsMessage::Frame(frame) => process_frame(frame),
+//         },
+//         Err(ws_err) => Some(Err(SocketError::WebSocketError(ws_err))),
+//     }
+// }
+
 pub fn process_text<ExchangeMessage>(
     payload: String,
 ) -> Option<Result<ExchangeMessage, SocketError>>
@@ -167,7 +183,7 @@ where
 pub fn process_ping<ExchangeMessage>(
     ping: Vec<u8>,
 ) -> Option<Result<ExchangeMessage, SocketError>> {
-    format!("{:#?}", ping);  
+    format!("{:#?}", ping);
     None
 }
 

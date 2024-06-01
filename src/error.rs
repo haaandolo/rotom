@@ -32,3 +32,10 @@ pub enum SocketError {
     #[error("ExchangeStream terminated with closing frame: {0}")]
     Terminated(String),
 }
+
+
+#[derive(Debug, Error)]
+pub enum StandardError {
+    #[error("Std Error: {0}")]
+    StdError(#[from] Box<dyn std::error::Error>)
+}

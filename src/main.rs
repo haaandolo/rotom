@@ -38,3 +38,7 @@ async fn main() {
     }
 
 }
+
+// todo
+// 1. make a websocket builder for different exchanges and request. look into if you can use builder model
+// 2. code expected response for both exchange

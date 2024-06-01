@@ -2,7 +2,9 @@ pub mod binance;
 pub mod poloniex;
 pub mod protocols;
 
-use protocols::ws::{FuturesTokio, WsRead};
+use protocols::ws::{FuturesTokio, PingInterval, WsMessage, WsRead};
+
+use crate::error::SocketError;
 
 #[derive(Debug)]
 pub enum Exchange {
@@ -58,4 +60,18 @@ pub struct ExchangeStream {
 
 pub trait Identifier<T> {
     fn id(&self) -> T;
+}
+
+pub trait Connector {
+    fn url() -> String;
+
+    fn ping_interval() -> Option<PingInterval> {
+        None
+    }
+
+    fn requests(subscriptions: &[Subscription]) -> WsMessage;
+
+    fn expected_response() -> Option<usize> {
+        None
+    }
 }
