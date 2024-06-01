@@ -1,8 +1,8 @@
 pub mod binance;
 pub mod poloniex;
-pub mod ws;
+pub mod protocols;
 
-use ws::WsRead;
+use protocols::ws::{FuturesTokio, WsRead};
 
 #[derive(Debug)]
 pub enum Exchange {
@@ -53,6 +53,7 @@ impl Subscription {
 pub struct ExchangeStream {
     pub exchange: Exchange,
     pub stream: WsRead,
+    pub tasks: Vec<FuturesTokio>,
 }
 
 pub trait Identifier<T> {

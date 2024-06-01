@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use serde_json::json;
 
 use crate::error::Result;
-use crate::exchange_connector::ws::{PingInterval, WebSocketBase, WebSocketPayload};
+use crate::exchange_connector::protocols::ws::{PingInterval, WebSocketBase, WebSocketPayload};
 use crate::exchange_connector::{StreamType, Subscription};
 
 use super::ExchangeStream;
@@ -61,11 +61,12 @@ impl PoloniexInterface {
             ping_interval: Some(self.get_ping_interval()),
         };
 
-        let ws = WebSocketBase::connect(ws_payload).await?;
+        let ws_and_tasks = WebSocketBase::connect(ws_payload).await?;
 
         let exchange_ws = ExchangeStream {
             exchange: super::Exchange::Poloniex,
-            stream: ws,
+            stream: ws_and_tasks.0,
+            tasks: ws_and_tasks.1
         };
 
         Ok(exchange_ws)

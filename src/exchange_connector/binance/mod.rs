@@ -1,8 +1,8 @@
 use std::collections::HashSet;
 
-use crate::{error::Result, exchange_connector::ws::WebSocketPayload};
+use crate::{error::Result, exchange_connector::protocols::ws::WebSocketPayload};
 
-use super::{ws::WebSocketBase, ExchangeStream, StreamType, Subscription};
+use super::{protocols::ws::WebSocketBase, ExchangeStream, StreamType, Subscription};
 
 // CHANNELS
 pub struct BinanceChannel(pub &'static str);
@@ -33,8 +33,7 @@ impl BinanceInterface {
                     StreamType::L2 => BinanceChannel::ORDER_BOOK_L2.as_ref(),
                     StreamType::Trades => BinanceChannel::TRADES.as_ref(),
                 };
-                let ticker = format!("{}{}{}", s.base, s.quote, stream).to_lowercase();
-                ticker
+                format!("{}{}{}", s.base, s.quote, stream).to_lowercase()
             })
             .collect::<HashSet<_>>()
             .into_iter()
@@ -47,12 +46,12 @@ impl BinanceInterface {
             subscription: None,
             ping_interval: None,
         };
-
-        let ws = WebSocketBase::connect(ws_payload).await?;
+        let ws_and_tasks = WebSocketBase::connect(ws_payload).await?;
 
         let exchange_ws = ExchangeStream {
             exchange: super::Exchange::Binance,
-            stream: ws,
+            stream: ws_and_tasks.0,
+            tasks: ws_and_tasks.1
         };
 
         Ok(exchange_ws)
