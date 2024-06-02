@@ -68,9 +68,9 @@ impl BinanceInterface {
 //Connector implenation
 /*------------------------------------------- */
 
-pub struct Binance;
+pub struct BinanceSpot;
 
-impl Connector for Binance {
+impl Connector for BinanceSpot {
     fn url() -> String {
         BinanceChannel::SPOT_WS_URL.as_ref().to_string()
     }

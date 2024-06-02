@@ -1,6 +1,7 @@
 pub mod binance;
 pub mod poloniex;
 pub mod protocols;
+pub mod subscribe;
 
 use protocols::ws::{FuturesTokio, PingInterval, WsMessage, WsRead};
 

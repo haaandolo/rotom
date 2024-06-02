@@ -81,9 +81,9 @@ impl PoloniexInterface {
 /*------------------------------------------- */
 
 
-pub struct Poloniex;
+pub struct PoloniexSpot;
 
-impl Connector for Poloniex {
+impl Connector for PoloniexSpot {
     fn url() -> String {
         PoloniexChannel::SPOT_WS_URL.as_ref().to_string()
     }

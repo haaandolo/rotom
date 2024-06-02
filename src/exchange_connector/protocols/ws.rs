@@ -3,21 +3,13 @@ use futures::{
     stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
 };
-use serde::de::DeserializeOwned;
 use serde_json::Value;
 use tokio::{
     net::TcpStream,
     sync::mpsc,
     time::{sleep, Duration},
 };
-use tokio_tungstenite::{
-    connect_async,
-    tungstenite::{
-        error::ProtocolError,
-        protocol::{frame::Frame, CloseFrame},
-    },
-    MaybeTlsStream, WebSocketStream,
-};
+use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
 
 pub type WsMessage = tokio_tungstenite::tungstenite::Message;
 pub type WsError = tokio_tungstenite::tungstenite::Error;
@@ -26,7 +18,6 @@ pub type WsRead = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 pub type WsWrite = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, WsMessage>;
 pub type FuturesTokio = tokio::task::JoinHandle<()>;
 
-// Websocket base
 #[derive(Clone)]
 pub struct WebSocketPayload {
     pub url: String,
@@ -61,9 +52,7 @@ impl WebSocketBase {
 
         // Handle subscription
         if let Some(subscription) = payload.subscription {
-            ws_write
-                .send(subscription)
-                .await?
+            ws_write.send(subscription).await?
         }
 
         // Handle custom ping
@@ -99,121 +88,126 @@ pub async fn schedule_pings_to_exchange(
     }
 }
 
-// Stream parser
-pub trait StreamParser {
-    type Message;
-    type Error;
+/*--------------------------------------------------------------------------------------------------*/
+// STREAM PARSER
+/*--------------------------------------------------------------------------------------------------*/
+// use tokio_tungstenite::tungstenite::{error::ProtocolError, protocol::{frame::Frame, CloseFrame}};
+// use serde::de::DeserializeOwned;
 
-    fn parse<Output>(
-        input: Result<Self::Message, Self::Error>,
-    ) -> Option<Result<Output, SocketError>>
-    where
-        Output: DeserializeOwned;
-}
+// pub trait StreamParser {
+//     type Message;
+//     type Error;
 
-impl StreamParser for WebSocketBase {
-    type Message = WsMessage;
-    type Error = tokio_tungstenite::tungstenite::Error;
+//     fn parse<Output>(
+//         input: Result<Self::Message, Self::Error>,
+//     ) -> Option<Result<Output, SocketError>>
+//     where
+//         Output: DeserializeOwned;
+// }
 
-    fn parse<Output>(
-        input: Result<Self::Message, Self::Error>,
-    ) -> Option<Result<Output, SocketError>>
-    where
-        Output: DeserializeOwned,
-    {
-        match input {
-            Ok(ws_message) => match ws_message {
-                WsMessage::Text(text) => process_text(text),
-                WsMessage::Binary(binary) => process_binary(binary),
-                WsMessage::Ping(ping) => process_ping(ping),
-                WsMessage::Pong(pong) => process_pong(pong),
-                WsMessage::Close(close_frame) => process_close_frame(close_frame),
-                WsMessage::Frame(frame) => process_frame(frame),
-            },
-            Err(ws_err) => Some(Err(SocketError::WebSocketError(ws_err))),
-        }
-    }
-}
+// impl StreamParser for WebSocketBase {
+//     type Message = WsMessage;
+//     type Error = tokio_tungstenite::tungstenite::Error;
 
-// pub fn parse<Output>(input: Result<WsMessage, WsError>) -> Option<Result<Output, SocketError>>
-// where
-//     Output: DeserializeOwned,
-// {
-//     match input {
-//         Ok(ws_message) => match ws_message {
-//             WsMessage::Text(text) => process_text(text),
-//             WsMessage::Binary(binary) => process_binary(binary),
-//             WsMessage::Ping(ping) => process_ping(ping),
-//             WsMessage::Pong(pong) => process_pong(pong),
-//             WsMessage::Close(close_frame) => process_close_frame(close_frame),
-//             WsMessage::Frame(frame) => process_frame(frame),
-//         },
-//         Err(ws_err) => Some(Err(SocketError::WebSocketError(ws_err))),
+//     fn parse<Output>(
+//         input: Result<Self::Message, Self::Error>,
+//     ) -> Option<Result<Output, SocketError>>
+//     where
+//         Output: DeserializeOwned,
+//     {
+//         match input {
+//             Ok(ws_message) => match ws_message {
+//                 WsMessage::Text(text) => process_text(text),
+//                 WsMessage::Binary(binary) => process_binary(binary),
+//                 WsMessage::Ping(ping) => process_ping(ping),
+//                 WsMessage::Pong(pong) => process_pong(pong),
+//                 WsMessage::Close(close_frame) => process_close_frame(close_frame),
+//                 WsMessage::Frame(frame) => process_frame(frame),
+//             },
+//             Err(ws_err) => Some(Err(SocketError::WebSocketError(ws_err))),
+//         }
 //     }
 // }
 
-pub fn process_text<ExchangeMessage>(
-    payload: String,
-) -> Option<Result<ExchangeMessage, SocketError>>
-where
-    ExchangeMessage: DeserializeOwned,
-{
-    Some(
-        serde_json::from_str::<ExchangeMessage>(&payload)
-            .map_err(|error| SocketError::Deserialise { error, payload }),
-    )
-}
+// // pub fn parse<Output>(input: Result<WsMessage, WsError>) -> Option<Result<Output, SocketError>>
+// // where
+// //     Output: DeserializeOwned,
+// // {
+// //     match input {
+// //         Ok(ws_message) => match ws_message {
+// //             WsMessage::Text(text) => process_text(text),
+// //             WsMessage::Binary(binary) => process_binary(binary),
+// //             WsMessage::Ping(ping) => process_ping(ping),
+// //             WsMessage::Pong(pong) => process_pong(pong),
+// //             WsMessage::Close(close_frame) => process_close_frame(close_frame),
+// //             WsMessage::Frame(frame) => process_frame(frame),
+// //         },
+// //         Err(ws_err) => Some(Err(SocketError::WebSocketError(ws_err))),
+// //     }
+// // }
 
-pub fn process_binary<ExchangeMessage>(
-    payload: Vec<u8>,
-) -> Option<Result<ExchangeMessage, SocketError>>
-where
-    ExchangeMessage: DeserializeOwned,
-{
-    Some(
-        serde_json::from_slice::<ExchangeMessage>(&payload).map_err(|error| {
-            SocketError::Deserialise {
-                error,
-                payload: String::from_utf8(payload).unwrap_or_else(|x| x.to_string()),
-            }
-        }),
-    )
-}
+// pub fn process_text<ExchangeMessage>(
+//     payload: String,
+// ) -> Option<Result<ExchangeMessage, SocketError>>
+// where
+//     ExchangeMessage: DeserializeOwned,
+// {
+//     Some(
+//         serde_json::from_str::<ExchangeMessage>(&payload)
+//             .map_err(|error| SocketError::Deserialise { error, payload }),
+//     )
+// }
 
-pub fn process_ping<ExchangeMessage>(
-    ping: Vec<u8>,
-) -> Option<Result<ExchangeMessage, SocketError>> {
-    format!("{:#?}", ping);
-    None
-}
+// pub fn process_binary<ExchangeMessage>(
+//     payload: Vec<u8>,
+// ) -> Option<Result<ExchangeMessage, SocketError>>
+// where
+//     ExchangeMessage: DeserializeOwned,
+// {
+//     Some(
+//         serde_json::from_slice::<ExchangeMessage>(&payload).map_err(|error| {
+//             SocketError::Deserialise {
+//                 error,
+//                 payload: String::from_utf8(payload).unwrap_or_else(|x| x.to_string()),
+//             }
+//         }),
+//     )
+// }
 
-pub fn process_pong<ExchangeMessage>(
-    pong: Vec<u8>,
-) -> Option<Result<ExchangeMessage, SocketError>> {
-    format!("{:?}", pong);
-    None
-}
+// pub fn process_ping<ExchangeMessage>(
+//     ping: Vec<u8>,
+// ) -> Option<Result<ExchangeMessage, SocketError>> {
+//     format!("{:#?}", ping);
+//     None
+// }
 
-pub fn process_close_frame<ExchangeMessage>(
-    close_frame: Option<CloseFrame<'_>>,
-) -> Option<Result<ExchangeMessage, SocketError>> {
-    let close_frame = format!("{:?}", close_frame);
-    Some(Err(SocketError::Terminated(close_frame)))
-}
+// pub fn process_pong<ExchangeMessage>(
+//     pong: Vec<u8>,
+// ) -> Option<Result<ExchangeMessage, SocketError>> {
+//     format!("{:?}", pong);
+//     None
+// }
 
-pub fn process_frame<ExchangeMessage>(
-    frame: Frame,
-) -> Option<Result<ExchangeMessage, SocketError>> {
-    format!("{:?}", frame);
-    None
-}
+// pub fn process_close_frame<ExchangeMessage>(
+//     close_frame: Option<CloseFrame<'_>>,
+// ) -> Option<Result<ExchangeMessage, SocketError>> {
+//     let close_frame = format!("{:?}", close_frame);
+//     Some(Err(SocketError::Terminated(close_frame)))
+// }
 
-pub fn is_websocket_disconnected(error: &WsError) -> bool {
-    matches!(
-        error,
-        WsError::ConnectionClosed
-            | WsError::AlreadyClosed
-            | WsError::Io(_)
-            | WsError::Protocol(ProtocolError::SendAfterClosing)
-    )
-}
+// pub fn process_frame<ExchangeMessage>(
+//     frame: Frame,
+// ) -> Option<Result<ExchangeMessage, SocketError>> {
+//     format!("{:?}", frame);
+//     None
+// }
+
+// pub fn is_websocket_disconnected(error: &WsError) -> bool {
+//     matches!(
+//         error,
+//         WsError::ConnectionClosed
+//             | WsError::AlreadyClosed
+//             | WsError::Io(_)
+//             | WsError::Protocol(ProtocolError::SendAfterClosing)
+//     )
+// }
