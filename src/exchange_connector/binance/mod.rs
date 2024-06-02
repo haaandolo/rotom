@@ -5,8 +5,7 @@ use serde_json::json;
 use std::collections::HashSet;
 
 use super::{
-    protocols::ws::{WebSocketBase, WsMessage},
-    Connector, ExchangeStream, StreamType, Subscription,
+    protocols::ws::{WebSocketBase, WsMessage}, Connector, ExchangeStream, ExchangeSub, StreamType, Subscription
 };
 use crate::{error::SocketError, exchange_connector::protocols::ws::WebSocketPayload};
 
@@ -55,7 +54,7 @@ impl BinanceInterface {
         let ws_and_tasks = WebSocketBase::connect(ws_payload).await?;
 
         let exchange_ws = ExchangeStream {
-            exchange: super::Exchange::Binance,
+            exchange: super::Exchange::BinanceSpot,
             stream: ws_and_tasks.0,
             tasks: ws_and_tasks.1,
         };
@@ -68,18 +67,19 @@ impl BinanceInterface {
 //Connector implenation
 /*------------------------------------------- */
 
+#[derive(Debug)]
 pub struct BinanceSpot;
 
 impl Connector for BinanceSpot {
-    fn url() -> String {
+    fn url(&self) -> String {
         BinanceChannel::SPOT_WS_URL.as_ref().to_string()
     }
 
-    fn requests(subscriptions: &[Subscription]) -> WsMessage {
+    fn requests(subscriptions: &[ExchangeSub]) -> WsMessage {
         let channels = subscriptions
             .iter()
             .map(|s| {
-                let stream = match s.stream {
+                let stream = match s.stream_type {
                     StreamType::L1 => BinanceChannel::ORDER_BOOK_L1.as_ref(),
                     StreamType::L2 => BinanceChannel::ORDER_BOOK_L2.as_ref(),
                     StreamType::Trades => BinanceChannel::TRADES.as_ref(),

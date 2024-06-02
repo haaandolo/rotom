@@ -5,7 +5,7 @@ use channel::PoloniexChannel;
 use serde_json::json;
 
 use super::protocols::ws::WsMessage;
-use super::{Connector, ExchangeStream};
+use super::{Connector, ExchangeStream, ExchangeSub};
 use crate::error::SocketError;
 use crate::exchange_connector::protocols::ws::{PingInterval, WebSocketBase, WebSocketPayload};
 use crate::exchange_connector::{StreamType, Subscription};
@@ -84,15 +84,15 @@ impl PoloniexInterface {
 pub struct PoloniexSpot;
 
 impl Connector for PoloniexSpot {
-    fn url() -> String {
+    fn url(&self) -> String {
         PoloniexChannel::SPOT_WS_URL.as_ref().to_string()
     }
 
-    fn requests(sub: &[Subscription]) -> WsMessage {
+    fn requests(sub: &[ExchangeSub]) -> WsMessage {
         let channels = sub
             .iter()
             .map(|s| {
-                match s.stream {
+                match s.stream_type {
                     StreamType::L2 => PoloniexChannel::ORDER_BOOK_L2.as_ref(),
                     StreamType::Trades => PoloniexChannel::TRADES.as_ref(),
                     _ => "Invalid Stream", // CHANGE
