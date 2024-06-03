@@ -1,9 +1,8 @@
-use std::collections::{hash_map, HashMap};
+use std::collections::HashMap;
 
-use super::{binance::BinanceSpot, protocols::ws::WsRead, Connector, ExchangeSub, SubGeneric};
+use super::{binance::BinanceSpot, protocols::ws::WsRead, Connector, SubGeneric};
 use crate::exchange_connector::{
-    poloniex::{PoloniexInterface, PoloniexSpot},
-    Exchange, FuturesTokio,
+    poloniex::PoloniexSpot, protocols::ws::WebSocketBase, Exchange, FuturesTokio,
 };
 
 pub struct ExchangeStream {
@@ -28,10 +27,9 @@ impl StreamBuilder {
         }
     }
 
-    pub fn subscribe(mut self, subscription: Vec<SubGeneric>) -> Self {
-        // Convert subscription to exchange specific sub
+    pub async fn subscribe(mut self, subscription: Vec<SubGeneric>) -> Self {
+        // Convert subscription to exchange specific subscription
         let mut exchange_sub = HashMap::new();
-
         subscription.into_iter().for_each(|sub| {
             exchange_sub
                 .entry(sub.exchange)
@@ -39,16 +37,27 @@ impl StreamBuilder {
                 .push(sub.convert_subscription())
         });
 
-        exchange_sub.into_iter().for_each(|(key, value)| {
-            let Some(exchange) = match key {
-                Exchange::BinanceSpot => Box::new(&dyn BinanceSpot),
-                Exchange::Poloniex => Box::new(PoloniexSpot),
+        // Get the connectors for each exchange specified in the subscription
+        for (key, value) in exchange_sub.into_iter() {
+            let exchange: Box<&dyn Connector> = match key {
+                Exchange::BinanceSpot => Box::new(&BinanceSpot),
+                Exchange::Poloniex => Box::new(&PoloniexSpot),
             };
-        });
 
-        // exchange_sub.iter().for_each(||)
+            let url = exchange.url();
+            let subscription = exchange.requests(&value);
+            let ping_interval = exchange.ping_interval();
 
-        println!("{:#?}", exchange_sub);
+            let ws = WebSocketBase::new(url)
+                .set_subscription(subscription)
+                .set_ping_interval(ping_interval)
+                .build()
+                .await
+                .unwrap();
+
+            self.streams.insert(key, ws);
+        }
+
         self
     }
 }

@@ -3,9 +3,7 @@ pub mod poloniex;
 pub mod protocols;
 pub mod subscribe;
 
-// use std::fmt;
-
-use protocols::ws::{FuturesTokio, PingInterval, WsMessage, WsRead};
+use protocols::ws::{FuturesTokio, PingInterval, WsMessage};
 
 #[derive(Debug, PartialEq, Hash, Eq, Clone, Copy)]
 pub enum Exchange {
@@ -88,24 +86,7 @@ impl SubGeneric {
     }
 }
 
-// impl<E: std::fmt::Display, S: std::fmt::Display> fmt::Debug for SubGeneric<E, S> {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         write!(
-//             f,
-//             "Subscription: {}, {}, {}",
-//             self.exchange, self.base, self.quote
-//         )
-//     }
-// }
-
 /*---------- */
-#[derive(Debug)]
-pub struct ExchangeStream {
-    pub exchange: Exchange,
-    pub stream: WsRead,
-    pub tasks: Vec<FuturesTokio>,
-}
-
 pub trait Identifier<T> {
     fn id(&self) -> T;
 }
@@ -113,13 +94,13 @@ pub trait Identifier<T> {
 pub trait Connector {
     fn url(&self) -> String;
 
-    fn ping_interval() -> Option<PingInterval> {
+    fn ping_interval(&self) -> Option<PingInterval> {
         None
     }
 
-    fn requests(subscriptions: &[ExchangeSub]) -> WsMessage;
+    fn requests(&self, subscriptions: &[ExchangeSub]) -> WsMessage;
 
-    fn expected_response() -> Option<usize> {
+    fn expected_response(&self) -> Option<usize> {
         None
     }
 }
