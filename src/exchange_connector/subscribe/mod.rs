@@ -27,15 +27,15 @@ impl StreamBuilder {
         }
     }
 
-    pub async fn subscribe(mut self, subscription: Vec<SubGeneric>) -> Self {
+    pub async fn subscribe(mut self, subscriptions: Vec<SubGeneric>) -> Self {
         // Convert subscription to exchange specific subscription
         let mut exchange_sub = HashMap::new();
-        subscription.into_iter().for_each(|sub| {
+        for sub in subscriptions.into_iter() {
             exchange_sub
                 .entry(sub.exchange)
                 .or_insert(Vec::new())
                 .push(sub.convert_subscription())
-        });
+        }
 
         // Get the connectors for each exchange specified in the subscription
         for (key, value) in exchange_sub.into_iter() {
