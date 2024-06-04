@@ -42,8 +42,9 @@ impl StreamBuilder {
         // Get the connectors for each exchange specified in the subscription
         for (key, value) in exchange_sub.into_iter() {
             let exchange: Box<&dyn Connector> = match key {
+                // Add more connectors here
                 Exchange::BinanceSpot => Box::new(&BinanceSpot),
-                Exchange::Poloniex => Box::new(&PoloniexSpot),
+                Exchange::PoloniexSpot => Box::new(&PoloniexSpot),
             };
 
             let url = exchange.url();

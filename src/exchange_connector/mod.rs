@@ -9,7 +9,7 @@ use protocols::ws::{FuturesTokio, PingInterval, WsMessage};
 #[derive(Debug, PartialEq, Hash, Eq, Clone, Copy)]
 pub enum Exchange {
     BinanceSpot,
-    Poloniex,
+    PoloniexSpot,
 }
 
 #[derive(Debug)]

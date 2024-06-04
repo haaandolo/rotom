@@ -9,11 +9,15 @@ async fn main() {
             Sub::new(Exchange::BinanceSpot, "arb", "usdt", StreamType::L2),
             Sub::new(Exchange::BinanceSpot, "arb", "usdt", StreamType::Trades),
             Sub::new(Exchange::BinanceSpot, "btc", "usdt", StreamType::L2),
-        ])
-        .await;
+        ]).await
+        .subscribe(vec![
+            Sub::new(Exchange::PoloniexSpot, "arb", "usdt", StreamType::L2),
+            Sub::new(Exchange::PoloniexSpot, "arb", "usdt", StreamType::Trades),
+            Sub::new(Exchange::PoloniexSpot, "btc", "usdt", StreamType::L2),
+        ]).await;
 
     // Read from socket
-    if let Some(mut value) = streams.streams.remove(&Exchange::BinanceSpot) {
+    if let Some(mut value) = streams.streams.remove(&Exchange::PoloniexSpot) {
         while let Some(msg) = value.stream.next().await {
             println!("{:#?}", msg);
         }
