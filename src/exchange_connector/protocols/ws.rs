@@ -31,25 +31,32 @@ pub struct PingInterval {
     pub message: Value,
 }
 
-pub struct WebSocketBase;
+#[derive(Clone, Debug)]
+pub struct WebSocketBase {
+    pub url: String,
+    pub subscription: Option<WsMessage>,
+    pub ping_interval: Option<PingInterval>,
+}
 
 impl WebSocketBase {
-    pub fn new(_url: String) -> WebSocketBuilder {
-        WebSocketBuilder {
+    pub fn new(
+        _url: String,
+        _subscription: Option<WsMessage>,
+        _ping_interval: Option<PingInterval>,
+    ) -> Self {
+        Self {
             url: _url,
-            subscription: None,
-            ping_interval: None,
+            subscription: _subscription,
+            ping_interval: _ping_interval,
         }
     }
 
-    pub async fn connect(
-        payload: WebSocketPayload,
-    ) -> Result<ExchangeStream, SocketError> {
-        // Vec of futures to run
+    pub async fn connect(self) -> Result<ExchangeStream, SocketError> {
+        // Vec of tasks to run
         let mut _tasks = Vec::new();
 
         // Make connection
-        let ws = connect_async(payload.url)
+        let ws = connect_async(self.url)
             .await
             .map(|(ws, _)| ws)
             .map_err(SocketError::WebSocketError);
@@ -59,12 +66,12 @@ impl WebSocketBase {
         let (ws_sink_tx, mut ws_sink_rx) = mpsc::unbounded_channel();
 
         // Handle subscription
-        if let Some(subscription) = payload.subscription {
+        if let Some(subscription) = self.subscription {
             ws_write.send(subscription).await?
         }
 
         // Handle custom ping
-        if let Some(ping_interval) = payload.ping_interval {
+        if let Some(ping_interval) = self.ping_interval {
             let ping_handler = tokio::spawn(schedule_pings_to_exchange(ws_sink_tx, ping_interval));
             _tasks.push(ping_handler);
         }
@@ -80,9 +87,9 @@ impl WebSocketBase {
         });
         _tasks.push(write_handler);
 
-        let exchange_stream =  ExchangeStream {
+        let exchange_stream = ExchangeStream {
             stream: ws_stream,
-            tasks: _tasks
+            tasks: _tasks,
         };
 
         Ok(exchange_stream)
@@ -101,9 +108,6 @@ pub async fn schedule_pings_to_exchange(
     }
 }
 
-/*--------------------------------------------------------------------------------------------------*/
-// WEBSOCKET BUILDER
-/*--------------------------------------------------------------------------------------------------*/
 pub struct WebSocketBuilder {
     pub url: String,
     pub subscription: Option<WsMessage>,
@@ -111,6 +115,19 @@ pub struct WebSocketBuilder {
 }
 
 impl WebSocketBuilder {
+    pub fn new(_url: String) -> Self {
+        Self {
+            url: _url,
+            subscription: None,
+            ping_interval: None,
+        }
+    }
+
+    pub fn set_url(&mut self, url: String) -> &mut Self {
+        self.url = url;
+        self
+    }
+
     pub fn set_subscription(&mut self, subcription: WsMessage) -> &mut Self {
         self.subscription = Some(subcription);
         self
@@ -122,13 +139,13 @@ impl WebSocketBuilder {
     }
 
     pub async fn build(&mut self) -> Result<ExchangeStream, SocketError> {
-        let payload = WebSocketPayload {
-            url: self.url.clone(),
-            subscription: self.subscription.clone(),
-            ping_interval: self.ping_interval.clone(),
-        };
-
-        WebSocketBase::connect(payload).await
+        WebSocketBase::new(
+            self.url.clone(),
+            self.subscription.clone(),
+            self.ping_interval.clone(),
+        )
+        .connect()
+        .await
     }
 }
 

@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 
-use super::{binance::BinanceSpot, protocols::ws::WsRead, Connector, SubGeneric};
-use crate::exchange_connector::{
-    poloniex::PoloniexSpot, protocols::ws::WebSocketBase, Exchange, FuturesTokio,
+use super::{
+    binance::BinanceSpot,
+    protocols::ws::{WebSocketBuilder, WsRead},
+    Connector, Sub,
 };
+use crate::exchange_connector::{poloniex::PoloniexSpot, Exchange, FuturesTokio};
 
 pub struct ExchangeStream {
     pub stream: WsRead,
@@ -27,7 +29,7 @@ impl StreamBuilder {
         }
     }
 
-    pub async fn subscribe(mut self, subscriptions: Vec<SubGeneric>) -> Self {
+    pub async fn subscribe(mut self, subscriptions: Vec<Sub>) -> Self {
         // Convert subscription to exchange specific subscription
         let mut exchange_sub = HashMap::new();
         for sub in subscriptions.into_iter() {
@@ -48,7 +50,7 @@ impl StreamBuilder {
             let subscription = exchange.requests(&value);
             let ping_interval = exchange.ping_interval();
 
-            let ws = WebSocketBase::new(url)
+            let ws = WebSocketBuilder::new(url)
                 .set_subscription(subscription)
                 .set_ping_interval(ping_interval)
                 .build()

@@ -5,6 +5,7 @@ pub mod subscribe;
 
 use protocols::ws::{FuturesTokio, PingInterval, WsMessage};
 
+// Subscription enum inputs
 #[derive(Debug, PartialEq, Hash, Eq, Clone, Copy)]
 pub enum Exchange {
     BinanceSpot,
@@ -18,40 +19,7 @@ pub enum StreamType {
     Trades,
 }
 
-#[derive(Debug)]
-pub enum MarketType {
-    Spot,
-    Futures,
-}
-
-#[derive(Debug)]
-pub struct Subscription {
-    pub exchange: Exchange,
-    pub base: String,
-    pub quote: String,
-    pub market: MarketType,
-    pub stream: StreamType,
-}
-
-impl Subscription {
-    pub fn new(
-        _exchange: Exchange,
-        _base: String,
-        _quote: String,
-        _market_type: MarketType,
-        _stream: StreamType,
-    ) -> Self {
-        Self {
-            exchange: _exchange,
-            base: _base,
-            quote: _quote,
-            market: _market_type,
-            stream: _stream,
-        }
-    }
-}
-
-/*---------- */
+// Exchange subscription
 #[derive(Debug)]
 pub struct ExchangeSub {
     pub base: &'static str,
@@ -60,15 +28,20 @@ pub struct ExchangeSub {
 }
 
 #[derive(Debug)]
-pub struct SubGeneric {
+pub struct Sub {
     pub exchange: Exchange,
     pub base: &'static str,
     pub quote: &'static str,
     pub stream_type: StreamType,
 }
 
-impl SubGeneric {
-    pub fn new(_exchange: Exchange, _base: &'static str, _quote: &'static str, _stream_type: StreamType) -> Self {
+impl Sub {
+    pub fn new(
+        _exchange: Exchange,
+        _base: &'static str,
+        _quote: &'static str,
+        _stream_type: StreamType,
+    ) -> Self {
         Self {
             exchange: _exchange,
             base: _base,
@@ -81,12 +54,12 @@ impl SubGeneric {
         ExchangeSub {
             base: self.base,
             quote: self.quote,
-            stream_type: self.stream_type
+            stream_type: self.stream_type,
         }
     }
 }
 
-/*---------- */
+// Exchange connector traits
 pub trait Identifier<T> {
     fn id(&self) -> T;
 }
