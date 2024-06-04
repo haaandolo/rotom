@@ -12,7 +12,7 @@ pub enum Exchange {
     PoloniexSpot,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone, Hash, Eq)]
 pub enum StreamType {
     L1,
     L2,
@@ -20,7 +20,7 @@ pub enum StreamType {
 }
 
 // Exchange subscription
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone, Hash, Eq)]
 pub struct ExchangeSub {
     pub base: &'static str,
     pub quote: &'static str,

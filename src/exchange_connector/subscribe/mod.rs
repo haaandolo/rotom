@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use super::{
     binance::BinanceSpot,
@@ -39,6 +39,8 @@ impl StreamBuilder {
                 .push(sub.convert_subscription())
         }
 
+        println!("{:#?}", exchange_sub);
+
         // Get the connectors for each exchange specified in the subscription
         for (key, value) in exchange_sub.into_iter() {
             let exchange: Box<&dyn Connector> = match key {
@@ -46,6 +48,16 @@ impl StreamBuilder {
                 Exchange::BinanceSpot => Box::new(&BinanceSpot),
                 Exchange::PoloniexSpot => Box::new(&PoloniexSpot),
             };
+
+            println!("rm dup");
+            let unique_vec: Vec<_> = value
+                .clone()
+                .into_iter()
+                .collect::<HashSet<_>>() // Convert to HashSet to remove duplicates
+                .into_iter()
+                .collect();
+            
+            println!("{:#?}", unique_vec);
 
             let url = exchange.url();
             let subscription = exchange.requests(&value);
