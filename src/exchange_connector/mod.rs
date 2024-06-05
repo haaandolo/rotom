@@ -3,9 +3,11 @@ pub mod poloniex;
 pub mod protocols;
 pub mod subscribe;
 
-use protocols::ws::{FuturesTokio, PingInterval, WsMessage};
+use protocols::ws::{PingInterval, WsMessage};
 
+/*---------- */
 // Subscription enum inputs
+/*---------- */
 #[derive(Debug, PartialEq, Hash, Eq, Clone, Copy)]
 pub enum Exchange {
     BinanceSpot,
@@ -19,7 +21,9 @@ pub enum StreamType {
     Trades,
 }
 
+/*-------- */
 // Exchange subscription
+/*-------- */
 #[derive(Debug, PartialEq, Clone, Hash, Eq)]
 pub struct ExchangeSub {
     pub base: &'static str,
@@ -59,7 +63,9 @@ impl Sub {
     }
 }
 
+/*-------- */
 // Exchange connector traits
+/*-------- */
 pub trait Identifier<T> {
     fn id(&self) -> T;
 }

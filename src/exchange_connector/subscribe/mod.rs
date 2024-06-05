@@ -2,15 +2,10 @@ use std::collections::{HashMap, HashSet};
 
 use super::{
     binance::BinanceSpot,
-    protocols::ws::{WebSocketBuilder, WsRead},
+    protocols::ws::{ExchangeStream, WebSocketBuilder},
     Connector, Sub,
 };
-use crate::exchange_connector::{poloniex::PoloniexSpot, Exchange, FuturesTokio};
-
-pub struct ExchangeStream {
-    pub stream: WsRead,
-    pub tasks: Vec<FuturesTokio>,
-}
+use crate::exchange_connector::{poloniex::PoloniexSpot, Exchange};
 
 pub struct StreamBuilder {
     pub streams: HashMap<Exchange, ExchangeStream>,
@@ -39,8 +34,6 @@ impl StreamBuilder {
                 .push(sub.convert_subscription())
         }
 
-        println!("{:#?}", exchange_sub);
-
         // Get the connectors for each exchange specified in the subscription
         for (key, value) in exchange_sub.into_iter() {
             let exchange: Box<&dyn Connector> = match key {
@@ -49,15 +42,13 @@ impl StreamBuilder {
                 Exchange::PoloniexSpot => Box::new(&PoloniexSpot),
             };
 
-            println!("rm dup");
-            let unique_vec: Vec<_> = value
+            // Remove duplicate requests
+            let value: Vec<_> = value
                 .clone()
                 .into_iter()
-                .collect::<HashSet<_>>() // Convert to HashSet to remove duplicates
+                .collect::<HashSet<_>>()
                 .into_iter()
                 .collect();
-            
-            println!("{:#?}", unique_vec);
 
             let url = exchange.url();
             let subscription = exchange.requests(&value);
@@ -72,7 +63,6 @@ impl StreamBuilder {
 
             self.streams.insert(key, ws);
         }
-
         self
     }
 }

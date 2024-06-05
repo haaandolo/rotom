@@ -18,13 +18,13 @@ async fn main() {
         ])
         .await;
 
-//    // Read from socket
-//    if let Some(mut value) = streams.streams.remove(&Exchange::PoloniexSpot) {
-//        while let Some(msg) = value.stream.next().await {
-//            println!("----- Poloniex -----");
-//            println!("{:#?}", msg);
-//        }
-//    }
+   // Read from socket
+   if let Some(mut value) = streams.streams.remove(&Exchange::PoloniexSpot) {
+       while let Some(msg) = value.stream.next().await {
+           println!("----- Poloniex -----");
+           println!("{:#?}", msg);
+       }
+   }
 
 //    // Read from socket
 //    if let Some(mut value) = streams.streams.remove(&Exchange::BinanceSpot) {
@@ -36,7 +36,6 @@ async fn main() {
 }
 
 // todo
-// -3. remove duplicates
-// -2. make sure to spawn each ws
-// -1. refactor WebsocketBase
-// 2. code expected response for both exchange
+// - make sure to spawn each ws
+// - refactor code for converting sub to exchange specfic sub
+// - expected responses for binance spot and poloniex spot
