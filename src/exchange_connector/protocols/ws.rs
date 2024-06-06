@@ -1,4 +1,4 @@
-use crate::error::SocketError;
+use crate::{error::SocketError, exchange_connector::Exchange};
 use futures::{
     stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
@@ -18,29 +18,38 @@ pub type WsRead = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 pub type WsWrite = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, WsMessage>;
 pub type FuturesTokio = tokio::task::JoinHandle<()>;
 
-#[derive(Clone)]
-pub struct WebSocketPayload {
-    pub url: String,
-    pub subscription: Option<WsMessage>,
-    pub ping_interval: Option<PingInterval>,
-}
-
-#[derive(Clone)]
+/*---------- */
+// Models
+/*---------- */
+#[derive(Clone, Debug)]
 pub struct PingInterval {
     pub time: u64,
     pub message: Value,
 }
 
-pub struct WebSocketBase;
+pub struct ExchangeStream {
+    pub stream: WsRead,
+    pub tasks: Vec<FuturesTokio>,
+}
 
-impl WebSocketBase {
-    pub async fn connect(
-        payload: WebSocketPayload,
-    ) -> Result<(WsRead, Vec<FuturesTokio>), SocketError> {
-        // Vec of futures to run
-        let mut tasks = Vec::new();
+#[derive(Debug, Clone)]
+pub struct WebSocketPayload {
+    pub exchange: Exchange,
+    pub url: String,
+    pub subscription: Option<WsMessage>,
+    pub ping_interval: Option<PingInterval>,
+}
 
+/*---------- */
+// WebSocket
+/*---------- */
+#[derive(Debug)]
+pub struct WebSocketClient;
+
+impl WebSocketClient {
+    pub async fn connect(payload: WebSocketPayload) -> Result<ExchangeStream, SocketError> {
         // Make connection
+        let mut _tasks = Vec::new();
         let ws = connect_async(payload.url)
             .await
             .map(|(ws, _)| ws)
@@ -50,18 +59,7 @@ impl WebSocketBase {
         let (mut ws_write, ws_stream) = ws?.split();
         let (ws_sink_tx, mut ws_sink_rx) = mpsc::unbounded_channel();
 
-        // Handle subscription
-        if let Some(subscription) = payload.subscription {
-            ws_write.send(subscription).await?
-        }
-
-        // Handle custom ping
-        if let Some(ping_interval) = payload.ping_interval {
-            let ping_handler = tokio::spawn(schedule_pings_to_exchange(ws_sink_tx, ping_interval));
-            tasks.push(ping_handler);
-        }
-
-        // Hand writes using channel
+        // Handle writes
         let write_handler = tokio::spawn(async move {
             while let Some(msg) = ws_sink_rx.recv().await {
                 let _ = ws_write
@@ -70,9 +68,31 @@ impl WebSocketBase {
                     .map_err(SocketError::WebSocketError);
             }
         });
-        tasks.push(write_handler);
+        _tasks.push(write_handler);
 
-        Ok((ws_stream, tasks))
+        // Handle subscription
+        if let Some(subscription) = payload.subscription {
+            ws_sink_tx
+                .clone()
+                .send(subscription)
+                .expect("Failed to send subscription to ws")
+        }
+
+        // Handle custom ping
+        if let Some(ping_interval) = payload.ping_interval {
+            let ping_handler = tokio::spawn(schedule_pings_to_exchange(
+                ws_sink_tx.clone(),
+                ping_interval,
+            ));
+            _tasks.push(ping_handler);
+        }
+
+        let exchange_stream = ExchangeStream {
+            stream: ws_stream,
+            tasks: _tasks,
+        };
+
+        Ok(exchange_stream)
     }
 }
 
@@ -84,13 +104,14 @@ pub async fn schedule_pings_to_exchange(
         sleep(Duration::from_secs(ping_interval.time)).await;
         ws_sink_tx
             .send(WsMessage::Text(ping_interval.message.to_string()))
-            .unwrap();
+            .expect("Failed to send ping to ws");
     }
 }
 
-/*--------------------------------------------------------------------------------------------------*/
+/*---------- */
 // STREAM PARSER
-/*--------------------------------------------------------------------------------------------------*/
+/*---------- */
+// STREAM PARSER
 // use tokio_tungstenite::tungstenite::{error::ProtocolError, protocol::{frame::Frame, CloseFrame}};
 // use serde::de::DeserializeOwned;
 

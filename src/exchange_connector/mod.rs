@@ -3,74 +3,83 @@ pub mod poloniex;
 pub mod protocols;
 pub mod subscribe;
 
-use protocols::ws::{FuturesTokio, PingInterval, WsMessage, WsRead};
+use protocols::ws::{PingInterval, WsMessage};
 
-#[derive(Debug)]
+/*---------- */
+// Subscription enum inputs
+/*---------- */
+#[derive(Debug, PartialEq, Hash, Eq, Clone, Copy)]
 pub enum Exchange {
-    Binance,
-    Poloniex,
+    BinanceSpot,
+    PoloniexSpot,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone, Hash, Eq)]
 pub enum StreamType {
     L1,
     L2,
     Trades,
 }
 
-#[derive(Debug)]
-pub enum MarketType {
-    Spot,
-    Futures,
+/*-------- */
+// Exchange subscription
+/*-------- */
+#[derive(Debug, PartialEq, Clone, Hash, Eq)]
+pub struct ExchangeSub {
+    pub base: &'static str,
+    pub quote: &'static str,
+    pub stream_type: StreamType,
 }
 
-#[derive(Debug)]
-pub struct Subscription {
+#[derive(Debug, PartialEq, Eq, Hash)]
+pub struct Sub {
     pub exchange: Exchange,
-    pub base: String,
-    pub quote: String,
-    pub market: MarketType,
-    pub stream: StreamType,
+    pub base: &'static str,
+    pub quote: &'static str,
+    pub stream_type: StreamType,
 }
 
-impl Subscription {
+impl Sub {
     pub fn new(
         _exchange: Exchange,
-        _base: String,
-        _quote: String,
-        _market_type: MarketType,
-        _stream: StreamType,
+        _base: &'static str,
+        _quote: &'static str,
+        _stream_type: StreamType,
     ) -> Self {
         Self {
             exchange: _exchange,
             base: _base,
             quote: _quote,
-            market: _market_type,
-            stream: _stream,
+            stream_type: _stream_type,
+        }
+    }
+
+    pub fn convert_subscription(self) -> ExchangeSub {
+        ExchangeSub {
+            base: self.base,
+            quote: self.quote,
+            stream_type: self.stream_type,
         }
     }
 }
 
-pub struct ExchangeStream {
-    pub exchange: Exchange,
-    pub stream: WsRead,
-    pub tasks: Vec<FuturesTokio>,
-}
-
+/*-------- */
+// Exchange connector traits
+/*-------- */
 pub trait Identifier<T> {
     fn id(&self) -> T;
 }
 
 pub trait Connector {
-    fn url() -> String;
+    fn url(&self) -> String;
 
-    fn ping_interval() -> Option<PingInterval> {
+    fn ping_interval(&self) -> Option<PingInterval> {
         None
     }
 
-    fn requests(subscriptions: &[Subscription]) -> WsMessage;
+    fn requests(&self, subscriptions: &[ExchangeSub]) -> Option<WsMessage>;
 
-    fn expected_response() -> Option<usize> {
+    fn expected_response(&self) -> Option<usize> {
         None
     }
 }

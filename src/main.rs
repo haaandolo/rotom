@@ -1,44 +1,44 @@
-use arb_bot::exchange_connector::{Exchange, MarketType, StreamType, Subscription};
-use arb_bot::exchange_connector::poloniex::PoloniexInterface;
-use arb_bot::exchange_connector::binance::BinanceInterface;
+use arb_bot::exchange_connector::{subscribe::StreamBuilder, Exchange, StreamType, Sub};
 use futures::StreamExt;
 
 #[tokio::main]
 async fn main() {
-//    // BINANCE
-//    let mut sub_vec = Vec::new();
-//    let sub1 = Subscription::new(Exchange::Binance, "arb".to_string(), "usdt".to_string(), MarketType::Spot, StreamType::L2);
-//    let sub2 = Subscription::new(Exchange::Binance, "btc".to_string(), "usdt".to_string(), MarketType::Spot, StreamType::L2);
-//    let sub3 = Subscription::new(Exchange::Binance, "arb".to_string(), "usdt".to_string(), MarketType::Spot, StreamType::Trades);
+    // Build Streams
+    let mut streams = StreamBuilder::new()
+        .subscribe(vec![
+            Sub::new(Exchange::BinanceSpot, "arb", "usdt", StreamType::Trades),
+            Sub::new(Exchange::BinanceSpot, "arb", "usdt", StreamType::Trades),
+            Sub::new(Exchange::BinanceSpot, "btc", "usdt", StreamType::Trades),
+        ])
+        .subscribe(vec![
+            Sub::new(Exchange::PoloniexSpot, "arb", "usdt", StreamType::Trades),
+            Sub::new(Exchange::PoloniexSpot, "arb", "usdt", StreamType::Trades),
+            Sub::new(Exchange::PoloniexSpot, "btc", "usdt", StreamType::Trades),
+        ])
+        .init()
+        .await;
 
-//    sub_vec.push(sub1);
-//    sub_vec.push(sub2);
-//    sub_vec.push(sub3);
+    //    // Read from socket
+    //    if let Some(mut value) = streams.streams.remove(&Exchange::PoloniexSpot) {
+    //        while let Some(msg) = value.stream.next().await {
+    //            println!("----- Poloniex -----");
+    //            println!("{:#?}", msg);
+    //        }
+    //    }
 
-//    let mut bin = BinanceInterface.get_stream(sub_vec).await.unwrap();
-
-//    while let Some(msg) = bin.stream.next().await {
-//        println!("{:#?}", msg)
-//    }
-
-   //  POLONIEX
-    let mut sub_vec = Vec::new();
-    let sub1 = Subscription::new(Exchange::Poloniex, "arb".to_string(), "usdt".to_string(), MarketType::Spot, StreamType::L2);
-    let sub2 = Subscription::new(Exchange::Poloniex, "btc".to_string(), "usdt".to_string(), MarketType::Spot, StreamType::L2);
-    let sub3 = Subscription::new(Exchange::Poloniex, "arb".to_string(), "usdt".to_string(), MarketType::Spot, StreamType::Trades);
-
-    sub_vec.push(sub1);
-    sub_vec.push(sub2);
-    sub_vec.push(sub3);
-
-    let mut polo = PoloniexInterface.get_stream(sub_vec).await.unwrap();
-
-    while let Some(msg) = polo.stream.next().await {
-        println!("{:#?}", msg)
-    }
-
+       // Read from socket
+       if let Some(mut value) = streams.streams.remove(&Exchange::BinanceSpot) {
+           while let Some(msg) = value.stream.next().await {
+               println!("----- Binance -----");
+               println!("{:#?}", msg);
+           }
+       }
 }
 
 // todo
-// 1. make a websocket builder for different exchanges and request. look into if you can use builder model
-// 2. code expected response for both exchange
+// - ws auto reconnect
+// - make sure to spawn each ws
+// - refactor code for converting sub to exchange specfic sub
+// - expected responses for binance spot and poloniex spot
+// - fix the awaits in the stream builder so only have to do it once
+// - write test for the subscribe fn in stream builder
