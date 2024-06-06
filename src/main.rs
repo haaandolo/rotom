@@ -1,4 +1,4 @@
-use arb_bot::exchange_connector::{subscribe::StreamBuilder, Exchange, StreamType, Sub};
+use arb_bot::exchange_connector::{subscriber::StreamBuilder, Exchange, StreamType, Sub};
 use futures::StreamExt;
 
 #[tokio::main]

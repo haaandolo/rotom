@@ -1,7 +1,7 @@
 pub mod binance;
 pub mod poloniex;
 pub mod protocols;
-pub mod subscribe;
+pub mod subscriber;
 
 use protocols::ws::{PingInterval, WsMessage};
 
