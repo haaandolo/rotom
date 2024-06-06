@@ -2,13 +2,14 @@ use std::collections::{HashMap, HashSet};
 
 use super::{
     binance::BinanceSpot,
-    protocols::ws::{ExchangeStream, WebSocketBuilder},
+    protocols::ws::{ExchangeStream, WebSocketClient, WebSocketPayload},
     Connector, Sub,
 };
 use crate::exchange_connector::{poloniex::PoloniexSpot, Exchange};
 
 pub struct StreamBuilder {
     pub streams: HashMap<Exchange, ExchangeStream>,
+    pub exchange_sub: Vec<WebSocketPayload>,
 }
 
 impl Default for StreamBuilder {
@@ -21,47 +22,54 @@ impl StreamBuilder {
     pub fn new() -> Self {
         Self {
             streams: HashMap::new(),
+            exchange_sub: Vec::new(),
         }
     }
 
-    pub async fn subscribe(mut self, subscriptions: Vec<Sub>) -> Self {
-        // Convert subscription to exchange specific subscription
+    // Function to convert general subscription to exchange specific ones
+    pub fn subscribe(mut self, subscriptions: Vec<Sub>) -> Self {
+        // Convert vec of subs to hashmap. Extract the exchange
+        // field out of the sub struct then put in key of hashmap.
+        // Then insert rest of sub fields as value of the hashmap.
+        // Vec<Sub> ---> HashMap<Exchange, Vec<ExchangeSub>>
         let mut exchange_sub = HashMap::new();
-        for sub in subscriptions.into_iter() {
-            exchange_sub
-                .entry(sub.exchange)
-                .or_insert(Vec::new())
-                .push(sub.convert_subscription())
-        }
+
+        subscriptions
+            .into_iter()
+            .collect::<HashSet<Sub>>() // rm duplicates
+            .into_iter()
+            .for_each(|sub| {
+                exchange_sub
+                    .entry(sub.exchange)
+                    .or_insert(Vec::new())
+                    .push(sub.convert_subscription())
+            });
 
         // Get the connectors for each exchange specified in the subscription
-        for (key, value) in exchange_sub.into_iter() {
+        exchange_sub.into_iter().for_each(|(key, value)| {
             let exchange: Box<&dyn Connector> = match key {
                 // Add more connectors here
                 Exchange::BinanceSpot => Box::new(&BinanceSpot),
                 Exchange::PoloniexSpot => Box::new(&PoloniexSpot),
             };
 
-            // Remove duplicate requests
-            let value: Vec<_> = value
-                .clone()
-                .into_iter()
-                .collect::<HashSet<_>>()
-                .into_iter()
-                .collect();
+            self.exchange_sub.push(WebSocketPayload {
+                exchange: key,
+                url: exchange.url(),
+                subscription: exchange.requests(&value),
+                ping_interval: exchange.ping_interval(),
+            })
+        });
+        self
+    }
 
-            let url = exchange.url();
-            let subscription = exchange.requests(&value);
-            let ping_interval = exchange.ping_interval();
-
-            let ws = WebSocketBuilder::new(url)
-                .set_subscription(subscription)
-                .set_ping_interval(ping_interval)
-                .build()
+    pub async fn init(mut self) -> Self {
+        for sub in self.exchange_sub.clone().into_iter() {
+            let exchange = sub.exchange;
+            let ws = WebSocketClient::connect(sub)
                 .await
-                .unwrap();
-
-            self.streams.insert(key, ws);
+                .expect("Failed to connect to Ws");
+            self.streams.insert(exchange, ws);
         }
         self
     }

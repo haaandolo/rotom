@@ -1,4 +1,4 @@
-use crate::error::SocketError;
+use crate::{error::SocketError, exchange_connector::Exchange};
 use futures::{
     stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
@@ -32,33 +32,25 @@ pub struct ExchangeStream {
     pub tasks: Vec<FuturesTokio>,
 }
 
-/*---------- */
-// WebSocket
-/*---------- */
-#[derive(Debug)]
-pub struct WebSocketBase {
+#[derive(Debug, Clone)]
+pub struct WebSocketPayload {
+    pub exchange: Exchange,
     pub url: String,
     pub subscription: Option<WsMessage>,
     pub ping_interval: Option<PingInterval>,
 }
 
-impl WebSocketBase {
-    pub fn new(
-        _url: String,
-        _subscription: Option<WsMessage>,
-        _ping_interval: Option<PingInterval>,
-    ) -> Self {
-        Self {
-            url: _url,
-            subscription: _subscription,
-            ping_interval: _ping_interval,
-        }
-    }
+/*---------- */
+// WebSocket
+/*---------- */
+#[derive(Debug)]
+pub struct WebSocketClient;
 
-    pub async fn connect(self) -> Result<ExchangeStream, SocketError> {
+impl WebSocketClient {
+    pub async fn connect(payload: WebSocketPayload) -> Result<ExchangeStream, SocketError> {
         // Make connection
         let mut _tasks = Vec::new();
-        let ws = connect_async(self.url)
+        let ws = connect_async(payload.url)
             .await
             .map(|(ws, _)| ws)
             .map_err(SocketError::WebSocketError);
@@ -79,7 +71,7 @@ impl WebSocketBase {
         _tasks.push(write_handler);
 
         // Handle subscription
-        if let Some(subscription) = self.subscription {
+        if let Some(subscription) = payload.subscription {
             ws_sink_tx
                 .clone()
                 .send(subscription)
@@ -87,7 +79,7 @@ impl WebSocketBase {
         }
 
         // Handle custom ping
-        if let Some(ping_interval) = self.ping_interval {
+        if let Some(ping_interval) = payload.ping_interval {
             let ping_handler = tokio::spawn(schedule_pings_to_exchange(
                 ws_sink_tx.clone(),
                 ping_interval,
@@ -115,51 +107,6 @@ pub async fn schedule_pings_to_exchange(
             .expect("Failed to send ping to ws");
     }
 }
-
-/*---------- */
-// WebSocket Builder
-/*---------- */
-pub struct WebSocketBuilder {
-    pub url: String,
-    pub subscription: Option<WsMessage>,
-    pub ping_interval: Option<PingInterval>,
-}
-
-impl WebSocketBuilder {
-    pub fn new(_url: String) -> Self {
-        Self {
-            url: _url,
-            subscription: None,
-            ping_interval: None,
-        }
-    }
-
-    pub fn set_url(&mut self, url: String) -> &mut Self {
-        self.url = url;
-        self
-    }
-
-    pub fn set_subscription(&mut self, subcription: WsMessage) -> &mut Self {
-        self.subscription = Some(subcription);
-        self
-    }
-
-    pub fn set_ping_interval(&mut self, ping_interval: Option<PingInterval>) -> &mut Self {
-        self.ping_interval = ping_interval;
-        self
-    }
-
-    pub async fn build(&mut self) -> Result<ExchangeStream, SocketError> {
-        WebSocketBase::new(
-            self.url.clone(),
-            self.subscription.clone(),
-            self.ping_interval.clone(),
-        )
-        .connect()
-        .await
-    }
-}
-
 
 /*---------- */
 // STREAM PARSER

@@ -16,7 +16,7 @@ impl Connector for PoloniexSpot {
         PoloniexChannel::SPOT_WS_URL.as_ref().to_string()
     }
 
-    fn requests(&self, sub: &[ExchangeSub]) -> WsMessage {
+    fn requests(&self, sub: &[ExchangeSub]) -> Option<WsMessage> {
         let channels = sub
             .iter()
             .map(|s| {
@@ -43,7 +43,7 @@ impl Connector for PoloniexSpot {
             "symbols": tickers
         });
 
-        WsMessage::text(poloniex_sub.to_string())
+        Some(WsMessage::text(poloniex_sub.to_string()))
     }
 
     fn ping_interval(&self) -> Option<PingInterval> {

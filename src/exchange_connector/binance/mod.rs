@@ -14,7 +14,7 @@ impl Connector for BinanceSpot {
         BinanceChannel::SPOT_WS_URL.as_ref().to_string()
     }
 
-    fn requests(&self, subscriptions: &[ExchangeSub]) -> WsMessage {
+    fn requests(&self, subscriptions: &[ExchangeSub]) -> Option<WsMessage> {
         let channels = subscriptions
             .iter()
             .map(|s| {
@@ -35,6 +35,6 @@ impl Connector for BinanceSpot {
             "id": 1
         });
 
-        WsMessage::Text(binance_request.to_string())
+        Some(WsMessage::Text(binance_request.to_string()))
     }
 }

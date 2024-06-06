@@ -31,7 +31,7 @@ pub struct ExchangeSub {
     pub stream_type: StreamType,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub struct Sub {
     pub exchange: Exchange,
     pub base: &'static str,
@@ -77,7 +77,7 @@ pub trait Connector {
         None
     }
 
-    fn requests(&self, subscriptions: &[ExchangeSub]) -> WsMessage;
+    fn requests(&self, subscriptions: &[ExchangeSub]) -> Option<WsMessage>;
 
     fn expected_response(&self) -> Option<usize> {
         None
