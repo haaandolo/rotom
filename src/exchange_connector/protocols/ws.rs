@@ -6,17 +6,19 @@ use futures::{
 use serde_json::Value;
 use tokio::{
     net::TcpStream,
-    sync::mpsc,
+    sync::mpsc::{self, UnboundedReceiver},
     time::{sleep, Duration},
 };
-use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
+use tokio_tungstenite::{
+    connect_async, tungstenite::error::ProtocolError, MaybeTlsStream, WebSocketStream,
+};
 
 pub type WsMessage = tokio_tungstenite::tungstenite::Message;
 pub type WsError = tokio_tungstenite::tungstenite::Error;
 pub type WebSocket = tokio_tungstenite::WebSocketStream<MaybeTlsStream<TcpStream>>;
 pub type WsRead = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 pub type WsWrite = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, WsMessage>;
-pub type FuturesTokio = tokio::task::JoinHandle<()>;
+pub type JoinHandle = tokio::task::JoinHandle<()>;
 
 /*---------- */
 // Models
@@ -28,8 +30,16 @@ pub struct PingInterval {
 }
 
 pub struct ExchangeStream {
-    pub stream: WsRead,
-    pub tasks: Vec<FuturesTokio>,
+    pub stream: UnboundedReceiver<WsMessage>,
+    pub tasks: Vec<JoinHandle>,
+}
+
+impl ExchangeStream {
+    pub fn cancel_running_tasks(&self) {
+        self.tasks.iter().for_each(|task| {
+            task.abort();
+        })
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -47,7 +57,7 @@ pub struct WebSocketPayload {
 pub struct WebSocketClient;
 
 impl WebSocketClient {
-    pub async fn connect(payload: WebSocketPayload) -> Result<ExchangeStream, SocketError> {
+    pub async fn connect(self, payload: WebSocketPayload) -> Result<ExchangeStream, SocketError> {
         // Make connection
         let mut _tasks = Vec::new();
         let ws = connect_async(payload.url)
@@ -57,26 +67,16 @@ impl WebSocketClient {
 
         // Split WS and make channels
         let (mut ws_write, ws_stream) = ws?.split();
-        let (ws_sink_tx, mut ws_sink_rx) = mpsc::unbounded_channel();
-
-        // Handle writes
-        let write_handler = tokio::spawn(async move {
-            while let Some(msg) = ws_sink_rx.recv().await {
-                let _ = ws_write
-                    .send(msg)
-                    .await
-                    .map_err(SocketError::WebSocketError);
-            }
-        });
-        _tasks.push(write_handler);
+        let (ws_sink_tx, ws_sink_rx) = mpsc::unbounded_channel();
 
         // Handle subscription
-        if let Some(subscription) = payload.subscription {
-            ws_sink_tx
-                .clone()
-                .send(subscription)
-                .expect("Failed to send subscription to ws")
+        if let Some(subcription) = payload.subscription {
+            ws_write.send(subcription).await?
         }
+
+        // Handle writes
+        let write_handler = tokio::spawn(write_to_ws(ws_sink_rx, ws_write));
+        _tasks.push(write_handler);
 
         // Handle custom ping
         if let Some(ping_interval) = payload.ping_interval {
@@ -87,8 +87,13 @@ impl WebSocketClient {
             _tasks.push(ping_handler);
         }
 
+        // Handle read by spawning channel
+        let (ws_stream_tx, ws_stream_rx) = mpsc::unbounded_channel();
+        let read_handler = tokio::spawn(read_from_ws(ws_stream_tx, ws_stream));
+        _tasks.push(read_handler);
+
         let exchange_stream = ExchangeStream {
-            stream: ws_stream,
+            stream: ws_stream_rx,
             tasks: _tasks,
         };
 
@@ -96,7 +101,22 @@ impl WebSocketClient {
     }
 }
 
-pub async fn schedule_pings_to_exchange(
+async fn read_from_ws(ws_stream_tx: mpsc::UnboundedSender<WsMessage>, mut ws_stream: WsRead) {
+    while let Some(msg) = ws_stream.next().await {
+        ws_stream_tx
+            .clone()
+            .send(msg.unwrap())
+            .expect("Failed to send msg from WS")
+    }
+}
+
+async fn write_to_ws(mut ws_sink_rx: mpsc::UnboundedReceiver<WsMessage>, mut ws_sink: WsWrite) {
+    while let Some(msg) = ws_sink_rx.recv().await {
+        let _ = ws_sink.send(msg).await.map_err(SocketError::WebSocketError);
+    }
+}
+
+async fn schedule_pings_to_exchange(
     ws_sink_tx: mpsc::UnboundedSender<WsMessage>,
     ping_interval: PingInterval,
 ) {
@@ -106,6 +126,17 @@ pub async fn schedule_pings_to_exchange(
             .send(WsMessage::Text(ping_interval.message.to_string()))
             .expect("Failed to send ping to ws");
     }
+}
+
+pub fn is_websocket_disconnected(error: &WsError) -> bool {
+    matches!(
+        error,
+        WsError::ConnectionClosed
+            | WsError::AlreadyClosed
+            | WsError::Io(_)
+            | WsError::Protocol(ProtocolError::SendAfterClosing)
+            | WsError::Protocol(ProtocolError::ResetWithoutClosingHandshake) // | WsError::Protocol(_)
+    )
 }
 
 /*---------- */

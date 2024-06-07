@@ -66,7 +66,7 @@ impl StreamBuilder {
     pub async fn init(mut self) -> Self {
         for sub in self.exchange_sub.clone().into_iter() {
             let exchange = sub.exchange;
-            let ws = WebSocketClient::connect(sub)
+            let ws = WebSocketClient.connect(sub)
                 .await
                 .expect("Failed to connect to Ws");
             self.streams.insert(exchange, ws);
