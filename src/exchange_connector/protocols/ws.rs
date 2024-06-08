@@ -1,4 +1,4 @@
-use crate::{error::SocketError, exchange_connector::Exchange};
+use crate::error::SocketError;
 use futures::{
     stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
@@ -28,85 +28,86 @@ pub struct PingInterval {
     pub time: u64,
     pub message: Value,
 }
-
-pub struct ExchangeStream {
-    pub stream: UnboundedReceiver<WsMessage>,
+/*---------- */
+// WebSocket
+/*---------- */
+#[derive(Debug)]
+pub struct WebSocketClient {
+    pub url: String,
+    pub subscription: Option<WsMessage>,
+    pub ping_interval: Option<PingInterval>,
+    pub read_tx: Option<UnboundedReceiver<Result<WsMessage, WsError>>>,
     pub tasks: Vec<JoinHandle>,
 }
 
-impl ExchangeStream {
+impl WebSocketClient {
+    pub fn new(
+        _url: String,
+        _subscription: Option<WsMessage>,
+        _ping_interval: Option<PingInterval>,
+    ) -> Self {
+        Self {
+            url: _url,
+            subscription: _subscription,
+            ping_interval: _ping_interval,
+            read_tx: None,
+            tasks: Vec::new(),
+        }
+    }
+    pub async fn connect(&mut self) {
+        // Make connection
+        let ws = connect_async(self.url.clone())
+            .await
+            .map(|(ws, _)| ws)
+            .map_err(SocketError::WebSocketError);
+
+        // Split WS and make channels
+        let (mut ws_write, ws_stream) = ws.unwrap().split();
+        let (ws_sink_tx, ws_sink_rx) = mpsc::unbounded_channel();
+
+        // Handle subscription
+        if let Some(subcription) = self.subscription.clone() {
+            ws_write
+                .send(subcription)
+                .await
+                .expect("Failed to send subscription")
+        }
+
+        // Spawn write handle
+        let write_handler = tokio::spawn(write_to_ws(ws_sink_rx, ws_write));
+        self.tasks.push(write_handler);
+
+        // Spawn custom ping handle
+        if let Some(ping_interval) = self.ping_interval.clone() {
+            let ping_handler = tokio::spawn(schedule_pings_to_exchange(
+                ws_sink_tx.clone(),
+                ping_interval,
+            ));
+            self.tasks.push(ping_handler);
+        }
+
+        // Spawn read handle
+        let (ws_stream_tx, ws_stream_rx) = mpsc::unbounded_channel();
+        let read_handler = tokio::spawn(read_from_ws(ws_stream_tx, ws_stream));
+        self.tasks.push(read_handler);
+        self.read_tx = Some(ws_stream_rx);
+    }
+
     pub fn cancel_running_tasks(&self) {
         self.tasks.iter().for_each(|task| {
             task.abort();
         })
     }
 }
-
-#[derive(Debug, Clone)]
-pub struct WebSocketPayload {
-    pub exchange: Exchange,
-    pub url: String,
-    pub subscription: Option<WsMessage>,
-    pub ping_interval: Option<PingInterval>,
-}
-
 /*---------- */
-// WebSocket
+// WS helper functions
 /*---------- */
-#[derive(Debug)]
-pub struct WebSocketClient;
-
-impl WebSocketClient {
-    pub async fn connect(self, payload: WebSocketPayload) -> Result<ExchangeStream, SocketError> {
-        // Make connection
-        let mut _tasks = Vec::new();
-        let ws = connect_async(payload.url)
-            .await
-            .map(|(ws, _)| ws)
-            .map_err(SocketError::WebSocketError);
-
-        // Split WS and make channels
-        let (mut ws_write, ws_stream) = ws?.split();
-        let (ws_sink_tx, ws_sink_rx) = mpsc::unbounded_channel();
-
-        // Handle subscription
-        if let Some(subcription) = payload.subscription {
-            ws_write.send(subcription).await?
-        }
-
-        // Handle writes
-        let write_handler = tokio::spawn(write_to_ws(ws_sink_rx, ws_write));
-        _tasks.push(write_handler);
-
-        // Handle custom ping
-        if let Some(ping_interval) = payload.ping_interval {
-            let ping_handler = tokio::spawn(schedule_pings_to_exchange(
-                ws_sink_tx.clone(),
-                ping_interval,
-            ));
-            _tasks.push(ping_handler);
-        }
-
-        // Handle read by spawning channel
-        let (ws_stream_tx, ws_stream_rx) = mpsc::unbounded_channel();
-        let read_handler = tokio::spawn(read_from_ws(ws_stream_tx, ws_stream));
-        _tasks.push(read_handler);
-
-        let exchange_stream = ExchangeStream {
-            stream: ws_stream_rx,
-            tasks: _tasks,
-        };
-
-        Ok(exchange_stream)
-    }
-}
-
-async fn read_from_ws(ws_stream_tx: mpsc::UnboundedSender<WsMessage>, mut ws_stream: WsRead) {
+async fn read_from_ws(
+    ws_stream_tx: mpsc::UnboundedSender<Result<WsMessage, WsError>>,
+    mut ws_stream: WsRead,
+) {
     while let Some(msg) = ws_stream.next().await {
-        ws_stream_tx
-            .clone()
-            .send(msg.unwrap())
-            .expect("Failed to send msg from WS")
+        ws_stream_tx.send(msg).expect("Failed to send message");
     }
 }
 
@@ -121,6 +122,7 @@ async fn schedule_pings_to_exchange(
     ping_interval: PingInterval,
 ) {
     loop {
+        println!("ping");
         sleep(Duration::from_secs(ping_interval.time)).await;
         ws_sink_tx
             .send(WsMessage::Text(ping_interval.message.to_string()))

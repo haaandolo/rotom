@@ -64,7 +64,7 @@ impl Sub {
 }
 
 /*-------- */
-// Exchange connector traits
+// Exchange connector trait
 /*-------- */
 pub trait Identifier<T> {
     fn id(&self) -> T;

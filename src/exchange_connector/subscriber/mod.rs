@@ -1,15 +1,10 @@
 use std::collections::{HashMap, HashSet};
 
-use super::{
-    binance::BinanceSpot,
-    protocols::ws::{ExchangeStream, WebSocketClient, WebSocketPayload},
-    Connector, Sub,
-};
+use super::{binance::BinanceSpot, protocols::ws::WebSocketClient, Connector, Sub};
 use crate::exchange_connector::{poloniex::PoloniexSpot, Exchange};
 
 pub struct StreamBuilder {
-    pub streams: HashMap<Exchange, ExchangeStream>,
-    pub exchange_sub: Vec<WebSocketPayload>,
+    pub clients: HashMap<Exchange, WebSocketClient>,
 }
 
 impl Default for StreamBuilder {
@@ -21,8 +16,7 @@ impl Default for StreamBuilder {
 impl StreamBuilder {
     pub fn new() -> Self {
         Self {
-            streams: HashMap::new(),
-            exchange_sub: Vec::new(),
+            clients: HashMap::new(),
         }
     }
 
@@ -53,23 +47,20 @@ impl StreamBuilder {
                 Exchange::PoloniexSpot => Box::new(&PoloniexSpot),
             };
 
-            self.exchange_sub.push(WebSocketPayload {
-                exchange: key,
-                url: exchange.url(),
-                subscription: exchange.requests(&value),
-                ping_interval: exchange.ping_interval(),
-            })
+            let client = WebSocketClient::new(
+                exchange.url(),
+                exchange.requests(&value),
+                exchange.ping_interval(),
+            );
+
+            self.clients.insert(key, client);
         });
         self
     }
 
     pub async fn init(mut self) -> Self {
-        for sub in self.exchange_sub.clone().into_iter() {
-            let exchange = sub.exchange;
-            let ws = WebSocketClient.connect(sub)
-                .await
-                .expect("Failed to connect to Ws");
-            self.streams.insert(exchange, ws);
+        for (_, client) in self.clients.iter_mut() {
+            client.connect().await;
         }
         self
     }
