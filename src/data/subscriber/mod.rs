@@ -67,12 +67,13 @@ impl StreamBuilder {
     }
 
     pub async fn init(self) -> HashMap<Exchange, UnboundedReceiver<WsMessage>> {
-        let mut ws_streams = HashMap::new();
-        for (key, client) in self.clients.into_iter() {
-            let (tx, rx) = mpsc::unbounded_channel();
-            tokio::spawn(try_connect(client, tx));
-            ws_streams.insert(key, rx);
-        }
-        ws_streams
+        self.clients
+            .into_iter()
+            .map(|(exchange_name, client)| {
+                let (tx, rx) = mpsc::unbounded_channel();
+                tokio::spawn(try_connect(client, tx));
+                (exchange_name, rx)
+            })
+            .collect::<HashMap<_, _>>()
     }
 }
