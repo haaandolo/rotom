@@ -1,4 +1,4 @@
-use arb_bot::exchange_connector::{
+use arb_bot::data::{
     protocols::ws::is_websocket_disconnected, subscriber::StreamBuilder, Exchange, StreamType, Sub,
 };
 

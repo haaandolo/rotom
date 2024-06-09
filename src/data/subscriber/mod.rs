@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use super::{binance::BinanceSpot, protocols::ws::WebSocketClient, Connector, Sub};
-use crate::exchange_connector::{poloniex::PoloniexSpot, Exchange};
+use crate::data::{poloniex::PoloniexSpot, Exchange};
 
 pub struct StreamBuilder {
     pub clients: HashMap<Exchange, WebSocketClient>,

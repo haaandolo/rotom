@@ -6,8 +6,8 @@ use std::collections::HashSet;
 
 use super::protocols::ws::WsMessage;
 use super::{Connector, ExchangeSub};
-use crate::exchange_connector::protocols::ws::PingInterval;
-use crate::exchange_connector::StreamType;
+use crate::data::protocols::ws::PingInterval;
+use crate::data::StreamType;
 
 pub struct PoloniexSpot;
 

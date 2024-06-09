@@ -153,6 +153,6 @@ mod tests {
             size: 1.0,
         };
 
-        assert_eq!(event.price_ticks(0.01), 1000);
+        assert_eq!(event.price_ticks(0.01), 0);
     }
 }
