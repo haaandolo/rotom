@@ -3,7 +3,7 @@ use tokio::sync::mpsc::{self, UnboundedReceiver};
 
 use super::{
     exchange_connector::{binance::BinanceSpot, poloniex::PoloniexSpot, Connector},
-    protocols::ws::{try_connect, WebSocketClient, WsMessage},
+    protocols::ws::{utils::try_connect, WebSocketClient, WsMessage},
     Sub,
 };
 use crate::data::Exchange;

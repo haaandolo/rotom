@@ -1,8 +1,6 @@
+pub mod exchange_connector;
 pub mod protocols;
 pub mod subscriber;
-pub mod exchange_connector;
-
-use protocols::ws::{PingInterval, WsMessage};
 
 /*---------- */
 // Subscription enum inputs
@@ -61,5 +59,3 @@ impl Sub {
         }
     }
 }
-
-

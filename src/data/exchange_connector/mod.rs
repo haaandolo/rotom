@@ -1,7 +1,7 @@
-use super::{protocols::ws::{PingInterval, WsMessage}, ExchangeSub};
-
 pub mod binance;
 pub mod poloniex;
+
+use super::{protocols::ws::{PingInterval, WsMessage}, ExchangeSub};
 
 /*-------- */
 // Exchange connector trait
