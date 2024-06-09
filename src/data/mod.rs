@@ -1,9 +1,6 @@
-pub mod binance;
-pub mod poloniex;
+pub mod exchange_connector;
 pub mod protocols;
 pub mod subscriber;
-
-use protocols::ws::{PingInterval, WsMessage};
 
 /*---------- */
 // Subscription enum inputs
@@ -60,26 +57,5 @@ impl Sub {
             quote: self.quote,
             stream_type: self.stream_type,
         }
-    }
-}
-
-/*-------- */
-// Exchange connector trait
-/*-------- */
-pub trait Identifier<T> {
-    fn id(&self) -> T;
-}
-
-pub trait Connector {
-    fn url(&self) -> String;
-
-    fn ping_interval(&self) -> Option<PingInterval> {
-        None
-    }
-
-    fn requests(&self, subscriptions: &[ExchangeSub]) -> Option<WsMessage>;
-
-    fn expected_response(&self) -> Option<usize> {
-        None
     }
 }

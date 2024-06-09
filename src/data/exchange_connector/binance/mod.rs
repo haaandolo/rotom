@@ -4,7 +4,8 @@ use channel::BinanceChannel;
 use serde_json::json;
 use std::collections::HashSet;
 
-use super::{protocols::ws::WsMessage, Connector, ExchangeSub, StreamType};
+use crate::data::{protocols::ws::WsMessage, StreamType};
+use super::{Connector, ExchangeSub};
 
 #[derive(Debug)]
 pub struct BinanceSpot;

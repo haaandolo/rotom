@@ -4,9 +4,8 @@ use channel::PoloniexChannel;
 use serde_json::json;
 use std::collections::HashSet;
 
-use super::protocols::ws::WsMessage;
 use super::{Connector, ExchangeSub};
-use crate::data::protocols::ws::PingInterval;
+use crate::data::protocols::ws::{PingInterval, WsMessage};
 use crate::data::StreamType;
 
 pub struct PoloniexSpot;
@@ -48,7 +47,7 @@ impl Connector for PoloniexSpot {
 
     fn ping_interval(&self) -> Option<PingInterval> {
         Some(PingInterval {
-            time: 35,
+            time: 30,
             message: json!({"event": "ping"}),
         })
     }
