@@ -5,9 +5,10 @@ use tokio_tungstenite::tungstenite::error::ProtocolError;
 use crate::data::protocols::ws::WsMessage;
 use super::{PingInterval, WebSocketClient, WsError, WsWrite};
 
+pub const START_RECONNECTION_BACKOFF_MS: u64 = 125;
+
 pub async fn schedule_pings_to_exchange(mut ws_write: WsWrite, ping_interval: PingInterval) {
     loop {
-        println!("ping");
         sleep(Duration::from_secs(ping_interval.time)).await;
         ws_write
             .send(WsMessage::Text(ping_interval.message.to_string()))
@@ -26,8 +27,6 @@ pub fn is_websocket_disconnected(error: &WsError) -> bool {
             | WsError::Protocol(ProtocolError::ResetWithoutClosingHandshake) // | WsError::Protocol(_)
     )
 }
-
-pub const START_RECONNECTION_BACKOFF_MS: u64 = 125;
 
 pub async fn try_connect(mut ws_client: WebSocketClient, exchange_tx: UnboundedSender<WsMessage>) {
     let mut _connection_attempt: u32 = 0;
@@ -61,8 +60,7 @@ pub async fn try_connect(mut ws_client: WebSocketClient, exchange_tx: UnboundedS
                     exchange_tx.send(message).expect("Failed to send message");
                 }
                 Err(error) => {
-                    if is_websocket_disconnected(&error) {
-                        println!("{:#?}", error);
+                    if is_websocket_disconnected(&error) { // SHOULD CHANGE THIS TO SEE WHAT ERRORS ACTUAL MEANS RECONNECTING
                         stream.cancel_running_tasks()
                     }
                 } // ADD Error for if sequence is broken then have to restart
