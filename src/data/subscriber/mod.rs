@@ -2,11 +2,11 @@ use std::collections::{HashMap, HashSet};
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 
 use super::{
-    binance::BinanceSpot,
+    exchange_connector::{binance::BinanceSpot, poloniex::PoloniexSpot, Connector},
     protocols::ws::{try_connect, WebSocketClient, WsMessage},
-    Connector, Sub,
+    Sub,
 };
-use crate::data::{poloniex::PoloniexSpot, Exchange};
+use crate::data::Exchange;
 
 /*---------- */
 // Stream builder

@@ -1,5 +1,3 @@
-pub mod binance;
-pub mod poloniex;
 pub mod protocols;
 pub mod subscriber;
 pub mod exchange_connector;
@@ -64,23 +62,4 @@ impl Sub {
     }
 }
 
-/*-------- */
-// Exchange connector trait
-/*-------- */
-pub trait Identifier<T> {
-    fn id(&self) -> T;
-}
 
-pub trait Connector {
-    fn url(&self) -> String;
-
-    fn ping_interval(&self) -> Option<PingInterval> {
-        None
-    }
-
-    fn requests(&self, subscriptions: &[ExchangeSub]) -> Option<WsMessage>;
-
-    fn expected_response(&self) -> Option<usize> {
-        None
-    }
-}
