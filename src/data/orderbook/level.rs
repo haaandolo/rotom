@@ -1,4 +1,4 @@
-use crate::orderbook::event::Event;
+use crate::data::orderbook::event::Event;
 use std::cmp::Ordering;
 use std::fmt::Display;
 

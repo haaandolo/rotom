@@ -66,7 +66,7 @@ impl StreamBuilder {
         self
     }
 
-    pub async fn init(self) -> HashMap<Exchange, UnboundedReceiver<WsMessage>> {
+    pub async fn init(self) -> HashMap<Exchange, UnboundedReceiver<String>> {
         self.clients
             .into_iter()
             .map(|(exchange_name, client)| {

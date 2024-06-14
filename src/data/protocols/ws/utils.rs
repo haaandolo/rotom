@@ -28,7 +28,7 @@ pub fn is_websocket_disconnected(error: &WsError) -> bool {
     )
 }
 
-pub async fn try_connect(mut ws_client: WebSocketClient, exchange_tx: UnboundedSender<WsMessage>) {
+pub async fn try_connect(mut ws_client: WebSocketClient, exchange_tx: UnboundedSender<String>) {
     let mut _connection_attempt: u32 = 0;
     let mut _backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
 
@@ -57,7 +57,10 @@ pub async fn try_connect(mut ws_client: WebSocketClient, exchange_tx: UnboundedS
         while let Some(message) = stream.ws_read.next().await {
             match message {
                 Ok(message) => {
-                    exchange_tx.send(message).expect("Failed to send message");
+                    match message {
+                        WsMessage::Text(text) => exchange_tx.send(text).expect("Failed to send message"),
+                        _ => ()
+                    }
                 }
                 Err(error) => {
                     if is_websocket_disconnected(&error) { // SHOULD CHANGE THIS TO SEE WHAT ERRORS ACTUAL MEANS RECONNECTING
