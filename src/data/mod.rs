@@ -1,7 +1,7 @@
 pub mod exchange_connector;
 pub mod protocols;
 pub mod subscriber;
-pub mod orderbook;
+pub mod shared;
 
 /*---------- */
 // Subscription enum inputs
