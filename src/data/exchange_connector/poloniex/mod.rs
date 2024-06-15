@@ -1,4 +1,5 @@
 pub mod channel;
+pub mod book;
 
 use channel::PoloniexChannel;
 use serde_json::json;

@@ -1,10 +1,15 @@
-use crate::data::shared::orderbook::event::Event;
 use std::cmp::Ordering;
 use std::fmt::Display;
+use serde::Deserialize;
 
-#[derive(Debug, Clone, Copy, Default)]
+use crate::data::shared::orderbook::event::Event;
+use crate::data::shared::de::de_str;
+
+#[derive(Debug, Clone, Copy, Default, Deserialize)]
 pub struct Level {
+    #[serde(deserialize_with = "de_str")]
     pub price: f64,
+    #[serde(deserialize_with = "de_str")]
     pub size: f64,
 }
 

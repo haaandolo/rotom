@@ -1,4 +1,5 @@
 pub mod channel;
+pub mod book;
 
 use channel::BinanceChannel;
 use serde_json::json;
