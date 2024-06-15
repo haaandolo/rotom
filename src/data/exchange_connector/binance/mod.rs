@@ -39,4 +39,8 @@ impl Connector for BinanceSpot {
 
         Some(WsMessage::Text(binance_request.to_string()))
     }
+
+    fn expected_response(&self) {
+       // "{\"result\":null,\"id\":1}"
+    }
 }

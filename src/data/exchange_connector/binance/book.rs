@@ -15,7 +15,7 @@ pub struct BinanceSnapshot {
 }
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize)]
-pub struct BinanceBookDelta {
+pub struct BinanceBookUpdate {
     #[serde(alias = "U")]
     pub first_update_id: u64,
     #[serde(alias = "u")]

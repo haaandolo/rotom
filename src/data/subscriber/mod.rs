@@ -56,7 +56,7 @@ impl StreamBuilder {
             };
 
             let client = WebSocketClient::new(
-                exchange.url(),
+                exchange.url(), // Change this to be excconnector
                 exchange.requests(&value),
                 exchange.ping_interval(),
             );

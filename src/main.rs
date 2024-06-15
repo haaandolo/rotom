@@ -1,47 +1,47 @@
 use arb_bot::data::{subscriber::StreamBuilder, Exchange, StreamType, Sub};
-use serde::{de::{MapAccess, Visitor}, Deserialize};
 
 #[tokio::main]
 async fn main() {
-//////////////////
-// Build Streams
-let mut streams = StreamBuilder::new()
-    .subscribe(vec![
-        // Sub::new(Exchange::BinanceSpot, "arb", "usdt", StreamType::Trades),
-        // Sub::new(Exchange::BinanceSpot, "arb", "usdt", StreamType::Trades),
-        Sub::new(Exchange::BinanceSpot, "btc", "usdt", StreamType::L2),
-    ])
-    .subscribe(vec![
-        // Sub::new(Exchange::PoloniexSpot, "arb", "usdt", StreamType::Trades),
-        // Sub::new(Exchange::PoloniexSpot, "arb", "usdt", StreamType::Trades),
-        Sub::new(Exchange::PoloniexSpot, "btc", "usdt", StreamType::Trades),
-    ])
-    .init()
-    .await;
+    //////////////////
+    // Build Streams
+    let mut streams = StreamBuilder::new()
+        .subscribe(vec![
+            // Sub::new(Exchange::BinanceSpot, "arb", "usdt", StreamType::Trades),
+            // Sub::new(Exchange::BinanceSpot, "arb", "usdt", StreamType::Trades),
+            Sub::new(Exchange::BinanceSpot, "btc", "usdt", StreamType::L2),
+        ])
+        .subscribe(vec![
+            // Sub::new(Exchange::PoloniexSpot, "arb", "usdt", StreamType::Trades),
+            // Sub::new(Exchange::PoloniexSpot, "arb", "usdt", StreamType::Trades),
+            Sub::new(Exchange::PoloniexSpot, "btc", "usdt", StreamType::L2),
+        ])
+        .init()
+        .await;
 
-// Read from socket
-if let Some(mut receiver) = streams.remove(&Exchange::BinanceSpot) {
-    while let Some(msg) = receiver.recv().await {
-        // Some(msg);
-        println!("----- Binance -----");
-        println!("{:#?}", msg);
+    // Read from socket
+    if let Some(mut receiver) = streams.remove(&Exchange::BinanceSpot) {
+        while let Some(msg) = receiver.recv().await {
+            // Some(msg);
+            println!("----- Binance -----");
+            // let msg: BinanceBookUpdate = serde_json::from_str(&msg).unwrap();
+            println!("{:#?}", msg);
+        }
     }
-}
 
-// Read from socket
-if let Some(mut receiver) = streams.remove(&Exchange::PoloniexSpot) {
-    while let Some(msg) = receiver.recv().await {
-        // Some(msg);
-        println!("----- Poloniex -----");
-        println!("{:#?}", msg);
-    }
-}
+    // // Read from socket
+    // if let Some(mut receiver) = streams.remove(&Exchange::PoloniexSpot) {
+    //     while let Some(msg) = receiver.recv().await {
+    //         // Some(msg);
+    //         println!("----- Poloniex -----");
+    //         // let msg: PoloniexBookUpdate = serde_json::from_str(&msg).unwrap();
+    //         println!("{:#?}", msg);
+    //     }
+    // }
 }
 
 // todo
-// - serde json to update book
-// - ws auto reconnect
 // - expected responses for binance spot and poloniex spot
+// - ws auto reconnect
 // - write test for the subscribe fn in stream builder
 
 /*------------------------------- */
@@ -87,6 +87,9 @@ if let Some(mut receiver) = streams.remove(&Exchange::PoloniexSpot) {
 // )
 
 //     "{\"channel\":\"trades\",\"data\":[{\"symbol\":\"BTC_USDT\",\"amount\":\"1684.53544514\",\"quantity\":\"0.024914\",\"takerSide\":\"sell\",\"createTime\":1718096866390,\"price\":\"67614.01\",\"id\":\"95714554\",\"ts\":1718096866402}]}",
+
+// Expected response
+// "{\"event\":\"subscribe\",\"channel\":\"book_lv2\",\"symbols\":[\"BTC_USDT\"]}"
 
 /*------------------------ */
 // Binance
@@ -138,7 +141,6 @@ if let Some(mut receiver) = streams.remove(&Exchange::PoloniexSpot) {
 //     .unwrap();
 
 // println!("{:#?}", bin_sc);
-
 
 /*--------- */
 
@@ -285,7 +287,6 @@ if let Some(mut receiver) = streams.remove(&Exchange::PoloniexSpot) {
 
 //     /*-------------------------------- */
 //     /*-------------------------------- */
-
 //     // binace trade
 //     let bin_trade = "{\"e\":\"trade\",\"E\":1718097131139,\"s\":\"BTCUSDT\",\"t\":3631373609,\"p\":\"67547.10000000\",\"q\":\"0.00100000\",\"b\":27777962514,\"a\":27777962896,\"T\":1718097131138,\"m\":true,\"M\":true}";
 //     let bin_trade: BinanceTrade = serde_json::from_str(bin_trade).unwrap();

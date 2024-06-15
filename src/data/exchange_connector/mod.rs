@@ -15,7 +15,5 @@ pub trait Connector {
 
     fn requests(&self, subscriptions: &[ExchangeSub]) -> Option<WsMessage>;
 
-    fn expected_response(&self) -> Option<usize> {
-        None
-    }
+    fn expected_response(&self);
 }

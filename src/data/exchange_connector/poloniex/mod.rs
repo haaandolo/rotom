@@ -52,4 +52,8 @@ impl Connector for PoloniexSpot {
             message: json!({"event": "ping"}),
         })
     }
+
+    fn expected_response(&self) {
+        // "{\"event\":\"subscribe\",\"channel\":\"book_lv2\",\"symbols\":[\"BTC_USDT\"]}" 
+    }
 }

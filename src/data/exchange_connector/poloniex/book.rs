@@ -19,7 +19,7 @@ pub struct PoloniexBookData {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct PoloniexBookDelta {
+pub struct PoloniexBookUpdate {
     pub channel: String,
     pub data: Vec<PoloniexBookData>,
     pub action: String,
