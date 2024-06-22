@@ -40,6 +40,12 @@ pub struct BinanceTradeUpdate {
     pub side: bool,
 }
 
+#[derive(Clone, Debug)]
+pub enum Omega {
+    Trade(BinanceTradeUpdate),
+    Book(BinanceBookUpdate)
+}
+
 /*---------- */
 // Examples
 /*---------- */

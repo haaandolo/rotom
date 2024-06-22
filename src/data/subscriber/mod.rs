@@ -35,7 +35,6 @@ impl StreamBuilder {
         // Then insert rest of sub fields as value of the hashmap.
         // Vec<Sub> ---> HashMap<Exchange, Vec<ExchangeSub>>
         let mut exchange_sub = HashMap::new();
-
         subscriptions
             .into_iter()
             .collect::<HashSet<Sub>>() // rm duplicates
@@ -49,10 +48,10 @@ impl StreamBuilder {
 
         // Get the connectors for each exchange specified in the subscription
         exchange_sub.into_iter().for_each(|(key, value)| {
-            let exchange: Box<&dyn Connector> = match key {
+            let exchange: Box<dyn Connector> = match key {
                 // Add more connectors here
-                Exchange::BinanceSpot => Box::new(&BinanceSpot),
-                Exchange::PoloniexSpot => Box::new(&PoloniexSpot),
+                Exchange::BinanceSpot => Box::new(BinanceSpot),
+                Exchange::PoloniexSpot => Box::new(PoloniexSpot),
             };
 
             let client = WebSocketClient::new(

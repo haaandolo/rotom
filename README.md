@@ -34,3 +34,7 @@ Able to handle an arbitary number of trader for a given market
 
 - Portfolio
 aggrgate portfolio of system. 
+
+
+Note:
+- each sub has to be from same exchnage and of same same stream type

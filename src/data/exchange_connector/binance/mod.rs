@@ -12,6 +12,7 @@ use super::{Connector, ExchangeSub};
 pub struct BinanceSpot;
 
 impl Connector for BinanceSpot {
+
     fn url(&self) -> String {
         BinanceChannel::SPOT_WS_URL.as_ref().to_string()
     }
@@ -43,4 +44,5 @@ impl Connector for BinanceSpot {
     fn expected_response(&self) {
        // "{\"result\":null,\"id\":1}"
     }
+
 }
