@@ -2,7 +2,7 @@ use futures::{SinkExt, StreamExt};
 use tokio::{sync::mpsc::UnboundedSender, time::{sleep, Duration}};
 use tokio_tungstenite::tungstenite::error::ProtocolError;
 
-use crate::data::protocols::ws::WsMessage;
+use crate::data::{protocols::ws::WsMessage, shared::orderbook::event::Event};
 use super::{PingInterval,  WebSocketClient, WsError, WsWrite};
 
 pub const START_RECONNECTION_BACKOFF_MS: u64 = 125;
@@ -28,7 +28,7 @@ pub fn is_websocket_disconnected(error: &WsError) -> bool {
     )
 }
 
-pub async fn try_connect(mut ws_client: WebSocketClient, exchange_tx: UnboundedSender<String>) {
+pub async fn try_connect(mut ws_client: WebSocketClient, exchange_tx: UnboundedSender<Event>) {
     let mut _connection_attempt: u32 = 0;
     let mut _backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
 
@@ -56,17 +56,19 @@ pub async fn try_connect(mut ws_client: WebSocketClient, exchange_tx: UnboundedS
         // Read from stream and send via channel, but if error occurs, attempt reconnection
         while let Some(message) = stream.ws_read.next().await {
             match message {
-                Ok(message) => {
-                    match message {
-                        WsMessage::Text(text) => exchange_tx.send(text).expect("Failed to send message"),
-                        _ => ()
-                    }
-                }
-                Err(error) => {
-                    if is_websocket_disconnected(&error) { // SHOULD CHANGE THIS TO SEE WHAT ERRORS ACTUAL MEANS RECONNECTING
-                        stream.cancel_running_tasks()
-                    }
-                } // ADD Error for if sequence is broken then have to restart
+                Ok(message) => exchange_tx.send(message).expect("Failed to send message"),
+                Err(error) => (),
+                // Ok(message) => {
+                //     match message {
+                //         WsMessage::Text(text) => exchange_tx.send(text).expect("Failed to send message"),
+                //         _ => ()
+                //     }
+                // }
+                // Err(error) => {
+                //     if is_websocket_disconnected(&error) { // SHOULD CHANGE THIS TO SEE WHAT ERRORS ACTUAL MEANS RECONNECTING
+                //         stream.cancel_running_tasks()
+                //     }
+                // } // ADD Error for if sequence is broken then have to restart
             }
         }
 

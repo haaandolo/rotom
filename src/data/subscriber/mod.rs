@@ -2,15 +2,13 @@ use std::collections::{HashMap, HashSet};
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 
 use super::{
-    exchange_connector::{binance::BinanceSpot, poloniex::PoloniexSpot, Connector},
-    protocols::ws::{utils::try_connect, WebSocketClient, WsMessage},
-    Sub,
+    exchange_connector::{binance::BinanceSpot, poloniex::PoloniexSpot, Connector}, protocols::ws::{utils::try_connect, WebSocketClient}, shared::orderbook::event::Event, Sub
 };
 use crate::data::Exchange;
 
-/*---------- */
+/*----- */
 // Stream builder
-/*---------- */
+/*----- */
 pub struct StreamBuilder {
     pub clients: HashMap<Exchange, WebSocketClient>,
 }
@@ -65,7 +63,7 @@ impl StreamBuilder {
         self
     }
 
-    pub async fn init(self) -> HashMap<Exchange, UnboundedReceiver<String>> {
+    pub async fn init(self) -> HashMap<Exchange, UnboundedReceiver<Event>> {
         self.clients
             .into_iter()
             .map(|(exchange_name, client)| {

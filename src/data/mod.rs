@@ -4,10 +4,11 @@ pub mod exchange_connector;
 pub mod protocols;
 pub mod subscriber;
 pub mod shared;
+pub mod transformer;
 
-/*---------- */
+/*----- */
 // Subscription enum inputs
-/*---------- */
+/*----- */
 #[derive(Debug, PartialEq, Hash, Eq, Clone, Copy)]
 pub enum Exchange {
     BinanceSpot,
@@ -39,9 +40,9 @@ impl fmt::Display for StreamType {
     }
 }
 
-/*-------- */
+/*----- */
 // Exchange subscription
-/*-------- */
+/*----- */
 #[derive(Debug, PartialEq, Clone, Hash, Eq)]
 pub struct ExchangeSub {
     pub base: &'static str,

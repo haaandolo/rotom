@@ -16,6 +16,24 @@ pub struct Event {
 }
 
 impl Event {
+    pub fn new(
+        _timestamp: u64,
+        _seq: u64,
+        _is_trade: bool,
+        _is_buy: bool,
+        _price: f64,
+        _size: f64,
+    ) -> Self {
+        Self {
+            timestamp: _timestamp,
+            seq: _seq,
+            is_trade: _is_trade,
+            is_buy: _is_buy,
+            price: _price,
+            size: _size,
+        }
+    }
+
     pub fn price_ticks(&self, tick_size: f64) -> u64 {
         (self.price * tick_size) as u64
     }

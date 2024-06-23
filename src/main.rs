@@ -1,125 +1,33 @@
-use std::str::FromStr;
+use arb_bot::{data::{protocols::ws::{ExchangeStream2, Transformer, WsMessage}, subscriber::StreamBuilder, Exchange, StreamType, Sub}};
 
-use arb_bot::{data::{protocols::ws::{ExchangeStream2, Transformer, WsMessage}, subscriber::StreamBuilder, Exchange, StreamType, Sub}, error::SocketError};
-use futures::{SinkExt, StreamExt};
-use serde::{de, Deserialize};
-use serde_json::json;
-use tokio_tungstenite::connect_async;
-
-
-
-// Communicative type alias for what the VolumeSum the Transformer is generating
-type VolumeSum = f64;
-
-#[derive(Deserialize)]
-#[serde(untagged, rename_all = "camelCase")]
-enum BinanceMessage {
-    SubResponse {
-        result: Option<Vec<String>>,
-        id: u32,
-    },
-    Trade {
-        #[serde(rename = "q", deserialize_with = "de_str")]
-        quantity: f64,
-    },
-}
-
-/// Deserialize a `String` as the desired type.
-fn de_str<'de, D, T>(deserializer: D) -> Result<T, D::Error>
-where
-    D: de::Deserializer<'de>,
-    T: FromStr,
-    T::Err: std::fmt::Display,
-{
-    let data: String = Deserialize::deserialize(deserializer)?;
-    data.parse::<T>().map_err(de::Error::custom)
-}
-
-struct StatefulTransformer {
-    sum_of_volume: VolumeSum,
-}
-
-impl Transformer for StatefulTransformer {
-    type Error = SocketError;
-    type Input = BinanceMessage;
-    type Output = VolumeSum;
-    type OutputIter = Vec<Result<Self::Output, Self::Error>>;
-
-    fn transform(&mut self, input: Self::Input) -> Self::OutputIter {
-        // Add new input Trade quantity to sum
-        match input {
-            BinanceMessage::SubResponse { result, id } => {
-                // Don't care about this for the example
-            }
-            BinanceMessage::Trade { quantity, .. } => {
-                // Add new Trade volume to internal state VolumeSum
-                self.sum_of_volume += quantity;
-            }
-        };
-
-        // Return IntoIterator of length 1 containing the running sum of volume
-        vec![Ok(self.sum_of_volume)]
-    }
-}
 
 #[tokio::main]
 async fn main() {
-    let mut binance_conn = connect_async("wss://fstream.binance.com/ws").await.unwrap().0;
+    // //////////////////
+    // Build Streams
+    let mut streams = StreamBuilder::new()
+        .subscribe(vec![
+            // Sub::new(Exchange::BinanceSpot, "arb", "usdt", StreamType::Trades),
+            // Sub::new(Exchange::BinanceSpot, "arb", "usdt", StreamType::Trades),
+            Sub::new(Exchange::BinanceSpot, "btc", "usdt", StreamType::Trades),
+        ])
+        .subscribe(vec![
+            // Sub::new(Exchange::PoloniexSpot, "arb", "usdt", StreamType::Trades),
+            // Sub::new(Exchange::PoloniexSpot, "arb", "usdt", StreamType::Trades),
+            Sub::new(Exchange::PoloniexSpot, "btc", "usdt", StreamType::L2),
+        ])
+        .init()
+        .await;
 
-    // Send something over the socket (eg/ Binance trades subscription)
-    binance_conn
-        .send(WsMessage::Text(
-            json!({"method": "SUBSCRIBE","params": ["btcusdt@aggTrade"],"id": 1}).to_string(),
-        ))
-        .await
-        .expect("failed to send WsMessage over socket");
-
-    // Instantiate some arbitrary Transformer to apply to data parsed from the WebSocket protocol
-    let transformer = StatefulTransformer { sum_of_volume: 0.0 };
-
-    // ExchangeWsStream includes pre-defined WebSocket Sink/Stream & WebSocket StreamParser
-    let mut ws_stream = ExchangeStream2::new(binance_conn, transformer);
-
-    // Receive a stream of your desired Output data model from the ExchangeStream
-    while let Some(volume_result) = ws_stream.next().await {
-        match volume_result {
-            Ok(cumulative_volume) => {
-                // Do something with your data
-                println!("{cumulative_volume:?}");
-            }
-            Err(error) => {
-                // React to any errors produced by the internal transformation
-                eprintln!("{error}")
-            }
+    // Read from socket
+    if let Some(mut receiver) = streams.remove(&Exchange::BinanceSpot) {
+        while let Some(msg) = receiver.recv().await {
+            // Some(msg);
+            println!("----- Binance -----");
+            // let msg: BinanceBookUpdate = serde_json::from_str(&msg).unwrap();
+            println!("{:#?}", msg);
         }
     }
-
-
-    // //////////////////
-    // // Build Streams
-    // let mut streams = StreamBuilder::new()
-    //     .subscribe(vec![
-    //         // Sub::new(Exchange::BinanceSpot, "arb", "usdt", StreamType::Trades),
-    //         // Sub::new(Exchange::BinanceSpot, "arb", "usdt", StreamType::Trades),
-    //         Sub::new(Exchange::BinanceSpot, "btc", "usdt", StreamType::L2),
-    //     ])
-    //     .subscribe(vec![
-    //         // Sub::new(Exchange::PoloniexSpot, "arb", "usdt", StreamType::Trades),
-    //         // Sub::new(Exchange::PoloniexSpot, "arb", "usdt", StreamType::Trades),
-    //         Sub::new(Exchange::PoloniexSpot, "btc", "usdt", StreamType::L2),
-    //     ])
-    //     .init()
-    //     .await;
-
-    // // Read from socket
-    // if let Some(mut receiver) = streams.remove(&Exchange::BinanceSpot) {
-    //     while let Some(msg) = receiver.recv().await {
-    //         // Some(msg);
-    //         println!("----- Binance -----");
-    //         // let msg: BinanceBookUpdate = serde_json::from_str(&msg).unwrap();
-    //         println!("{:#?}", msg);
-    //     }
-    // }
 
     // // Read from socket
     // if let Some(mut receiver) = streams.remove(&Exchange::PoloniexSpot) {
@@ -133,6 +41,7 @@ async fn main() {
 }
 
 // todo
+// - implement transformer in websocket client
 // - expected responses for binance spot and poloniex spot
 // - ws auto reconnect
 // - write test for the subscribe fn in stream builder

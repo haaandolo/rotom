@@ -1,13 +1,17 @@
 pub mod utils;
 
-use std::{collections::VecDeque, fmt::Debug, pin::pin, task::Poll};
+use std::{collections::VecDeque, fmt::Debug, pin::pin, str::FromStr, task::Poll};
 
+use chrono::{DateTime, Utc};
 use futures::{
     stream::{SplitSink, SplitStream},
     SinkExt, Stream, StreamExt,
 };
 use pin_project::pin_project;
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::{
+    de::{self, DeserializeOwned},
+    Deserialize,
+};
 use serde_json::Value;
 use tokio::net::TcpStream;
 use tokio_tungstenite::{
@@ -17,7 +21,13 @@ use tokio_tungstenite::{
 };
 use utils::schedule_pings_to_exchange;
 
-use crate::error::SocketError;
+use crate::{
+    data::{
+        exchange_connector::binance::book::{BinanceMessage, BinanceSnapshot, BinanceTradeUpdate},
+        shared::{de::de_u64_epoch_ms_as_datetime_utc, orderbook::event::Event},
+    },
+    error::SocketError,
+};
 
 pub type WsMessage = tokio_tungstenite::tungstenite::Message;
 pub type WsError = tokio_tungstenite::tungstenite::Error;
@@ -26,9 +36,9 @@ pub type WsRead = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 pub type WsWrite = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, WsMessage>;
 pub type JoinHandle = tokio::task::JoinHandle<()>;
 
-/*---------- */
+/*----- */
 // Models
-/*---------- */
+/*----- */
 #[derive(Clone, Debug)]
 pub struct PingInterval {
     pub time: u64,
@@ -36,7 +46,7 @@ pub struct PingInterval {
 }
 
 pub struct ExchangeStream {
-    pub ws_read: WsRead,
+    pub ws_read: ExchangeStream2<WsRead, StatefulTransformer>,
     pub tasks: Vec<JoinHandle>,
 }
 
@@ -48,21 +58,16 @@ impl ExchangeStream {
     }
 }
 
-/*---------- */
+/*----- */
 // WebSocket
-/*---------- */
+/*----- */
 #[derive(Debug)]
-// pub struct WebSocketClient<Exchange> {
-//     pub connector: Exchange,
 pub struct WebSocketClient {
     pub url: String,
     pub subscription: Option<WsMessage>,
     pub ping_interval: Option<PingInterval>,
 }
 
-// impl<Exchange> WebSocketClient<Exchange>
-// where
-//     Exchange: Connector,
 impl WebSocketClient {
     pub fn new(
         _url: String,
@@ -100,16 +105,21 @@ impl WebSocketClient {
             _tasks.push(ping_handler);
         }
 
+        let transformer = StatefulTransformer {
+            event: vec![Ok(Event::new(12, 12, true, true, 12.0, 12.0))],
+        };
+        let ws_test = ExchangeStream2::new(ws_stream, transformer);
+
         Ok(ExchangeStream {
-            ws_read: ws_stream,
+            ws_read: ws_test,
             tasks: _tasks,
         })
     }
 }
 
-/*---------- */
+/*----- */
 // Transformer
-/*---------- */
+/*----- */
 pub trait Transformer {
     type Error;
     type Input: for<'de> Deserialize<'de>;
@@ -118,9 +128,46 @@ pub trait Transformer {
     fn transform(&mut self, input: Self::Input) -> Self::OutputIter;
 }
 
-/*---------- */
+#[derive(Clone)]
+struct StatefulTransformer {
+    event: Vec<Result<Event, SocketError>>,
+}
+
+impl Transformer for StatefulTransformer {
+    type Error = SocketError;
+    type Input = BinanceMessage;
+    type Output = Event;
+    type OutputIter = Vec<Result<Self::Output, Self::Error>>;
+
+    fn transform(&mut self, input: Self::Input) -> Self::OutputIter {
+        // Add new input Trade quantity to sum
+        match input {
+            BinanceMessage::SubResponse(response) => {}
+            BinanceMessage::Book(book_update) => {}
+            BinanceMessage::Subscription(sub) => {}
+            BinanceMessage::Snapshot(snap) => {}
+            BinanceMessage::Trade(trade_update) => {
+                // Add new Trade volume to internal state VolumeSum
+                let event = Event {
+                    timestamp: trade_update.time,
+                    seq: trade_update.id,
+                    is_trade: true,
+                    is_buy: trade_update.side,
+                    price: trade_update.price,
+                    size: trade_update.amount,
+                };
+                self.event.push(Ok(event))
+            }
+        };
+
+        // Return IntoIterator of length 1 containing the running sum of volume
+        self.event
+    }
+}
+
+/*----- */
 // Exchange stream
-/*---------- */
+/*----- */
 #[pin_project]
 pub struct ExchangeStream2<InnerStream, StreamTransformer>
 where
@@ -199,7 +246,6 @@ where
     }
 }
 
-// Process a payload of `String` by deserialising into an `ExchangeMessage`.
 pub fn process_text<ExchangeMessage>(
     payload: String,
 ) -> Option<Result<ExchangeMessage, SocketError>>
@@ -212,7 +258,6 @@ where
     )
 }
 
-// Process a payload of `Vec<u8>` bytes by deserialising into an `ExchangeMessage`.
 pub fn process_binary<ExchangeMessage>(
     payload: Vec<u8>,
 ) -> Option<Result<ExchangeMessage, SocketError>>
@@ -229,7 +274,6 @@ where
     )
 }
 
-// Basic process for a [`WebSocket`] ping message. Logs the payload at `trace` level.
 pub fn process_ping<ExchangeMessage>(
     ping: Vec<u8>,
 ) -> Option<Result<ExchangeMessage, SocketError>> {
@@ -237,7 +281,6 @@ pub fn process_ping<ExchangeMessage>(
     None
 }
 
-// Basic process for a [`WebSocket`] pong message. Logs the payload at `trace` level.
 pub fn process_pong<ExchangeMessage>(
     pong: Vec<u8>,
 ) -> Option<Result<ExchangeMessage, SocketError>> {
@@ -245,7 +288,6 @@ pub fn process_pong<ExchangeMessage>(
     None
 }
 
-// Basic process for a [`WebSocket`] CloseFrame message. Logs the payload at `trace` level.
 pub fn process_close_frame<ExchangeMessage>(
     close_frame: Option<CloseFrame<'_>>,
 ) -> Option<Result<ExchangeMessage, SocketError>> {
@@ -253,7 +295,6 @@ pub fn process_close_frame<ExchangeMessage>(
     Some(Err(SocketError::Terminated(close_frame)))
 }
 
-// Basic process for a [`WebSocket`] Frame message. Logs the payload at `trace` level.
 pub fn process_frame<ExchangeMessage>(
     frame: Frame,
 ) -> Option<Result<ExchangeMessage, SocketError>> {

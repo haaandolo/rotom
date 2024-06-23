@@ -3,9 +3,9 @@ pub mod poloniex;
 
 use super::{protocols::ws::{PingInterval, WsMessage}, ExchangeSub};
 
-/*-------- */
+/*----- */
 // Exchange connector trait
-/*-------- */
+/*----- */
 pub trait Connector {
     fn url(&self) -> String;
 
