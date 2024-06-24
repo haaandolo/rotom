@@ -5,6 +5,8 @@ use serde::de::Visitor;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
+use super::level::Level;
+
 #[derive(Debug, Clone, Copy, Serialize)]
 pub struct Event {
     pub timestamp: u64,
@@ -14,6 +16,8 @@ pub struct Event {
     pub price: f64,
     pub size: f64,
 }
+
+
 
 impl Event {
     pub fn price_ticks(&self, tick_size: f64) -> u64 {
