@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
-use crate::data::shared::{de::{de_str, de_u64_epoch_ms_as_datetime_utc}, orderbook::level::Level};
+use crate::data::shared::{de::{de_str, de_u64_epoch_ms_as_datetime_utc}, orderbook::Level};
 
 /*---------- */
 // Models

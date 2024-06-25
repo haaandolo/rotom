@@ -844,4 +844,109 @@ mod test {
             ]
         );
     }
+
+    #[test]
+    fn price_tick() {
+        let price_tick = price_ticks(120.0, 0.01);
+        assert_eq!(price_tick, 1.2 as u64)
+    }
+
+    #[test]
+    fn midprice() {
+        let mut ob = Orderbook::new(0.01);
+
+        let event = Event::new(
+            0,
+            0,
+            Some(vec![
+                Level::new(16.0, 1.0),
+                Level::new(17.0, 1.0),
+                Level::new(12.0, 1.0),
+            ]),
+            Some(vec![
+                Level::new(19.0, 1.0),
+                Level::new(18.0, 1.0),
+                Level::new(21.0, 1.0),
+            ]),
+            None,
+            None,
+        );
+
+        ob.process(event);
+
+        let mid_price = ob.midprice().unwrap();
+
+        assert_eq!(mid_price, 17.5);
+    }
+
+    #[test]
+    fn weighted_midprice() {
+        let mut ob = Orderbook::new(0.01);
+
+        let event = Event::new(
+            0,
+            0,
+            Some(vec![
+                Level::new(16.0, 1.0),
+            ]),
+            Some(vec![
+                Level::new(20.0, 4.0),
+            ]),
+            None,
+            None,
+        );
+
+        ob.process(event);
+
+        let weighted_midprice= ob.weighted_midprice().unwrap();
+
+        assert_eq!(weighted_midprice, 16.8);
+    }
+
+    #[test]
+    fn process_stream_bbo() {
+        let mut ob = Orderbook::new(0.01);
+
+        let event = Event::new(
+            0,
+            0,
+            Some(vec![
+                Level::new(16.0, 1.0),
+                Level::new(17.0, 1.0),
+                Level::new(12.0, 1.0),
+            ]),
+            Some(vec![
+                Level::new(19.0, 1.0),
+                Level::new(18.0, 1.0),
+                Level::new(21.0, 1.0),
+            ]),
+            None,
+            None,
+        );
+
+        let (best_bid, best_ask) = ob.process_stream_bbo(event).unwrap();
+
+        assert_eq!(
+            best_bid.unwrap(),
+            Level::new(17.0, 1.0)
+        );
+
+        assert_eq!(
+            best_ask.unwrap(),
+            Level::new(18.0, 1.0)
+        );
+
+        let event = Event::new(
+            0,
+            0,
+            None,
+            Some(vec![
+                Level::new(23.0, 1.0),
+            ]),
+            None,
+            None,
+        );
+
+        assert_eq!(ob.process_stream_bbo(event), None);
+    }
 }

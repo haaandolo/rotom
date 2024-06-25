@@ -1,6 +1,7 @@
 use serde::Deserialize;
 
-use crate::data::shared::orderbook::level::Level;
+use crate::data::shared::orderbook::Level;
+
 
 /*---------- */
 // Models
