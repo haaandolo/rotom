@@ -19,9 +19,9 @@ pub type WsRead = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 pub type WsWrite = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, WsMessage>;
 pub type JoinHandle = tokio::task::JoinHandle<()>;
 
-/*---------- */
+/*----- */
 // Models
-/*---------- */
+/*----- */
 #[derive(Clone, Debug)]
 pub struct PingInterval {
     pub time: u64,
@@ -41,9 +41,9 @@ impl ExchangeStream {
     }
 }
 
-/*---------- */
+/*----- */
 // WebSocket
-/*---------- */
+/*----- */
 #[derive(Debug)]
 pub struct WebSocketClient {
     pub url: String,

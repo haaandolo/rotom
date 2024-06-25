@@ -40,8 +40,7 @@ async fn main() {
 }
 
 // todo
-// - expected responses for binance spot and poloniex spot
-// - ws auto reconnect
+// - expected responses and poloniex spot
 // - write test for the subscribe fn in stream builder
 
 /*------------------------------- */

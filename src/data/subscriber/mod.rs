@@ -8,9 +8,9 @@ use super::{
 };
 use crate::data::Exchange;
 
-/*---------- */
+/*----- */
 // Stream builder
-/*---------- */
+/*----- */
 pub struct StreamBuilder {
     pub clients: HashMap<Exchange, WebSocketClient>,
 }

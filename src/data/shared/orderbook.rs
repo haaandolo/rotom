@@ -57,6 +57,7 @@ impl Display for Level {
 /*----- */
 // Event
 /*----- */
+#[derive(PartialEq, Debug)]
 pub struct Event {
     pub timestamp: u64,
     pub seq: u64,

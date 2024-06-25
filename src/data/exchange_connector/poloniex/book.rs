@@ -3,9 +3,9 @@ use serde::Deserialize;
 use crate::data::shared::orderbook::Level;
 
 
-/*---------- */
+/*----- */
 // Models
-/*---------- */
+/*----- */
 #[derive(Deserialize, Debug)]
 pub struct PoloniexBookData {
     pub symbol: String,
@@ -46,9 +46,9 @@ pub struct PoloneixTradeUpdate {
     pub data: Vec<PoloniexTradeData>,
 }
 
-/*---------- */
+/*----- */
 // Exchange specific de
-/*---------- */
+/*----- */
 pub fn de_buyer_is_maker_poloniex<'de, D>(deserializer: D) -> Result<bool, D::Error>
 where
     D: serde::de::Deserializer<'de>,
