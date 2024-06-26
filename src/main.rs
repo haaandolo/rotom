@@ -40,6 +40,7 @@ async fn main() {
 }
 
 // todo
+// - write symbol deserializer for structs and event
 // - expected responses and poloniex spot
 // - write test for the subscribe fn in stream builder
 

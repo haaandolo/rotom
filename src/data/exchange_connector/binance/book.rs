@@ -42,8 +42,6 @@ pub struct BinanceBookUpdate {
     pub timestamp: u64,
     #[serde(alias = "U")]
     pub first_update_id: u64,
-    #[serde(alias = "u")]
-    pub last_update_id: u64,
     #[serde(alias = "b")]
     pub bids: Vec<Level>,
     #[serde(alias = "a")]
@@ -159,7 +157,6 @@ mod test {
         let orderbook_expected = BinanceBookUpdate {
             timestamp: 1718097006844,
             first_update_id: 47781538300,
-            last_update_id: 47781538304,
             bids: vec![
                 Level::new(67543.58000000, 0.03729000),
                 Level::new(67527.08000000, 8.71242000),
@@ -175,7 +172,6 @@ mod test {
         let orderbook_struct = BinanceBookUpdate {
             timestamp: 1718097006844,
             first_update_id: 47781538300,
-            last_update_id: 47781538304,
             bids: vec![
                 Level::new(67543.58000000, 0.03729000),
                 Level::new(67527.08000000, 8.71242000),
