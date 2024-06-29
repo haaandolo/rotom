@@ -122,50 +122,15 @@ impl Orderbook {
     }
 
     #[inline]
-    pub fn process_raw(
-        &mut self,
-        symbol: String,
-        timestamp: u64,
-        seq: u64,
-        bids: Option<Vec<Level>>,
-        asks: Option<Vec<Level>>,
-        trade: Option<Level>,
-        is_buy: Option<bool>,
-    ) {
-        let event = Event {
-            symbol,
-            timestamp,
-            seq,
-            bids,
-            asks,
-            trade,
-            is_buy,
-        };
-
+    pub fn process_raw(&mut self, event: Event) {
         self.process(event);
     }
 
     #[inline]
     pub fn process_stream_bbo_raw(
         &mut self,
-        symbol: String,
-        timestamp: u64,
-        seq: u64,
-        bids: Option<Vec<Level>>,
-        asks: Option<Vec<Level>>,
-        trade: Option<Level>,
-        is_buy: Option<bool>,
+        event: Event,
     ) -> Option<(Option<Level>, Option<Level>)> {
-        let event = Event {
-            symbol,
-            timestamp,
-            seq,
-            bids,
-            asks,
-            trade,
-            is_buy,
-        };
-
         self.process_stream_bbo(event)
     }
 
@@ -507,11 +472,11 @@ mod test {
         // Update bid level with trade
         let event = Event::new(
             "btcusdt".to_string(),
-            4, 
+            4,
             4,
             None,
             None,
-            Some(Level::new(16.0, 0.5)), 
+            Some(Level::new(16.0, 0.5)),
             Some(true),
         );
 
@@ -544,7 +509,7 @@ mod test {
             5,
             None,
             None,
-            Some(Level::new(20.0, 0.25)), 
+            Some(Level::new(20.0, 0.25)),
             Some(false),
         );
 
@@ -577,7 +542,7 @@ mod test {
             6,
             None,
             None,
-            Some(Level::new(16.0, 0.75)), 
+            Some(Level::new(16.0, 0.75)),
             Some(true),
         );
 
@@ -609,7 +574,7 @@ mod test {
             7,
             None,
             None,
-            Some(Level::new(20.0, 0.75)), 
+            Some(Level::new(20.0, 0.75)),
             Some(false),
         );
 
@@ -640,7 +605,7 @@ mod test {
             8,
             None,
             None,
-            Some(Level::new(17.0, 3.0)), 
+            Some(Level::new(17.0, 3.0)),
             Some(true),
         );
 
@@ -648,10 +613,7 @@ mod test {
 
         assert_eq!(
             ob.top_bids(5),
-            [
-                Level::new(12.0, 1.0),
-                Level::new(11.0, 1.0),
-            ]
+            [Level::new(12.0, 1.0), Level::new(11.0, 1.0),]
         );
 
         assert_eq!(
@@ -670,7 +632,7 @@ mod test {
             9,
             None,
             None,
-            Some(Level::new(18.0, 3.0)), 
+            Some(Level::new(18.0, 3.0)),
             Some(false),
         );
 
@@ -678,18 +640,12 @@ mod test {
 
         assert_eq!(
             ob.top_bids(5),
-            [
-                Level::new(12.0, 1.0),
-                Level::new(11.0, 1.0),
-            ]
+            [Level::new(12.0, 1.0), Level::new(11.0, 1.0),]
         );
 
         assert_eq!(
             ob.top_asks(5),
-            [
-                Level::new(21.0, 1.0),
-                Level::new(22.0, 1.0),
-            ]
+            [Level::new(21.0, 1.0), Level::new(22.0, 1.0),]
         );
 
         // Remove price level that does not exist with trade
@@ -699,7 +655,7 @@ mod test {
             10,
             None,
             None,
-            Some(Level::new(18.0, 3.0)), 
+            Some(Level::new(18.0, 3.0)),
             Some(true),
         );
 
@@ -707,18 +663,12 @@ mod test {
 
         assert_eq!(
             ob.top_bids(5),
-            [
-                Level::new(12.0, 1.0),
-                Level::new(11.0, 1.0),
-            ]
+            [Level::new(12.0, 1.0), Level::new(11.0, 1.0),]
         );
 
         assert_eq!(
             ob.top_asks(5),
-            [
-                Level::new(21.0, 1.0),
-                Level::new(22.0, 1.0),
-            ]
+            [Level::new(21.0, 1.0), Level::new(22.0, 1.0),]
         );
 
         // Remove ask price level that does not exist
@@ -728,7 +678,7 @@ mod test {
             11,
             None,
             None,
-            Some(Level::new(18.0, 3.0)), 
+            Some(Level::new(18.0, 3.0)),
             Some(false),
         );
 
@@ -736,18 +686,12 @@ mod test {
 
         assert_eq!(
             ob.top_bids(5),
-            [
-                Level::new(12.0, 1.0),
-                Level::new(11.0, 1.0),
-            ]
+            [Level::new(12.0, 1.0), Level::new(11.0, 1.0),]
         );
 
         assert_eq!(
             ob.top_asks(5),
-            [
-                Level::new(21.0, 1.0),
-                Level::new(22.0, 1.0),
-            ]
+            [Level::new(21.0, 1.0), Level::new(22.0, 1.0),]
         );
 
         // Break sequence id by providing seq id < last_sequence
@@ -757,7 +701,7 @@ mod test {
             10,
             None,
             None,
-            Some(Level::new(21.0, 3.0)), 
+            Some(Level::new(21.0, 3.0)),
             Some(false),
         );
 
@@ -765,18 +709,12 @@ mod test {
 
         assert_eq!(
             ob.top_bids(5),
-            [
-                Level::new(12.0, 1.0),
-                Level::new(11.0, 1.0),
-            ]
+            [Level::new(12.0, 1.0), Level::new(11.0, 1.0),]
         );
 
         assert_eq!(
             ob.top_asks(5),
-            [
-                Level::new(21.0, 1.0),
-                Level::new(22.0, 1.0),
-            ]
+            [Level::new(21.0, 1.0), Level::new(22.0, 1.0),]
         );
 
         // Break sequence id by providing timestamp < last_updated
@@ -786,7 +724,7 @@ mod test {
             12,
             None,
             None,
-            Some(Level::new(21.0, 3.0)), 
+            Some(Level::new(21.0, 3.0)),
             Some(false),
         );
 
@@ -794,18 +732,12 @@ mod test {
 
         assert_eq!(
             ob.top_bids(5),
-            [
-                Level::new(12.0, 1.0),
-                Level::new(11.0, 1.0),
-            ]
+            [Level::new(12.0, 1.0), Level::new(11.0, 1.0),]
         );
 
         assert_eq!(
             ob.top_asks(5),
-            [
-                Level::new(21.0, 1.0),
-                Level::new(22.0, 1.0),
-            ]
+            [Level::new(21.0, 1.0), Level::new(22.0, 1.0),]
         );
     }
 
@@ -912,19 +844,15 @@ mod test {
             "btcusdt".to_string(),
             0,
             0,
-            Some(vec![
-                Level::new(16.0, 1.0),
-            ]),
-            Some(vec![
-                Level::new(20.0, 4.0),
-            ]),
+            Some(vec![Level::new(16.0, 1.0)]),
+            Some(vec![Level::new(20.0, 4.0)]),
             None,
             None,
         );
 
         ob.process(event);
 
-        let weighted_midprice= ob.weighted_midprice().unwrap();
+        let weighted_midprice = ob.weighted_midprice().unwrap();
 
         assert_eq!(weighted_midprice, 16.8);
     }
@@ -953,24 +881,16 @@ mod test {
 
         let (best_bid, best_ask) = ob.process_stream_bbo(event).unwrap();
 
-        assert_eq!(
-            best_bid.unwrap(),
-            Level::new(17.0, 1.0)
-        );
+        assert_eq!(best_bid.unwrap(), Level::new(17.0, 1.0));
 
-        assert_eq!(
-            best_ask.unwrap(),
-            Level::new(18.0, 1.0)
-        );
+        assert_eq!(best_ask.unwrap(), Level::new(18.0, 1.0));
 
         let event = Event::new(
             "btcusdt".to_string(),
             0,
             0,
             None,
-            Some(vec![
-                Level::new(23.0, 1.0),
-            ]),
+            Some(vec![Level::new(23.0, 1.0)]),
             None,
             None,
         );
