@@ -74,9 +74,9 @@ pub async fn try_connect(mut ws_client: WebSocketClient, exchange_tx: UnboundedS
         sleep(Duration::from_millis(_backoff_ms)).await;
     }
 }
-/*---------- */
+/*----- */
 // STREAM PARSER
-/*---------- */
+/*----- */
 // STREAM PARSER
 // use tokio_tungstenite::tungstenite::{error::ProtocolError, protocol::{frame::Frame, CloseFrame}};
 // use serde::de::DeserializeOwned;

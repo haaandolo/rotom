@@ -11,6 +11,21 @@ where
     data.parse::<T>().map_err(serde::de::Error::custom)
 }
 
+// Deserialize a symbol to a be lowercase and non-snake or camel case
+pub fn de_str_symbol<'de, D, T>(deserializer: D) -> Result<T, D::Error>
+where
+    D: serde::de::Deserializer<'de>,
+    T: std::str::FromStr + std::iter::FromIterator<char>,
+    T::Err: std::fmt::Display,
+{
+    let data: &str = serde::de::Deserialize::deserialize(deserializer)?;
+    Ok(data
+        .chars()
+        .filter(|&c| c != '_')
+        .map(|c| c.to_ascii_lowercase())
+        .collect())
+}
+
 // Deserialize date
 pub fn datetime_utc_from_epoch_duration(
     duration: std::time::Duration,
@@ -65,4 +80,3 @@ where
         datetime_utc_from_epoch_duration(std::time::Duration::from_secs_f64(epoch_s))
     })
 }
-
