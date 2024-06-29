@@ -1,17 +1,25 @@
-pub mod channel;
 pub mod book;
+pub mod channel;
 
+use book::{BinanceExpectedResponse, BinanceMessage};
 use channel::BinanceChannel;
 use serde_json::json;
 use std::collections::HashSet;
 
-use crate::data::{protocols::ws::WsMessage, StreamType};
 use super::{Connector, ExchangeSub};
+use crate::data::{protocols::ws::WsMessage, ExchangeId, StreamType};
 
-#[derive(Debug)]
+#[derive(Debug, Default, Eq, PartialEq, Hash)]
 pub struct BinanceSpot;
 
 impl Connector for BinanceSpot {
+    type ExchangeId = ExchangeId;
+    type Message = BinanceMessage;
+
+    fn exchange_id(&self) -> String {
+        ExchangeId::BinanceSpot.as_str().to_string()
+    }
+
     fn url(&self) -> String {
         BinanceChannel::SPOT_WS_URL.as_ref().to_string()
     }
@@ -40,7 +48,13 @@ impl Connector for BinanceSpot {
         Some(WsMessage::Text(binance_request.to_string()))
     }
 
-    fn expected_response(&self) {
-       // "{\"result\":null,\"id\":1}"
+    fn expected_response(
+        &self,
+        subscription_response: String,
+        subscriptions: &[ExchangeSub],
+    ) -> bool {
+        let response_struct =
+            serde_json::from_str::<BinanceExpectedResponse>(&subscription_response).unwrap();
+        response_struct.result.is_none()
     }
 }

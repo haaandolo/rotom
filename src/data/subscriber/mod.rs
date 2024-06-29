@@ -6,13 +6,13 @@ use super::{
     protocols::ws::{utils::try_connect, WebSocketClient, WsMessage},
     Sub,
 };
-use crate::data::Exchange;
+use crate::data::ExchangeId;
 
 /*----- */
 // Stream builder
 /*----- */
 pub struct StreamBuilder {
-    pub clients: HashMap<Exchange, WebSocketClient>,
+    pub clients: HashMap<ExchangeId, WebSocketClient>,
 }
 
 impl Default for StreamBuilder {
@@ -47,26 +47,26 @@ impl StreamBuilder {
                     .push(sub.convert_subscription())
             });
 
-        // Get the connectors for each exchange specified in the subscription
-        exchange_sub.into_iter().for_each(|(key, value)| {
-            let exchange: Box<&dyn Connector> = match key {
-                // Add more connectors here
-                Exchange::BinanceSpot => Box::new(&BinanceSpot),
-                Exchange::PoloniexSpot => Box::new(&PoloniexSpot),
-            };
+        // // Get the connectors for each exchange specified in the subscription
+        // exchange_sub.into_iter().for_each(|(key, value)| {
+        //     let exchange: Box<&dyn Connector as BinanceSpot> = match key {
+        //         // Add more connectors here
+        //         Exchange::BinanceSpot => Box::new(&BinanceSpot),
+        //         Exchange::PoloniexSpot => Box::new(&PoloniexSpot),
+        //     };
 
-            let client = WebSocketClient::new(
-                exchange.url(), // Change this to be excconnector
-                exchange.requests(&value),
-                exchange.ping_interval(),
-            );
+        //     let client = WebSocketClient::new(
+        //         exchange.url(), // Change this to be exchange connector
+        //         exchange.requests(&value),
+        //         exchange.ping_interval(),
+        //     );
 
-            self.clients.insert(key, client);
-        });
+        //     self.clients.insert(key, client);
+        // });
         self
     }
 
-    pub async fn init(self) -> HashMap<Exchange, UnboundedReceiver<String>> {
+    pub async fn init(self) -> HashMap<ExchangeId, UnboundedReceiver<String>> {
         self.clients
             .into_iter()
             .map(|(exchange_name, client)| {

@@ -2,7 +2,8 @@ use serde::Deserialize;
 
 use crate::data::shared::{
     de::{de_str, de_str_symbol},
-    orderbook::{Event, Level}, utils::{current_timestamp_utc, snapshot_symbol_default_value},
+    orderbook::{Event, Level},
+    utils::{current_timestamp_utc, snapshot_symbol_default_value},
 };
 
 /*----- */
@@ -91,6 +92,20 @@ impl From<BinanceTradeUpdate> for Event {
             Some(value.side),
         )
     }
+}
+
+#[derive(Debug, Deserialize, PartialEq)]
+pub struct BinanceExpectedResponse {
+    pub result: Option<String>,
+    pub id: u32,
+}
+
+#[derive(Debug, Deserialize, PartialEq)]
+pub enum BinanceMessage {
+    Book(BinanceBookUpdate),
+    Snapshot(BinanceSnapshot),
+    Trade(BinanceTradeUpdate),
+    ExpectedResponse(BinanceExpectedResponse)
 }
 
 /*----- */
@@ -248,5 +263,17 @@ mod test {
         let event_from = Event::from(trade_struct);
 
         assert_eq!(event_from, event_expected)
+    }
+
+    #[test]
+    fn expected_response_de() {
+        let expected_response = "{\"result\":null,\"id\":1}";
+        let expected_response_de =
+            serde_json::from_str::<BinanceExpectedResponse>(expected_response).unwrap();
+        let expected_response_struct = BinanceExpectedResponse {
+            result: None,
+            id: 1,
+        };
+        assert_eq!(expected_response_de, expected_response_struct)
     }
 }
