@@ -59,6 +59,7 @@ impl Display for Level {
 /*----- */
 #[derive(PartialEq, Debug)]
 pub struct Event {
+    pub symbol: String,
     pub timestamp: u64,
     pub seq: u64,
     pub bids: Option<Vec<Level>>,
@@ -69,6 +70,7 @@ pub struct Event {
 
 impl Event {
     pub fn new(
+        _symbol: String,
         _timestamp: u64,
         _seq: u64,
         _bids: Option<Vec<Level>>,
@@ -77,6 +79,7 @@ impl Event {
         _is_buy: Option<bool>,
     ) -> Self {
         Self {
+            symbol: _symbol,
             timestamp: _timestamp,
             seq: _seq,
             bids: _bids,
@@ -121,6 +124,7 @@ impl Orderbook {
     #[inline]
     pub fn process_raw(
         &mut self,
+        symbol: String,
         timestamp: u64,
         seq: u64,
         bids: Option<Vec<Level>>,
@@ -129,6 +133,7 @@ impl Orderbook {
         is_buy: Option<bool>,
     ) {
         let event = Event {
+            symbol,
             timestamp,
             seq,
             bids,
@@ -143,6 +148,7 @@ impl Orderbook {
     #[inline]
     pub fn process_stream_bbo_raw(
         &mut self,
+        symbol: String,
         timestamp: u64,
         seq: u64,
         bids: Option<Vec<Level>>,
@@ -151,6 +157,7 @@ impl Orderbook {
         is_buy: Option<bool>,
     ) -> Option<(Option<Level>, Option<Level>)> {
         let event = Event {
+            symbol,
             timestamp,
             seq,
             bids,
@@ -333,6 +340,7 @@ mod test {
         let mut ob = Orderbook::new(0.01);
 
         let event = Event::new(
+            "btcusdt".to_string(),
             0,
             0,
             Some(vec![
@@ -371,6 +379,7 @@ mod test {
 
         // Add more bids and asks
         let event = Event::new(
+            "btcusdt".to_string(),
             1,
             1,
             Some(vec![
@@ -413,6 +422,7 @@ mod test {
 
         // Update bids and asks
         let event = Event::new(
+            "btcusdt".to_string(),
             2,
             2,
             Some(vec![
@@ -455,6 +465,7 @@ mod test {
 
         // Remove bid and ask levels
         let event = Event::new(
+            "btcusdt".to_string(),
             3,
             3,
             Some(vec![
@@ -495,6 +506,7 @@ mod test {
 
         // Update bid level with trade
         let event = Event::new(
+            "btcusdt".to_string(),
             4, 
             4,
             None,
@@ -527,6 +539,7 @@ mod test {
 
         // Update asks level with trade
         let event = Event::new(
+            "btcusdt".to_string(),
             5,
             5,
             None,
@@ -559,6 +572,7 @@ mod test {
 
         // Remove bid price level with trade > current price level quantity
         let event = Event::new(
+            "btcusdt".to_string(),
             6,
             6,
             None,
@@ -590,6 +604,7 @@ mod test {
 
         // Remove ask price level with trade > current price level quantity
         let event = Event::new(
+            "btcusdt".to_string(),
             7,
             7,
             None,
@@ -620,6 +635,7 @@ mod test {
 
         // Remove bid price level with trade == price level quantity
         let event = Event::new(
+            "btcusdt".to_string(),
             8,
             8,
             None,
@@ -649,6 +665,7 @@ mod test {
 
         // Remove ask price level with trade == price level quantity
         let event = Event::new(
+            "btcusdt".to_string(),
             9,
             9,
             None,
@@ -677,6 +694,7 @@ mod test {
 
         // Remove price level that does not exist with trade
         let event = Event::new(
+            "btcusdt".to_string(),
             10,
             10,
             None,
@@ -705,6 +723,7 @@ mod test {
 
         // Remove ask price level that does not exist
         let event = Event::new(
+            "btcusdt".to_string(),
             11,
             11,
             None,
@@ -733,6 +752,7 @@ mod test {
 
         // Break sequence id by providing seq id < last_sequence
         let event = Event::new(
+            "btcusdt".to_string(),
             12,
             10,
             None,
@@ -761,6 +781,7 @@ mod test {
 
         // Break sequence id by providing timestamp < last_updated
         let event = Event::new(
+            "btcusdt".to_string(),
             10,
             12,
             None,
@@ -793,6 +814,7 @@ mod test {
         let mut ob = Orderbook::new(0.01);
 
         let event = Event::new(
+            "btcusdt".to_string(),
             0,
             0,
             Some(vec![
@@ -822,6 +844,7 @@ mod test {
         let mut ob = Orderbook::new(0.01);
 
         let event = Event::new(
+            "btcusdt".to_string(),
             0,
             0,
             None,
@@ -857,6 +880,7 @@ mod test {
         let mut ob = Orderbook::new(0.01);
 
         let event = Event::new(
+            "btcusdt".to_string(),
             0,
             0,
             Some(vec![
@@ -885,6 +909,7 @@ mod test {
         let mut ob = Orderbook::new(0.01);
 
         let event = Event::new(
+            "btcusdt".to_string(),
             0,
             0,
             Some(vec![
@@ -909,6 +934,7 @@ mod test {
         let mut ob = Orderbook::new(0.01);
 
         let event = Event::new(
+            "btcusdt".to_string(),
             0,
             0,
             Some(vec![
@@ -938,6 +964,7 @@ mod test {
         );
 
         let event = Event::new(
+            "btcusdt".to_string(),
             0,
             0,
             None,

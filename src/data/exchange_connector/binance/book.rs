@@ -1,9 +1,8 @@
-use chrono::Utc;
 use serde::Deserialize;
 
 use crate::data::shared::{
-    de::de_str,
-    orderbook::{Event, Level},
+    de::{de_str, de_str_symbol},
+    orderbook::{Event, Level}, utils::{current_timestamp_utc, snapshot_symbol_default_value},
 };
 
 /*----- */
@@ -11,6 +10,8 @@ use crate::data::shared::{
 /*----- */
 #[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize)]
 pub struct BinanceSnapshot {
+    #[serde(default = "snapshot_symbol_default_value")]
+    symbol: String,
     #[serde(default = "current_timestamp_utc")]
     pub timestamp: u64,
     #[serde(rename = "lastUpdateId")]
@@ -19,13 +20,10 @@ pub struct BinanceSnapshot {
     pub asks: Vec<Level>,
 }
 
-fn current_timestamp_utc() -> u64 {
-    Utc::now().timestamp() as u64
-}
-
 impl From<BinanceSnapshot> for Event {
     fn from(value: BinanceSnapshot) -> Self {
         Event::new(
+            value.symbol,
             value.timestamp,
             value.last_update_id,
             Some(value.bids),
@@ -38,6 +36,9 @@ impl From<BinanceSnapshot> for Event {
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize)]
 pub struct BinanceBookUpdate {
+    #[serde(alias = "s")]
+    #[serde(alias = "p", deserialize_with = "de_str_symbol")]
+    pub symbol: String,
     #[serde(alias = "E")]
     pub timestamp: u64,
     #[serde(alias = "U")]
@@ -51,6 +52,7 @@ pub struct BinanceBookUpdate {
 impl From<BinanceBookUpdate> for Event {
     fn from(value: BinanceBookUpdate) -> Self {
         Event::new(
+            value.symbol,
             value.timestamp,
             value.first_update_id,
             Some(value.bids),
@@ -63,6 +65,8 @@ impl From<BinanceBookUpdate> for Event {
 
 #[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize)]
 pub struct BinanceTradeUpdate {
+    #[serde(alias = "s", deserialize_with = "de_str_symbol")]
+    pub symbol: String,
     #[serde(alias = "T")]
     pub timestamp: u64,
     #[serde(alias = "t")]
@@ -78,6 +82,7 @@ pub struct BinanceTradeUpdate {
 impl From<BinanceTradeUpdate> for Event {
     fn from(value: BinanceTradeUpdate) -> Self {
         Event::new(
+            value.symbol,
             value.timestamp,
             value.id,
             None,
@@ -100,6 +105,7 @@ mod test {
         let snapshot =  "{\"lastUpdateId\":3476852730,\"bids\":[[\"0.00914500\",\"2.18100000\"],[\"0.00914400\",\"8.12300000\"]],\"asks\":[[\"0.00914600\",\"312.94200000\"],[\"0.00914700\",\"7.30100000\"]]}";
         let snapshot_de = serde_json::from_str::<BinanceSnapshot>(snapshot).unwrap();
         let snapshot_expected = BinanceSnapshot {
+            symbol: "snapshot".to_string(),
             timestamp: current_timestamp_utc(),
             last_update_id: 3476852730,
             bids: vec![
@@ -118,6 +124,7 @@ mod test {
     fn snapshot_to_event() {
         let current_timestamp = current_timestamp_utc();
         let snapshot_struct = BinanceSnapshot {
+            symbol: "snapshot".to_string(),
             timestamp: current_timestamp,
             last_update_id: 3476852730,
             bids: vec![
@@ -131,6 +138,7 @@ mod test {
         };
 
         let event_expected = Event::new(
+            "snapshot".to_string(),
             current_timestamp,
             3476852730,
             Some(vec![
@@ -155,6 +163,7 @@ mod test {
         let orderbook = "{\"e\":\"depthupdate\",\"E\":1718097006844,\"s\":\"btcusdt\",\"U\":47781538300,\"u\":47781538304,\"b\":[[\"67543.58000000\",\"0.03729000\"],[\"67527.08000000\",\"8.71242000\"]],\"a\":[]}";
         let orderbook_de = serde_json::from_str::<BinanceBookUpdate>(orderbook).unwrap();
         let orderbook_expected = BinanceBookUpdate {
+            symbol: "btcusdt".to_string(),
             timestamp: 1718097006844,
             first_update_id: 47781538300,
             bids: vec![
@@ -164,12 +173,15 @@ mod test {
             asks: vec![],
         };
 
+        println!("{:#?}", orderbook_expected);
+
         assert_eq!(orderbook_de, orderbook_expected)
     }
 
     #[test]
     fn orderbook_to_event() {
         let orderbook_struct = BinanceBookUpdate {
+            symbol: "btcusdt".to_string(),
             timestamp: 1718097006844,
             first_update_id: 47781538300,
             bids: vec![
@@ -180,6 +192,7 @@ mod test {
         };
 
         let event_expected = Event::new(
+            "btcusdt".to_string(),
             1718097006844,
             47781538300,
             Some(vec![
@@ -201,6 +214,7 @@ mod test {
         let trade = "{\"e\":\"trade\",\"E\":1718097131139,\"s\":\"BTCUSDT\",\"t\":3631373609,\"p\":\"67547.10000000\",\"q\":\"0.00100000\",\"b\":27777962514,\"a\":27777962896,\"T\":1718097131138,\"m\":true,\"M\":true}";
         let trade_de = serde_json::from_str::<BinanceTradeUpdate>(trade).unwrap();
         let trade_expected = BinanceTradeUpdate {
+            symbol: "btcusdt".to_string(),
             timestamp: 1718097131138,
             id: 3631373609,
             price: 67547.10000000,
@@ -213,6 +227,7 @@ mod test {
     #[test]
     fn trade_to_event() {
         let trade_struct = BinanceTradeUpdate {
+            symbol: "btcusdt".to_string(),
             timestamp: 1718097131138,
             id: 3631373609,
             price: 67547.10000000,
@@ -221,6 +236,7 @@ mod test {
         };
 
         let event_expected = Event::new(
+            "btcusdt".to_string(),
             1718097131138,
             3631373609,
             None,
