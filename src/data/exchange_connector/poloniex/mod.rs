@@ -1,22 +1,33 @@
-pub mod channel;
 pub mod book;
+pub mod channel;
 
+use book::{PoloniexExpectedResponse, PoloniexMessage};
 use channel::PoloniexChannel;
 use serde_json::json;
 use std::collections::HashSet;
 
-use super::{Connector, ExchangeSub};
+use super::{Connector,Instrument};
 use crate::data::protocols::ws::{PingInterval, WsMessage};
-use crate::data::StreamType;
+use crate::data::shared::orderbook::Event;
+use crate::data::{ExchangeId, StreamType};
 
+#[derive(Debug, Default, Eq, PartialEq, Hash)]
 pub struct PoloniexSpot;
 
 impl Connector for PoloniexSpot {
+    type ExchangeId = ExchangeId;
+    type Input = PoloniexMessage;
+    type Output = Event;
+
+    fn exchange_id(&self) -> String {
+        ExchangeId::PoloniexSpot.as_str().to_string()
+    }
+
     fn url(&self) -> String {
         PoloniexChannel::SPOT_WS_URL.as_ref().to_string()
     }
 
-    fn requests(&self, sub: &[ExchangeSub]) -> Option<WsMessage> {
+    fn requests(&self, sub: &[Instrument]) -> Option<WsMessage> {
         let channels = sub
             .iter()
             .map(|s| {
@@ -53,7 +64,19 @@ impl Connector for PoloniexSpot {
         })
     }
 
-    fn expected_response(&self) {
-        // "{\"event\":\"subscribe\",\"channel\":\"book_lv2\",\"symbols\":[\"BTC_USDT\"]}" 
+    fn expected_response(&self, subscription_response: String, sub: &[Instrument]) -> bool {
+        let expected_response =
+            serde_json::from_str::<PoloniexExpectedResponse>(&subscription_response).unwrap();
+        expected_response.symbols.len() == sub.len()
+    }
+
+    fn transform(&mut self, input: Self::Input) -> Self::Output {
+        match input {
+            PoloniexMessage::Book(book) => Event::from(book),
+            PoloniexMessage::Trade(trade) => Event::from(trade),
+            PoloniexMessage::ExpectedResponse(_) => {
+                Event::new("ok".to_string(), 0, 0, None, None, None, None)
+            }
+        }
     }
 }

@@ -1,6 +1,9 @@
 use serde::Deserialize;
 
-use crate::data::shared::{de::{de_str, de_str_symbol}, orderbook::{Event, Level}};
+use crate::data::shared::{
+    de::{de_str, de_str_symbol},
+    orderbook::{Event, Level},
+};
 
 /*----- */
 // Models
@@ -34,8 +37,8 @@ impl From<PoloniexBookUpdate> for Event {
             Some(data.bids),
             Some(data.asks),
             None,
-            None
-        )    
+            None,
+        )
     }
 }
 
@@ -73,26 +76,32 @@ impl From<PoloneixTradeUpdate> for Event {
             None,
             None,
             Some(Level::new(data.price, data.quantity)),
-            Some(data.is_buy)
+            Some(data.is_buy),
         )
     }
+}
+
+#[derive(Debug, Deserialize, PartialEq)]
+pub struct PoloniexExpectedResponse {
+    pub symbols: Vec<String>,
+}
+
+#[derive(Debug, Deserialize, PartialEq)]
+#[serde(untagged, rename_all = "snake_case")]
+pub enum PoloniexMessage {
+    Trade(PoloneixTradeUpdate),
+    Book(PoloniexBookUpdate),
+    ExpectedResponse(PoloniexExpectedResponse),
 }
 
 /*----- */
 // Exchange specific de
 /*----- */
-#[allow(clippy::needless_bool)]
 pub fn de_buyer_is_maker_poloniex<'de, D>(deserializer: D) -> Result<bool, D::Error>
 where
     D: serde::de::Deserializer<'de>,
 {
-    <&str as Deserialize>::deserialize(deserializer).map(|buyer_is_maker| {
-        if buyer_is_maker == "sell" {
-            false
-        } else {
-            true
-        }
-    })
+    <&str as Deserialize>::deserialize(deserializer).map(|buyer_is_maker| buyer_is_maker == "buy")
 }
 
 /*----- */
@@ -143,10 +152,13 @@ mod test {
             "btcusdt".to_string(),
             1718096579424,
             1051076041,
-            Some(vec![Level::new(67546.83, 0.027962), Level::new(67301.78, 0.0)]),
+            Some(vec![
+                Level::new(67546.83, 0.027962),
+                Level::new(67301.78, 0.0),
+            ]),
             Some(vec![]),
             None,
-            None
+            None,
         );
 
         let event_from = Event::from(orderbook_struct);
@@ -170,7 +182,7 @@ mod test {
         };
 
         let trade_expected = PoloneixTradeUpdate {
-            data: vec![trade_data_expected]
+            data: vec![trade_data_expected],
         };
 
         assert_eq!(trade_de, trade_expected)
@@ -190,7 +202,7 @@ mod test {
         };
 
         let trade_struct = PoloneixTradeUpdate {
-            data: vec![trade_data]
+            data: vec![trade_data],
         };
 
         let event_expected = Event::new(
@@ -200,7 +212,7 @@ mod test {
             None,
             None,
             Some(Level::new(67614.01, 0.024914)),
-            Some(false)
+            Some(false),
         );
 
         let event_from = Event::from(trade_struct);
@@ -252,11 +264,23 @@ mod test {
             Some(vec![Level::new(67546.15, 0.238432)]),
             Some(vec![Level::new(67547.43, 0.039788)]),
             None,
-            None
+            None,
         );
 
         let event_from = Event::from(snapshot_struct);
 
         assert_eq!(event_from, event_expected)
+    }
+
+    #[test]
+    fn expected_response_de() {
+        let expected_response =
+            "{\"event\":\"subscribe\",\"channel\":\"book_lv2\",\"symbols\":[\"BTC_USDT\"]}";
+        let expected_response_de =
+            serde_json::from_str::<PoloniexExpectedResponse>(expected_response).unwrap();
+        let expected_response_struct = PoloniexExpectedResponse {
+            symbols: vec!["BTC_USDT".to_string()],
+        };
+        assert_eq!(expected_response_de, expected_response_struct)
     }
 }

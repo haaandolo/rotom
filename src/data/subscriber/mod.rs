@@ -2,72 +2,69 @@ use std::collections::{HashMap, HashSet};
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 
 use super::{
-    exchange_connector::{binance::BinanceSpot, poloniex::PoloniexSpot, Connector},
-    protocols::ws::{utils::try_connect, WebSocketClient, WsMessage},
-    Sub,
+    exchange_connector::Connector, protocols::ws::utils::try_connect, Instrument, StreamType,
+    Subscription,
 };
-use crate::data::Exchange;
 
 /*----- */
 // Stream builder
 /*----- */
-pub struct StreamBuilder {
-    pub clients: HashMap<Exchange, WebSocketClient>,
+pub struct StreamBuilder<ExchangeConnector> {
+    pub market_subscriptions: HashMap<String, Subscription<ExchangeConnector>>,
 }
 
-impl Default for StreamBuilder {
+impl<ExchangeConnector> Default for StreamBuilder<ExchangeConnector>
+where
+    ExchangeConnector: Send + Connector + 'static,
+{
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl StreamBuilder {
+impl<ExchangeConnector> StreamBuilder<ExchangeConnector>
+where
+    ExchangeConnector: Send + Connector + 'static,
+{
     pub fn new() -> Self {
         Self {
-            clients: HashMap::new(),
+            market_subscriptions: HashMap::new(),
         }
     }
 
-    // Function to convert general subscription to exchange specific ones
-    pub fn subscribe(mut self, subscriptions: Vec<Sub>) -> Self {
-        // Convert vec of subs to hashmap. Extract the exchange
-        // field out of the sub struct then put in key of hashmap.
-        // Then insert rest of sub fields as value of the hashmap.
-        // Vec<Sub> ---> HashMap<Exchange, Vec<ExchangeSub>>
-        let mut exchange_sub = HashMap::new();
-
+    pub fn subscribe<Subscriptions>(mut self, subscriptions: Subscriptions) -> Self
+    where
+        Subscriptions:
+            IntoIterator<Item = (ExchangeConnector, &'static str, &'static str, StreamType)>,
+        ExchangeConnector: Connector + Eq + std::hash::Hash + std::fmt::Debug,
+    {
+        // exchange_sub is a hashmap of where the key is a exchange connector and
+        // value is a vec of ExchangeSub structs. Here we are essentially grouping
+        // by the exchange connector and geting the subscriptions associated with it
+        let mut exchange_subscriptions = HashMap::new();
         subscriptions
             .into_iter()
-            .collect::<HashSet<Sub>>() // rm duplicates
+            .collect::<HashSet<_>>() // rm duplicates
             .into_iter()
-            .for_each(|sub| {
-                exchange_sub
-                    .entry(sub.exchange)
+            .for_each(|(exchange_conn, base, quote, stream_type)| {
+                exchange_subscriptions
+                    .entry(exchange_conn)
                     .or_insert(Vec::new())
-                    .push(sub.convert_subscription())
+                    .push(Instrument::new(base, quote, stream_type))
             });
 
-        // Get the connectors for each exchange specified in the subscription
-        exchange_sub.into_iter().for_each(|(key, value)| {
-            let exchange: Box<&dyn Connector> = match key {
-                // Add more connectors here
-                Exchange::BinanceSpot => Box::new(&BinanceSpot),
-                Exchange::PoloniexSpot => Box::new(&PoloniexSpot),
-            };
-
-            let client = WebSocketClient::new(
-                exchange.url(), // Change this to be excconnector
-                exchange.requests(&value),
-                exchange.ping_interval(),
-            );
-
-            self.clients.insert(key, client);
-        });
+        exchange_subscriptions
+            .into_iter()
+            .for_each(|(exchange_connector, instruments)| {
+                let exchange_id = exchange_connector.exchange_id();
+                let subscriptions = Subscription::new(exchange_connector, instruments);
+                self.market_subscriptions.insert(exchange_id, subscriptions);
+            });
         self
     }
 
-    pub async fn init(self) -> HashMap<Exchange, UnboundedReceiver<String>> {
-        self.clients
+    pub async fn init(self) -> HashMap<String, UnboundedReceiver<ExchangeConnector::Output>> {
+        self.market_subscriptions
             .into_iter()
             .map(|(exchange_name, client)| {
                 let (tx, rx) = mpsc::unbounded_channel();
