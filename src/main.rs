@@ -40,5 +40,5 @@ async fn main() {
 }
 
 // todo
-// - expected responses and poloniex spot
+// - expected responses and poloniex spo
 // - write test for the subscribe fn in stream builder
