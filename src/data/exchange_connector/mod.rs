@@ -1,12 +1,12 @@
 pub mod binance;
 pub mod poloniex;
 
+use serde::Deserialize;
 use std::fmt::Debug;
 
-use serde::Deserialize;
-
 use super::{
-    protocols::ws::{PingInterval, WsMessage}, shared::orderbook::Event, ExchangeSub
+    protocols::ws::{PingInterval, WsMessage},
+    Instrument,
 };
 
 /*----- */
@@ -25,12 +25,12 @@ pub trait Connector {
         None
     }
 
-    fn requests(&self, subscriptions: &[ExchangeSub]) -> Option<WsMessage>;
+    fn requests(&self, subscriptions: &[Instrument]) -> Option<WsMessage>;
 
     fn expected_response(
         &self,
         subscription_repsonse: String,
-        subscriptions: &[ExchangeSub],
+        subscriptions: &[Instrument],
     ) -> bool;
 
     fn transform(&mut self, input: Self::Input) -> Self::Output;

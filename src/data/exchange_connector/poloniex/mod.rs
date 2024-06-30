@@ -6,7 +6,7 @@ use channel::PoloniexChannel;
 use serde_json::json;
 use std::collections::HashSet;
 
-use super::{Connector, ExchangeSub};
+use super::{Connector,Instrument};
 use crate::data::protocols::ws::{PingInterval, WsMessage};
 use crate::data::shared::orderbook::Event;
 use crate::data::{ExchangeId, StreamType};
@@ -27,7 +27,7 @@ impl Connector for PoloniexSpot {
         PoloniexChannel::SPOT_WS_URL.as_ref().to_string()
     }
 
-    fn requests(&self, sub: &[ExchangeSub]) -> Option<WsMessage> {
+    fn requests(&self, sub: &[Instrument]) -> Option<WsMessage> {
         let channels = sub
             .iter()
             .map(|s| {
@@ -64,7 +64,7 @@ impl Connector for PoloniexSpot {
         })
     }
 
-    fn expected_response(&self, subscription_response: String, sub: &[ExchangeSub]) -> bool {
+    fn expected_response(&self, subscription_response: String, sub: &[Instrument]) -> bool {
         let expected_response =
             serde_json::from_str::<PoloniexExpectedResponse>(&subscription_response).unwrap();
         expected_response.symbols.len() == sub.len()

@@ -9,41 +9,17 @@ use tokio_tungstenite::tungstenite::{
     protocol::{frame::Frame, CloseFrame},
 };
 
-use super::{PingInterval, WebSocketClient, WsError, WsWrite};
 use crate::{
-    data::{
-        exchange_connector::{binance::BinanceSpot, Connector},
-        protocols::ws::WsMessage,
-        ConnectorStuct,
-    },
+    data::{exchange_connector::Connector, Subscription},
     error::SocketError,
 };
 
+use super::{PingInterval, WebSocketClient, WsError, WsMessage, WsWrite};
+
 pub const START_RECONNECTION_BACKOFF_MS: u64 = 125;
 
-pub async fn schedule_pings_to_exchange(mut ws_write: WsWrite, ping_interval: PingInterval) {
-    loop {
-        sleep(Duration::from_secs(ping_interval.time)).await;
-        ws_write
-            .send(WsMessage::Text(ping_interval.message.to_string()))
-            .await
-            .expect("Failed to send ping to ws");
-    }
-}
-
-pub fn is_websocket_disconnected(error: &WsError) -> bool {
-    matches!(
-        error,
-        WsError::ConnectionClosed
-            | WsError::AlreadyClosed
-            | WsError::Io(_)
-            | WsError::Protocol(ProtocolError::SendAfterClosing)
-            | WsError::Protocol(ProtocolError::ResetWithoutClosingHandshake) // | WsError::Protocol(_)
-    )
-}
-
 pub async fn try_connect<ExchangeConnector>(
-    mut subs: ConnectorStuct<ExchangeConnector>,
+    mut subscription: Subscription<ExchangeConnector>,
     exchange_tx: UnboundedSender<ExchangeConnector::Output>,
 ) where
     ExchangeConnector: Connector + std::marker::Send,
@@ -52,9 +28,9 @@ pub async fn try_connect<ExchangeConnector>(
     let mut _backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
 
     let mut ws_client = WebSocketClient::new(
-        subs.connector.url(),
-        subs.connector.requests(&subs.subs),
-        subs.connector.ping_interval(),
+        subscription.connector.url(),
+        subscription.connector.requests(&subscription.instruments),
+        subscription.connector.ping_interval(),
     );
 
     loop {
@@ -84,7 +60,6 @@ pub async fn try_connect<ExchangeConnector>(
                 Ok(ws_message) => {
                     let msg = match ws_message {
                         WsMessage::Text(text) => {
-                            // process_text::<>(text)
                             process_text::<<ExchangeConnector as Connector>::Input>(text)
                         }
                         WsMessage::Binary(binary) => process_binary(binary),
@@ -95,18 +70,9 @@ pub async fn try_connect<ExchangeConnector>(
                     }
                     .unwrap()
                     .unwrap();
-                    let test = subs.connector.transform(msg);
+
+                    let test = subscription.connector.transform(msg);
                     exchange_tx.send(test).expect("Failed to send message");
-
-                    // println!("{:#?}", &msg);
-
-                    // match msg {
-                    //     Ok(msg) => {
-                    //         let test = subs.connector.transform(msg);
-                    //         exchange_tx.send(test).expect("Failed to send message")
-                    //     },
-                    //     Err() => ()
-                    // }
                 }
                 Err(error) => {
                     if is_websocket_disconnected(&error) {
@@ -115,18 +81,6 @@ pub async fn try_connect<ExchangeConnector>(
                     }
                 } // ADD Error for if sequence is broken then have to restart
             }
-
-            // match message {
-            //     Ok(message) => if let WsMessage::Text(text) = message {
-            //         exchange_tx.send(text).expect("Failed to send message")
-            //      },
-            //     Err(error) => {
-            //         if is_websocket_disconnected(&error) {
-            //             // SHOULD CHANGE THIS TO SEE WHAT ERRORS ACTUAL MEANS RECONNECTING
-            //             stream.cancel_running_tasks()
-            //         }
-            //     } // ADD Error for if sequence is broken then have to restart
-            // }
         }
 
         // Wait a certain ms before trying to reconnect
@@ -190,127 +144,23 @@ pub fn process_frame<ExchangeMessage>(
     None
 }
 
-/*----- */
-// STREAM PARSER
-/*----- */
-// STREAM PARSER
-// use tokio_tungstenite::tungstenite::{error::ProtocolError, protocol::{frame::Frame, CloseFrame}};
-// use serde::de::DeserializeOwned;
+pub fn is_websocket_disconnected(error: &WsError) -> bool {
+    matches!(
+        error,
+        WsError::ConnectionClosed
+            | WsError::AlreadyClosed
+            | WsError::Io(_)
+            | WsError::Protocol(ProtocolError::SendAfterClosing)
+            | WsError::Protocol(ProtocolError::ResetWithoutClosingHandshake) // | WsError::Protocol(_)
+    )
+}
 
-// pub trait StreamParser {
-//     type Message;
-//     type Error;
-
-//     fn parse<Output>(
-//         input: Result<Self::Message, Self::Error>,
-//     ) -> Option<Result<Output, SocketError>>
-//     where
-//         Output: DeserializeOwned;
-// }
-
-// impl StreamParser for WebSocketBase {
-//     type Message = WsMessage;
-//     type Error = tokio_tungstenite::tungstenite::Error;
-
-//     fn parse<Output>(
-//         input: Result<Self::Message, Self::Error>,
-//     ) -> Option<Result<Output, SocketError>>
-//     where
-//         Output: DeserializeOwned,
-//     {
-//         match input {
-//             Ok(ws_message) => match ws_message {
-//                 WsMessage::Text(text) => process_text(text),
-//                 WsMessage::Binary(binary) => process_binary(binary),
-//                 WsMessage::Ping(ping) => process_ping(ping),
-//                 WsMessage::Pong(pong) => process_pong(pong),
-//                 WsMessage::Close(close_frame) => process_close_frame(close_frame),
-//                 WsMessage::Frame(frame) => process_frame(frame),
-//             },
-//             Err(ws_err) => Some(Err(SocketError::WebSocketError(ws_err))),
-//         }
-//     }
-// }
-
-// // pub fn parse<Output>(input: Result<WsMessage, WsError>) -> Option<Result<Output, SocketError>>
-// // where
-// //     Output: DeserializeOwned,
-// // {
-// //     match input {
-// //         Ok(ws_message) => match ws_message {
-// //             WsMessage::Text(text) => process_text(text),
-// //             WsMessage::Binary(binary) => process_binary(binary),
-// //             WsMessage::Ping(ping) => process_ping(ping),
-// //             WsMessage::Pong(pong) => process_pong(pong),
-// //             WsMessage::Close(close_frame) => process_close_frame(close_frame),
-// //             WsMessage::Frame(frame) => process_frame(frame),
-// //         },
-// //         Err(ws_err) => Some(Err(SocketError::WebSocketError(ws_err))),
-// //     }
-// // }
-
-// pub fn process_text<ExchangeMessage>(
-//     payload: String,
-// ) -> Option<Result<ExchangeMessage, SocketError>>
-// where
-//     ExchangeMessage: DeserializeOwned,
-// {
-//     Some(
-//         serde_json::from_str::<ExchangeMessage>(&payload)
-//             .map_err(|error| SocketError::Deserialise { error, payload }),
-//     )
-// }
-
-// pub fn process_binary<ExchangeMessage>(
-//     payload: Vec<u8>,
-// ) -> Option<Result<ExchangeMessage, SocketError>>
-// where
-//     ExchangeMessage: DeserializeOwned,
-// {
-//     Some(
-//         serde_json::from_slice::<ExchangeMessage>(&payload).map_err(|error| {
-//             SocketError::Deserialise {
-//                 error,
-//                 payload: String::from_utf8(payload).unwrap_or_else(|x| x.to_string()),
-//             }
-//         }),
-//     )
-// }
-
-// pub fn process_ping<ExchangeMessage>(
-//     ping: Vec<u8>,
-// ) -> Option<Result<ExchangeMessage, SocketError>> {
-//     format!("{:#?}", ping);
-//     None
-// }
-
-// pub fn process_pong<ExchangeMessage>(
-//     pong: Vec<u8>,
-// ) -> Option<Result<ExchangeMessage, SocketError>> {
-//     format!("{:?}", pong);
-//     None
-// }
-
-// pub fn process_close_frame<ExchangeMessage>(
-//     close_frame: Option<CloseFrame<'_>>,
-// ) -> Option<Result<ExchangeMessage, SocketError>> {
-//     let close_frame = format!("{:?}", close_frame);
-//     Some(Err(SocketError::Terminated(close_frame)))
-// }
-
-// pub fn process_frame<ExchangeMessage>(
-//     frame: Frame,
-// ) -> Option<Result<ExchangeMessage, SocketError>> {
-//     format!("{:?}", frame);
-//     None
-// }
-
-// pub fn is_websocket_disconnected(error: &WsError) -> bool {
-//     matches!(
-//         error,
-//         WsError::ConnectionClosed
-//             | WsError::AlreadyClosed
-//             | WsError::Io(_)
-//             | WsError::Protocol(ProtocolError::SendAfterClosing)
-//     )
-// }
+pub async fn schedule_pings_to_exchange(mut ws_write: WsWrite, ping_interval: PingInterval) {
+    loop {
+        sleep(Duration::from_secs(ping_interval.time)).await;
+        ws_write
+            .send(WsMessage::Text(ping_interval.message.to_string()))
+            .await
+            .expect("Failed to send ping to ws");
+    }
+}

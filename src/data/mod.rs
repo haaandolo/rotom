@@ -6,7 +6,7 @@ pub mod shared;
 pub mod subscriber;
 
 /*----- */
-// Subscription enum inputs
+// Exchange ID's & stream types
 /*----- */
 #[derive(Debug, PartialEq, Hash, Eq, Clone, Copy)]
 pub enum ExchangeId {
@@ -44,13 +44,13 @@ impl StreamType {
 // Exchange subscription
 /*----- */
 #[derive(Debug, PartialEq, Clone, Hash, Eq)]
-pub struct ExchangeSub {
+pub struct Instrument {
     pub base: &'static str,
     pub quote: &'static str,
     pub stream_type: StreamType,
 }
 
-impl ExchangeSub {
+impl Instrument {
     pub fn new(_base: &'static str, _quote: &'static str, _stream_type: StreamType) -> Self {
         Self {
             base: _base,
@@ -60,53 +60,20 @@ impl ExchangeSub {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
-pub struct Sub {
-    pub exchange: ExchangeId,
-    pub base: &'static str,
-    pub quote: &'static str,
-    pub stream_type: StreamType,
-}
-
-impl Sub {
-    pub fn new(
-        _exchange: ExchangeId,
-        _base: &'static str,
-        _quote: &'static str,
-        _stream_type: StreamType,
-    ) -> Self {
-        Self {
-            exchange: _exchange,
-            base: _base,
-            quote: _quote,
-            stream_type: _stream_type,
-        }
-    }
-
-    pub fn convert_subscription(self) -> ExchangeSub {
-        ExchangeSub {
-            base: self.base,
-            quote: self.quote,
-            stream_type: self.stream_type,
-        }
-    }
-}
-
-//////
 #[derive(Clone)]
-pub struct ConnectorStuct<ExchangeConnector> {
+pub struct Subscription<ExchangeConnector> {
     pub connector: ExchangeConnector,
-    pub subs: Vec<ExchangeSub>,
+    pub instruments: Vec<Instrument>,
 }
 
-impl<ExchangeConnector> ConnectorStuct<ExchangeConnector>
+impl<ExchangeConnector> Subscription<ExchangeConnector>
 where
     ExchangeConnector: Connector,
 {
-    pub fn new(_connector: ExchangeConnector, _subs: Vec<ExchangeSub>) -> Self {
+    pub fn new(_connector: ExchangeConnector, _instruments: Vec<Instrument>) -> Self {
         Self {
             connector: _connector,
-            subs: _subs,
+            instruments: _instruments,
         }
     }
 }

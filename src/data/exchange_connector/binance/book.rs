@@ -101,6 +101,7 @@ pub struct BinanceExpectedResponse {
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
+#[serde(untagged, rename_all = "snake_case")]
 pub enum BinanceMessage {
     Book(BinanceBookUpdate),
     Snapshot(BinanceSnapshot),

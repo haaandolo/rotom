@@ -87,6 +87,7 @@ pub struct PoloniexExpectedResponse {
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
+#[serde(untagged, rename_all = "snake_case")]
 pub enum PoloniexMessage {
     Trade(PoloneixTradeUpdate),
     Book(PoloniexBookUpdate),
