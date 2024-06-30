@@ -1,9 +1,12 @@
 pub mod binance;
 pub mod poloniex;
 
+use std::fmt::Debug;
+
+use serde::Deserialize;
+
 use super::{
-    protocols::ws::{PingInterval, WsMessage},
-    ExchangeSub,
+    protocols::ws::{PingInterval, WsMessage}, shared::orderbook::Event, ExchangeSub
 };
 
 /*----- */
@@ -11,7 +14,8 @@ use super::{
 /*----- */
 pub trait Connector {
     type ExchangeId;
-    type Message;
+    type Input: for<'de> Deserialize<'de> + Debug;
+    type Output: Send;
 
     fn exchange_id(&self) -> String;
 
@@ -28,4 +32,6 @@ pub trait Connector {
         subscription_repsonse: String,
         subscriptions: &[ExchangeSub],
     ) -> bool;
+
+    fn transform(&mut self, input: Self::Input) -> Self::Output;
 }

@@ -8,6 +8,7 @@ use std::collections::HashSet;
 
 use super::{Connector, ExchangeSub};
 use crate::data::protocols::ws::{PingInterval, WsMessage};
+use crate::data::shared::orderbook::Event;
 use crate::data::{ExchangeId, StreamType};
 
 #[derive(Debug, Default, Eq, PartialEq, Hash)]
@@ -15,7 +16,8 @@ pub struct PoloniexSpot;
 
 impl Connector for PoloniexSpot {
     type ExchangeId = ExchangeId;
-    type Message = PoloniexMessage;
+    type Input = PoloniexMessage;
+    type Output = Event;
 
     fn exchange_id(&self) -> String {
         ExchangeId::PoloniexSpot.as_str().to_string()
@@ -66,5 +68,15 @@ impl Connector for PoloniexSpot {
         let expected_response =
             serde_json::from_str::<PoloniexExpectedResponse>(&subscription_response).unwrap();
         expected_response.symbols.len() == sub.len()
+    }
+
+    fn transform(&mut self, input: Self::Input) -> Self::Output {
+        match input {
+            PoloniexMessage::Book(book) => Event::from(book),
+            PoloniexMessage::Trade(trade) => Event::from(trade),
+            PoloniexMessage::ExpectedResponse(_) => {
+                Event::new("ok".to_string(), 0, 0, None, None, None, None)
+            }
+        }
     }
 }

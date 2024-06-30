@@ -7,14 +7,15 @@ use serde_json::json;
 use std::collections::HashSet;
 
 use super::{Connector, ExchangeSub};
-use crate::data::{protocols::ws::WsMessage, ExchangeId, StreamType};
+use crate::data::{protocols::ws::WsMessage, shared::orderbook::Event, ExchangeId, StreamType};
 
 #[derive(Debug, Default, Eq, PartialEq, Hash)]
 pub struct BinanceSpot;
 
 impl Connector for BinanceSpot {
     type ExchangeId = ExchangeId;
-    type Message = BinanceMessage;
+    type Input = BinanceMessage;
+    type Output = Event;
 
     fn exchange_id(&self) -> String {
         ExchangeId::BinanceSpot.as_str().to_string()
@@ -56,5 +57,16 @@ impl Connector for BinanceSpot {
         let response_struct =
             serde_json::from_str::<BinanceExpectedResponse>(&subscription_response).unwrap();
         response_struct.result.is_none()
+    }
+
+    fn transform(&mut self, input: Self::Input) -> Self::Output {
+        match input {
+            BinanceMessage::Book(book) => Event::from(book),
+            BinanceMessage::Snapshot(snapshot) => Event::from(snapshot),
+            BinanceMessage::Trade(trade) => Event::from(trade),
+            BinanceMessage::ExpectedResponse(_) => {
+                Event::new("ok".to_string(), 0, 0, None, None, None, None)
+            }
+        }
     }
 }

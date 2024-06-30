@@ -25,7 +25,7 @@
 //                 .push(ExchangeSub::new(base, quote, stream_type))
 //         });
 
-//     // Here we move the key of exchange_sub into a new stuct and replace it 
+//     // Here we move the key of exchange_sub into a new stuct and replace it
 //     // with a string
 //     let mut some = exchange_sub
 //         .into_iter()
@@ -55,7 +55,11 @@
 //     let _ = subscribe(subs);
 // }
 
-use arb_bot::data::{exchange_connector::{binance::BinanceSpot, poloniex::PoloniexSpot}, subscriber::StreamBuilder, ExchangeId, StreamType, Sub};
+use arb_bot::data::{
+    exchange_connector::{binance::BinanceSpot, poloniex::PoloniexSpot},
+    subscriber::StreamBuilder,
+    ExchangeId, StreamType, Sub,
+};
 
 #[tokio::main]
 async fn main() {
@@ -65,22 +69,28 @@ async fn main() {
         .subscribe([
             (BinanceSpot, "arb", "usdt", StreamType::Trades),
             (BinanceSpot, "arb", "usdt", StreamType::Trades),
-            (BinanceSpot, "btc", "usdt", StreamType::L2),
-        ]);
-        // .await;
+            // (BinanceSpot, "btc", "usdt", StreamType::L2),
+        ])
+        // .subscribe([
+        //     (PoloniexSpot, "arb", "usdt", StreamType::Trades),
+        //     (PoloniexSpot, "arb", "usdt", StreamType::Trades),
+        //     (PoloniexSpot, "btc", "usdt", StreamType::L2),
+        // ])
+        .init()
+        .await;
+
+    // Read from socket
+    if let Some(mut receiver) = streams.remove("binancespot") {
+        while let Some(msg) = receiver.recv().await {
+            // Some(msg);
+            println!("----- Binance -----");
+            // let msg: BinanceBookUpdate = serde_json::from_str(&msg).unwrap();
+            println!("{:#?}", msg);
+        }
+    }
 
     // // Read from socket
-    // if let Some(mut receiver) = streams.remove(&Exchange::BinanceSpot) {
-    //     while let Some(msg) = receiver.recv().await {
-    //         // Some(msg);
-    //         println!("----- Binance -----");
-    //         // let msg: BinanceBookUpdate = serde_json::from_str(&msg).unwrap();
-    //         println!("{:#?}", msg);
-    //     }
-    // }
-
-    // // Read from socket
-    // if let Some(mut receiver) = streams.remove(&Exchange::PoloniexSpot) {
+    // if let Some(mut receiver) = streams.remove("poloniexspot") {
     //     while let Some(msg) = receiver.recv().await {
     //         // Some(msg);
     //         println!("----- Poloniex -----");
