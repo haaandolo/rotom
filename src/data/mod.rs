@@ -1,3 +1,5 @@
+use exchange_connector::Connector;
+
 pub mod exchange_connector;
 pub mod protocols;
 pub mod shared;
@@ -42,14 +44,14 @@ impl StreamType {
 // Exchange subscription
 /*----- */
 #[derive(Debug, PartialEq, Clone, Hash, Eq)]
-pub struct ExchangeSub<'a> {
-    pub base: &'a str,
-    pub quote: &'a str,
+pub struct ExchangeSub {
+    pub base: &'static str,
+    pub quote: &'static str,
     pub stream_type: StreamType,
 }
 
-impl<'a> ExchangeSub<'a> {
-    pub fn new(_base: &'a str, _quote: &'a str, _stream_type: StreamType) -> Self {
+impl ExchangeSub {
+    pub fn new(_base: &'static str, _quote: &'static str, _stream_type: StreamType) -> Self {
         Self {
             base: _base,
             quote: _quote,
@@ -81,7 +83,7 @@ impl Sub {
         }
     }
 
-    pub fn convert_subscription(self) -> ExchangeSub<'static> {
+    pub fn convert_subscription(self) -> ExchangeSub {
         ExchangeSub {
             base: self.base,
             quote: self.quote,
@@ -91,7 +93,20 @@ impl Sub {
 }
 
 //////
-pub struct ConnectorStuct<'a, ExchangeConnector> {
+#[derive(Clone)]
+pub struct ConnectorStuct<ExchangeConnector> {
     pub connector: ExchangeConnector,
-    pub subs: Vec<ExchangeSub<'a>>,
+    pub subs: Vec<ExchangeSub>,
+}
+
+impl<ExchangeConnector> ConnectorStuct<ExchangeConnector>
+where
+    ExchangeConnector: Connector,
+{
+    pub fn new(_connector: ExchangeConnector, _subs: Vec<ExchangeSub>) -> Self {
+        Self {
+            connector: _connector,
+            subs: _subs,
+        }
+    }
 }

@@ -10,7 +10,7 @@ use super::{Connector, ExchangeSub};
 use crate::data::protocols::ws::{PingInterval, WsMessage};
 use crate::data::{ExchangeId, StreamType};
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Eq, PartialEq, Hash)]
 pub struct PoloniexSpot;
 
 impl Connector for PoloniexSpot {
