@@ -1,4 +1,4 @@
-use futures::{SinkExt, StreamExt};
+use futures::{SinkExt, Stream, StreamExt};
 use serde::de::DeserializeOwned;
 use tokio::{
     sync::mpsc::UnboundedSender,
@@ -14,7 +14,7 @@ use crate::{
     error::SocketError,
 };
 
-use super::{PingInterval, WebSocketClient, WsError, WsMessage, WsWrite};
+use super::{PingInterval, WebSocket, WebSocketClient, WsError, WsMessage, WsWrite};
 
 pub const START_RECONNECTION_BACKOFF_MS: u64 = 125;
 
@@ -54,6 +54,20 @@ pub async fn try_connect<ExchangeConnector>(
             }
         };
 
+        // Validate subscriptions
+        if let Some(Ok(WsMessage::Text(message))) = &stream.ws_read.next().await {
+            let subscription_sucess = subscription
+                .connector
+                .validate_subscription(message.to_owned(), &subscription.instruments);
+
+            println!("{:#?}", subscription_sucess);
+
+            if !subscription_sucess {
+                // break SocketError::Subscribe(format!("Subscription failed"))
+                panic!("Subscription failed") // CHANGE THIS
+            }
+        };
+
         // Read from stream and send via channel, but if error occurs, attempt reconnection
         while let Some(message) = stream.ws_read.next().await {
             match message {
@@ -72,7 +86,7 @@ pub async fn try_connect<ExchangeConnector>(
                     .unwrap();
 
                     let test = subscription.connector.transform(msg);
-                    exchange_tx.send(test).expect("Failed to send message");
+                    exchange_tx.send(test).expect("Failed to send message"); // CHANGE THIS
                 }
                 Err(error) => {
                     if is_websocket_disconnected(&error) {
@@ -85,6 +99,48 @@ pub async fn try_connect<ExchangeConnector>(
 
         // Wait a certain ms before trying to reconnect
         sleep(Duration::from_millis(_backoff_ms)).await;
+    }
+}
+
+/*----- */
+// Stream Parser
+/*----- */
+pub struct WebSocketParser;
+
+pub trait StreamParser {
+    type Stream: Stream;
+    type Message;
+    type Error;
+
+    fn parse<Output>(
+        input: Result<Self::Message, Self::Error>,
+    ) -> Option<Result<Output, SocketError>>
+    where
+        Output: DeserializeOwned;
+}
+
+impl StreamParser for WebSocketParser {
+    type Stream = WebSocket;
+    type Message = WsMessage;
+    type Error = WsError;
+
+    fn parse<Output>(
+        input: Result<Self::Message, Self::Error>,
+    ) -> Option<Result<Output, SocketError>>
+    where
+        Output: DeserializeOwned,
+    {
+        match input {
+            Ok(ws_message) => match ws_message {
+                WsMessage::Text(text) => process_text(text),
+                WsMessage::Binary(binary) => process_binary(binary),
+                WsMessage::Ping(ping) => process_ping(ping),
+                WsMessage::Pong(pong) => process_pong(pong),
+                WsMessage::Close(close_frame) => process_close_frame(close_frame),
+                WsMessage::Frame(frame) => process_frame(frame),
+            },
+            Err(ws_err) => Some(Err(SocketError::WebSocketError(ws_err))),
+        }
     }
 }
 

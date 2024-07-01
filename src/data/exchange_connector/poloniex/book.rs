@@ -82,8 +82,10 @@ impl From<PoloneixTradeUpdate> for Event {
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
-pub struct PoloniexExpectedResponse {
+pub struct PoloniexSubscriptionResponse {
+    pub event: String,
     pub symbols: Vec<String>,
+    pub channel: String,
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
@@ -91,7 +93,7 @@ pub struct PoloniexExpectedResponse {
 pub enum PoloniexMessage {
     Trade(PoloneixTradeUpdate),
     Book(PoloniexBookUpdate),
-    ExpectedResponse(PoloniexExpectedResponse),
+    // ExpectedResponse(PoloniexSubscriptionResponse),
 }
 
 /*----- */
@@ -277,8 +279,10 @@ mod test {
         let expected_response =
             "{\"event\":\"subscribe\",\"channel\":\"book_lv2\",\"symbols\":[\"BTC_USDT\"]}";
         let expected_response_de =
-            serde_json::from_str::<PoloniexExpectedResponse>(expected_response).unwrap();
-        let expected_response_struct = PoloniexExpectedResponse {
+            serde_json::from_str::<PoloniexSubscriptionResponse>(expected_response).unwrap();
+        let expected_response_struct = PoloniexSubscriptionResponse {
+            event: "subscribe".to_string(),
+            channel: "book_lv2".to_string(),
             symbols: vec!["BTC_USDT".to_string()],
         };
         assert_eq!(expected_response_de, expected_response_struct)

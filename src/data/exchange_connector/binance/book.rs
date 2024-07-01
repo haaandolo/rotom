@@ -95,7 +95,7 @@ impl From<BinanceTradeUpdate> for Event {
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
-pub struct BinanceExpectedResponse {
+pub struct BinanceSubscriptionResponse {
     pub result: Option<String>,
     pub id: u32,
 }
@@ -106,7 +106,7 @@ pub enum BinanceMessage {
     Book(BinanceBookUpdate),
     Snapshot(BinanceSnapshot),
     Trade(BinanceTradeUpdate),
-    ExpectedResponse(BinanceExpectedResponse)
+    // ExpectedResponse(BinanceSubscriptionResponse),
 }
 
 /*----- */
@@ -270,8 +270,8 @@ mod test {
     fn expected_response_de() {
         let expected_response = "{\"result\":null,\"id\":1}";
         let expected_response_de =
-            serde_json::from_str::<BinanceExpectedResponse>(expected_response).unwrap();
-        let expected_response_struct = BinanceExpectedResponse {
+            serde_json::from_str::<BinanceSubscriptionResponse>(expected_response).unwrap();
+        let expected_response_struct = BinanceSubscriptionResponse {
             result: None,
             id: 1,
         };

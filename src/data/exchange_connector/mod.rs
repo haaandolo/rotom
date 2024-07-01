@@ -2,10 +2,10 @@ pub mod binance;
 pub mod poloniex;
 
 use serde::Deserialize;
-use std::fmt::Debug;
+use std::{fmt::Debug, time::Duration};
 
 use super::{
-    protocols::ws::{PingInterval, WsMessage},
+    protocols::ws::{utils::StreamParser, PingInterval, WsMessage},
     Instrument,
 };
 
@@ -16,6 +16,8 @@ pub trait Connector {
     type ExchangeId;
     type Input: for<'de> Deserialize<'de> + Debug;
     type Output: Send;
+    type SubscriptionResponse;
+    // type Parser: StreamParser;
 
     fn exchange_id(&self) -> String;
 
@@ -27,11 +29,15 @@ pub trait Connector {
 
     fn requests(&self, subscriptions: &[Instrument]) -> Option<WsMessage>;
 
-    fn expected_response(
+    fn validate_subscription(
         &self,
         subscription_repsonse: String,
         subscriptions: &[Instrument],
     ) -> bool;
 
     fn transform(&mut self, input: Self::Input) -> Self::Output;
+
+    fn subscription_timeout() -> Duration {
+        Duration::from_secs(10)
+    }    
 }

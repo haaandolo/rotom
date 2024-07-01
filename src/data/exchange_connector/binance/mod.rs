@@ -1,7 +1,7 @@
 pub mod book;
 pub mod channel;
 
-use book::{BinanceExpectedResponse, BinanceMessage};
+use book::{BinanceMessage, BinanceSubscriptionResponse};
 use channel::BinanceChannel;
 use serde_json::json;
 use std::collections::HashSet;
@@ -16,6 +16,7 @@ impl Connector for BinanceSpot {
     type ExchangeId = ExchangeId;
     type Input = BinanceMessage;
     type Output = Event;
+    type SubscriptionResponse = BinanceSubscriptionResponse;
 
     fn exchange_id(&self) -> String {
         ExchangeId::BinanceSpot.as_str().to_string()
@@ -49,14 +50,14 @@ impl Connector for BinanceSpot {
         Some(WsMessage::Text(binance_request.to_string()))
     }
 
-    fn expected_response(
+    fn validate_subscription(
         &self,
         subscription_response: String,
-        subscriptions: &[Instrument],
+        _subscriptions: &[Instrument],
     ) -> bool {
-        let response_struct =
-            serde_json::from_str::<BinanceExpectedResponse>(&subscription_response).unwrap();
-        response_struct.result.is_none()
+        let subscription_response=
+            serde_json::from_str::<BinanceSubscriptionResponse>(&subscription_response).unwrap();
+        subscription_response.result.is_none()
     }
 
     fn transform(&mut self, input: Self::Input) -> Self::Output {
@@ -64,9 +65,9 @@ impl Connector for BinanceSpot {
             BinanceMessage::Book(book) => Event::from(book),
             BinanceMessage::Snapshot(snapshot) => Event::from(snapshot),
             BinanceMessage::Trade(trade) => Event::from(trade),
-            BinanceMessage::ExpectedResponse(_) => {
-                Event::new("ok".to_string(), 0, 0, None, None, None, None)
-            }
+            // BinanceMessage::ExpectedResponse(_) => {
+            //     Event::new("ok".to_string(), 0, 0, None, None, None, None)
+            // }
         }
     }
 }

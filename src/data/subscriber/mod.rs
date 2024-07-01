@@ -1,3 +1,5 @@
+pub mod validator;
+
 use std::collections::{HashMap, HashSet};
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 
@@ -28,7 +30,7 @@ where
 {
     pub fn new() -> Self {
         Self {
-            market_subscriptions: HashMap::new(),
+           market_subscriptions: HashMap::new(),
         }
     }
 
@@ -66,9 +68,9 @@ where
     pub async fn init(self) -> HashMap<String, UnboundedReceiver<ExchangeConnector::Output>> {
         self.market_subscriptions
             .into_iter()
-            .map(|(exchange_name, client)| {
+            .map(|(exchange_name, subscription)| {
                 let (tx, rx) = mpsc::unbounded_channel();
-                tokio::spawn(try_connect(client, tx));
+                tokio::spawn(try_connect(subscription, tx));
                 (exchange_name, rx)
             })
             .collect::<HashMap<_, _>>()

@@ -31,6 +31,9 @@ pub enum SocketError {
 
     #[error("ExchangeStream terminated with closing frame: {0}")]
     Terminated(String),
+
+    #[error("error subscribing to resources over the socket: {0}")]
+    Subscribe(String),
 }
 
 

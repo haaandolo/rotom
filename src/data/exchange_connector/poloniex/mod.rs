@@ -1,12 +1,12 @@
 pub mod book;
 pub mod channel;
 
-use book::{PoloniexExpectedResponse, PoloniexMessage};
+use book::{PoloniexMessage, PoloniexSubscriptionResponse};
 use channel::PoloniexChannel;
 use serde_json::json;
 use std::collections::HashSet;
 
-use super::{Connector,Instrument};
+use super::{Connector, Instrument};
 use crate::data::protocols::ws::{PingInterval, WsMessage};
 use crate::data::shared::orderbook::Event;
 use crate::data::{ExchangeId, StreamType};
@@ -18,6 +18,7 @@ impl Connector for PoloniexSpot {
     type ExchangeId = ExchangeId;
     type Input = PoloniexMessage;
     type Output = Event;
+    type SubscriptionResponse = PoloniexSubscriptionResponse;
 
     fn exchange_id(&self) -> String {
         ExchangeId::PoloniexSpot.as_str().to_string()
@@ -64,19 +65,19 @@ impl Connector for PoloniexSpot {
         })
     }
 
-    fn expected_response(&self, subscription_response: String, sub: &[Instrument]) -> bool {
-        let expected_response =
-            serde_json::from_str::<PoloniexExpectedResponse>(&subscription_response).unwrap();
-        expected_response.symbols.len() == sub.len()
+    fn validate_subscription(&self, subscription_response: String, sub: &[Instrument]) -> bool {
+        let subscription_reponse=
+            serde_json::from_str::<PoloniexSubscriptionResponse>(&subscription_response).unwrap();
+        subscription_reponse.symbols.len() == sub.len()
     }
 
     fn transform(&mut self, input: Self::Input) -> Self::Output {
         match input {
             PoloniexMessage::Book(book) => Event::from(book),
             PoloniexMessage::Trade(trade) => Event::from(trade),
-            PoloniexMessage::ExpectedResponse(_) => {
-                Event::new("ok".to_string(), 0, 0, None, None, None, None)
-            }
+            // PoloniexMessage::ExpectedResponse(_) => {
+            //     Event::new("ok".to_string(), 0, 0, None, None, None, None)
+            // }
         }
     }
 }
