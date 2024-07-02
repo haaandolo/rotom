@@ -65,6 +65,10 @@ impl Connector for PoloniexSpot {
         })
     }
 
+    // Note: Poloniex sends a subscription validation response for
+    // each stream type. This will cause the websocket to panic as
+    // the validation code for websocket only looks at the first 
+    // message from the WS. Hence, only group by singular stream.
     fn validate_subscription(&self, subscription_response: String, sub: &[Instrument]) -> bool {
         let subscription_response =
             serde_json::from_str::<PoloniexSubscriptionResponse>(&subscription_response).unwrap();

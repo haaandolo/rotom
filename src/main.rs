@@ -48,3 +48,6 @@ async fn main() {
 // - empty bid ask vec's should be skipped in deserialization process
 // - write test for the subscribe fn in stream builder
 // - process custom ping for poloniex
+// - add mismatch sequence error in websocket
+// - multi stream builder
+// - make orderbooks
