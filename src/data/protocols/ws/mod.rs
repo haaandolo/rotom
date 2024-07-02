@@ -1,96 +1,182 @@
-pub mod utils;
+pub mod ws_client;
 
-use crate::error::SocketError;
-use futures::{
-    stream::{SplitSink, SplitStream},
-    SinkExt, StreamExt,
+use futures::StreamExt;
+use serde::de::DeserializeOwned;
+use tokio::{
+    sync::mpsc::UnboundedSender,
+    time::{sleep, Duration},
 };
-use serde_json::Value;
-use tokio::net::TcpStream;
-use tokio_tungstenite::{
-    connect_async, MaybeTlsStream, WebSocketStream,
+use tokio_tungstenite::tungstenite::{
+    error::ProtocolError,
+    protocol::{frame::Frame, CloseFrame},
 };
-use utils::schedule_pings_to_exchange;
+use ws_client::{WebSocketClient, WsError, WsMessage};
 
-pub type WsMessage = tokio_tungstenite::tungstenite::Message;
-pub type WsError = tokio_tungstenite::tungstenite::Error;
-pub type WebSocket = tokio_tungstenite::WebSocketStream<MaybeTlsStream<TcpStream>>;
-pub type WsRead = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
-pub type WsWrite = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, WsMessage>;
-pub type JoinHandle = tokio::task::JoinHandle<()>;
+use crate::{
+    data::{exchange_connector::Connector, Subscription},
+    error::SocketError,
+};
 
-/*----- */
-// Models
-/*----- */
-#[derive(Clone, Debug)]
-pub struct PingInterval {
-    pub time: u64,
-    pub message: Value,
-}
+pub const START_RECONNECTION_BACKOFF_MS: u64 = 125;
 
-pub struct ExchangeStream {
-    pub ws_read: WsRead,
-    pub tasks: Vec<JoinHandle>,
-}
+pub async fn connect<ExchangeConnector>(
+    mut subscription: Subscription<ExchangeConnector>,
+    exchange_tx: UnboundedSender<ExchangeConnector::Output>,
+) -> SocketError
+where
+    ExchangeConnector: Connector + std::marker::Send,
+{
+    let mut _connection_attempt: u32 = 0;
+    let mut _backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
 
-impl ExchangeStream {
-    pub fn cancel_running_tasks(&self) {
-        self.tasks.iter().for_each(|task| {
-            task.abort();
-        })
+    let mut ws_client = WebSocketClient::new(
+        subscription.connector.url(),
+        subscription.connector.requests(&subscription.instruments),
+        subscription.connector.ping_interval(),
+    );
+
+    loop {
+        _connection_attempt += 1;
+        _backoff_ms *= 2;
+
+        // Attempt to connect to the stream
+        let mut stream = match ws_client.create_websocket().await {
+            Ok(stream) => {
+                _connection_attempt = 0;
+                _backoff_ms = START_RECONNECTION_BACKOFF_MS;
+                stream
+            }
+            Err(error) => {
+                if _connection_attempt == 1 {
+                    return SocketError::Subscribe(format!(
+                        "Subscription failed on first attempt: {}",
+                        error
+                    ));
+                } else {
+                    continue;
+                }
+            }
+        };
+
+        // Validate subscriptions
+        if let Some(Ok(WsMessage::Text(message))) = &stream.ws_read.next().await {
+            let subscription_sucess = subscription
+                .connector
+                .validate_subscription(message.to_owned(), &subscription.instruments);
+
+            if !subscription_sucess {
+                break SocketError::Subscribe(String::from("Subscription failed"));
+            }
+        };
+
+        // Read from stream and send via channel, but if error occurs, attempt reconnection
+        while let Some(message) = stream.ws_read.next().await {
+            match message {
+                Ok(ws_message) => {
+                    let deserialized_message =
+                        match parse::<<ExchangeConnector as Connector>::Input>(ws_message) {
+                            Some(Ok(exchange_message)) => exchange_message,
+                            Some(Err(_)) => break, // Log this error (this is a deserisation error from the parsing function)
+                            None => continue,
+                        };
+
+                    let event = subscription.connector.transform(deserialized_message);
+                    exchange_tx.send(event).expect("failed to send message");
+                }
+                Err(error) => {
+                    if is_websocket_disconnected(&error) {
+                        // SHOULD CHANGE THIS TO SEE WHAT ERRORS ACTUAL MEANS RECONNECTING
+                        stream.cancel_running_tasks()
+                    }
+                } // ADD Error for if sequence is broken then have to restart
+            }
+        }
+
+        // Wait a certain ms before trying to reconnect
+        sleep(Duration::from_millis(_backoff_ms)).await;
     }
 }
 
 /*----- */
-// WebSocket
+// WebSocket message parser
 /*----- */
-#[derive(Debug)]
-pub struct WebSocketClient {
-    pub url: String,
-    pub subscription: Option<WsMessage>,
-    pub ping_interval: Option<PingInterval>,
+pub fn parse<Output>(input: WsMessage) -> Option<Result<Output, SocketError>>
+where
+    Output: DeserializeOwned,
+{
+    match input {
+        WsMessage::Text(text) => process_text(text),
+        WsMessage::Binary(binary) => process_binary(binary),
+        WsMessage::Ping(ping) => process_ping(ping),
+        WsMessage::Pong(pong) => process_pong(pong),
+        WsMessage::Close(close_frame) => process_close_frame(close_frame),
+        WsMessage::Frame(frame) => process_frame(frame),
+    }
 }
 
-impl WebSocketClient {
-    pub fn new(
-        _url: String,
-        _subscription: Option<WsMessage>,
-        _ping_interval: Option<PingInterval>,
-    ) -> Self {
-        Self {
-            url: _url,
-            subscription: _subscription,
-            ping_interval: _ping_interval,
-        }
-    }
-    pub async fn connect(&mut self) -> Result<ExchangeStream, SocketError> {
-        // Make connection
-        let mut _tasks = Vec::new();
-        let ws = connect_async(self.url.clone())
-            .await
-            .map(|(ws, _)| ws)
-            .map_err(SocketError::WebSocketError);
+pub fn process_text<ExchangeMessage>(
+    payload: String,
+) -> Option<Result<ExchangeMessage, SocketError>>
+where
+    ExchangeMessage: DeserializeOwned,
+{
+    Some(
+        serde_json::from_str::<ExchangeMessage>(&payload)
+            .map_err(|error| SocketError::Deserialise { error, payload }),
+    )
+}
 
-        // Split WS and make channels
-        let (mut ws_write, ws_stream) = ws?.split();
+pub fn process_binary<ExchangeMessage>(
+    payload: Vec<u8>,
+) -> Option<Result<ExchangeMessage, SocketError>>
+where
+    ExchangeMessage: DeserializeOwned,
+{
+    Some(
+        serde_json::from_slice::<ExchangeMessage>(&payload).map_err(|error| {
+            SocketError::Deserialise {
+                error,
+                payload: String::from_utf8(payload).unwrap_or_else(|x| x.to_string()),
+            }
+        }),
+    )
+}
 
-        // Handle subscription
-        if let Some(subcription) = self.subscription.clone() {
-            ws_write
-                .send(subcription)
-                .await
-                .expect("Failed to send subscription")
-        }
+pub fn process_ping<ExchangeMessage>(
+    ping: Vec<u8>,
+) -> Option<Result<ExchangeMessage, SocketError>> {
+    format!("{:#?}", ping);
+    None
+}
 
-        // Spawn custom ping handle (application level ping)
-        if let Some(ping_interval) = self.ping_interval.clone() {
-            let ping_handler = tokio::spawn(schedule_pings_to_exchange(ws_write, ping_interval));
-            _tasks.push(ping_handler);
-        }
+pub fn process_pong<ExchangeMessage>(
+    pong: Vec<u8>,
+) -> Option<Result<ExchangeMessage, SocketError>> {
+    format!("{:#?}", pong);
+    None
+}
 
-        Ok(ExchangeStream {
-            ws_read: ws_stream,
-            tasks: _tasks,
-        })
-    }
+pub fn process_close_frame<ExchangeMessage>(
+    close_frame: Option<CloseFrame<'_>>,
+) -> Option<Result<ExchangeMessage, SocketError>> {
+    let close_frame = format!("{:?}", close_frame);
+    Some(Err(SocketError::Terminated(close_frame)))
+}
+
+pub fn process_frame<ExchangeMessage>(
+    frame: Frame,
+) -> Option<Result<ExchangeMessage, SocketError>> {
+    format!("{:?}", frame);
+    None
+}
+
+pub fn is_websocket_disconnected(error: &WsError) -> bool {
+    matches!(
+        error,
+        WsError::ConnectionClosed
+            | WsError::AlreadyClosed
+            | WsError::Io(_)
+            | WsError::Protocol(ProtocolError::SendAfterClosing)
+            | WsError::Protocol(ProtocolError::ResetWithoutClosingHandshake) // | WsError::Protocol(_)
+    )
 }

@@ -15,9 +15,10 @@ async fn main() {
         //     (BinanceSpot, "btc", "usdt", StreamType::L2),
         // ])
         .subscribe([
-            (PoloniexSpot, "arb", "usdt", StreamType::Trades),
-            (PoloniexSpot, "arb", "usdt", StreamType::Trades),
+            // (PoloniexSpot, "arb", "usdt", StreamType::Trades),
+            // (PoloniexSpot, "arb", "usdt", StreamType::Trades),
             (PoloniexSpot, "btc", "usdt", StreamType::L2),
+            (PoloniexSpot, "arb", "usdt", StreamType::L2),
         ])
         .init()
         .await;
@@ -44,7 +45,6 @@ async fn main() {
 }
 
 // todo
-// - expected responses and poloniex spot i.e., validator
-// - write test for the subscribe fn in stream builder
 // - empty bid ask vec's should be skipped in deserialization process
+// - write test for the subscribe fn in stream builder
 // - process custom ping for poloniex

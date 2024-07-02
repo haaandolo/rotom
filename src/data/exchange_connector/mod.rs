@@ -5,8 +5,7 @@ use serde::Deserialize;
 use std::{fmt::Debug, time::Duration};
 
 use super::{
-    protocols::ws::{utils::StreamParser, PingInterval, WsMessage},
-    Instrument,
+    protocols::ws::ws_client::{PingInterval, WsMessage}, Instrument
 };
 
 /*----- */
@@ -17,7 +16,6 @@ pub trait Connector {
     type Input: for<'de> Deserialize<'de> + Debug;
     type Output: Send;
     type SubscriptionResponse;
-    // type Parser: StreamParser;
 
     fn exchange_id(&self) -> String;
 
@@ -39,5 +37,5 @@ pub trait Connector {
 
     fn subscription_timeout() -> Duration {
         Duration::from_secs(10)
-    }    
+    }
 }

@@ -7,7 +7,7 @@ use serde_json::json;
 use std::collections::HashSet;
 
 use super::{Connector, Instrument};
-use crate::data::protocols::ws::{PingInterval, WsMessage};
+use crate::data::protocols::ws::ws_client::{PingInterval, WsMessage};
 use crate::data::shared::orderbook::Event;
 use crate::data::{ExchangeId, StreamType};
 
@@ -66,18 +66,15 @@ impl Connector for PoloniexSpot {
     }
 
     fn validate_subscription(&self, subscription_response: String, sub: &[Instrument]) -> bool {
-        let subscription_reponse=
+        let subscription_response =
             serde_json::from_str::<PoloniexSubscriptionResponse>(&subscription_response).unwrap();
-        subscription_reponse.symbols.len() == sub.len()
+        subscription_response.symbols.len() == sub.len()
     }
 
     fn transform(&mut self, input: Self::Input) -> Self::Output {
         match input {
             PoloniexMessage::Book(book) => Event::from(book),
             PoloniexMessage::Trade(trade) => Event::from(trade),
-            // PoloniexMessage::ExpectedResponse(_) => {
-            //     Event::new("ok".to_string(), 0, 0, None, None, None, None)
-            // }
         }
     }
 }

@@ -7,7 +7,7 @@ use serde_json::json;
 use std::collections::HashSet;
 
 use super::{Connector, Instrument};
-use crate::data::{protocols::ws::WsMessage, shared::orderbook::Event, ExchangeId, StreamType};
+use crate::data::{ protocols::ws::ws_client::WsMessage, shared::orderbook::Event, ExchangeId, StreamType};
 
 #[derive(Debug, Default, Eq, PartialEq, Hash)]
 pub struct BinanceSpot;
@@ -65,9 +65,6 @@ impl Connector for BinanceSpot {
             BinanceMessage::Book(book) => Event::from(book),
             BinanceMessage::Snapshot(snapshot) => Event::from(snapshot),
             BinanceMessage::Trade(trade) => Event::from(trade),
-            // BinanceMessage::ExpectedResponse(_) => {
-            //     Event::new("ok".to_string(), 0, 0, None, None, None, None)
-            // }
         }
     }
 }

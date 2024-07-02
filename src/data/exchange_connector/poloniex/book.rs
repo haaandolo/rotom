@@ -93,7 +93,6 @@ pub struct PoloniexSubscriptionResponse {
 pub enum PoloniexMessage {
     Trade(PoloneixTradeUpdate),
     Book(PoloniexBookUpdate),
-    // ExpectedResponse(PoloniexSubscriptionResponse),
 }
 
 /*----- */

@@ -106,7 +106,6 @@ pub enum BinanceMessage {
     Book(BinanceBookUpdate),
     Snapshot(BinanceSnapshot),
     Trade(BinanceTradeUpdate),
-    // ExpectedResponse(BinanceSubscriptionResponse),
 }
 
 /*----- */

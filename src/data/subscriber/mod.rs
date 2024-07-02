@@ -1,11 +1,8 @@
-pub mod validator;
-
 use std::collections::{HashMap, HashSet};
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 
 use super::{
-    exchange_connector::Connector, protocols::ws::utils::try_connect, Instrument, StreamType,
-    Subscription,
+    exchange_connector::Connector, protocols::ws::connect, Instrument, StreamType, Subscription
 };
 
 /*----- */
@@ -70,7 +67,7 @@ where
             .into_iter()
             .map(|(exchange_name, subscription)| {
                 let (tx, rx) = mpsc::unbounded_channel();
-                tokio::spawn(try_connect(subscription, tx));
+                tokio::spawn(connect(subscription, tx));
                 (exchange_name, rx)
             })
             .collect::<HashMap<_, _>>()
