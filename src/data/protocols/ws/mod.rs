@@ -24,7 +24,7 @@ pub async fn connect<ExchangeConnector>(
     exchange_tx: UnboundedSender<ExchangeConnector::Output>,
 ) -> SocketError
 where
-    ExchangeConnector: Connector + std::marker::Send,
+    ExchangeConnector: Connector + Send,
 {
     let mut _connection_attempt: u32 = 0;
     let mut _backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
@@ -76,7 +76,14 @@ where
                     let deserialized_message =
                         match parse::<<ExchangeConnector as Connector>::Input>(ws_message) {
                             Some(Ok(exchange_message)) => exchange_message,
-                            Some(Err(_)) => break, // Log this error (this is a deserisation error from the parsing function)
+                            Some(Err(error)) => {
+                                println!("Failed to deserialise WsMessage: {:#?}", &error); // Log this error
+                                // Defs dont return this as crashed the whole program
+                                return SocketError::Subscribe(format!(
+                                    "Failed to deserialise WsMessage: {}",
+                                    error
+                                ));
+                            }
                             None => continue,
                         };
 

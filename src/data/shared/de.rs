@@ -1,5 +1,9 @@
 // use serde::Deserialize;
 
+use std::{fmt, marker::PhantomData};
+
+use serde::{de::{SeqAccess, Visitor}, Deserialize, Deserializer};
+
 // Deserialize a `String` as the desired type.
 pub fn de_str<'de, D, T>(deserializer: D) -> Result<T, D::Error>
 where
@@ -80,3 +84,43 @@ where
         datetime_utc_from_epoch_duration(std::time::Duration::from_secs_f64(epoch_s))
     })
 }
+
+// Deserialize a non empty vec else return None
+pub fn deserialize_non_empty_vec<'de, D, T>(deserializer: D) -> Result<Option<Vec<T>>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: Deserialize<'de>,
+{
+    struct NonEmptyVecVisitor<T>(PhantomData<T>);
+
+    impl<'de, T> Visitor<'de> for NonEmptyVecVisitor<T>
+    where
+        T: Deserialize<'de>,
+    {
+        type Value = Option<Vec<T>>;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("a sequence")
+        }
+
+        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+        where
+            A: SeqAccess<'de>,
+        {
+            match seq.next_element()? {
+                Some(first) => {
+                    let mut vec = Vec::with_capacity(seq.size_hint().unwrap_or(4));
+                    vec.push(first);
+                    while let Some(element) = seq.next_element()? {
+                        vec.push(element);
+                    }
+                    Ok(Some(vec))
+                }
+                None => Ok(None),
+            }
+        }
+    }
+
+    deserializer.deserialize_seq(NonEmptyVecVisitor(PhantomData))
+}
+

@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 
 use super::{
-    exchange_connector::Connector, protocols::ws::connect, Instrument, StreamType, Subscription
+    exchange_connector::Connector, protocols::ws::connect, Instrument, StreamType, Subscription,
 };
 
 /*----- */
@@ -27,7 +27,7 @@ where
 {
     pub fn new() -> Self {
         Self {
-           market_subscriptions: HashMap::new(),
+            market_subscriptions: HashMap::new(),
         }
     }
 

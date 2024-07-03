@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
 use crate::data::shared::{
-    de::{de_str, de_str_symbol},
+    de::{de_str, de_str_symbol, deserialize_non_empty_vec},
     orderbook::{Event, Level},
     utils::{current_timestamp_utc, snapshot_symbol_default_value},
 };
@@ -17,8 +17,10 @@ pub struct BinanceSnapshot {
     pub timestamp: u64,
     #[serde(rename = "lastUpdateId")]
     pub last_update_id: u64,
-    pub bids: Vec<Level>,
-    pub asks: Vec<Level>,
+    #[serde(deserialize_with = "deserialize_non_empty_vec")]
+    pub bids: Option<Vec<Level>>,
+    #[serde(deserialize_with = "deserialize_non_empty_vec")]
+    pub asks: Option<Vec<Level>>,
 }
 
 impl From<BinanceSnapshot> for Event {
@@ -27,8 +29,8 @@ impl From<BinanceSnapshot> for Event {
             value.symbol,
             value.timestamp,
             value.last_update_id,
-            Some(value.bids),
-            Some(value.asks),
+            value.bids,
+            value.asks,
             None,
             None,
         )
@@ -45,9 +47,11 @@ pub struct BinanceBookUpdate {
     #[serde(alias = "U")]
     pub first_update_id: u64,
     #[serde(alias = "b")]
-    pub bids: Vec<Level>,
+    #[serde(deserialize_with = "deserialize_non_empty_vec")]
+    pub bids: Option<Vec<Level>>,
     #[serde(alias = "a")]
-    pub asks: Vec<Level>,
+    #[serde(deserialize_with = "deserialize_non_empty_vec")]
+    pub asks: Option<Vec<Level>>,
 }
 
 impl From<BinanceBookUpdate> for Event {
@@ -56,8 +60,8 @@ impl From<BinanceBookUpdate> for Event {
             value.symbol,
             value.timestamp,
             value.first_update_id,
-            Some(value.bids),
-            Some(value.asks),
+            value.bids,
+            value.asks,
             None,
             None,
         )
@@ -123,14 +127,14 @@ mod test {
             symbol: "snapshot".to_string(),
             timestamp: current_timestamp_utc(),
             last_update_id: 3476852730,
-            bids: vec![
+            bids: Some(vec![
                 Level::new(0.00914500, 2.18100000),
                 Level::new(0.00914400, 8.12300000),
-            ],
-            asks: vec![
+            ]),
+            asks: Some(vec![
                 Level::new(0.00914600, 312.94200000),
                 Level::new(0.00914700, 7.30100000),
-            ],
+            ]),
         };
         assert_eq!(snapshot_de, snapshot_expected)
     }
@@ -142,14 +146,14 @@ mod test {
             symbol: "snapshot".to_string(),
             timestamp: current_timestamp,
             last_update_id: 3476852730,
-            bids: vec![
+            bids: Some(vec![
                 Level::new(0.00914500, 2.18100000),
                 Level::new(0.00914400, 8.12300000),
-            ],
-            asks: vec![
+            ]),
+            asks: Some(vec![
                 Level::new(0.00914600, 312.94200000),
                 Level::new(0.00914700, 7.30100000),
-            ],
+            ]),
         };
 
         let event_expected = Event::new(
@@ -181,11 +185,11 @@ mod test {
             symbol: "btcusdt".to_string(),
             timestamp: 1718097006844,
             first_update_id: 47781538300,
-            bids: vec![
+            bids: Some(vec![
                 Level::new(67543.58000000, 0.03729000),
                 Level::new(67527.08000000, 8.71242000),
-            ],
-            asks: vec![],
+            ]),
+            asks: None,
         };
 
         println!("{:#?}", orderbook_expected);
@@ -199,11 +203,11 @@ mod test {
             symbol: "btcusdt".to_string(),
             timestamp: 1718097006844,
             first_update_id: 47781538300,
-            bids: vec![
+            bids: Some(vec![
                 Level::new(67543.58000000, 0.03729000),
                 Level::new(67527.08000000, 8.71242000),
-            ],
-            asks: vec![],
+            ]),
+            asks: None,
         };
 
         let event_expected = Event::new(
@@ -214,7 +218,7 @@ mod test {
                 Level::new(67543.58000000, 0.03729000),
                 Level::new(67527.08000000, 8.71242000),
             ]),
-            Some(vec![]),
+            None,
             None,
             None,
         );

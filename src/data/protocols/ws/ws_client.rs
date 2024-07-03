@@ -39,7 +39,7 @@ impl ExchangeWebSocket {
 }
 
 /*----- */
-// WebSocket Client
+// WebSocket client
 /*----- */
 #[derive(Debug)]
 pub struct WebSocketClient {

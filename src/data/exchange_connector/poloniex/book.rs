@@ -1,21 +1,25 @@
+use std::mem;
+
 use serde::Deserialize;
 
 use crate::data::shared::{
-    de::{de_str, de_str_symbol},
+    de::{de_str, de_str_symbol, deserialize_non_empty_vec},
     orderbook::{Event, Level},
 };
 
 /*----- */
 // Models
 /*----- */
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, Debug, PartialEq, Default)]
 pub struct PoloniexBookData {
     #[serde(deserialize_with = "de_str_symbol")]
     pub symbol: String,
     #[serde(alias = "createTime")]
     pub timestamp: u64,
-    pub asks: Vec<Level>,
-    pub bids: Vec<Level>,
+    #[serde(deserialize_with = "deserialize_non_empty_vec")]
+    pub asks: Option<Vec<Level>>,
+    #[serde(deserialize_with = "deserialize_non_empty_vec")]
+    pub bids: Option<Vec<Level>>,
     #[serde(alias = "lastId")]
     pub last_id: u64,
     pub id: u64,
@@ -24,25 +28,25 @@ pub struct PoloniexBookData {
 
 #[derive(Debug, Deserialize, PartialEq)]
 pub struct PoloniexBookUpdate {
-    pub data: Vec<PoloniexBookData>,
+    pub data: [PoloniexBookData; 1],
 }
 
 impl From<PoloniexBookUpdate> for Event {
     fn from(mut value: PoloniexBookUpdate) -> Self {
-        let data = value.data.remove(0);
+        let data = mem::take(&mut value.data[0]);
         Event::new(
             data.symbol,
             data.timestamp,
             data.id,
-            Some(data.bids),
-            Some(data.asks),
+            data.bids,
+            data.asks,
             None,
             None,
         )
     }
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Deserialize, PartialEq, Default)]
 pub struct PoloniexTradeData {
     #[serde(deserialize_with = "de_str_symbol")]
     pub symbol: String,
@@ -63,12 +67,12 @@ pub struct PoloniexTradeData {
 
 #[derive(Debug, Deserialize, PartialEq)]
 pub struct PoloneixTradeUpdate {
-    pub data: Vec<PoloniexTradeData>,
+    pub data: [PoloniexTradeData; 1],
 }
 
 impl From<PoloneixTradeUpdate> for Event {
     fn from(mut value: PoloneixTradeUpdate) -> Self {
-        let data = value.data.remove(0);
+        let data = mem::take(&mut value.data[0]);
         Event::new(
             data.symbol,
             data.timestamp,
@@ -119,15 +123,18 @@ mod test {
         let orderbook_data_expected = PoloniexBookData {
             symbol: "btcusdt".to_string(),
             timestamp: 1718096579424,
-            asks: vec![],
-            bids: vec![Level::new(67546.83, 0.027962), Level::new(67301.78, 0.0)],
+            asks: None,
+            bids: Some(vec![
+                Level::new(67546.83, 0.027962),
+                Level::new(67301.78, 0.0),
+            ]),
             last_id: 1051076040,
             id: 1051076041,
             ts: 1718096579435,
         };
 
         let orderbook_expected = PoloniexBookUpdate {
-            data: vec![orderbook_data_expected],
+            data: [orderbook_data_expected],
         };
 
         assert_eq!(orderbook_de, orderbook_expected)
@@ -138,15 +145,18 @@ mod test {
         let orderbook_data = PoloniexBookData {
             symbol: "btcusdt".to_string(),
             timestamp: 1718096579424,
-            asks: vec![],
-            bids: vec![Level::new(67546.83, 0.027962), Level::new(67301.78, 0.0)],
+            asks: None,
+            bids: Some(vec![
+                Level::new(67546.83, 0.027962),
+                Level::new(67301.78, 0.0),
+            ]),
             last_id: 1051076040,
             id: 1051076041,
             ts: 1718096579435,
         };
 
         let orderbook_struct = PoloniexBookUpdate {
-            data: vec![orderbook_data],
+            data: [orderbook_data],
         };
 
         let event_expected = Event::new(
@@ -157,7 +167,7 @@ mod test {
                 Level::new(67546.83, 0.027962),
                 Level::new(67301.78, 0.0),
             ]),
-            Some(vec![]),
+            None,
             None,
             None,
         );
@@ -183,7 +193,7 @@ mod test {
         };
 
         let trade_expected = PoloneixTradeUpdate {
-            data: vec![trade_data_expected],
+            data: [trade_data_expected],
         };
 
         assert_eq!(trade_de, trade_expected)
@@ -202,9 +212,7 @@ mod test {
             ts: 1718096866402,
         };
 
-        let trade_struct = PoloneixTradeUpdate {
-            data: vec![trade_data],
-        };
+        let trade_struct = PoloneixTradeUpdate { data: [trade_data] };
 
         let event_expected = Event::new(
             "btcusdt".to_string(),
@@ -228,15 +236,15 @@ mod test {
         let snapshot_data_expected = PoloniexBookData {
             symbol: "btcusdt".to_string(),
             timestamp: 1718096578118,
-            asks: vec![Level::new(67547.43, 0.039788)],
-            bids: vec![Level::new(67546.15, 0.238432)],
+            asks: Some(vec![Level::new(67547.43, 0.039788)]),
+            bids: Some(vec![Level::new(67546.15, 0.238432)]),
             last_id: 1051076022,
             id: 1051076023,
             ts: 1718096578303,
         };
 
         let snapshot_expected = PoloniexBookUpdate {
-            data: vec![snapshot_data_expected],
+            data: [snapshot_data_expected],
         };
 
         assert_eq!(snapshot_de, snapshot_expected)
@@ -247,15 +255,15 @@ mod test {
         let snapshot_data = PoloniexBookData {
             symbol: "btcusdt".to_string(),
             timestamp: 1718096578118,
-            asks: vec![Level::new(67547.43, 0.039788)],
-            bids: vec![Level::new(67546.15, 0.238432)],
+            asks: Some(vec![Level::new(67547.43, 0.039788)]),
+            bids: Some(vec![Level::new(67546.15, 0.238432)]),
             last_id: 1051076022,
             id: 1051076023,
             ts: 1718096578303,
         };
 
         let snapshot_struct = PoloniexBookUpdate {
-            data: vec![snapshot_data],
+            data: [snapshot_data],
         };
 
         let event_expected = Event::new(
