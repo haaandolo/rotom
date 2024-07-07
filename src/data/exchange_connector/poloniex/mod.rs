@@ -1,14 +1,13 @@
 pub mod book;
 pub mod channel;
 
-use book::{PoloniexMessage, PoloniexSubscriptionResponse};
+use book::PoloniexSubscriptionResponse;
 use channel::PoloniexChannel;
 use serde_json::json;
 use std::collections::HashSet;
 
 use super::{Connector, Instrument};
 use crate::data::protocols::ws::ws_client::{PingInterval, WsMessage};
-use crate::data::shared::orderbook::Event;
 use crate::data::{ExchangeId, StreamType};
 
 #[derive(Debug, Default, Eq, PartialEq, Hash)]
@@ -16,12 +15,10 @@ pub struct PoloniexSpot;
 
 impl Connector for PoloniexSpot {
     type ExchangeId = ExchangeId;
-    type Input = PoloniexMessage;
-    type Output = Event;
     type SubscriptionResponse = PoloniexSubscriptionResponse;
 
-    fn exchange_id(&self) -> String {
-        ExchangeId::PoloniexSpot.as_str().to_string()
+    fn exchange_id(&self) -> ExchangeId{
+        ExchangeId::PoloniexSpot
     }
 
     fn url(&self) -> String {
@@ -67,18 +64,11 @@ impl Connector for PoloniexSpot {
 
     // Note: Poloniex sends a subscription validation response for
     // each stream type. This will cause the websocket to panic as
-    // the validation code for websocket only looks at the first 
+    // the validation code for websocket only looks at the first
     // message from the WS. Hence, only group by singular stream.
     fn validate_subscription(&self, subscription_response: String, sub: &[Instrument]) -> bool {
         let subscription_response =
             serde_json::from_str::<PoloniexSubscriptionResponse>(&subscription_response).unwrap();
         subscription_response.symbols.len() == sub.len()
-    }
-
-    fn transform(&mut self, input: Self::Input) -> Self::Output {
-        match input {
-            PoloniexMessage::Book(book) => Event::from(book),
-            PoloniexMessage::Trade(trade) => Event::from(trade),
-        }
     }
 }

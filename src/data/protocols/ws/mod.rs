@@ -1,7 +1,7 @@
 pub mod ws_client;
 
 use futures::StreamExt;
-use serde::de::DeserializeOwned;
+use serde::{de::DeserializeOwned, Deserialize};
 use tokio::{
     sync::mpsc::UnboundedSender,
     time::{sleep, Duration},
@@ -13,18 +13,19 @@ use tokio_tungstenite::tungstenite::{
 use ws_client::{WebSocketClient, WsError, WsMessage};
 
 use crate::{
-    data::{exchange_connector::Connector, Subscription},
+    data::{exchange_connector::Connector, shared::orderbook::Event, Subscription},
     error::SocketError,
 };
 
 pub const START_RECONNECTION_BACKOFF_MS: u64 = 125;
 
-pub async fn connect<ExchangeConnector>(
-    mut subscription: Subscription<ExchangeConnector>,
-    exchange_tx: UnboundedSender<ExchangeConnector::Output>,
+pub async fn connect<ExchangeConnector, StreamKind>(
+    subscription: Subscription<ExchangeConnector>,
+    exchange_tx: UnboundedSender<Event>,
 ) -> SocketError
 where
     ExchangeConnector: Connector + Send,
+    StreamKind: for<'de> Deserialize<'de> + Into<Event>,
 {
     let mut _connection_attempt: u32 = 0;
     let mut _backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
@@ -73,22 +74,24 @@ where
         while let Some(message) = stream.ws_read.next().await {
             match message {
                 Ok(ws_message) => {
-                    let deserialized_message =
-                        match parse::<<ExchangeConnector as Connector>::Input>(ws_message) {
-                            Some(Ok(exchange_message)) => exchange_message,
-                            Some(Err(error)) => {
-                                println!("Failed to deserialise WsMessage: {:#?}", &error); // Log this error
-                                // Defs dont return this as crashed the whole program
-                                return SocketError::Subscribe(format!(
-                                    "Failed to deserialise WsMessage: {}",
-                                    error
-                                ));
-                            }
-                            None => continue,
-                        };
+                    let deserialized_message = match parse::<StreamKind>(ws_message) {
+                        Some(Ok(exchange_message)) => exchange_message,
+                        Some(Err(error)) => {
+                            println!("Failed to deserialise WsMessage: {:#?}", &error); // Log this error
+                                                                                        // Defs dont return this as crashed the whole program
+                            return SocketError::Subscribe(format!(
+                                "Failed to deserialise WsMessage: {}",
+                                error
+                            ));
+                        }
+                        None => continue,
+                    };
 
-                    let event = subscription.connector.transform(deserialized_message);
-                    exchange_tx.send(event).expect("failed to send message");
+                    exchange_tx
+                        .send(deserialized_message.into())
+                        .expect("failed to send message");
+                    // let event = subscription.connector.transform(deserialized_message);
+                    // exchange_tx.send(event).expect("failed to send message");
                 }
                 Err(error) => {
                     if is_websocket_disconnected(&error) {

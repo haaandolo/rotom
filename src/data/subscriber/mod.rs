@@ -1,15 +1,28 @@
-use std::collections::{HashMap, HashSet};
+use futures::Future;
+use serde::Deserialize;
+use std::{
+    collections::{HashMap, HashSet},
+    marker::PhantomData,
+    pin::Pin,
+};
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 
+use crate::error::SocketError;
+
 use super::{
-    exchange_connector::Connector, protocols::ws::connect, Instrument, StreamType, Subscription,
+    exchange_connector::Connector, protocols::ws::connect, shared::orderbook::Event, ExchangeId,
+    Instrument, StreamType, Subscription, Subscription2,
 };
+
+pub type SubscribeFuture = Pin<Box<dyn Future<Output = Result<(), SocketError>>>>;
 
 /*----- */
 // Stream builder
 /*----- */
 pub struct StreamBuilder<ExchangeConnector> {
-    pub market_subscriptions: HashMap<String, Subscription<ExchangeConnector>>,
+    pub market_subscriptions: HashMap<ExchangeId, UnboundedReceiver<Event>>,
+    pub futures: Vec<SubscribeFuture>,
+    pub exchange_marker: PhantomData<ExchangeConnector>,
 }
 
 impl<ExchangeConnector> Default for StreamBuilder<ExchangeConnector>
@@ -28,46 +41,99 @@ where
     pub fn new() -> Self {
         Self {
             market_subscriptions: HashMap::new(),
+            futures: Vec::new(),
+            exchange_marker: PhantomData,
         }
     }
 
-    pub fn subscribe<Subscriptions>(mut self, subscriptions: Subscriptions) -> Self
+    pub fn subscribe<StreamKind>(
+        mut self,
+        subscriptions: impl IntoIterator<
+            Item = (
+                ExchangeConnector,
+                &'static str,
+                &'static str,
+                StreamKind,
+            ),
+        >,
+    ) -> Self
     where
-        Subscriptions:
-            IntoIterator<Item = (ExchangeConnector, &'static str, &'static str, StreamType)>,
         ExchangeConnector: Connector + Eq + std::hash::Hash + std::fmt::Debug,
+        StreamKind: Send + for<'de> Deserialize<'de> + 'static + Into<Event> + std::fmt::Debug,
     {
-        let mut exchange_subscriptions = HashMap::new();
-        subscriptions
-            .into_iter()
-            .collect::<HashSet<_>>() // rm duplicates
-            .into_iter()
-            .for_each(|(exchange_conn, base, quote, stream_type)| {
-                exchange_subscriptions
-                    .entry(exchange_conn)
-                    .or_insert(Vec::new())
-                    .push(Instrument::new(base, quote, stream_type))
-            });
+        let something = subscriptions.into_iter().map(|sub| {
+            Subscription2::from(sub)
+        })
+        .collect::<Vec<_>>();
+        println!("{:#?}", something);
 
-        exchange_subscriptions
-            .into_iter()
-            .for_each(|(exchange_connector, instruments)| {
-                let exchange_id = exchange_connector.exchange_id();
-                let subscriptions = Subscription::new(exchange_connector, instruments);
-                self.market_subscriptions.insert(exchange_id, subscriptions);
-            });
+        // let mut exchange_subscriptions = HashMap::new();
+        // subscriptions
+        //     .into_iter()
+        //     // .collect::<HashSet<_>>() // rm duplicates
+        //     // .into_iter()
+        //     .for_each(|(exchange_conn, base, quote, stream_type, kind)| {
+        //         exchange_subscriptions
+        //             .entry(exchange_conn)
+        //             .or_insert(Vec::new())
+        //             .push(Instrument::new(base, quote, stream_type))
+        //     });
+
+        // exchange_subscriptions
+        //     .into_iter()
+        //     .for_each(|(exchange_connector, instruments)| {
+        //         let exchange_id = exchange_connector.exchange_id();
+        //         let subscriptions = Subscription::new(exchange_connector, instruments);
+        //         let (tx, rx) = mpsc::unbounded_channel();
+        //         self.futures.push(Box::pin(async move {
+        //             tokio::spawn(connect::<ExchangeConnector, StreamKind>(subscriptions, tx));
+        //             Ok(())
+        //         }));
+        //         self.market_subscriptions.insert(exchange_id, rx);
+        //     });
         self
     }
 
-    pub async fn init(self) -> HashMap<String, UnboundedReceiver<ExchangeConnector::Output>> {
+    // pub fn subscribe<StreamKind>(
+    //     mut self,
+    //     subscriptions: impl IntoIterator<
+    //         Item = (ExchangeConnector, &'static str, &'static str, StreamType, StreamKind),
+    //     >,
+    // ) -> Self
+    // where
+    //     ExchangeConnector: Connector + Eq + std::hash::Hash + std::fmt::Debug,
+    //     StreamKind: Send + for<'de> Deserialize<'de> + 'static + Into<Event>,
+    // {
+    //     let mut exchange_subscriptions = HashMap::new();
+    //     subscriptions
+    //         .into_iter()
+    //         // .collect::<HashSet<_>>() // rm duplicates
+    //         // .into_iter()
+    //         .for_each(|(exchange_conn, base, quote, stream_type, kind)| {
+    //             exchange_subscriptions
+    //                 .entry(exchange_conn)
+    //                 .or_insert(Vec::new())
+    //                 .push(Instrument::new(base, quote, stream_type))
+    //         });
+
+    //     exchange_subscriptions
+    //         .into_iter()
+    //         .for_each(|(exchange_connector, instruments)| {
+    //             let exchange_id = exchange_connector.exchange_id();
+    //             let subscriptions = Subscription::new(exchange_connector, instruments);
+    //             let (tx, rx) = mpsc::unbounded_channel();
+    //             self.futures.push(Box::pin(async move {
+    //                 tokio::spawn(connect::<ExchangeConnector, StreamKind>(subscriptions, tx));
+    //                 Ok(())
+    //             }));
+    //             self.market_subscriptions.insert(exchange_id, rx);
+    //         });
+    //     self
+    // }
+
+    pub async fn init(self) -> HashMap<ExchangeId, UnboundedReceiver<Event>> {
+        futures::future::try_join_all(self.futures).await.unwrap(); // Chnage to result
         self.market_subscriptions
-            .into_iter()
-            .map(|(exchange_name, subscription)| {
-                let (tx, rx) = mpsc::unbounded_channel();
-                tokio::spawn(connect(subscription, tx));
-                (exchange_name, rx)
-            })
-            .collect::<HashMap<_, _>>()
     }
 }
 

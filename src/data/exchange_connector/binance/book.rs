@@ -37,8 +37,8 @@ impl From<BinanceSnapshot> for Event {
     }
 }
 
-#[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize)]
-pub struct BinanceBookUpdate {
+#[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize, Default)]
+pub struct BinanceBook {
     #[serde(alias = "s")]
     #[serde(alias = "p", deserialize_with = "de_str_symbol")]
     pub symbol: String,
@@ -54,8 +54,8 @@ pub struct BinanceBookUpdate {
     pub asks: Option<Vec<Level>>,
 }
 
-impl From<BinanceBookUpdate> for Event {
-    fn from(value: BinanceBookUpdate) -> Self {
+impl From<BinanceBook> for Event {
+    fn from(value: BinanceBook) -> Self {
         Event::new(
             value.symbol,
             value.timestamp,
@@ -68,8 +68,8 @@ impl From<BinanceBookUpdate> for Event {
     }
 }
 
-#[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize)]
-pub struct BinanceTradeUpdate {
+#[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize, Default)]
+pub struct BinanceTrade {
     #[serde(alias = "s", deserialize_with = "de_str_symbol")]
     pub symbol: String,
     #[serde(alias = "T")]
@@ -84,8 +84,8 @@ pub struct BinanceTradeUpdate {
     pub side: bool,
 }
 
-impl From<BinanceTradeUpdate> for Event {
-    fn from(value: BinanceTradeUpdate) -> Self {
+impl From<BinanceTrade> for Event {
+    fn from(value: BinanceTrade) -> Self {
         Event::new(
             value.symbol,
             value.timestamp,
@@ -107,9 +107,9 @@ pub struct BinanceSubscriptionResponse {
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(untagged, rename_all = "snake_case")]
 pub enum BinanceMessage {
-    Book(BinanceBookUpdate),
+    Book(BinanceBook),
     Snapshot(BinanceSnapshot),
-    Trade(BinanceTradeUpdate),
+    Trade(BinanceTrade),
 }
 
 /*----- */
@@ -180,8 +180,8 @@ mod test {
     #[test]
     fn orderbook_de() {
         let orderbook = "{\"e\":\"depthupdate\",\"E\":1718097006844,\"s\":\"btcusdt\",\"U\":47781538300,\"u\":47781538304,\"b\":[[\"67543.58000000\",\"0.03729000\"],[\"67527.08000000\",\"8.71242000\"]],\"a\":[]}";
-        let orderbook_de = serde_json::from_str::<BinanceBookUpdate>(orderbook).unwrap();
-        let orderbook_expected = BinanceBookUpdate {
+        let orderbook_de = serde_json::from_str::<BinanceBook>(orderbook).unwrap();
+        let orderbook_expected = BinanceBook {
             symbol: "btcusdt".to_string(),
             timestamp: 1718097006844,
             first_update_id: 47781538300,
@@ -199,7 +199,7 @@ mod test {
 
     #[test]
     fn orderbook_to_event() {
-        let orderbook_struct = BinanceBookUpdate {
+        let orderbook_struct = BinanceBook {
             symbol: "btcusdt".to_string(),
             timestamp: 1718097006844,
             first_update_id: 47781538300,
@@ -231,8 +231,8 @@ mod test {
     #[test]
     fn trade_de() {
         let trade = "{\"e\":\"trade\",\"E\":1718097131139,\"s\":\"BTCUSDT\",\"t\":3631373609,\"p\":\"67547.10000000\",\"q\":\"0.00100000\",\"b\":27777962514,\"a\":27777962896,\"T\":1718097131138,\"m\":true,\"M\":true}";
-        let trade_de = serde_json::from_str::<BinanceTradeUpdate>(trade).unwrap();
-        let trade_expected = BinanceTradeUpdate {
+        let trade_de = serde_json::from_str::<BinanceTrade>(trade).unwrap();
+        let trade_expected = BinanceTrade {
             symbol: "btcusdt".to_string(),
             timestamp: 1718097131138,
             id: 3631373609,
@@ -245,7 +245,7 @@ mod test {
 
     #[test]
     fn trade_to_event() {
-        let trade_struct = BinanceTradeUpdate {
+        let trade_struct = BinanceTrade {
             symbol: "btcusdt".to_string(),
             timestamp: 1718097131138,
             id: 3631373609,

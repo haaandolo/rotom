@@ -1,7 +1,13 @@
 use arb_bot::data::{
-    exchange_connector::{binance::BinanceSpot, poloniex::PoloniexSpot},
+    exchange_connector::{
+        binance::{
+            book::{BinanceBook, BinanceTrade},
+            BinanceSpot,
+        },
+        poloniex::PoloniexSpot,
+    },
     subscriber::StreamBuilder,
-    StreamType,
+    ExchangeId, StreamType,
 };
 
 #[tokio::main]
@@ -9,12 +15,15 @@ async fn main() {
     //////////////////
     // Build Streams
     let mut streams = StreamBuilder::new()
-        .subscribe([
-            (BinanceSpot, "arb", "usdt", StreamType::Trades),
-            (BinanceSpot, "arb", "usdt", StreamType::Trades),
-            (BinanceSpot, "btc", "usdt", StreamType::L2),
+        .subscribe::<BinanceBook>([
+            (BinanceSpot, "arb", "usdt", BinanceBook),
+            (BinanceSpot, "btc", "usdt", BinanceBook),
         ])
-        // .subscribe([
+        .subscribe::<BinanceTrade>([
+            (BinanceSpot, "btc", "usdt", BinanceTrade::default()),
+            (BinanceSpot, "arb", "usdt", BinanceTrade::default()),
+        ])
+        // .subscribe::<BinanceTradeUpdate>(vec![
         //     // (PoloniexSpot, "arb", "usdt", StreamType::Trades),
         //     // (PoloniexSpot, "arb", "usdt", StreamType::Trades),
         //     (PoloniexSpot, "btc", "usdt", StreamType::L2),
@@ -24,7 +33,7 @@ async fn main() {
         .await;
 
     // Read from socket
-    if let Some(mut receiver) = streams.remove("binancespot") {
+    if let Some(mut receiver) = streams.remove(&ExchangeId::BinanceSpot) {
         while let Some(msg) = receiver.recv().await {
             // Some(msg);
             println!("----- Binance -----");
@@ -33,7 +42,7 @@ async fn main() {
     }
 
     // Read from socket
-    if let Some(mut receiver) = streams.remove("poloniexspot") {
+    if let Some(mut receiver) = streams.remove(&ExchangeId::PoloniexSpot) {
         while let Some(msg) = receiver.recv().await {
             // Some(msg);
             println!("----- Poloniex -----");
