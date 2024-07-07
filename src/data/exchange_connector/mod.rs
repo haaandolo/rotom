@@ -2,10 +2,12 @@ pub mod binance;
 pub mod poloniex;
 
 use serde::Deserialize;
-use std::{fmt::Debug, time::Duration};
+use std::fmt::Debug;
 
 use super::{
-    protocols::ws::ws_client::{PingInterval, WsMessage}, Instrument
+    protocols::ws::ws_client::{PingInterval, WsMessage},
+    shared::orderbook::Event,
+    ExchangeId, Instrument,
 };
 
 /*----- */
@@ -17,7 +19,7 @@ pub trait Connector {
     type Output: Send;
     type SubscriptionResponse;
 
-    fn exchange_id(&self) -> String;
+    fn exchange_id(&self) -> ExchangeId;
 
     fn url(&self) -> String;
 
@@ -34,8 +36,35 @@ pub trait Connector {
     ) -> bool;
 
     fn transform(&mut self, input: Self::Input) -> Self::Output;
+}
 
-    fn subscription_timeout() -> Duration {
-        Duration::from_secs(10)
-    }
+/*----- */
+// Subscription kinds
+/*----- */
+pub trait SubKind
+where
+    Self: Debug + Clone,
+{
+    type Event: Debug;
+}
+
+#[derive(Clone, Debug)]
+pub struct Trades;
+
+impl SubKind for Trades {
+    type Event = Event;
+}
+
+#[derive(Clone, Debug)]
+pub struct L2;
+
+impl SubKind for L2 {
+    type Event = Event;
+}
+/*----- */
+// Stream Selector
+/*----- */
+pub trait ExchangeSelector
+{
+    type ExchangeConn: Connector;
 }

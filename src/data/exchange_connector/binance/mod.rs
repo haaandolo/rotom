@@ -7,7 +7,9 @@ use serde_json::json;
 use std::collections::HashSet;
 
 use super::{Connector, Instrument};
-use crate::data::{ protocols::ws::ws_client::WsMessage, shared::orderbook::Event, ExchangeId, StreamType};
+use crate::data::{
+    protocols::ws::ws_client::WsMessage, shared::orderbook::Event, ExchangeId, StreamType,
+};
 
 #[derive(Debug, Default, Eq, PartialEq, Hash)]
 pub struct BinanceSpot;
@@ -18,8 +20,8 @@ impl Connector for BinanceSpot {
     type Output = Event;
     type SubscriptionResponse = BinanceSubscriptionResponse;
 
-    fn exchange_id(&self) -> String {
-        ExchangeId::BinanceSpot.as_str().to_string()
+    fn exchange_id(&self) -> ExchangeId {
+        ExchangeId::BinanceSpot
     }
 
     fn url(&self) -> String {
@@ -55,7 +57,7 @@ impl Connector for BinanceSpot {
         subscription_response: String,
         _subscriptions: &[Instrument],
     ) -> bool {
-        let subscription_response=
+        let subscription_response =
             serde_json::from_str::<BinanceSubscriptionResponse>(&subscription_response).unwrap();
         subscription_response.result.is_none()
     }

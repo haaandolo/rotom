@@ -10,7 +10,7 @@ use crate::data::shared::{
 /*----- */
 // Models
 /*----- */
-#[derive(Deserialize, Debug, PartialEq, Default)]
+#[derive(Deserialize, Debug, PartialEq, Default, Eq)]
 pub struct PoloniexBookData {
     #[serde(deserialize_with = "de_str_symbol")]
     pub symbol: String,
@@ -26,13 +26,13 @@ pub struct PoloniexBookData {
     pub ts: u64,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
-pub struct PoloniexBookUpdate {
+#[derive(Debug, Deserialize, PartialEq, Default, Eq)]
+pub struct PoloniexBook {
     pub data: [PoloniexBookData; 1],
 }
 
-impl From<PoloniexBookUpdate> for Event {
-    fn from(mut value: PoloniexBookUpdate) -> Self {
+impl From<PoloniexBook> for Event {
+    fn from(mut value: PoloniexBook) -> Self {
         let data = mem::take(&mut value.data[0]);
         Event::new(
             data.symbol,
@@ -66,12 +66,12 @@ pub struct PoloniexTradeData {
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
-pub struct PoloneixTradeUpdate {
+pub struct PoloneixTrade {
     pub data: [PoloniexTradeData; 1],
 }
 
-impl From<PoloneixTradeUpdate> for Event {
-    fn from(mut value: PoloneixTradeUpdate) -> Self {
+impl From<PoloneixTrade> for Event {
+    fn from(mut value: PoloneixTrade) -> Self {
         let data = mem::take(&mut value.data[0]);
         Event::new(
             data.symbol,
@@ -95,8 +95,8 @@ pub struct PoloniexSubscriptionResponse {
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(untagged, rename_all = "snake_case")]
 pub enum PoloniexMessage {
-    Trade(PoloneixTradeUpdate),
-    Book(PoloniexBookUpdate),
+    Trade(PoloneixTrade),
+    Book(PoloniexBook),
 }
 
 /*----- */
@@ -119,7 +119,7 @@ mod test {
     #[test]
     fn orderbook_de() {
         let orderbook = "{\"channel\":\"book_lv2\",\"data\":[{\"symbol\":\"BTC_USDT\",\"createTime\":1718096579424,\"asks\":[],\"bids\":[[\"67546.83\",\"0.027962\"],[\"67301.78\",\"0\"]],\"lastId\":1051076040,\"id\":1051076041,\"ts\":1718096579435}],\"action\":\"update\"}";
-        let orderbook_de = serde_json::from_str::<PoloniexBookUpdate>(orderbook).unwrap();
+        let orderbook_de = serde_json::from_str::<PoloniexBook>(orderbook).unwrap();
         let orderbook_data_expected = PoloniexBookData {
             symbol: "btcusdt".to_string(),
             timestamp: 1718096579424,
@@ -133,7 +133,7 @@ mod test {
             ts: 1718096579435,
         };
 
-        let orderbook_expected = PoloniexBookUpdate {
+        let orderbook_expected = PoloniexBook {
             data: [orderbook_data_expected],
         };
 
@@ -155,7 +155,7 @@ mod test {
             ts: 1718096579435,
         };
 
-        let orderbook_struct = PoloniexBookUpdate {
+        let orderbook_struct = PoloniexBook {
             data: [orderbook_data],
         };
 
@@ -180,7 +180,7 @@ mod test {
     #[test]
     fn trade_de() {
         let trade = "{\"channel\":\"trades\",\"data\":[{\"symbol\":\"BTC_USDT\",\"amount\":\"1684.53544514\",\"quantity\":\"0.024914\",\"takerSide\":\"sell\",\"createTime\":1718096866390,\"price\":\"67614.01\",\"id\":\"95714554\",\"ts\":1718096866402}]}";
-        let trade_de = serde_json::from_str::<PoloneixTradeUpdate>(trade).unwrap();
+        let trade_de = serde_json::from_str::<PoloneixTrade>(trade).unwrap();
         let trade_data_expected = PoloniexTradeData {
             symbol: "btcusdt".to_string(),
             amount: 1684.53544514,
@@ -192,7 +192,7 @@ mod test {
             ts: 1718096866402,
         };
 
-        let trade_expected = PoloneixTradeUpdate {
+        let trade_expected = PoloneixTrade {
             data: [trade_data_expected],
         };
 
@@ -212,7 +212,7 @@ mod test {
             ts: 1718096866402,
         };
 
-        let trade_struct = PoloneixTradeUpdate { data: [trade_data] };
+        let trade_struct = PoloneixTrade { data: [trade_data] };
 
         let event_expected = Event::new(
             "btcusdt".to_string(),
@@ -232,7 +232,7 @@ mod test {
     #[test]
     fn snapshot_de() {
         let snapshot = "{\"channel\":\"book_lv2\",\"data\":[{\"symbol\":\"BTC_USDT\",\"createTime\":1718096578118,\"asks\":[[\"67547.43\",\"0.039788\"]],\"bids\":[[\"67546.15\",\"0.238432\"]],\"lastId\":1051076022,\"id\":1051076023,\"ts\":1718096578303}],\"action\":\"snapshot\"}";
-        let snapshot_de = serde_json::from_str::<PoloniexBookUpdate>(snapshot).unwrap();
+        let snapshot_de = serde_json::from_str::<PoloniexBook>(snapshot).unwrap();
         let snapshot_data_expected = PoloniexBookData {
             symbol: "btcusdt".to_string(),
             timestamp: 1718096578118,
@@ -243,7 +243,7 @@ mod test {
             ts: 1718096578303,
         };
 
-        let snapshot_expected = PoloniexBookUpdate {
+        let snapshot_expected = PoloniexBook {
             data: [snapshot_data_expected],
         };
 
@@ -262,7 +262,7 @@ mod test {
             ts: 1718096578303,
         };
 
-        let snapshot_struct = PoloniexBookUpdate {
+        let snapshot_struct = PoloniexBook {
             data: [snapshot_data],
         };
 

@@ -20,8 +20,8 @@ impl Connector for PoloniexSpot {
     type Output = Event;
     type SubscriptionResponse = PoloniexSubscriptionResponse;
 
-    fn exchange_id(&self) -> String {
-        ExchangeId::PoloniexSpot.as_str().to_string()
+    fn exchange_id(&self) -> ExchangeId {
+        ExchangeId::PoloniexSpot
     }
 
     fn url(&self) -> String {
