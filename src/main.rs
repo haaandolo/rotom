@@ -16,8 +16,8 @@ async fn main() {
     // Build Streams
     let mut streams = StreamBuilder::new()
         .subscribe::<BinanceBook>([
-            (BinanceSpot, "arb", "usdt", BinanceBook),
-            (BinanceSpot, "btc", "usdt", BinanceBook),
+            (BinanceSpot, "arb", "usdt", BinanceBook::default()),
+            (BinanceSpot, "btc", "usdt", BinanceBook::default()),
         ])
         .subscribe::<BinanceTrade>([
             (BinanceSpot, "btc", "usdt", BinanceTrade::default()),

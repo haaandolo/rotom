@@ -129,10 +129,77 @@ where
 mod test {
     use super::*;
 
+    pub trait Identifier<T> {
+        fn id(&self) -> T;
+    }
+
+    #[derive(Debug)]
+    // General types
+    pub struct Book;
+    #[derive(Debug)]
+    pub struct Trades;
+
+    #[derive(Debug)]
+    pub struct Sub<Ex, Kind> {
+        pub ex: Ex,
+        pub kind: Kind,
+    }
+
+    impl<Ex, Kind> From<(Ex, Kind)> for Sub<Ex, Kind> {
+        fn from(value: (Ex, Kind)) -> Self {
+            Self {
+                ex: value.0,
+                kind: value.1
+            }
+        }
+    }
+
+    // Polo
+    #[derive(Debug)]
+    pub struct Polo;
+    #[derive(Debug)]
+    pub struct PoloBook;
+    #[derive(Debug)]
+    pub struct PoloTrade;
+    #[derive(Debug)]
+    pub enum PoloMessage {
+        Book(PoloBook),
+        Trade(PoloTrade),
+    }
+
+    impl Identifier<PoloMessage> for Sub<Polo, Book> {
+        fn id(&self) -> PoloMessage {
+            PoloMessage::Book(PoloBook)
+        }
+    }
+
+    impl Identifier<BinMessage> for Sub<Bin, Book> {
+        fn id(&self) -> BinMessage {
+            BinMessage::Book(BinBook)
+        }
+    }
+
+    // Bin
+    #[derive(Debug)]
+    pub struct Bin;
+    #[derive(Debug)]
+    pub struct BinBook;
+    #[derive(Debug)]
+    pub struct BinTrade;
+    #[derive(Debug)]
+    pub enum BinMessage {
+        Book(BinBook),
+        Trade(BinTrade),
+    }
+
     #[test]
     fn test() {
-        let test = (ExchangeId::BinanceSpot, "arb", "usdt", StreamType::L2);
-        let some = Subscription2::from(test);
-        println!("{:#?}", some);
+        let test = (Bin, Book);
+        let some = Sub::from(test);
+        println!("{:#?}", some.id()); 
+    
+        let test2 = (Polo, Book);
+        let some2 = Sub::from(test2);
+        println!("{:#?}", some2.id());
     }
 }
