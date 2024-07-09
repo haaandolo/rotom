@@ -10,7 +10,7 @@ use super::{Connector, Instrument};
 use crate::data::protocols::ws::ws_client::{PingInterval, WsMessage};
 use crate::data::{ExchangeId, StreamType};
 
-#[derive(Debug, Default, Eq, PartialEq, Hash)]
+#[derive(Debug, Default, Eq, PartialEq, Hash, Clone)]
 pub struct PoloniexSpot;
 
 impl Connector for PoloniexSpot {
@@ -32,7 +32,7 @@ impl Connector for PoloniexSpot {
                 match s.stream_type {
                     StreamType::L2 => PoloniexChannel::ORDER_BOOK_L2.as_ref(),
                     StreamType::Trades => PoloniexChannel::TRADES.as_ref(),
-                    _ => "Invalid Stream", // CHANGE
+                    _ => panic!("Invalid stream was enter for poloniex"),
                 }
             })
             .collect::<HashSet<_>>()

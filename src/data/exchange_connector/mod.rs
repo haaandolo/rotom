@@ -1,9 +1,9 @@
 pub mod binance;
 pub mod poloniex;
 
-
 use super::{
-    protocols::ws::ws_client::{PingInterval, WsMessage}, ExchangeId, Instrument
+    protocols::ws::ws_client::{PingInterval, WsMessage},
+    ExchangeId, Instrument,
 };
 
 /*----- */
@@ -28,4 +28,11 @@ pub trait Connector {
         subscription_repsonse: String,
         subscriptions: &[Instrument],
     ) -> bool;
+}
+
+/*----- */
+// Identifier
+/*----- */
+pub trait Identifier<T> {
+    fn id(&self) -> T;
 }

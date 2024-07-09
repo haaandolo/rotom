@@ -9,7 +9,7 @@ use std::collections::HashSet;
 use super::{Connector, Instrument};
 use crate::data::{protocols::ws::ws_client::WsMessage, ExchangeId, StreamType};
 
-#[derive(Debug, Default, Eq, PartialEq, Hash)]
+#[derive(Debug, Default, Eq, PartialEq, Hash, Clone)]
 pub struct BinanceSpot;
 
 impl Connector for BinanceSpot {
@@ -58,3 +58,5 @@ impl Connector for BinanceSpot {
         subscription_response.result.is_none()
     }
 }
+
+

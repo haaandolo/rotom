@@ -1,34 +1,23 @@
 use arb_bot::data::{
-    exchange_connector::{
-        binance::{
-            book::{BinanceBook, BinanceTrade},
-            BinanceSpot,
-        },
-        poloniex::PoloniexSpot,
-    },
+    exchange_connector::{binance::BinanceSpot, poloniex::PoloniexSpot},
     subscriber::StreamBuilder,
-    ExchangeId, StreamType,
+    ExchangeId, OrderbookL2, StreamType,
 };
 
 #[tokio::main]
 async fn main() {
     //////////////////
     // Build Streams
-    let mut streams = StreamBuilder::new()
-        .subscribe::<BinanceBook>([
-            (BinanceSpot, "arb", "usdt", BinanceBook::default()),
-            (BinanceSpot, "btc", "usdt", BinanceBook::default()),
+    let mut streams = StreamBuilder::<OrderbookL2>::new()
+        .subscribe([
+            (BinanceSpot, "arb", "usdt", StreamType::L2, OrderbookL2),
+            (BinanceSpot, "btc", "usdt", StreamType::L2, OrderbookL2),
+            (BinanceSpot, "btc", "usdt", StreamType::L2, OrderbookL2),
         ])
-        .subscribe::<BinanceTrade>([
-            (BinanceSpot, "btc", "usdt", BinanceTrade::default()),
-            (BinanceSpot, "arb", "usdt", BinanceTrade::default()),
+        .subscribe([
+            (PoloniexSpot, "btc", "usdt", StreamType::L2, OrderbookL2),
+            (PoloniexSpot, "arb", "usdt", StreamType::L2, OrderbookL2),
         ])
-        // .subscribe::<BinanceTradeUpdate>(vec![
-        //     // (PoloniexSpot, "arb", "usdt", StreamType::Trades),
-        //     // (PoloniexSpot, "arb", "usdt", StreamType::Trades),
-        //     (PoloniexSpot, "btc", "usdt", StreamType::L2),
-        //     (PoloniexSpot, "arb", "usdt", StreamType::L2),
-        // ])
         .init()
         .await;
 

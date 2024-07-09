@@ -7,7 +7,7 @@ use std::{
 };
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 
-use crate::error::SocketError;
+use crate::{data::ExchangeSub, error::SocketError};
 
 use super::{
     exchange_connector::Connector, protocols::ws::connect, shared::orderbook::Event, ExchangeId,
@@ -19,25 +19,14 @@ pub type SubscribeFuture = Pin<Box<dyn Future<Output = Result<(), SocketError>>>
 /*----- */
 // Stream builder
 /*----- */
-pub struct StreamBuilder<ExchangeConnector> {
+#[derive(Default)]
+pub struct StreamBuilder<StreamKind> {
     pub market_subscriptions: HashMap<ExchangeId, UnboundedReceiver<Event>>,
     pub futures: Vec<SubscribeFuture>,
-    pub exchange_marker: PhantomData<ExchangeConnector>,
+    pub exchange_marker: PhantomData<StreamKind>,
 }
 
-impl<ExchangeConnector> Default for StreamBuilder<ExchangeConnector>
-where
-    ExchangeConnector: Send + Connector + 'static,
-{
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<ExchangeConnector> StreamBuilder<ExchangeConnector>
-where
-    ExchangeConnector: Send + Connector + 'static,
-{
+impl<StreamKind> StreamBuilder<StreamKind> {
     pub fn new() -> Self {
         Self {
             market_subscriptions: HashMap::new(),
@@ -46,26 +35,25 @@ where
         }
     }
 
-    pub fn subscribe<StreamKind>(
-        mut self,
-        subscriptions: impl IntoIterator<
-            Item = (
-                ExchangeConnector,
-                &'static str,
-                &'static str,
-                StreamKind,
-            ),
-        >,
-    ) -> Self
+    pub fn subscribe<SubIter, Sub, Exchange>(mut self, subscriptions: SubIter) -> Self
     where
-        ExchangeConnector: Connector + Eq + std::hash::Hash + std::fmt::Debug,
-        StreamKind: Send + for<'de> Deserialize<'de> + 'static + Into<Event> + std::fmt::Debug,
+        SubIter: IntoIterator<Item = Sub>,
+        Sub: Into<Subscription2<Exchange, StreamKind>> + std::fmt::Debug,
+        Exchange: Connector + std::fmt::Debug + Clone,
+        StreamKind: std::fmt::Debug + Clone, // StreamKind: Send + for<'de> Deserialize<'de> + 'static + Into<Event> + std::fmt::Debug,
     {
-        let something = subscriptions.into_iter().map(|sub| {
-            Subscription2::from(sub)
-        })
-        .collect::<Vec<_>>();
-        println!("{:#?}", something);
+        let subscriptions: ExchangeSub<Exchange, StreamKind> = subscriptions
+            .into_iter()
+            .map(Sub::into)
+            .collect::<Vec<_>>()
+            .into();
+
+        self.futures.push(Box::pin(async move {
+            tokio::spawn(connect::<Exchange, StreamKind>(subscriptions, tx));
+            Ok(())
+        }));
+
+        println!("{:#?}", subscriptions);
 
         // let mut exchange_subscriptions = HashMap::new();
         // subscriptions

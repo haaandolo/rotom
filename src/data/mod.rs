@@ -11,7 +11,7 @@ pub mod subscriber;
 /*----- */
 // Exchange ID's & stream types
 /*----- */
-#[derive(Debug, PartialEq, Hash, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Hash, Eq, Clone, Copy, Ord, PartialOrd)]
 pub enum ExchangeId {
     BinanceSpot,
     PoloniexSpot,
@@ -26,7 +26,7 @@ impl ExchangeId {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Hash, Eq)]
+#[derive(Debug, PartialEq, Clone, Hash, Eq, Ord, PartialOrd)]
 pub enum StreamType {
     L1,
     L2,
@@ -82,52 +82,96 @@ where
 }
 
 /*-------------- */
-#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Deserialize, Serialize)]
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 
-pub struct Instrument2<Kind> {
+pub struct Instrument2 {
     pub base: String,
     pub quote: String,
-    pub stream_type: PhantomData<Kind>,
+    pub stream_type: StreamType,
 }
 
-impl<Kind> Instrument2<Kind> {
-    pub fn new(_base: String, _quote: String, _stream_type: Kind) -> Self {
+impl Instrument2 {
+    pub fn new(base: String, quote: String, stream_type: StreamType) -> Self {
         Self {
-            base: _base,
-            quote: _quote,
-            stream_type: PhantomData,
+            base,
+            quote,
+            stream_type,
         }
     }
 }
 
-impl<Kind> From<(String, String, Kind)> for Instrument2<Kind> {
-    fn from((base, quote, kind): (String, String, Kind)) -> Self {
-        Self::new(base, quote, kind)
+impl From<(String, String, StreamType)> for Instrument2 {
+    fn from((base, quote, stream_type): (String, String, StreamType)) -> Self {
+        Self::new(base, quote, stream_type)
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Deserialize, Serialize)]
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct Subscription2<Exchange, Kind> {
     pub exchange: Exchange,
-    #[serde(flatten)]
-    pub instrument: Instrument2<Kind>,
+    pub instrument: Instrument2,
+    pub kind: Kind,
 }
 
-impl<Exchange, S, Kind> From<(Exchange, S, S, Kind)> for Subscription2<Exchange, Kind>
+impl<Exchange, S, Kind> From<(Exchange, S, S, StreamType, Kind)> for Subscription2<Exchange, Kind>
 where
     S: Into<String>,
 {
-    fn from((exchange, base, quote, kind): (Exchange, S, S, Kind)) -> Self {
+    fn from(
+        (exchange, base, quote, stream_type, kind): (Exchange, S, S, StreamType, Kind),
+    ) -> Self {
         Self {
             exchange,
-            instrument: Instrument2::new(base.into(), quote.into(), kind),
+            instrument: Instrument2::new(base.into(), quote.into(), stream_type),
+            kind,
         }
     }
 }
 
+#[derive(Debug)]
+pub struct ExchangeSub<Exchange, Kind> {
+    pub exchange: Exchange,
+    pub subscriptions: Vec<Instrument2>,
+    pub kind: Kind,
+}
+
+impl<Exchange, Kind> From<Vec<Subscription2<Exchange, Kind>>> for ExchangeSub<Exchange, Kind>
+where
+    Exchange: Clone,
+    Kind: Clone
+{
+    fn from(value: Vec<Subscription2<Exchange, Kind>>) -> Self {
+        let exchange = value[0].exchange.clone(); // Okay for now but should fix
+        let kind = value[0].kind.clone(); // Okay for now but should fix
+        let subscriptions = value
+            .into_iter()
+            .map(|sub| sub.instrument)
+            .collect::<Vec<Instrument2>>();
+        Self {
+            exchange,
+            subscriptions,
+            kind
+        }
+    }
+}
+
+/*----- */
+// Stream kinds
+/*----- */
+#[derive(Debug, Clone)]
+pub struct OrderbookL1;
+
+#[derive(Debug, Clone)]
+pub struct OrderbookL2;
+
+#[derive(Debug, Clone)]
+pub struct Trades;
+
+/*----- */
+// Tests
+/*----- */
 #[cfg(test)]
 mod test {
-    use super::*;
 
     pub trait Identifier<T> {
         fn id(&self) -> T;
@@ -149,7 +193,7 @@ mod test {
         fn from(value: (Ex, Kind)) -> Self {
             Self {
                 ex: value.0,
-                kind: value.1
+                kind: value.1,
             }
         }
     }
@@ -196,8 +240,8 @@ mod test {
     fn test() {
         let test = (Bin, Book);
         let some = Sub::from(test);
-        println!("{:#?}", some.id()); 
-    
+        println!("{:#?}", some.id());
+
         let test2 = (Polo, Book);
         let some2 = Sub::from(test2);
         println!("{:#?}", some2.id());
