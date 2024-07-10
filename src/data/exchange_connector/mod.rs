@@ -1,8 +1,13 @@
 pub mod binance;
 pub mod poloniex;
 
+use std::fmt::Debug;
+
+use serde::de::DeserializeOwned;
+
 use super::{
     protocols::ws::ws_client::{PingInterval, WsMessage},
+    shared::orderbook::Event,
     ExchangeId, Instrument,
 };
 
@@ -28,6 +33,16 @@ pub trait Connector {
         subscription_repsonse: String,
         subscriptions: &[Instrument],
     ) -> bool;
+}
+
+/*----- */
+// Stream Selector
+/*----- */
+pub trait StreamSelector<Exchange, Kind>
+where
+    Exchange: Connector,
+{
+    type DeStruct: DeserializeOwned + Into<Event> + Debug;
 }
 
 /*----- */

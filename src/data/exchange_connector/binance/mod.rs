@@ -1,13 +1,15 @@
 pub mod book;
 pub mod channel;
 
-use book::BinanceSubscriptionResponse;
+use book::{BinanceBook, BinanceSubscriptionResponse};
 use channel::BinanceChannel;
 use serde_json::json;
 use std::collections::HashSet;
 
-use super::{Connector, Instrument};
-use crate::data::{protocols::ws::ws_client::WsMessage, ExchangeId, StreamType};
+use super::{Connector, Identifier, Instrument, StreamSelector};
+use crate::data::{
+    protocols::ws::ws_client::WsMessage, ExchangeId, ExchangeSub, OrderbookL2, StreamType, Subscription,
+};
 
 #[derive(Debug, Default, Eq, PartialEq, Hash, Clone)]
 pub struct BinanceSpot;
@@ -59,4 +61,12 @@ impl Connector for BinanceSpot {
     }
 }
 
+impl Identifier<String> for Subscription<BinanceSpot, OrderbookL2> {
+    fn id(&self) -> String {
+        String::from("worked !")
+    }
+}
 
+impl StreamSelector<BinanceSpot, OrderbookL2> for ExchangeSub<BinanceSpot, OrderbookL2> {
+    type DeStruct = BinanceBook;
+}

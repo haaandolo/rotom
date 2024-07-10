@@ -1,7 +1,8 @@
 pub mod ws_client;
 
+use std::fmt::Debug;
 use futures::StreamExt;
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::de::DeserializeOwned;
 use tokio::{
     sync::mpsc::UnboundedSender,
     time::{sleep, Duration},
@@ -13,27 +14,31 @@ use tokio_tungstenite::tungstenite::{
 use ws_client::{WebSocketClient, WsError, WsMessage};
 
 use crate::{
-    data::{exchange_connector::Connector, shared::orderbook::Event, Subscription},
+    data::{
+        exchange_connector::{Connector, StreamSelector},
+        shared::orderbook::Event,
+        ExchangeSub,
+    },
     error::SocketError,
 };
 
 pub const START_RECONNECTION_BACKOFF_MS: u64 = 125;
 
-pub async fn connect<ExchangeConnector, StreamKind>(
-    subscription: Subscription<ExchangeConnector>,
+pub async fn connect<Exchange, StreamKind>(
+    exchange_sub: ExchangeSub<Exchange, StreamKind>,
     exchange_tx: UnboundedSender<Event>,
 ) -> SocketError
 where
-    ExchangeConnector: Connector + Send,
-    StreamKind: for<'de> Deserialize<'de> + Into<Event>,
+    Exchange: Connector + Send,
+    ExchangeSub<Exchange, StreamKind>: StreamSelector<Exchange, StreamKind> + Send + Debug,
 {
     let mut _connection_attempt: u32 = 0;
     let mut _backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
 
     let mut ws_client = WebSocketClient::new(
-        subscription.connector.url(),
-        subscription.connector.requests(&subscription.instruments),
-        subscription.connector.ping_interval(),
+        exchange_sub.connector.url(),
+        exchange_sub.connector.requests(&exchange_sub.subscriptions),
+        exchange_sub.connector.ping_interval(),
     );
 
     loop {
@@ -61,9 +66,9 @@ where
 
         // Validate subscriptions
         if let Some(Ok(WsMessage::Text(message))) = &stream.ws_read.next().await {
-            let subscription_sucess = subscription
+            let subscription_sucess = exchange_sub
                 .connector
-                .validate_subscription(message.to_owned(), &subscription.instruments);
+                .validate_subscription(message.to_owned(), &exchange_sub.subscriptions);
 
             if !subscription_sucess {
                 break SocketError::Subscribe(String::from("Subscription failed"));
@@ -74,7 +79,13 @@ where
         while let Some(message) = stream.ws_read.next().await {
             match message {
                 Ok(ws_message) => {
-                    let deserialized_message = match parse::<StreamKind>(ws_message) {
+                    let deserialized_message = match parse::<
+                        <ExchangeSub<Exchange, StreamKind> as StreamSelector<
+                            Exchange,
+                            StreamKind,
+                        >>::DeStruct,
+                    >(ws_message)
+                    {
                         Some(Ok(exchange_message)) => exchange_message,
                         Some(Err(error)) => {
                             println!("Failed to deserialise WsMessage: {:#?}", &error); // Log this error
@@ -87,11 +98,11 @@ where
                         None => continue,
                     };
 
+                    println!("{:#?}", &deserialized_message);
+
                     exchange_tx
                         .send(deserialized_message.into())
                         .expect("failed to send message");
-                    // let event = subscription.connector.transform(deserialized_message);
-                    // exchange_tx.send(event).expect("failed to send message");
                 }
                 Err(error) => {
                     if is_websocket_disconnected(&error) {
