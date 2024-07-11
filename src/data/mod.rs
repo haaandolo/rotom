@@ -1,5 +1,3 @@
-use tracing::instrument;
-
 pub mod exchange_connector;
 pub mod protocols;
 pub mod shared;
@@ -83,33 +81,6 @@ where
         Self {
             exchange,
             instrument: Instrument::new(base.into(), quote.into(), stream_type),
-            kind,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct ExchangeSub<Exchange, Kind> {
-    pub connector: Exchange,
-    pub subscriptions: Vec<Instrument>,
-    pub kind: Kind,
-}
-
-impl<Exchange, Kind> From<Vec<Subscription<Exchange, Kind>>> for ExchangeSub<Exchange, Kind>
-where
-    Exchange: Clone,
-    Kind: Clone,
-{
-    fn from(value: Vec<Subscription<Exchange, Kind>>) -> Self {
-        let connector = value[0].exchange.clone(); // Okay for now but should fix
-        let kind = value[0].kind.clone(); // Okay for now but should fix
-        let subscriptions = value
-            .into_iter()
-            .map(|sub| sub.instrument)
-            .collect::<Vec<Instrument>>();
-        Self {
-            connector,
-            subscriptions,
             kind,
         }
     }

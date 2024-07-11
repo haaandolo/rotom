@@ -6,27 +6,23 @@ use channel::BinanceChannel;
 use serde_json::json;
 use std::collections::HashSet;
 
-use super::{Connector, Identifier, Instrument, StreamSelector};
-use crate::data::{
-    protocols::ws::ws_client::WsMessage, ExchangeId, ExchangeSub, OrderbookL2, StreamType, Subscription,
-};
+use super::{Connector, Instrument, StreamSelector};
+use crate::data::{protocols::ws::ws_client::WsMessage, ExchangeId, OrderbookL2, StreamType};
 
-#[derive(Debug, Default, Eq, PartialEq, Hash, Clone)]
+#[derive(Debug, Default, Eq, PartialEq, Hash)]
 pub struct BinanceSpot;
 
 impl Connector for BinanceSpot {
     type ExchangeId = ExchangeId;
     type SubscriptionResponse = BinanceSubscriptionResponse;
 
-    fn exchange_id(&self) -> ExchangeId {
-        ExchangeId::BinanceSpot
-    }
+    const ID: ExchangeId = ExchangeId::BinanceSpot;
 
-    fn url(&self) -> String {
+    fn url() -> String {
         BinanceChannel::SPOT_WS_URL.as_ref().to_string()
     }
 
-    fn requests(&self, subscriptions: &[Instrument]) -> Option<WsMessage> {
+    fn requests(subscriptions: &[Instrument]) -> Option<WsMessage> {
         let channels = subscriptions
             .iter()
             .map(|s| {
@@ -50,23 +46,13 @@ impl Connector for BinanceSpot {
         Some(WsMessage::Text(binance_request.to_string()))
     }
 
-    fn validate_subscription(
-        &self,
-        subscription_response: String,
-        _subscriptions: &[Instrument],
-    ) -> bool {
+    fn validate_subscription(subscription_response: String, _subscriptions: &[Instrument]) -> bool {
         let subscription_response =
             serde_json::from_str::<BinanceSubscriptionResponse>(&subscription_response).unwrap();
         subscription_response.result.is_none()
     }
 }
 
-impl Identifier<String> for Subscription<BinanceSpot, OrderbookL2> {
-    fn id(&self) -> String {
-        String::from("worked !")
-    }
-}
-
-impl StreamSelector<BinanceSpot, OrderbookL2> for ExchangeSub<BinanceSpot, OrderbookL2> {
-    type DeStruct = BinanceBook;
+impl StreamSelector<BinanceSpot, OrderbookL2> for BinanceSpot {
+    type Stream = BinanceBook;
 }

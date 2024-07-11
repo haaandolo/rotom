@@ -18,18 +18,17 @@ pub trait Connector {
     type ExchangeId;
     type SubscriptionResponse;
 
-    fn exchange_id(&self) -> ExchangeId;
+    const ID: ExchangeId;
 
-    fn url(&self) -> String;
+    fn url() -> String;
 
-    fn ping_interval(&self) -> Option<PingInterval> {
+    fn ping_interval() -> Option<PingInterval> {
         None
     }
 
-    fn requests(&self, subscriptions: &[Instrument]) -> Option<WsMessage>;
-
+    fn requests(subscriptions: &[Instrument]) -> Option<WsMessage>;
+    
     fn validate_subscription(
-        &self,
         subscription_repsonse: String,
         subscriptions: &[Instrument],
     ) -> bool;
@@ -42,7 +41,7 @@ pub trait StreamSelector<Exchange, Kind>
 where
     Exchange: Connector,
 {
-    type DeStruct: DeserializeOwned + Into<Event> + Debug;
+    type Stream: DeserializeOwned + Into<Event> + Debug;
 }
 
 /*----- */

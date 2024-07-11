@@ -9,7 +9,7 @@ use crate::data::shared::{
 /*----- */
 // Models
 /*----- */
-#[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize)]
+#[derive(PartialEq, PartialOrd, Debug, Deserialize)]
 pub struct BinanceSnapshot {
     #[serde(default = "snapshot_symbol_default_value")]
     symbol: String,
@@ -37,7 +37,7 @@ impl From<BinanceSnapshot> for Event {
     }
 }
 
-#[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize, Default)]
+#[derive(PartialEq, PartialOrd, Debug, Deserialize, Default)]
 pub struct BinanceBook {
     #[serde(alias = "s")]
     #[serde(alias = "p", deserialize_with = "de_str_symbol")]
@@ -68,7 +68,7 @@ impl From<BinanceBook> for Event {
     }
 }
 
-#[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize, Default)]
+#[derive(PartialEq, PartialOrd, Debug, Deserialize, Default)]
 pub struct BinanceTrade {
     #[serde(alias = "s", deserialize_with = "de_str_symbol")]
     pub symbol: String,

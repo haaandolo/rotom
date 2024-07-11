@@ -8,24 +8,22 @@ use std::collections::HashSet;
 
 use super::{Connector, Instrument, StreamSelector};
 use crate::data::protocols::ws::ws_client::{PingInterval, WsMessage};
-use crate::data::{ExchangeId, ExchangeSub, OrderbookL2, StreamType};
+use crate::data::{ExchangeId, OrderbookL2, StreamType};
 
-#[derive(Debug, Default, Eq, PartialEq, Hash, Clone)]
+#[derive(Debug, Default, Eq, PartialEq, Hash)]
 pub struct PoloniexSpot;
 
 impl Connector for PoloniexSpot {
     type ExchangeId = ExchangeId;
     type SubscriptionResponse = PoloniexSubscriptionResponse;
+    
+    const ID: ExchangeId = ExchangeId::PoloniexSpot;
 
-    fn exchange_id(&self) -> ExchangeId {
-        ExchangeId::PoloniexSpot
-    }
-
-    fn url(&self) -> String {
+    fn url() -> String {
         PoloniexChannel::SPOT_WS_URL.as_ref().to_string()
     }
 
-    fn requests(&self, sub: &[Instrument]) -> Option<WsMessage> {
+    fn requests(sub: &[Instrument]) -> Option<WsMessage> {
         let channels = sub
             .iter()
             .map(|s| match s.stream_type {
@@ -53,7 +51,7 @@ impl Connector for PoloniexSpot {
         Some(WsMessage::text(poloniex_sub.to_string()))
     }
 
-    fn ping_interval(&self) -> Option<PingInterval> {
+    fn ping_interval() -> Option<PingInterval> {
         Some(PingInterval {
             time: 30,
             message: json!({"event": "ping"}),
@@ -64,13 +62,13 @@ impl Connector for PoloniexSpot {
     // each stream type. This will cause the websocket to panic as
     // the validation code for websocket only looks at the first
     // message from the WS. Hence, only group by singular stream.
-    fn validate_subscription(&self, subscription_response: String, sub: &[Instrument]) -> bool {
+    fn validate_subscription(subscription_response: String, sub: &[Instrument]) -> bool {
         let subscription_response =
             serde_json::from_str::<PoloniexSubscriptionResponse>(&subscription_response).unwrap();
         subscription_response.symbols.len() == sub.len()
     }
 }
 
-impl StreamSelector<PoloniexSpot, OrderbookL2> for ExchangeSub<PoloniexSpot, OrderbookL2> {
-    type DeStruct = PoloniexBook;
+impl StreamSelector<PoloniexSpot, OrderbookL2> for PoloniexSpot {
+    type Stream = PoloniexBook;
 }

@@ -1,6 +1,5 @@
 pub mod ws_client;
 
-use std::fmt::Debug;
 use futures::StreamExt;
 use serde::de::DeserializeOwned;
 use tokio::{
@@ -17,7 +16,7 @@ use crate::{
     data::{
         exchange_connector::{Connector, StreamSelector},
         shared::orderbook::Event,
-        ExchangeSub,
+        Subscription,
     },
     error::SocketError,
 };
@@ -25,20 +24,24 @@ use crate::{
 pub const START_RECONNECTION_BACKOFF_MS: u64 = 125;
 
 pub async fn connect<Exchange, StreamKind>(
-    exchange_sub: ExchangeSub<Exchange, StreamKind>,
+    exchange_sub: Vec<Subscription<Exchange, StreamKind>>,
     exchange_tx: UnboundedSender<Event>,
 ) -> SocketError
 where
-    Exchange: Connector + Send,
-    ExchangeSub<Exchange, StreamKind>: StreamSelector<Exchange, StreamKind> + Send + Debug,
+    Exchange: Connector + Send + StreamSelector<Exchange, StreamKind>,
 {
     let mut _connection_attempt: u32 = 0;
     let mut _backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
 
+    let subs = exchange_sub
+        .into_iter()
+        .map(|s| s.instrument)
+        .collect::<Vec<_>>();
+
     let mut ws_client = WebSocketClient::new(
-        exchange_sub.connector.url(),
-        exchange_sub.connector.requests(&exchange_sub.subscriptions),
-        exchange_sub.connector.ping_interval(),
+        Exchange::url(),
+        Exchange::requests(&subs),
+        Exchange::ping_interval(),
     );
 
     loop {
@@ -66,9 +69,7 @@ where
 
         // Validate subscriptions
         if let Some(Ok(WsMessage::Text(message))) = &stream.ws_read.next().await {
-            let subscription_sucess = exchange_sub
-                .connector
-                .validate_subscription(message.to_owned(), &exchange_sub.subscriptions);
+            let subscription_sucess = Exchange::validate_subscription(message.to_owned(), &subs);
 
             if !subscription_sucess {
                 break SocketError::Subscribe(String::from("Subscription failed"));
@@ -79,13 +80,7 @@ where
         while let Some(message) = stream.ws_read.next().await {
             match message {
                 Ok(ws_message) => {
-                    let deserialized_message = match parse::<
-                        <ExchangeSub<Exchange, StreamKind> as StreamSelector<
-                            Exchange,
-                            StreamKind,
-                        >>::DeStruct,
-                    >(ws_message)
-                    {
+                    let deserialized_message = match parse::<Exchange::Stream>(ws_message) {
                         Some(Ok(exchange_message)) => exchange_message,
                         Some(Err(error)) => {
                             println!("Failed to deserialise WsMessage: {:#?}", &error); // Log this error
