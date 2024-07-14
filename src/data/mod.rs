@@ -1,4 +1,4 @@
-pub mod exchange_connector;
+pub mod exchange;
 pub mod protocols;
 pub mod shared;
 pub mod subscriber;

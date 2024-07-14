@@ -14,7 +14,7 @@ use ws_client::{WebSocketClient, WsError, WsMessage};
 
 use crate::{
     data::{
-        exchange_connector::{Connector, StreamSelector}, models::{event::MarketEvent, subs::Subscription, SubKind}
+        exchange::{Connector, StreamSelector}, models::{event::MarketEvent, subs::Subscription, SubKind}
     },
     error::SocketError,
 };

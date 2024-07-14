@@ -4,7 +4,7 @@ use tokio::sync::mpsc::{self, UnboundedReceiver};
 
 use crate::{
     data::{
-        exchange_connector::{Connector, StreamSelector},
+        exchange::{Connector, StreamSelector},
         protocols::ws::connect,
         models::{event::MarketEvent, subs::{ExchangeId, Subscription}, SubKind},
     },

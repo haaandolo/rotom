@@ -1,5 +1,5 @@
 use arb_bot::data::{
-    exchange_connector::{binance::BinanceSpot, poloniex::PoloniexSpot},
+    exchange::{binance::BinanceSpot, poloniex::PoloniexSpot},
     subscriber::Streams,
     models::{book::OrderBookL2, subs::{ExchangeId, StreamType}},
 };
