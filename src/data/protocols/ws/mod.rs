@@ -14,9 +14,7 @@ use ws_client::{WebSocketClient, WsError, WsMessage};
 
 use crate::{
     data::{
-        exchange_connector::{Connector, StreamSelector},
-        shared::orderbook::Event,
-        Subscription,
+        exchange_connector::{Connector, StreamSelector}, models::{event::MarketEvent, subs::Subscription, SubKind}
     },
     error::SocketError,
 };
@@ -25,10 +23,11 @@ pub const START_RECONNECTION_BACKOFF_MS: u64 = 125;
 
 pub async fn connect<Exchange, StreamKind>(
     exchange_sub: Vec<Subscription<Exchange, StreamKind>>,
-    exchange_tx: UnboundedSender<Event>,
+    exchange_tx: UnboundedSender<MarketEvent<StreamKind::Event>>,
 ) -> SocketError
 where
     Exchange: Connector + Send + StreamSelector<Exchange, StreamKind>,
+    StreamKind: SubKind
 {
     let mut _connection_attempt: u32 = 0;
     let mut _backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
@@ -92,8 +91,6 @@ where
                         }
                         None => continue,
                     };
-
-                    println!("{:#?}", &deserialized_message);
 
                     exchange_tx
                         .send(deserialized_message.into())

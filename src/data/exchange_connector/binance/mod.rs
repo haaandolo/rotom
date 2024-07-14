@@ -7,7 +7,7 @@ use serde_json::json;
 use std::collections::HashSet;
 
 use super::{Connector, Instrument, StreamSelector};
-use crate::data::{protocols::ws::ws_client::WsMessage, ExchangeId, OrderbookL2, StreamType};
+use crate::data::{protocols::ws::ws_client::WsMessage, models::{book::OrderBookL2, subs::{ExchangeId, StreamType}}};
 
 #[derive(Debug, Default, Eq, PartialEq, Hash)]
 pub struct BinanceSpot;
@@ -53,6 +53,6 @@ impl Connector for BinanceSpot {
     }
 }
 
-impl StreamSelector<BinanceSpot, OrderbookL2> for BinanceSpot {
+impl StreamSelector<BinanceSpot, OrderBookL2> for BinanceSpot {
     type Stream = BinanceBook;
 }

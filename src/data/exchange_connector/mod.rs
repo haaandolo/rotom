@@ -7,8 +7,7 @@ use serde::de::DeserializeOwned;
 
 use super::{
     protocols::ws::ws_client::{PingInterval, WsMessage},
-    shared::orderbook::Event,
-    ExchangeId, Instrument,
+    models::{event::MarketEvent, subs::{ExchangeId, Instrument}, SubKind},
 };
 
 /*----- */
@@ -27,21 +26,19 @@ pub trait Connector {
     }
 
     fn requests(subscriptions: &[Instrument]) -> Option<WsMessage>;
-    
-    fn validate_subscription(
-        subscription_repsonse: String,
-        subscriptions: &[Instrument],
-    ) -> bool;
+
+    fn validate_subscription(subscription_repsonse: String, subscriptions: &[Instrument]) -> bool;
 }
 
 /*----- */
 // Stream Selector
 /*----- */
-pub trait StreamSelector<Exchange, Kind>
+pub trait StreamSelector<Exchange, StreamKind>
 where
     Exchange: Connector,
+    StreamKind: SubKind,
 {
-    type Stream: DeserializeOwned + Into<Event> + Debug;
+    type Stream: DeserializeOwned + Into<MarketEvent<StreamKind::Event>> + Debug;
 }
 
 /*----- */

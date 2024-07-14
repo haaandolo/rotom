@@ -8,7 +8,8 @@ use std::collections::HashSet;
 
 use super::{Connector, Instrument, StreamSelector};
 use crate::data::protocols::ws::ws_client::{PingInterval, WsMessage};
-use crate::data::{ExchangeId, OrderbookL2, StreamType};
+use crate::data::models::book::OrderBookL2;
+use crate::data::models::subs::{ExchangeId, StreamType};
 
 #[derive(Debug, Default, Eq, PartialEq, Hash)]
 pub struct PoloniexSpot;
@@ -16,7 +17,7 @@ pub struct PoloniexSpot;
 impl Connector for PoloniexSpot {
     type ExchangeId = ExchangeId;
     type SubscriptionResponse = PoloniexSubscriptionResponse;
-    
+
     const ID: ExchangeId = ExchangeId::PoloniexSpot;
 
     fn url() -> String {
@@ -58,10 +59,6 @@ impl Connector for PoloniexSpot {
         })
     }
 
-    // Note: Poloniex sends a subscription validation response for
-    // each stream type. This will cause the websocket to panic as
-    // the validation code for websocket only looks at the first
-    // message from the WS. Hence, only group by singular stream.
     fn validate_subscription(subscription_response: String, sub: &[Instrument]) -> bool {
         let subscription_response =
             serde_json::from_str::<PoloniexSubscriptionResponse>(&subscription_response).unwrap();
@@ -69,6 +66,6 @@ impl Connector for PoloniexSpot {
     }
 }
 
-impl StreamSelector<PoloniexSpot, OrderbookL2> for PoloniexSpot {
+impl StreamSelector<PoloniexSpot, OrderBookL2> for PoloniexSpot {
     type Stream = PoloniexBook;
 }

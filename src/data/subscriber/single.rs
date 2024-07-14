@@ -1,13 +1,12 @@
 use futures::Future;
-use std::{collections::HashMap, fmt::Debug, marker::PhantomData, pin::Pin};
+use std::{collections::HashMap, fmt::Debug, pin::Pin};
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 
 use crate::{
     data::{
         exchange_connector::{Connector, StreamSelector},
         protocols::ws::connect,
-        shared::orderbook::Event,
-        ExchangeId, Subscription,
+        models::{event::MarketEvent, subs::{ExchangeId, Subscription}, SubKind},
     },
     error::SocketError,
 };
@@ -18,21 +17,23 @@ pub type SubscribeFuture = Pin<Box<dyn Future<Output = Result<(), SocketError>>>
 // Stream builder
 /*----- */
 #[derive(Default)]
-pub struct StreamBuilder<StreamKind> {
-    pub market_subscriptions: HashMap<ExchangeId, UnboundedReceiver<Event>>,
+pub struct StreamBuilder<StreamKind>
+where
+    StreamKind: SubKind,
+{
+    pub market_subscriptions:
+        HashMap<ExchangeId, UnboundedReceiver<MarketEvent<StreamKind::Event>>>,
     pub futures: Vec<SubscribeFuture>,
-    pub exchange_marker: PhantomData<StreamKind>,
 }
 
 impl<StreamKind> StreamBuilder<StreamKind>
 where
-    StreamKind: Debug + Send + 'static,
+    StreamKind: SubKind + Debug + Send + 'static,
 {
     pub fn new() -> Self {
         Self {
             market_subscriptions: HashMap::new(),
             futures: Vec::new(),
-            exchange_marker: PhantomData,
         }
     }
 
@@ -40,7 +41,7 @@ where
     where
         SubIter: IntoIterator<Item = Sub>,
         Sub: Into<Subscription<Exchange, StreamKind>> + Debug,
-        Exchange: Connector + Debug + Send  + StreamSelector<Exchange, StreamKind> + 'static,
+        Exchange: Connector + Debug + Send + StreamSelector<Exchange, StreamKind> + 'static,
     {
         let exchange_sub = subscriptions
             .into_iter()
@@ -57,7 +58,9 @@ where
         self
     }
 
-    pub async fn init(self) -> HashMap<ExchangeId, UnboundedReceiver<Event>> {
+    pub async fn init(
+        self,
+    ) -> HashMap<ExchangeId, UnboundedReceiver<MarketEvent<StreamKind::Event>>> {
         futures::future::try_join_all(self.futures).await.unwrap(); // Chnage to result
         self.market_subscriptions
     }
