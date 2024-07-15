@@ -17,6 +17,7 @@ pub struct Streams<T> {
 }
 
 impl<T> Streams<T> {
+    // Single StreamKind builder
     pub fn builder<StreamKind>() -> StreamBuilder<StreamKind>
     where
         StreamKind: SubKind + Debug + Send + 'static,
@@ -24,14 +25,17 @@ impl<T> Streams<T> {
         StreamBuilder::<StreamKind>::new()
     }
 
+    // Multi StreamKind builder
     pub fn builder_multi() -> MultiStreamBuilder<T> {
         MultiStreamBuilder::<T>::new()
     }
 
+    // Remove exchange from hashmap
     pub fn select(&mut self, exchange: ExchangeId) -> Option<mpsc::UnboundedReceiver<T>> {
         self.streams.remove(&exchange)
     }
 
+    // Join all exchange streams into a unified mpsc::UnboundedReceiver
     pub async fn join(self) -> mpsc::UnboundedReceiver<T>
     where
         T: Send + 'static,
@@ -50,6 +54,7 @@ impl<T> Streams<T> {
         joined_rx
     }
 
+    // Join all exchange mpsc::UnboundedReceiver streams into a unified StreamMap
     pub async fn join_map(self) -> StreamMap<ExchangeId, UnboundedReceiverStream<T>> {
         self.streams
             .into_iter()
