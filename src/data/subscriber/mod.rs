@@ -1,176 +1,61 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
+use std::fmt::Debug;
+
+use multi::MultiStreamBuilder;
+use single::StreamBuilder;
 use tokio::sync::mpsc::{self, UnboundedReceiver};
+use tokio_stream::{wrappers::UnboundedReceiverStream, StreamMap};
 
-use super::{
-    exchange_connector::Connector, protocols::ws::connect, Instrument, StreamType, Subscription,
-};
+use super::models::subs::ExchangeId;
+use super::models::SubKind;
 
-/*----- */
-// Stream builder
-/*----- */
-pub struct StreamBuilder<ExchangeConnector> {
-    pub market_subscriptions: HashMap<String, Subscription<ExchangeConnector>>,
+pub mod multi;
+pub mod single;
+
+pub struct Streams<T> {
+    pub streams: HashMap<ExchangeId, UnboundedReceiver<T>>,
 }
 
-impl<ExchangeConnector> Default for StreamBuilder<ExchangeConnector>
-where
-    ExchangeConnector: Send + Connector + 'static,
-{
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<ExchangeConnector> StreamBuilder<ExchangeConnector>
-where
-    ExchangeConnector: Send + Connector + 'static,
-{
-    pub fn new() -> Self {
-        Self {
-            market_subscriptions: HashMap::new(),
-        }
-    }
-
-    pub fn subscribe<Subscriptions>(mut self, subscriptions: Subscriptions) -> Self
+impl<T> Streams<T> {
+    pub fn builder<StreamKind>() -> StreamBuilder<StreamKind>
     where
-        Subscriptions:
-            IntoIterator<Item = (ExchangeConnector, &'static str, &'static str, StreamType)>,
-        ExchangeConnector: Connector + Eq + std::hash::Hash + std::fmt::Debug,
+        StreamKind: SubKind + Debug + Send + 'static,
     {
-        let mut exchange_subscriptions = HashMap::new();
-        subscriptions
-            .into_iter()
-            .collect::<HashSet<_>>() // rm duplicates
-            .into_iter()
-            .for_each(|(exchange_conn, base, quote, stream_type)| {
-                exchange_subscriptions
-                    .entry(exchange_conn)
-                    .or_insert(Vec::new())
-                    .push(Instrument::new(base, quote, stream_type))
-            });
-
-        exchange_subscriptions
-            .into_iter()
-            .for_each(|(exchange_connector, instruments)| {
-                let exchange_id = exchange_connector.exchange_id();
-                let subscriptions = Subscription::new(exchange_connector, instruments);
-                self.market_subscriptions.insert(exchange_id, subscriptions);
-            });
-        self
+        StreamBuilder::<StreamKind>::new()
     }
 
-    pub async fn init(self) -> HashMap<String, UnboundedReceiver<ExchangeConnector::Output>> {
-        self.market_subscriptions
+    pub fn builder_multi() -> MultiStreamBuilder<T> {
+        MultiStreamBuilder::<T>::new()
+    }
+
+    pub fn select(&mut self, exchange: ExchangeId) -> Option<mpsc::UnboundedReceiver<T>> {
+        self.streams.remove(&exchange)
+    }
+
+    pub async fn join(self) -> mpsc::UnboundedReceiver<T>
+    where
+        T: Send + 'static,
+    {
+        let (joined_tx, joined_rx) = mpsc::unbounded_channel();
+
+        for mut exchange_rx in self.streams.into_values() {
+            let joined_tx = joined_tx.clone();
+            tokio::spawn(async move {
+                while let Some(event) = exchange_rx.recv().await {
+                    let _ = joined_tx.send(event);
+                }
+            });
+        }
+
+        joined_rx
+    }
+
+    pub async fn join_map(self) -> StreamMap<ExchangeId, UnboundedReceiverStream<T>> {
+        self.streams
             .into_iter()
-            .map(|(exchange_name, subscription)| {
-                let (tx, rx) = mpsc::unbounded_channel();
-                tokio::spawn(connect(subscription, tx));
-                (exchange_name, rx)
+            .fold(StreamMap::new(), |mut map, (exchange, rx)| {
+                map.insert(exchange, UnboundedReceiverStream::new(rx));
+                map
             })
-            .collect::<HashMap<_, _>>()
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[derive(PartialEq, Debug)]
-    pub struct Instrument<'a> {
-        pub base: &'a str,
-        pub quote: &'a str,
-        pub stream_type: &'a str,
-    }
-
-    impl<'a> Instrument<'a> {
-        fn new(_base: &'a str, _quote: &'a str, _stream_type: &'a str) -> Self {
-            Self {
-                base: _base,
-                quote: _quote,
-                stream_type: _stream_type,
-            }
-        }
-    }
-    #[derive(Eq, PartialEq, Hash, Debug)]
-    pub struct BinanceSpot;
-
-    impl BinanceSpot {
-        pub fn exchange_id(&self) -> String {
-            String::from("BinanceSpot")
-        }
-    }
-
-    #[derive(PartialEq, Debug)]
-    pub struct Subscription<'a, ExchangeConnector> {
-        pub connector: ExchangeConnector,
-        pub subscriptions: Vec<Instrument<'a>>,
-    }
-
-    impl<'a, ExchangeConnector> Subscription<'a, ExchangeConnector> {
-        fn new(_connector: ExchangeConnector, _subscriptions: Vec<Instrument<'a>>) -> Self {
-            Self {
-                connector: _connector,
-                subscriptions: _subscriptions,
-            }
-        }
-    }
-
-    #[test]
-    fn test_subscribe_function() {
-        // This is just an example but should not mix different stream
-        // types in the same subscription
-        let subscriptions = [
-            (BinanceSpot, "arb", "usdt", "Trades"),
-            (BinanceSpot, "arb", "usdt", "Trades"),
-            (BinanceSpot, "btc", "usdt", "L2"),
-        ];
-
-        // Test first part of function
-        let mut exchange_subscriptions = HashMap::new();
-        subscriptions
-            .into_iter()
-            .collect::<HashSet<_>>() // rm duplicates
-            .into_iter()
-            .for_each(|(exchange_conn, base, quote, stream_type)| {
-                exchange_subscriptions
-                    .entry(exchange_conn)
-                    .or_insert(Vec::new())
-                    .push(Instrument::new(base, quote, stream_type))
-            });
-
-        let mut expected_subscriptions = HashMap::new();
-        expected_subscriptions.insert(
-            BinanceSpot,
-            vec![
-                Instrument::new("arb", "usdt", "Trades"),
-                Instrument::new("btc", "usdt", "L2"),
-            ],
-        );
-
-        assert_eq!(exchange_subscriptions, exchange_subscriptions);
-
-        // Test second part of function
-        let mut market_subscriptions = HashMap::new();
-        exchange_subscriptions
-            .into_iter()
-            .for_each(|(exchange_connector, instruments)| {
-                let exchange_id = exchange_connector.exchange_id();
-                let subscriptions = Subscription::new(exchange_connector, instruments);
-                market_subscriptions.insert(exchange_id, subscriptions);
-            });
-
-        let mut expected_market_subscriptions = HashMap::new();
-        expected_market_subscriptions.insert(
-            "BinanceSpot".to_string(),
-            Subscription::new(
-                BinanceSpot,
-                vec![
-                    Instrument::new("arb", "usdt", "Trades"),
-                    Instrument::new("btc", "usdt", "L2"),
-                ],
-            ),
-        );
-
-        assert_eq!(market_subscriptions, expected_market_subscriptions);
     }
 }

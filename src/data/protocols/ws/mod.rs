@@ -13,26 +13,34 @@ use tokio_tungstenite::tungstenite::{
 use ws_client::{WebSocketClient, WsError, WsMessage};
 
 use crate::{
-    data::{exchange_connector::Connector, Subscription},
+    data::{
+        exchange::{Connector, StreamSelector}, models::{event::MarketEvent, subs::Subscription, SubKind}
+    },
     error::SocketError,
 };
 
 pub const START_RECONNECTION_BACKOFF_MS: u64 = 125;
 
-pub async fn connect<ExchangeConnector>(
-    mut subscription: Subscription<ExchangeConnector>,
-    exchange_tx: UnboundedSender<ExchangeConnector::Output>,
+pub async fn connect<Exchange, StreamKind>(
+    exchange_sub: Vec<Subscription<Exchange, StreamKind>>,
+    exchange_tx: UnboundedSender<MarketEvent<StreamKind::Event>>,
 ) -> SocketError
 where
-    ExchangeConnector: Connector + Send,
+    Exchange: Connector + Send + StreamSelector<Exchange, StreamKind>,
+    StreamKind: SubKind
 {
     let mut _connection_attempt: u32 = 0;
     let mut _backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
 
+    let subs = exchange_sub
+        .into_iter()
+        .map(|s| s.instrument)
+        .collect::<Vec<_>>();
+
     let mut ws_client = WebSocketClient::new(
-        subscription.connector.url(),
-        subscription.connector.requests(&subscription.instruments),
-        subscription.connector.ping_interval(),
+        Exchange::url(),
+        Exchange::requests(&subs),
+        Exchange::ping_interval(),
     );
 
     loop {
@@ -60,9 +68,7 @@ where
 
         // Validate subscriptions
         if let Some(Ok(WsMessage::Text(message))) = &stream.ws_read.next().await {
-            let subscription_sucess = subscription
-                .connector
-                .validate_subscription(message.to_owned(), &subscription.instruments);
+            let subscription_sucess = Exchange::validate_subscription(message.to_owned(), &subs);
 
             if !subscription_sucess {
                 break SocketError::Subscribe(String::from("Subscription failed"));
@@ -73,22 +79,22 @@ where
         while let Some(message) = stream.ws_read.next().await {
             match message {
                 Ok(ws_message) => {
-                    let deserialized_message =
-                        match parse::<<ExchangeConnector as Connector>::Input>(ws_message) {
-                            Some(Ok(exchange_message)) => exchange_message,
-                            Some(Err(error)) => {
-                                println!("Failed to deserialise WsMessage: {:#?}", &error); // Log this error
-                                // Defs dont return this as crashed the whole program
-                                return SocketError::Subscribe(format!(
-                                    "Failed to deserialise WsMessage: {}",
-                                    error
-                                ));
-                            }
-                            None => continue,
-                        };
+                    let deserialized_message = match parse::<Exchange::Stream>(ws_message) {
+                        Some(Ok(exchange_message)) => exchange_message,
+                        Some(Err(error)) => {
+                            println!("Failed to deserialise WsMessage: {:#?}", &error); // Log this error
+                                                                                        // Defs dont return this as crashed the whole program
+                            return SocketError::Subscribe(format!(
+                                "Failed to deserialise WsMessage: {}",
+                                error
+                            ));
+                        }
+                        None => continue,
+                    };
 
-                    let event = subscription.connector.transform(deserialized_message);
-                    exchange_tx.send(event).expect("failed to send message");
+                    exchange_tx
+                        .send(deserialized_message.into())
+                        .expect("failed to send message");
                 }
                 Err(error) => {
                     if is_websocket_disconnected(&error) {

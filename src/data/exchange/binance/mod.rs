@@ -1,32 +1,28 @@
 pub mod book;
 pub mod channel;
 
-use book::{BinanceMessage, BinanceSubscriptionResponse};
+use book::{BinanceBook, BinanceSubscriptionResponse, BinanceTrade};
 use channel::BinanceChannel;
 use serde_json::json;
 use std::collections::HashSet;
 
-use super::{Connector, Instrument};
-use crate::data::{ protocols::ws::ws_client::WsMessage, shared::orderbook::Event, ExchangeId, StreamType};
+use super::{Connector, Instrument, StreamSelector};
+use crate::data::{models::{book::OrderBookL2, subs::{ExchangeId, StreamType}, trade::Trades}, protocols::ws::ws_client::WsMessage};
 
 #[derive(Debug, Default, Eq, PartialEq, Hash)]
 pub struct BinanceSpot;
 
 impl Connector for BinanceSpot {
     type ExchangeId = ExchangeId;
-    type Input = BinanceMessage;
-    type Output = Event;
     type SubscriptionResponse = BinanceSubscriptionResponse;
 
-    fn exchange_id(&self) -> String {
-        ExchangeId::BinanceSpot.as_str().to_string()
-    }
+    const ID: ExchangeId = ExchangeId::BinanceSpot;
 
-    fn url(&self) -> String {
+    fn url() -> String {
         BinanceChannel::SPOT_WS_URL.as_ref().to_string()
     }
 
-    fn requests(&self, subscriptions: &[Instrument]) -> Option<WsMessage> {
+    fn requests(subscriptions: &[Instrument]) -> Option<WsMessage> {
         let channels = subscriptions
             .iter()
             .map(|s| {
@@ -50,21 +46,20 @@ impl Connector for BinanceSpot {
         Some(WsMessage::Text(binance_request.to_string()))
     }
 
-    fn validate_subscription(
-        &self,
-        subscription_response: String,
-        _subscriptions: &[Instrument],
-    ) -> bool {
-        let subscription_response=
+    fn validate_subscription(subscription_response: String, _subscriptions: &[Instrument]) -> bool {
+        let subscription_response =
             serde_json::from_str::<BinanceSubscriptionResponse>(&subscription_response).unwrap();
         subscription_response.result.is_none()
     }
-
-    fn transform(&mut self, input: Self::Input) -> Self::Output {
-        match input {
-            BinanceMessage::Book(book) => Event::from(book),
-            BinanceMessage::Snapshot(snapshot) => Event::from(snapshot),
-            BinanceMessage::Trade(trade) => Event::from(trade),
-        }
-    }
 }
+
+impl StreamSelector<BinanceSpot, OrderBookL2> for BinanceSpot {
+    type Stream = BinanceBook;
+}
+
+
+impl StreamSelector<BinanceSpot, Trades> for BinanceSpot {
+    type Stream = BinanceTrade;
+}
+
+
