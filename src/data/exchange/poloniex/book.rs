@@ -3,12 +3,16 @@ use std::mem;
 use serde::Deserialize;
 
 use crate::data::{
+    models::{
+        book::OrderBook,
+        event::MarketEvent,
+        level::Level,
+        subs::{ExchangeId, StreamType},
+        trade::Trade,
+    },
     shared::{
         de::{de_str, de_str_symbol, deserialize_non_empty_vec},
         utils::current_timestamp_utc,
-    },
-    models::{
-        book::OrderBook, event::MarketEvent, level::Level, subs::{ExchangeId, StreamType}, trade::Trade
     },
 };
 
@@ -74,12 +78,12 @@ pub struct PoloniexTradeData {
 }
 
 #[derive(Debug, Deserialize, PartialEq, Default)]
-pub struct PoloneixTrade {
+pub struct PoloniexTrade {
     pub data: [PoloniexTradeData; 1],
 }
 
-impl From<PoloneixTrade> for MarketEvent<Trade> {
-    fn from(mut value: PoloneixTrade) -> Self {
+impl From<PoloniexTrade> for MarketEvent<Trade> {
+    fn from(mut value: PoloniexTrade) -> Self {
         let data = mem::take(&mut value.data[0]);
         Self {
             exchange_time: data.timestamp,
@@ -106,7 +110,7 @@ pub struct PoloniexSubscriptionResponse {
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(untagged, rename_all = "snake_case")]
 pub enum PoloniexMessage {
-    Trade(PoloneixTrade),
+    Trade(PoloniexTrade),
     Book(PoloniexBook),
 }
 

@@ -1,12 +1,13 @@
 pub mod book;
 pub mod channel;
 
-use book::{PoloniexBook, PoloniexSubscriptionResponse};
+use book::{PoloniexBook, PoloniexSubscriptionResponse, PoloniexTrade};
 use channel::PoloniexChannel;
 use serde_json::json;
 use std::collections::HashSet;
 
 use super::{Connector, Instrument, StreamSelector};
+use crate::data::models::trade::Trades;
 use crate::data::protocols::ws::ws_client::{PingInterval, WsMessage};
 use crate::data::models::book::OrderBookL2;
 use crate::data::models::subs::{ExchangeId, StreamType};
@@ -68,4 +69,8 @@ impl Connector for PoloniexSpot {
 
 impl StreamSelector<PoloniexSpot, OrderBookL2> for PoloniexSpot {
     type Stream = PoloniexBook;
+}
+
+impl StreamSelector<PoloniexSpot, Trades> for PoloniexSpot {
+    type Stream = PoloniexTrade;
 }
