@@ -1,4 +1,4 @@
-pub mod transformer;
+pub mod exchange_stream;
 pub mod ws_client;
 
 use futures::{Stream, StreamExt};
@@ -45,7 +45,7 @@ where
         _backoff_ms *= 2;
 
         // Attempt to connect to the stream
-        let mut stream = match WebSocketClient::<Exchange>::create_websocket(&subs).await {
+        let mut stream = match WebSocketClient::<Exchange, StreamKind>::create_websocket(&subs).await {
             Ok(stream) => {
                 _connection_attempt = 0;
                 _backoff_ms = START_RECONNECTION_BACKOFF_MS;

@@ -1,6 +1,9 @@
 use std::marker::PhantomData;
 
-use crate::{data::{exchange::Connector, models::subs::Instrument}, error::SocketError};
+use crate::{
+    data::{exchange::Connector, models::{subs::Instrument, SubKind}},
+    error::SocketError,
+};
 use futures::{
     stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
@@ -12,7 +15,7 @@ use tokio::{
 };
 use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
 
-use super::transformer::Transformer;
+use super::exchange_stream::Transformer;
 
 pub type WsMessage = tokio_tungstenite::tungstenite::Message;
 pub type WsError = tokio_tungstenite::tungstenite::Error;
@@ -47,15 +50,16 @@ impl ExchangeWebSocket {
 // WebSocket client
 /*----- */
 #[derive(Debug)]
-pub struct WebSocketClient<Exchange> {
-    pub transformer_marker: PhantomData<Exchange>,
+pub struct WebSocketClient<Exchange, StreamKind> {
+    pub exchange_marker: PhantomData<Exchange>,
+    pub stream_marker: PhantomData<StreamKind>,
 }
 
-impl<Exchange> WebSocketClient<Exchange>
+impl<Exchange, StreamKind> WebSocketClient<Exchange, StreamKind>
 where
     Exchange: Connector,
+    StreamKind: SubKind,
 {
-
     pub async fn create_websocket(subs: &[Instrument]) -> Result<ExchangeWebSocket, SocketError> {
         // Make connection
         let mut tasks = Vec::new();
