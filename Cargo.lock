@@ -40,6 +40,7 @@ dependencies = [
  "csv",
  "futures",
  "futures-util",
+ "pin-project",
  "reqwest",
  "serde",
  "serde_json",

@@ -1,6 +1,7 @@
+pub mod transformer;
 pub mod ws_client;
 
-use futures::StreamExt;
+use futures::{Stream, StreamExt};
 use serde::de::DeserializeOwned;
 use tokio::{
     sync::mpsc::UnboundedSender,
@@ -10,11 +11,12 @@ use tokio_tungstenite::tungstenite::{
     error::ProtocolError,
     protocol::{frame::Frame, CloseFrame},
 };
-use ws_client::{WebSocketClient, WsError, WsMessage};
+use ws_client::{WebSocket, WebSocketClient, WsError, WsMessage};
 
 use crate::{
     data::{
-        exchange::{Connector, StreamSelector}, models::{event::MarketEvent, subs::Subscription, SubKind}
+        exchange::{Connector, StreamSelector},
+        models::{event::MarketEvent, subs::Subscription, SubKind},
     },
     error::SocketError,
 };
@@ -27,28 +29,23 @@ pub async fn connect<Exchange, StreamKind>(
 ) -> SocketError
 where
     Exchange: Connector + Send + StreamSelector<Exchange, StreamKind>,
-    StreamKind: SubKind
+    StreamKind: SubKind,
 {
     let mut _connection_attempt: u32 = 0;
     let mut _backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
 
+    // I DONT LIKE THIS - MAKE IT CLEANER
     let subs = exchange_sub
         .into_iter()
         .map(|s| s.instrument)
         .collect::<Vec<_>>();
-
-    let mut ws_client = WebSocketClient::new(
-        Exchange::url(),
-        Exchange::requests(&subs),
-        Exchange::ping_interval(),
-    );
 
     loop {
         _connection_attempt += 1;
         _backoff_ms *= 2;
 
         // Attempt to connect to the stream
-        let mut stream = match ws_client.create_websocket().await {
+        let mut stream = match WebSocketClient::<Exchange>::create_websocket(&subs).await {
             Ok(stream) => {
                 _connection_attempt = 0;
                 _backoff_ms = START_RECONNECTION_BACKOFF_MS;
@@ -113,6 +110,44 @@ where
 /*----- */
 // WebSocket message parser
 /*----- */
+pub trait StreamParser {
+    type Stream: Stream;
+    type Message;
+    type Error;
+
+    fn parse<Output>(
+        input: Result<Self::Message, Self::Error>,
+    ) -> Option<Result<Output, SocketError>>
+    where
+        Output: DeserializeOwned;
+}
+pub struct WebSocketParser;
+
+impl StreamParser for WebSocketParser {
+    type Stream = WebSocket;
+    type Message = WsMessage;
+    type Error = WsError;
+
+    fn parse<Output>(
+        input: Result<Self::Message, Self::Error>,
+    ) -> Option<Result<Output, SocketError>>
+    where
+        Output: DeserializeOwned,
+    {
+        match input {
+            Ok(ws_message) => match ws_message {
+                WsMessage::Text(text) => process_text(text),
+                WsMessage::Binary(binary) => process_binary(binary),
+                WsMessage::Ping(ping) => process_ping(ping),
+                WsMessage::Pong(pong) => process_pong(pong),
+                WsMessage::Close(close_frame) => process_close_frame(close_frame),
+                WsMessage::Frame(frame) => process_frame(frame),
+            },
+            Err(ws_err) => Some(Err(SocketError::WebSocketError(ws_err))),
+        }
+    }
+}
+
 pub fn parse<Output>(input: WsMessage) -> Option<Result<Output, SocketError>>
 where
     Output: DeserializeOwned,

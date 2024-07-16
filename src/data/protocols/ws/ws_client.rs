@@ -1,4 +1,6 @@
-use crate::error::SocketError;
+use std::marker::PhantomData;
+
+use crate::{data::{exchange::Connector, models::subs::Instrument}, error::SocketError};
 use futures::{
     stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
@@ -9,6 +11,9 @@ use tokio::{
     time::{sleep, Duration},
 };
 use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
+
+use super::transformer::Transformer;
+
 pub type WsMessage = tokio_tungstenite::tungstenite::Message;
 pub type WsError = tokio_tungstenite::tungstenite::Error;
 pub type WebSocket = tokio_tungstenite::WebSocketStream<MaybeTlsStream<TcpStream>>;
@@ -42,37 +47,28 @@ impl ExchangeWebSocket {
 // WebSocket client
 /*----- */
 #[derive(Debug)]
-pub struct WebSocketClient {
-    pub url: String,
-    pub subscription: Option<WsMessage>,
-    pub ping_interval: Option<PingInterval>,
+pub struct WebSocketClient<Exchange> {
+    pub transformer_marker: PhantomData<Exchange>,
 }
 
-impl WebSocketClient {
-    pub fn new(
-        _url: String,
-        _subscription: Option<WsMessage>,
-        _ping_interval: Option<PingInterval>,
-    ) -> Self {
-        Self {
-            url: _url,
-            subscription: _subscription,
-            ping_interval: _ping_interval,
-        }
-    }
-    pub async fn create_websocket(&mut self) -> Result<ExchangeWebSocket, SocketError> {
+impl<Exchange> WebSocketClient<Exchange>
+where
+    Exchange: Connector,
+{
+
+    pub async fn create_websocket(subs: &[Instrument]) -> Result<ExchangeWebSocket, SocketError> {
         // Make connection
-        let mut _tasks = Vec::new();
-        let ws = connect_async(self.url.clone())
+        let mut tasks = Vec::new();
+        let ws = connect_async(Exchange::url().clone())
             .await
             .map(|(ws, _)| ws)
             .map_err(SocketError::WebSocketError);
 
         // Split WS and make channels
-        let (mut ws_write, ws_stream) = ws?.split();
+        let (mut ws_write, ws_read) = ws?.split();
 
         // Handle subscription
-        if let Some(subcription) = self.subscription.clone() {
+        if let Some(subcription) = Exchange::requests(subs).clone() {
             ws_write
                 .send(subcription)
                 .await
@@ -80,15 +76,12 @@ impl WebSocketClient {
         }
 
         // Spawn custom ping handle (application level ping)
-        if let Some(ping_interval) = self.ping_interval.clone() {
+        if let Some(ping_interval) = Exchange::ping_interval().clone() {
             let ping_handler = tokio::spawn(schedule_pings_to_exchange(ws_write, ping_interval));
-            _tasks.push(ping_handler);
+            tasks.push(ping_handler);
         }
 
-        Ok(ExchangeWebSocket {
-            ws_read: ws_stream,
-            tasks: _tasks,
-        })
+        Ok(ExchangeWebSocket { ws_read, tasks })
     }
 }
 

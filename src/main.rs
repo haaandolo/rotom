@@ -16,17 +16,16 @@ async fn main() {
     /*----- */
     // Multi Streams
     /*----- */
-    let mut streams: Streams<MarketEvent<DataKind>> = Streams::builder_multi()
+    let streams: Streams<MarketEvent<DataKind>> = Streams::builder_multi()
         .add(
             Streams::<OrderBookL2>::builder()
                 .subscribe([
                     (BinanceSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
                     (BinanceSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
-                    (BinanceSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
                 ])
                 .subscribe([
                     (PoloniexSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
-                    (PoloniexSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
+                    (PoloniexSpot, "arb", "usdt", StreamType::L2, OrderBookL2),
                     (PoloniexSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
                 ]),
         )
@@ -34,13 +33,13 @@ async fn main() {
             Streams::<Trades>::builder()
                 .subscribe([
                     (BinanceSpot, "sol", "usdt", StreamType::Trades, Trades),
-                    (BinanceSpot, "btc", "usdt", StreamType::Trades, Trades),
+                    (BinanceSpot, "arb", "usdt", StreamType::Trades, Trades),
                     (BinanceSpot, "btc", "usdt", StreamType::Trades, Trades),
                 ])
                 .subscribe([
                     (PoloniexSpot, "sol", "usdt", StreamType::Trades, Trades),
                     (PoloniexSpot, "btc", "usdt", StreamType::Trades, Trades),
-                    (PoloniexSpot, "btc", "usdt", StreamType::Trades, Trades),
+                    (PoloniexSpot, "arb", "usdt", StreamType::Trades, Trades),
                 ]),
         )
         .init()
@@ -49,13 +48,9 @@ async fn main() {
 
     let mut joined_stream = streams.join_map().await;
 
-    for keys in joined_stream.keys() {
-        println!("{:#?}", keys)
-    }
-
     while let Some((exchange, data)) = joined_stream.next().await {
         println!(
-            "Exchange: {:#?}, MarketEvent<DataKind>: {:#?}",
+            "Exchange: {:?}, MarketEvent<DataKind>: {:?}",
             exchange, data
         );
     }
@@ -97,7 +92,9 @@ async fn main() {
 }
 
 // todo
-// - add mismatch sequence error in websocket
+// - implement transformer
 // - make orderbooks
 // - make orderbook take in MarketEvent instead of Event
+// - properly check sequence
+// - add mismatch sequence error in websocket
 // - process custom ping for poloniex
