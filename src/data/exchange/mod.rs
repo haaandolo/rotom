@@ -38,7 +38,7 @@ where
     Exchange: Connector,
     StreamKind: SubKind,
 {
-    type Stream: DeserializeOwned + Into<MarketEvent<StreamKind::Event>> + Debug;
+    type Stream: DeserializeOwned + Into<MarketEvent<StreamKind::Event>> + Debug + Send;
 }
 
 /*----- */
