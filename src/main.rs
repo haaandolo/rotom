@@ -92,6 +92,7 @@ async fn main() {
 }
 
 // todo
+// - implement stateless transformers then integrate poll next to see if it works
 // - implement transformer
 // - make orderbooks
 // - make orderbook take in MarketEvent instead of Event
