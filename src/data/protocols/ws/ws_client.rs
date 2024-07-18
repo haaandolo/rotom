@@ -44,7 +44,7 @@ pub struct PingInterval {
 
 #[derive(Debug)]
 #[pin_project]
-pub struct ExchangeWebSocket<Exchange, StreamKind>
+pub struct ExchangeStream<Exchange, StreamKind>
 where
     Exchange: Connector + StreamSelector<Exchange, StreamKind> + Send,
     StreamKind: SubKind,
@@ -56,7 +56,7 @@ where
     pub exchange_marker: PhantomData<Exchange>,
 }
 
-impl<Exchange, StreamKind> ExchangeWebSocket<Exchange, StreamKind>
+impl<Exchange, StreamKind> ExchangeStream<Exchange, StreamKind>
 where
     Exchange: Connector + StreamSelector<Exchange, StreamKind> + Send,
     StreamKind: SubKind,
@@ -77,7 +77,7 @@ where
     }
 }
 
-impl<Exchange, StreamKind> Stream for ExchangeWebSocket<Exchange, StreamKind>
+impl<Exchange, StreamKind> Stream for ExchangeStream<Exchange, StreamKind>
 where
     Exchange: Connector + StreamSelector<Exchange, StreamKind> + Send,
     StreamKind: SubKind,
@@ -100,7 +100,7 @@ where
 
             // Parse input protocol message into `ExchangeMessage`
             let exchange_message =
-                match <WebSocketParser as StreamParser>::parse::<Exchange::Stream>(input) {
+                match WebSocketParser::parse::<Exchange::Stream>(input) {
                     // `StreamParser` successfully deserialised `ExchangeMessage`
                     Some(Ok(exchange_message)) => exchange_message,
 
@@ -143,7 +143,7 @@ where
 {
     pub async fn create_websocket(
         subs: &[Instrument],
-    ) -> Result<ExchangeWebSocket<Exchange, StreamKind>, SocketError> {
+    ) -> Result<ExchangeStream<Exchange, StreamKind>, SocketError> {
         // Make connection
         let mut tasks = Vec::new();
         let ws = connect_async(Exchange::url().clone())
@@ -168,7 +168,7 @@ where
             tasks.push(ping_handler);
         }
 
-        Ok(ExchangeWebSocket::<Exchange, StreamKind>::new(
+        Ok(ExchangeStream::<Exchange, StreamKind>::new(
             ws_read, tasks,
         ))
     }

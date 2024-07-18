@@ -6,8 +6,12 @@ use std::fmt::Debug;
 use serde::de::DeserializeOwned;
 
 use super::{
+    models::{
+        event::MarketEvent,
+        subs::{ExchangeId, Instrument},
+        SubKind,
+    },
     protocols::ws::ws_client::{PingInterval, WsMessage},
-    models::{event::MarketEvent, subs::{ExchangeId, Instrument}, SubKind},
 };
 
 /*----- */
@@ -15,7 +19,9 @@ use super::{
 /*----- */
 pub trait Connector {
     type ExchangeId;
-    type SubscriptionResponse;
+    type SubscriptionResponse: DeserializeOwned;
+    // type Channel: AsRef<str>;
+    // type Market: AsRef<str>;
 
     const ID: ExchangeId;
 

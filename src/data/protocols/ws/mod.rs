@@ -73,40 +73,21 @@ where
             }
         };
 
-        while let Some(message) = stream.next().await {
-            println!("---- worked -----");
-            println!("{:#?}", message)
+        // Read from stream and send via channel, but if error occurs, attempt reconnection
+        while let Some(market_event) = stream.next().await {
+            match market_event {
+                Ok(market_event) => {
+                    exchange_tx
+                        .send(market_event.into())
+                        .expect("failed to send message");
+                }
+                Err(_error) => {
+                    // SHOULD CHANGE THIS TO SEE WHAT ERRORS ACTUAL MEANS INSTEAD OF BREAKING
+                    stream.cancel_running_tasks();
+                    break;
+                } // ADD Error for if sequence is broken then have to restart
+            }
         }
-
-        // // Read from stream and send via channel, but if error occurs, attempt reconnection
-        // while let Some(message) = stream.ws_read.next().await {
-        //     match message {
-        //         Ok(ws_message) => {
-        //             let deserialized_message = match parse::<Exchange::Stream>(ws_message) {
-        //                 Some(Ok(exchange_message)) => exchange_message,
-        //                 Some(Err(error)) => {
-        //                     println!("Failed to deserialise WsMessage: {:#?}", &error); // Log this error
-        //                                                                                 // Defs dont return this as crashed the whole program
-        //                     return SocketError::Subscribe(format!(
-        //                         "Failed to deserialise WsMessage: {}",
-        //                         error
-        //                     ));
-        //                 }
-        //                 None => continue,
-        //             };
-
-        //             exchange_tx
-        //                 .send(deserialized_message.into())
-        //                 .expect("failed to send message");
-        //         }
-        //         Err(error) => {
-        //             if is_websocket_disconnected(&error) {
-        //                 // SHOULD CHANGE THIS TO SEE WHAT ERRORS ACTUAL MEANS RECONNECTING
-        //                 stream.cancel_running_tasks()
-        //             }
-        //         } // ADD Error for if sequence is broken then have to restart
-        //     }
-        // }
 
         // Wait a certain ms before trying to reconnect
         sleep(Duration::from_millis(_backoff_ms)).await;
