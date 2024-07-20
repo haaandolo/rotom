@@ -1,4 +1,3 @@
-pub mod exchange_stream;
 pub mod ws_client;
 
 use futures::{Stream, StreamExt};

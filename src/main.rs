@@ -19,29 +19,29 @@ async fn main() {
     let streams: Streams<MarketEvent<DataKind>> = Streams::builder_multi()
         .add(
             Streams::<OrderBookL2>::builder()
-                .subscribe([
-                    (BinanceSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
-                    (BinanceSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
-                ])
+                // .subscribe([
+                //     (BinanceSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
+                //     (BinanceSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
+                // ])
                 .subscribe([
                     (PoloniexSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
                     (PoloniexSpot, "arb", "usdt", StreamType::L2, OrderBookL2),
                     (PoloniexSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
                 ]),
         )
-        .add(
-            Streams::<Trades>::builder()
-                .subscribe([
-                    (BinanceSpot, "sol", "usdt", StreamType::Trades, Trades),
-                    (BinanceSpot, "arb", "usdt", StreamType::Trades, Trades),
-                    (BinanceSpot, "btc", "usdt", StreamType::Trades, Trades),
-                ])
-                .subscribe([
-                    (PoloniexSpot, "sol", "usdt", StreamType::Trades, Trades),
-                    (PoloniexSpot, "btc", "usdt", StreamType::Trades, Trades),
-                    (PoloniexSpot, "arb", "usdt", StreamType::Trades, Trades),
-                ]),
-        )
+        // .add(
+        //     Streams::<Trades>::builder()
+        //         .subscribe([
+        //             (BinanceSpot, "sol", "usdt", StreamType::Trades, Trades),
+        //             (BinanceSpot, "arb", "usdt", StreamType::Trades, Trades),
+        //             (BinanceSpot, "btc", "usdt", StreamType::Trades, Trades),
+        //         ])
+        //         .subscribe([
+        //             (PoloniexSpot, "sol", "usdt", StreamType::Trades, Trades),
+        //             (PoloniexSpot, "btc", "usdt", StreamType::Trades, Trades),
+        //             (PoloniexSpot, "arb", "usdt", StreamType::Trades, Trades),
+        //         ]),
+        // )
         .init()
         .await
         .unwrap();
@@ -91,7 +91,9 @@ async fn main() {
     // }
 }
 
+/*----- */
 // todo
+/*----- */
 // - implement stateless transformers then integrate poll next to see if it works
 // - implement transformer
 // - make orderbooks
@@ -99,3 +101,17 @@ async fn main() {
 // - properly check sequence
 // - add mismatch sequence error in websocket
 // - process custom ping for poloniex
+
+// - instrumentId == subscriptionId
+
+/*----- */
+// Binance OB sequencing - specific for each exchange
+/*----- */
+// first_update_id: 49056508893,
+// last_update_id: 49056508904,
+
+// first_update_id: 49056508876,
+// last_update_id: 49056508892,
+
+// first_update_id: 49056508841,
+// last_update_id: 49056508875,

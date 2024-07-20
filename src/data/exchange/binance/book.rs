@@ -43,6 +43,8 @@ pub struct BinanceBook {
     pub timestamp: u64,
     #[serde(alias = "U")]
     pub first_update_id: u64,
+    #[serde(alias = "u")]
+    pub last_update_id: u64,
     #[serde(alias = "b")]
     #[serde(deserialize_with = "deserialize_non_empty_vec")]
     pub bids: Option<Vec<Level>>,
