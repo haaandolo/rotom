@@ -60,5 +60,3 @@ impl StreamSelector<BinanceSpot, OrderBookL2> for BinanceSpot {
 impl StreamSelector<BinanceSpot, Trades> for BinanceSpot {
     type Stream = BinanceTrade;
 }
-
-

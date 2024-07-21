@@ -4,7 +4,6 @@ use std::marker::PhantomData;
 
 use serde::{Deserialize, Serialize};
 
-use crate::data::models::event::MarketEvent;
 use crate::data::models::SubKind;
 use crate::error::SocketError;
 
