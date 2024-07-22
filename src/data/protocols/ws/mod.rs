@@ -1,5 +1,7 @@
 pub mod ws_client;
 
+use std::fmt::Debug;
+
 use futures::{Stream, StreamExt};
 use serde::de::DeserializeOwned;
 use tokio::{
@@ -10,12 +12,13 @@ use tokio_tungstenite::tungstenite::{
     error::ProtocolError,
     protocol::{frame::Frame, CloseFrame},
 };
-use ws_client::{WebSocket, WebSocketClient, WsError, WsMessage};
+use ws_client::{ExchangeStream, WebSocket, WebSocketClient, WsError, WsMessage};
 
 use crate::{
     data::{
         exchange::{Connector, StreamSelector},
         models::{event::MarketEvent, subs::Subscription, SubKind},
+        transformer::Transformer,
     },
     error::SocketError,
 };
@@ -29,6 +32,7 @@ pub async fn connect<Exchange, StreamKind>(
 where
     Exchange: Connector + Send + StreamSelector<Exchange, StreamKind>,
     StreamKind: SubKind,
+    // ExchangeStream<Exchange, StreamKind, Exchange::StreamTransformer>: Stream,
 {
     let mut _connection_attempt: u32 = 0;
     let mut _backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
@@ -76,9 +80,11 @@ where
         while let Some(market_event) = stream.next().await {
             match market_event {
                 Ok(market_event) => {
-                    exchange_tx
-                        .send(market_event.into())
-                        .expect("failed to send message");
+                    println!("--- polled next ---");
+                    println!("{:#?}", market_event)
+                    // exchange_tx
+                    //     .send(market_event.into())
+                    //     .expect("failed to send message");
                 }
                 Err(_error) => {
                     // SHOULD CHANGE THIS TO SEE WHAT ERRORS ACTUAL MEANS INSTEAD OF BREAKING

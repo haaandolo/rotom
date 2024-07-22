@@ -11,6 +11,7 @@ use crate::data::models::trade::Trades;
 use crate::data::protocols::ws::ws_client::{PingInterval, WsMessage};
 use crate::data::models::book::OrderBookL2;
 use crate::data::models::subs::{ExchangeId, StreamType};
+use crate::data::transformer::stateless_transformer::StatelessTransformer;
 
 #[derive(Debug, Default, Eq, PartialEq, Hash)]
 pub struct PoloniexSpot;
@@ -69,8 +70,10 @@ impl Connector for PoloniexSpot {
 
 impl StreamSelector<PoloniexSpot, OrderBookL2> for PoloniexSpot {
     type Stream = PoloniexBook;
+    type StreamTransformer = StatelessTransformer<PoloniexBook>;
 }
 
 impl StreamSelector<PoloniexSpot, Trades> for PoloniexSpot {
     type Stream = PoloniexTrade;
+    type StreamTransformer = StatelessTransformer<PoloniexTrade>;
 }

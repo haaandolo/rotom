@@ -11,7 +11,7 @@ use super::{
         subs::{ExchangeId, Instrument},
         SubKind,
     },
-    protocols::ws::ws_client::{PingInterval, WsMessage},
+    protocols::ws::ws_client::{PingInterval, WsMessage}, transformer::Transformer,
 };
 
 /*----- */
@@ -45,6 +45,7 @@ where
     StreamKind: SubKind,
 {
     type Stream: DeserializeOwned + Into<MarketEvent<StreamKind::Event>> + Debug + Send;
+    type StreamTransformer: Transformer + Default + Send;
 }
 
 /*----- */

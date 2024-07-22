@@ -10,36 +10,25 @@ use crate::error::SocketError;
 use super::Transformer;
 
 #[derive(Default, Clone, Eq, PartialEq, Debug, Serialize)]
-pub struct StatelessTransformer<StreamKind> {
-    phantom: PhantomData<StreamKind>,
+pub struct StatelessTransformer<DeStruct> {
+    phantom: PhantomData<DeStruct>,
 }
 
-impl<StreamKind> StatelessTransformer<StreamKind> {
+impl<DeStruct> StatelessTransformer<DeStruct> {
     pub fn new() -> Self {
         Self { phantom: PhantomData }
     }
 }
 
-impl<StreamKind> Transformer for StatelessTransformer<StreamKind>
+impl<DeStruct> Transformer for StatelessTransformer<DeStruct>
 where
-    StreamKind: SubKind + for<'de> Deserialize<'de>,
+    DeStruct: Send + Debug + for<'de> Deserialize<'de>,
 {
     type Error = SocketError;
-    type Input = StreamKind::Event;
-    type Output = StreamKind::Event;
+    type Input = DeStruct;
+    type Output = DeStruct;
 
     fn transform(&mut self, input: Self::Input) -> Self::Output {
         input
     }
 }
-
-// impl<Instrument, Server> StreamSelector<Instrument, PublicTrades> for Binance<Server>
-// where
-//     Instrument: InstrumentData,
-//     Server: ExchangeServer + Debug + Send + Sync,
-// {
-//     type Stream =
-//         ExchangeWsStream<StatelessTransformer<Self, Instrument::Id, PublicTrades, BinanceTrade>>;
-// }
-
-// pub type ExchangeWsStream<Transformer> = ExchangeStream<WebSocketParser, WsStream, Transformer>;

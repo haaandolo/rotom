@@ -1,5 +1,6 @@
 use std::{
     collections::VecDeque,
+    fmt::Debug,
     marker::PhantomData,
     pin::Pin,
     task::{Context, Poll},
@@ -9,6 +10,7 @@ use crate::{
     data::{
         exchange::{Connector, StreamSelector},
         models::{subs::Instrument, SubKind},
+        transformer::{self, Transformer},
     },
     error::SocketError,
 };
@@ -44,26 +46,31 @@ pub struct PingInterval {
 
 #[derive(Debug)]
 #[pin_project]
-pub struct ExchangeStream<Exchange, StreamKind>
+pub struct ExchangeStream<Exchange, StreamKind, StreamTransformer>
 where
     Exchange: Connector + StreamSelector<Exchange, StreamKind> + Send,
     StreamKind: SubKind,
+    StreamTransformer: Transformer,
 {
     #[pin]
     pub ws_read: WsRead,
+    pub transformer: StreamTransformer,
     pub tasks: Vec<JoinHandle>,
-    pub buffer: VecDeque<Result<Exchange::Stream, SocketError>>,
-    pub exchange_marker: PhantomData<Exchange>,
+    pub buffer: VecDeque<Result<StreamTransformer::Output, StreamTransformer::Error>>,
+    pub exchange_marker: PhantomData<(Exchange, StreamKind)>,
 }
 
-impl<Exchange, StreamKind> ExchangeStream<Exchange, StreamKind>
+impl<Exchange, StreamKind, StreamTransformer>
+    ExchangeStream<Exchange, StreamKind, StreamTransformer>
 where
     Exchange: Connector + StreamSelector<Exchange, StreamKind> + Send,
     StreamKind: SubKind,
+    StreamTransformer: Transformer,
 {
-    pub fn new(stream: WsRead, tasks: Vec<JoinHandle>) -> Self {
+    pub fn new(stream: WsRead, transformer: StreamTransformer, tasks: Vec<JoinHandle>) -> Self {
         Self {
             ws_read: stream,
+            transformer,
             tasks,
             buffer: VecDeque::with_capacity(6),
             exchange_marker: PhantomData,
@@ -77,12 +84,16 @@ where
     }
 }
 
-impl<Exchange, StreamKind> Stream for ExchangeStream<Exchange, StreamKind>
+impl<Exchange, StreamKind, StreamTransformer> Stream
+    for ExchangeStream<Exchange, StreamKind, StreamTransformer>
 where
     Exchange: Connector + StreamSelector<Exchange, StreamKind> + Send,
     StreamKind: SubKind,
+    StreamTransformer: Transformer,
+    // StreamTransformer::Error: From<SocketError>,
+    StreamTransformer::Output: Debug, //DELETE
 {
-    type Item = Result<Exchange::Stream, SocketError>;
+    type Item = Result<StreamTransformer::Output, StreamTransformer::Error>;
 
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         loop {
@@ -99,19 +110,24 @@ where
             };
 
             // Parse input protocol message into `ExchangeMessage`
-            let exchange_message =
-                match WebSocketParser::parse::<Exchange::Stream>(input) {
-                    // `StreamParser` successfully deserialised `ExchangeMessage`
-                    Some(Ok(exchange_message)) => exchange_message,
+            let exchange_message = match WebSocketParser::parse::<StreamTransformer::Input>(input) {
+                // `StreamParser` successfully deserialised `ExchangeMessage`
+                Some(Ok(exchange_message)) => exchange_message,
 
-                    // If `StreamParser` returns an Err pass it downstream
-                    Some(Err(err)) => return Poll::Ready(Some(Err(err))),
+                // If `StreamParser` returns an Err pass it downstream
+                // Some(Err(err)) => return Poll::Ready(Some(Err(err.into()))),
+                Some(Err(err)) => continue,
 
-                    // If `StreamParser` returns None it's a safe-to-skip message
-                    None => continue,
-                };
+                // If `StreamParser` returns None it's a safe-to-skip message
+                None => continue,
+            };
 
-            self.buffer.push_back(Ok(exchange_message))
+            let trans = self.transformer.transform(exchange_message);
+
+            // println!("---transformer ---");
+            // println!("{:#?}", trans);
+
+            self.buffer.push_back(Ok(trans))
 
             /*----- uncomment for later ----- */
             // // Transform `ExchangeMessage` into `Transformer::OutputIter`
@@ -143,7 +159,8 @@ where
 {
     pub async fn create_websocket(
         subs: &[Instrument],
-    ) -> Result<ExchangeStream<Exchange, StreamKind>, SocketError> {
+    ) -> Result<ExchangeStream<Exchange, StreamKind, Exchange::StreamTransformer>, SocketError>
+    {
         // Make connection
         let mut tasks = Vec::new();
         let ws = connect_async(Exchange::url().clone())
@@ -168,9 +185,13 @@ where
             tasks.push(ping_handler);
         }
 
-        Ok(ExchangeStream::<Exchange, StreamKind>::new(
-            ws_read, tasks,
-        ))
+        let transformer = Exchange::StreamTransformer::default();
+
+        Ok(ExchangeStream::<
+            Exchange,
+            StreamKind,
+            Exchange::StreamTransformer,
+        >::new(ws_read, transformer, tasks))
     }
 }
 
