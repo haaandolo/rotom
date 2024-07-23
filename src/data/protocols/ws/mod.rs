@@ -28,11 +28,14 @@ pub const START_RECONNECTION_BACKOFF_MS: u64 = 125;
 pub async fn connect<Exchange, StreamKind>(
     exchange_sub: Vec<Subscription<Exchange, StreamKind>>,
     exchange_tx: UnboundedSender<MarketEvent<StreamKind::Event>>,
+    // exchange_tx: UnboundedSender<<Exchange::StreamTransformer as Transformer>::Output>,
 ) -> SocketError
 where
     Exchange: Connector + Send + StreamSelector<Exchange, StreamKind>,
     StreamKind: SubKind,
-    // ExchangeStream<Exchange, StreamKind, Exchange::StreamTransformer>: Stream,
+    // StreamKind::Event: Into<<Exchange::StreamTransformer as Transformer>::Output>,
+    <Exchange::StreamTransformer as Transformer>::Output: Into<MarketEvent<StreamKind::Event>>, // StreamKind::Event: Into<<Exchange::StreamTransformer as Transformer>::Output>
+                                                                                                // ExchangeStream<Exchange, StreamKind, Exchange::StreamTransformer>: Stream,
 {
     let mut _connection_attempt: u32 = 0;
     let mut _backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
@@ -81,10 +84,10 @@ where
             match market_event {
                 Ok(market_event) => {
                     println!("--- polled next ---");
-                    println!("{:#?}", market_event)
-                    // exchange_tx
-                    //     .send(market_event.into())
-                    //     .expect("failed to send message");
+                    println!("{:#?}", market_event);
+                    exchange_tx
+                        .send(market_event.into())
+                        .expect("failed to send message");
                 }
                 Err(_error) => {
                     // SHOULD CHANGE THIS TO SEE WHAT ERRORS ACTUAL MEANS INSTEAD OF BREAKING

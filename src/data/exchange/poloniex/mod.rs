@@ -7,10 +7,10 @@ use serde_json::json;
 use std::collections::HashSet;
 
 use super::{Connector, Instrument, StreamSelector};
-use crate::data::models::trade::Trades;
-use crate::data::protocols::ws::ws_client::{PingInterval, WsMessage};
 use crate::data::models::book::OrderBookL2;
 use crate::data::models::subs::{ExchangeId, StreamType};
+use crate::data::models::trade::Trades;
+use crate::data::protocols::ws::ws_client::{PingInterval, WsMessage};
 use crate::data::transformer::stateless_transformer::StatelessTransformer;
 
 #[derive(Debug, Default, Eq, PartialEq, Hash)]
@@ -70,10 +70,10 @@ impl Connector for PoloniexSpot {
 
 impl StreamSelector<PoloniexSpot, OrderBookL2> for PoloniexSpot {
     type Stream = PoloniexBook;
-    type StreamTransformer = StatelessTransformer<PoloniexBook>;
+    type StreamTransformer = StatelessTransformer<PoloniexBook, OrderBookL2>;
 }
 
 impl StreamSelector<PoloniexSpot, Trades> for PoloniexSpot {
     type Stream = PoloniexTrade;
-    type StreamTransformer = StatelessTransformer<PoloniexTrade>;
+    type StreamTransformer = StatelessTransformer<PoloniexTrade, Trades>;
 }

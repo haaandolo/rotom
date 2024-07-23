@@ -11,6 +11,7 @@ use crate::{
             SubKind,
         },
         protocols::ws::connect,
+        transformer::Transformer,
     },
     error::SocketError,
 };
@@ -47,6 +48,7 @@ where
         SubIter: IntoIterator<Item = Sub>,
         Sub: Into<Subscription<Exchange, StreamKind>> + Debug,
         Exchange: Connector + Debug + Send + StreamSelector<Exchange, StreamKind> + 'static,
+
     {
         let exchange_sub = subscriptions
             .into_iter()
@@ -56,7 +58,7 @@ where
         let exchange_tx = self.channels.entry(Exchange::ID).or_default().tx.clone();
 
         self.futures.push(Box::pin(async move {
-            tokio::spawn(connect::<Exchange, StreamKind>(exchange_sub, exchange_tx));
+            tokio::spawn(connect(exchange_sub, exchange_tx));
             Ok(())
         }));
 

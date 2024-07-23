@@ -7,7 +7,15 @@ use serde_json::json;
 use std::collections::HashSet;
 
 use super::{Connector, Instrument, StreamSelector};
-use crate::data::{models::{book::OrderBookL2, subs::{ExchangeId, StreamType}, trade::Trades}, protocols::ws::ws_client::WsMessage, transformer::stateless_transformer::StatelessTransformer};
+use crate::data::{
+    models::{
+        book::OrderBookL2,
+        subs::{ExchangeId, StreamType},
+        trade::Trades,
+    },
+    protocols::ws::ws_client::WsMessage,
+    transformer::stateless_transformer::StatelessTransformer,
+};
 
 #[derive(Debug, Default, Eq, PartialEq, Hash)]
 pub struct BinanceSpot;
@@ -55,10 +63,10 @@ impl Connector for BinanceSpot {
 
 impl StreamSelector<BinanceSpot, OrderBookL2> for BinanceSpot {
     type Stream = BinanceBook;
-    type StreamTransformer = StatelessTransformer<BinanceBook>;
+    type StreamTransformer = StatelessTransformer<BinanceBook, OrderBookL2>;
 }
 
 impl StreamSelector<BinanceSpot, Trades> for BinanceSpot {
     type Stream = BinanceTrade;
-    type StreamTransformer = StatelessTransformer<BinanceTrade>;
+    type StreamTransformer = StatelessTransformer<BinanceTrade, Trades>;
 }

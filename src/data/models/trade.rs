@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 use super::{level::Level, SubKind};
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize, Default)]
 pub struct Trades;
 
 impl SubKind for Trades {

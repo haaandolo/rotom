@@ -1,34 +1,37 @@
-use async_trait::async_trait;
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
 use serde::{Deserialize, Serialize};
 
+use crate::data::models::event::MarketEvent;
 use crate::data::models::SubKind;
 use crate::error::SocketError;
 
 use super::Transformer;
 
 #[derive(Default, Clone, Eq, PartialEq, Debug, Serialize)]
-pub struct StatelessTransformer<DeStruct> {
-    phantom: PhantomData<DeStruct>,
+pub struct StatelessTransformer<Input, Output> {
+    phantom: PhantomData<(Input, Output)>,
 }
 
-impl<DeStruct> StatelessTransformer<DeStruct> {
+impl<Input, Output> StatelessTransformer<Input, Output> {
     pub fn new() -> Self {
-        Self { phantom: PhantomData }
+        Self {
+            phantom: PhantomData,
+        }
     }
 }
 
-impl<DeStruct> Transformer for StatelessTransformer<DeStruct>
+impl<Input, Output> Transformer for StatelessTransformer<Input, Output>
 where
-    DeStruct: Send + Debug + for<'de> Deserialize<'de>,
+    Input: Send + Debug + for<'de> Deserialize<'de> + Into<MarketEvent<Output::Event>>,
+    Output: SubKind,
 {
     type Error = SocketError;
-    type Input = DeStruct;
-    type Output = DeStruct;
+    type Input = Input;
+    type Output = MarketEvent<Output::Event>;
 
     fn transform(&mut self, input: Self::Input) -> Self::Output {
-        input
+        input.into()
     }
 }

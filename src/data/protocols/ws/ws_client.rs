@@ -10,7 +10,7 @@ use crate::{
     data::{
         exchange::{Connector, StreamSelector},
         models::{subs::Instrument, SubKind},
-        transformer::{self, Transformer},
+        transformer::Transformer,
     },
     error::SocketError,
 };
@@ -124,11 +124,7 @@ where
 
             let trans = self.transformer.transform(exchange_message);
 
-            // println!("---transformer ---");
-            // println!("{:#?}", trans);
-
             self.buffer.push_back(Ok(trans))
-
             /*----- uncomment for later ----- */
             // // Transform `ExchangeMessage` into `Transformer::OutputIter`
             // // ie/ IntoIterator<Item = Result<Output, SocketError>>
