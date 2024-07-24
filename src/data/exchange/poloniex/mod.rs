@@ -1,5 +1,6 @@
 pub mod book;
 pub mod channel;
+pub mod market;
 
 use book::{PoloniexBook, PoloniexSubscriptionResponse, PoloniexTrade};
 use channel::PoloniexChannel;

@@ -1,5 +1,6 @@
 pub mod book;
 pub mod channel;
+pub mod market;
 
 use book::{BinanceBook, BinanceSubscriptionResponse, BinanceTrade};
 use channel::BinanceChannel;

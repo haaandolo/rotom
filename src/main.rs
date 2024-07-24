@@ -94,14 +94,14 @@ async fn main() {
 /*----- */
 // todo
 /*----- */
-// - implement stateless transformers then integrate poll next to see if it works
 // - implement transformer
 // - make orderbooks
 // - make orderbook take in MarketEvent instead of Event
 // - properly check sequence
-// - add mismatch sequence error in websocket
+// - proper error handling i.e, add mismatch sequence error in websocket
 // - process custom ping for poloniex
 // - fix poll next (err)
+// - DOCUMENTATION
 
 // - instrumentId == subscriptionId
 
