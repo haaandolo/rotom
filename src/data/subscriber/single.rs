@@ -10,13 +10,12 @@ use crate::{
             subs::{ExchangeId, Subscription},
             SubKind,
         },
-        protocols::ws::connect,
         transformer::Transformer,
     },
     error::SocketError,
 };
 
-use super::Streams;
+use super::{consume::consume, Streams};
 
 pub type SubscribeFuture = Pin<Box<dyn Future<Output = Result<(), SocketError>>>>;
 
@@ -48,7 +47,7 @@ where
         SubIter: IntoIterator<Item = Sub>,
         Sub: Into<Subscription<Exchange, StreamKind>> + Debug,
         Exchange: Connector + Debug + Send + StreamSelector<Exchange, StreamKind> + 'static,
-
+        MarketEvent<StreamKind::Event>: From<<Exchange::StreamTransformer as Transformer>::Output>,
     {
         let exchange_sub = subscriptions
             .into_iter()
@@ -58,7 +57,7 @@ where
         let exchange_tx = self.channels.entry(Exchange::ID).or_default().tx.clone();
 
         self.futures.push(Box::pin(async move {
-            tokio::spawn(connect(exchange_sub, exchange_tx));
+            tokio::spawn(consume(exchange_sub, exchange_tx));
             Ok(())
         }));
 

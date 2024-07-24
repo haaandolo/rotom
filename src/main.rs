@@ -49,10 +49,10 @@ async fn main() {
     let mut joined_stream = streams.join_map().await;
 
     while let Some((exchange, data)) = joined_stream.next().await {
-        // println!(
-        //     "Exchange: {:?}, MarketEvent<DataKind>: {:?}",
-        //     exchange, data
-        // );
+        println!(
+            "Exchange: {:?}, MarketEvent<DataKind>: {:?}",
+            exchange, data
+        );
     }
 
     /*----- */
@@ -101,6 +101,7 @@ async fn main() {
 // - properly check sequence
 // - add mismatch sequence error in websocket
 // - process custom ping for poloniex
+// - fix poll next (err)
 
 // - instrumentId == subscriptionId
 

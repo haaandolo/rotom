@@ -1,3 +1,7 @@
+pub mod multi;
+pub mod single;
+pub mod consume;
+
 use std::collections::HashMap;
 use std::fmt::Debug;
 
@@ -8,9 +12,6 @@ use tokio_stream::{wrappers::UnboundedReceiverStream, StreamMap};
 
 use super::models::subs::ExchangeId;
 use super::models::SubKind;
-
-pub mod multi;
-pub mod single;
 
 pub struct Streams<T> {
     pub streams: HashMap<ExchangeId, UnboundedReceiver<T>>,
