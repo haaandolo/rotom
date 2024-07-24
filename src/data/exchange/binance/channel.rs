@@ -1,5 +1,4 @@
 use crate::data::{exchange::Identifier, models::{book::OrderBookL2, subs::Subscription, trade::Trades}};
-
 use super::BinanceSpot;
 
 pub struct BinanceChannel(pub &'static str);

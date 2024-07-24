@@ -1,9 +1,7 @@
 use std::{cmp::Ordering, fmt::Display};
-
 use serde::Deserialize;
 
 use crate::data::shared::de::de_str;
-
 
 #[derive(Debug, Clone, Copy, Default, Deserialize)]
 pub struct Level {

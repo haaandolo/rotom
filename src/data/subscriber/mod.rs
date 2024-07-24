@@ -4,12 +4,11 @@ pub mod consume;
 
 use std::collections::HashMap;
 use std::fmt::Debug;
-
-use multi::MultiStreamBuilder;
 use single::StreamBuilder;
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 use tokio_stream::{wrappers::UnboundedReceiverStream, StreamMap};
 
+use multi::MultiStreamBuilder;
 use super::models::subs::ExchangeId;
 use super::models::SubKind;
 

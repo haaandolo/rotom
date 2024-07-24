@@ -3,12 +3,10 @@ use std::{
     pin::Pin,
     task::{Context, Poll},
 };
-
 use futures::Stream;
 use pin_project::pin_project;
 
 use crate::data::transformer::Transformer;
-
 use super::{
     ws_parser::{StreamParser, WebSocketParser},
     JoinHandle, WsRead,

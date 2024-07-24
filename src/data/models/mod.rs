@@ -5,7 +5,6 @@ pub mod event;
 pub mod subs;
 
 use std::fmt::Debug;
-
 use serde::de::DeserializeOwned;
 
 pub trait SubKind

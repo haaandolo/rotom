@@ -2,7 +2,6 @@ use crate::data::{
     exchange::Identifier,
     models::{book::OrderBookL2, subs::Subscription, trade::Trades},
 };
-
 use super::PoloniexSpot;
 
 pub struct PoloniexChannel(pub &'static str);

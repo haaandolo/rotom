@@ -1,6 +1,5 @@
-use crate::data::{exchange::Identifier, models::subs::Subscription};
-
 use super::PoloniexSpot;
+use crate::data::{exchange::Identifier, models::subs::Subscription};
 
 pub struct PoloniexMarket(pub String);
 
