@@ -48,7 +48,7 @@ async fn main() {
 
     let mut joined_stream = streams.join_map().await;
 
-    while let Some((exchange, data)) = joined_stream.next().await {
+    while let Some(data) = joined_stream.next().await {
         println!("{:?}", data);
     }
 
@@ -98,6 +98,7 @@ async fn main() {
 // - proper error handling i.e, add mismatch sequence error in websocket
 // - process custom ping for poloniex
 // - fix poll next (err)
+// - are some traits meant to be async traits?
 // - DOCUMENTATION + EXAMPLES
 
 // - instrumentId == subscriptionId

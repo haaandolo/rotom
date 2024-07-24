@@ -14,7 +14,6 @@ use crate::{
     },
     error::SocketError,
 };
-
 use super::{consume::consume, Streams};
 
 pub type SubscribeFuture = Pin<Box<dyn Future<Output = Result<(), SocketError>>>>;

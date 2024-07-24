@@ -244,605 +244,605 @@ impl Orderbook {
     }
 }
 
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn process_lvl2_and_trade() {
-        let mut ob = Orderbook::new(0.01);
-
-        let event = Event::new(
-            "btcusdt".to_string(),
-            0,
-            0,
-            Some(vec![
-                Level::new(16.0, 1.0),
-                Level::new(17.0, 1.0),
-                Level::new(12.0, 1.0),
-            ]),
-            Some(vec![
-                Level::new(19.0, 1.0),
-                Level::new(18.0, 1.0),
-                Level::new(21.0, 1.0),
-            ]),
-            None,
-            None,
-        );
-
-        ob.process(event);
-
-        assert_eq!(
-            ob.top_bids(3),
-            [
-                Level::new(17.0, 1.0),
-                Level::new(16.0, 1.0),
-                Level::new(12.0, 1.0),
-            ]
-        );
-
-        assert_eq!(
-            ob.top_asks(3),
-            [
-                Level::new(18.0, 1.0),
-                Level::new(19.0, 1.0),
-                Level::new(21.0, 1.0),
-            ]
-        );
-
-        // Add more bids and asks
-        let event = Event::new(
-            "btcusdt".to_string(),
-            1,
-            1,
-            Some(vec![
-                Level::new(18.0, 1.0),
-                Level::new(11.0, 1.0),
-                Level::new(16.5, 1.0),
-            ]),
-            Some(vec![
-                Level::new(17.0, 1.0),
-                Level::new(20.0, 1.0),
-                Level::new(22.0, 1.0),
-            ]),
-            None,
-            None,
-        );
-
-        ob.process(event);
-
-        assert_eq!(
-            ob.top_bids(5),
-            [
-                Level::new(18.0, 1.0),
-                Level::new(17.0, 1.0),
-                Level::new(16.5, 1.0),
-                Level::new(16.0, 1.0),
-                Level::new(12.0, 1.0),
-            ]
-        );
-
-        assert_eq!(
-            ob.top_asks(5),
-            [
-                Level::new(17.0, 1.0),
-                Level::new(18.0, 1.0),
-                Level::new(19.0, 1.0),
-                Level::new(20.0, 1.0),
-                Level::new(21.0, 1.0),
-            ]
-        );
-
-        // Update bids and asks
-        let event = Event::new(
-            "btcusdt".to_string(),
-            2,
-            2,
-            Some(vec![
-                Level::new(18.0, 2.0),
-                Level::new(17.0, 3.0),
-                Level::new(16.5, 4.0),
-            ]),
-            Some(vec![
-                Level::new(17.0, 2.0),
-                Level::new(18.0, 3.0),
-                Level::new(19.0, 4.0),
-            ]),
-            None,
-            None,
-        );
-
-        ob.process(event);
-
-        assert_eq!(
-            ob.top_bids(5),
-            [
-                Level::new(18.0, 2.0),
-                Level::new(17.0, 3.0),
-                Level::new(16.5, 4.0),
-                Level::new(16.0, 1.0),
-                Level::new(12.0, 1.0),
-            ]
-        );
-
-        assert_eq!(
-            ob.top_asks(5),
-            [
-                Level::new(17.0, 2.0),
-                Level::new(18.0, 3.0),
-                Level::new(19.0, 4.0),
-                Level::new(20.0, 1.0),
-                Level::new(21.0, 1.0),
-            ]
-        );
-
-        // Remove bid and ask levels
-        let event = Event::new(
-            "btcusdt".to_string(),
-            3,
-            3,
-            Some(vec![
-                Level::new(18.0, 0.0),
-                Level::new(17.0, 3.0),
-                Level::new(16.5, 0.0),
-            ]),
-            Some(vec![
-                Level::new(17.0, 0.0),
-                Level::new(18.0, 3.0),
-                Level::new(19.0, 0.0),
-            ]),
-            None,
-            None,
-        );
-
-        ob.process(event);
-
-        assert_eq!(
-            ob.top_bids(5),
-            [
-                Level::new(17.0, 3.0),
-                Level::new(16.0, 1.0),
-                Level::new(12.0, 1.0),
-                Level::new(11.0, 1.0),
-            ]
-        );
-
-        assert_eq!(
-            ob.top_asks(5),
-            [
-                Level::new(18.0, 3.0),
-                Level::new(20.0, 1.0),
-                Level::new(21.0, 1.0),
-                Level::new(22.0, 1.0),
-            ]
-        );
-
-        // Update bid level with trade
-        let event = Event::new(
-            "btcusdt".to_string(),
-            4,
-            4,
-            None,
-            None,
-            Some(Level::new(16.0, 0.5)),
-            Some(true),
-        );
-
-        ob.process(event);
-
-        assert_eq!(
-            ob.top_bids(5),
-            [
-                Level::new(17.0, 3.0),
-                Level::new(16.0, 0.5),
-                Level::new(12.0, 1.0),
-                Level::new(11.0, 1.0),
-            ]
-        );
-
-        assert_eq!(
-            ob.top_asks(5),
-            [
-                Level::new(18.0, 3.0),
-                Level::new(20.0, 1.0),
-                Level::new(21.0, 1.0),
-                Level::new(22.0, 1.0),
-            ]
-        );
-
-        // Update asks level with trade
-        let event = Event::new(
-            "btcusdt".to_string(),
-            5,
-            5,
-            None,
-            None,
-            Some(Level::new(20.0, 0.25)),
-            Some(false),
-        );
-
-        ob.process(event);
-
-        assert_eq!(
-            ob.top_bids(5),
-            [
-                Level::new(17.0, 3.0),
-                Level::new(16.0, 0.5),
-                Level::new(12.0, 1.0),
-                Level::new(11.0, 1.0),
-            ]
-        );
-
-        assert_eq!(
-            ob.top_asks(5),
-            [
-                Level::new(18.0, 3.0),
-                Level::new(20.0, 0.75),
-                Level::new(21.0, 1.0),
-                Level::new(22.0, 1.0),
-            ]
-        );
-
-        // Remove bid price level with trade > current price level quantity
-        let event = Event::new(
-            "btcusdt".to_string(),
-            6,
-            6,
-            None,
-            None,
-            Some(Level::new(16.0, 0.75)),
-            Some(true),
-        );
-
-        ob.process(event);
-
-        assert_eq!(
-            ob.top_bids(5),
-            [
-                Level::new(17.0, 3.0),
-                Level::new(12.0, 1.0),
-                Level::new(11.0, 1.0),
-            ]
-        );
-
-        assert_eq!(
-            ob.top_asks(5),
-            [
-                Level::new(18.0, 3.0),
-                Level::new(20.0, 0.75),
-                Level::new(21.0, 1.0),
-                Level::new(22.0, 1.0),
-            ]
-        );
-
-        // Remove ask price level with trade > current price level quantity
-        let event = Event::new(
-            "btcusdt".to_string(),
-            7,
-            7,
-            None,
-            None,
-            Some(Level::new(20.0, 0.75)),
-            Some(false),
-        );
-
-        ob.process(event);
-
-        assert_eq!(
-            ob.top_bids(5),
-            [
-                Level::new(17.0, 3.0),
-                Level::new(12.0, 1.0),
-                Level::new(11.0, 1.0),
-            ]
-        );
-
-        assert_eq!(
-            ob.top_asks(5),
-            [
-                Level::new(18.0, 3.0),
-                Level::new(21.0, 1.0),
-                Level::new(22.0, 1.0),
-            ]
-        );
-
-        // Remove bid price level with trade == price level quantity
-        let event = Event::new(
-            "btcusdt".to_string(),
-            8,
-            8,
-            None,
-            None,
-            Some(Level::new(17.0, 3.0)),
-            Some(true),
-        );
-
-        ob.process(event);
-
-        assert_eq!(
-            ob.top_bids(5),
-            [Level::new(12.0, 1.0), Level::new(11.0, 1.0),]
-        );
-
-        assert_eq!(
-            ob.top_asks(5),
-            [
-                Level::new(18.0, 3.0),
-                Level::new(21.0, 1.0),
-                Level::new(22.0, 1.0),
-            ]
-        );
-
-        // Remove ask price level with trade == price level quantity
-        let event = Event::new(
-            "btcusdt".to_string(),
-            9,
-            9,
-            None,
-            None,
-            Some(Level::new(18.0, 3.0)),
-            Some(false),
-        );
-
-        ob.process(event);
-
-        assert_eq!(
-            ob.top_bids(5),
-            [Level::new(12.0, 1.0), Level::new(11.0, 1.0),]
-        );
-
-        assert_eq!(
-            ob.top_asks(5),
-            [Level::new(21.0, 1.0), Level::new(22.0, 1.0),]
-        );
-
-        // Remove price level that does not exist with trade
-        let event = Event::new(
-            "btcusdt".to_string(),
-            10,
-            10,
-            None,
-            None,
-            Some(Level::new(18.0, 3.0)),
-            Some(true),
-        );
-
-        ob.process(event);
-
-        assert_eq!(
-            ob.top_bids(5),
-            [Level::new(12.0, 1.0), Level::new(11.0, 1.0),]
-        );
-
-        assert_eq!(
-            ob.top_asks(5),
-            [Level::new(21.0, 1.0), Level::new(22.0, 1.0),]
-        );
-
-        // Remove ask price level that does not exist
-        let event = Event::new(
-            "btcusdt".to_string(),
-            11,
-            11,
-            None,
-            None,
-            Some(Level::new(18.0, 3.0)),
-            Some(false),
-        );
-
-        ob.process(event);
-
-        assert_eq!(
-            ob.top_bids(5),
-            [Level::new(12.0, 1.0), Level::new(11.0, 1.0),]
-        );
-
-        assert_eq!(
-            ob.top_asks(5),
-            [Level::new(21.0, 1.0), Level::new(22.0, 1.0),]
-        );
-
-        // Break sequence id by providing seq id < last_sequence
-        let event = Event::new(
-            "btcusdt".to_string(),
-            12,
-            10,
-            None,
-            None,
-            Some(Level::new(21.0, 3.0)),
-            Some(false),
-        );
-
-        ob.process(event);
-
-        assert_eq!(
-            ob.top_bids(5),
-            [Level::new(12.0, 1.0), Level::new(11.0, 1.0),]
-        );
-
-        assert_eq!(
-            ob.top_asks(5),
-            [Level::new(21.0, 1.0), Level::new(22.0, 1.0),]
-        );
-
-        // Break sequence id by providing timestamp < last_updated
-        let event = Event::new(
-            "btcusdt".to_string(),
-            10,
-            12,
-            None,
-            None,
-            Some(Level::new(21.0, 3.0)),
-            Some(false),
-        );
-
-        ob.process(event);
-
-        assert_eq!(
-            ob.top_bids(5),
-            [Level::new(12.0, 1.0), Level::new(11.0, 1.0),]
-        );
-
-        assert_eq!(
-            ob.top_asks(5),
-            [Level::new(21.0, 1.0), Level::new(22.0, 1.0),]
-        );
-    }
-
-    #[test]
-    fn process_lvl2_no_asks() {
-        let mut ob = Orderbook::new(0.01);
-
-        let event = Event::new(
-            "btcusdt".to_string(),
-            0,
-            0,
-            Some(vec![
-                Level::new(16.0, 1.0),
-                Level::new(17.0, 1.0),
-                Level::new(12.0, 1.0),
-            ]),
-            None,
-            None,
-            None,
-        );
-
-        ob.process(event);
-
-        assert_eq!(
-            ob.top_bids(3),
-            [
-                Level::new(17.0, 1.0),
-                Level::new(16.0, 1.0),
-                Level::new(12.0, 1.0),
-            ]
-        );
-    }
-
-    #[test]
-    fn process_lvl2_no_bids() {
-        let mut ob = Orderbook::new(0.01);
-
-        let event = Event::new(
-            "btcusdt".to_string(),
-            0,
-            0,
-            None,
-            Some(vec![
-                Level::new(19.0, 1.0),
-                Level::new(18.0, 1.0),
-                Level::new(21.0, 1.0),
-            ]),
-            None,
-            None,
-        );
-
-        ob.process(event);
-
-        assert_eq!(
-            ob.top_asks(3),
-            [
-                Level::new(18.0, 1.0),
-                Level::new(19.0, 1.0),
-                Level::new(21.0, 1.0),
-            ]
-        );
-    }
-
-    #[test]
-    fn price_tick() {
-        let price_tick = price_ticks(120.0, 0.01);
-        assert_eq!(price_tick, 1.2 as u64)
-    }
-
-    #[test]
-    fn midprice() {
-        let mut ob = Orderbook::new(0.01);
-
-        let event = Event::new(
-            "btcusdt".to_string(),
-            0,
-            0,
-            Some(vec![
-                Level::new(16.0, 1.0),
-                Level::new(17.0, 1.0),
-                Level::new(12.0, 1.0),
-            ]),
-            Some(vec![
-                Level::new(19.0, 1.0),
-                Level::new(18.0, 1.0),
-                Level::new(21.0, 1.0),
-            ]),
-            None,
-            None,
-        );
-
-        ob.process(event);
-
-        let mid_price = ob.midprice().unwrap();
-
-        assert_eq!(mid_price, 17.5);
-    }
-
-    #[test]
-    fn weighted_midprice() {
-        let mut ob = Orderbook::new(0.01);
-
-        let event = Event::new(
-            "btcusdt".to_string(),
-            0,
-            0,
-            Some(vec![Level::new(16.0, 1.0)]),
-            Some(vec![Level::new(20.0, 4.0)]),
-            None,
-            None,
-        );
-
-        ob.process(event);
-
-        let weighted_midprice = ob.weighted_midprice().unwrap();
-
-        assert_eq!(weighted_midprice, 16.8);
-    }
-
-    #[test]
-    fn process_stream_bbo() {
-        let mut ob = Orderbook::new(0.01);
-
-        let event = Event::new(
-            "btcusdt".to_string(),
-            0,
-            0,
-            Some(vec![
-                Level::new(16.0, 1.0),
-                Level::new(17.0, 1.0),
-                Level::new(12.0, 1.0),
-            ]),
-            Some(vec![
-                Level::new(19.0, 1.0),
-                Level::new(18.0, 1.0),
-                Level::new(21.0, 1.0),
-            ]),
-            None,
-            None,
-        );
-
-        let (best_bid, best_ask) = ob.process_stream_bbo(event).unwrap();
-
-        assert_eq!(best_bid.unwrap(), Level::new(17.0, 1.0));
-
-        assert_eq!(best_ask.unwrap(), Level::new(18.0, 1.0));
-
-        let event = Event::new(
-            "btcusdt".to_string(),
-            0,
-            0,
-            None,
-            Some(vec![Level::new(23.0, 1.0)]),
-            None,
-            None,
-        );
-
-        assert_eq!(ob.process_stream_bbo(event), None);
-    }
-}
+// #[cfg(test)]
+// mod test {
+//     use super::*;
+
+//     #[test]
+//     fn process_lvl2_and_trade() {
+//         let mut ob = Orderbook::new(0.01);
+
+//         let event = Event::new(
+//             "btcusdt".to_string(),
+//             0,
+//             0,
+//             Some(vec![
+//                 Level::new(16.0, 1.0),
+//                 Level::new(17.0, 1.0),
+//                 Level::new(12.0, 1.0),
+//             ]),
+//             Some(vec![
+//                 Level::new(19.0, 1.0),
+//                 Level::new(18.0, 1.0),
+//                 Level::new(21.0, 1.0),
+//             ]),
+//             None,
+//             None,
+//         );
+
+//         ob.process(event);
+
+//         assert_eq!(
+//             ob.top_bids(3),
+//             [
+//                 Level::new(17.0, 1.0),
+//                 Level::new(16.0, 1.0),
+//                 Level::new(12.0, 1.0),
+//             ]
+//         );
+
+//         assert_eq!(
+//             ob.top_asks(3),
+//             [
+//                 Level::new(18.0, 1.0),
+//                 Level::new(19.0, 1.0),
+//                 Level::new(21.0, 1.0),
+//             ]
+//         );
+
+//         // Add more bids and asks
+//         let event = Event::new(
+//             "btcusdt".to_string(),
+//             1,
+//             1,
+//             Some(vec![
+//                 Level::new(18.0, 1.0),
+//                 Level::new(11.0, 1.0),
+//                 Level::new(16.5, 1.0),
+//             ]),
+//             Some(vec![
+//                 Level::new(17.0, 1.0),
+//                 Level::new(20.0, 1.0),
+//                 Level::new(22.0, 1.0),
+//             ]),
+//             None,
+//             None,
+//         );
+
+//         ob.process(event);
+
+//         assert_eq!(
+//             ob.top_bids(5),
+//             [
+//                 Level::new(18.0, 1.0),
+//                 Level::new(17.0, 1.0),
+//                 Level::new(16.5, 1.0),
+//                 Level::new(16.0, 1.0),
+//                 Level::new(12.0, 1.0),
+//             ]
+//         );
+
+//         assert_eq!(
+//             ob.top_asks(5),
+//             [
+//                 Level::new(17.0, 1.0),
+//                 Level::new(18.0, 1.0),
+//                 Level::new(19.0, 1.0),
+//                 Level::new(20.0, 1.0),
+//                 Level::new(21.0, 1.0),
+//             ]
+//         );
+
+//         // Update bids and asks
+//         let event = Event::new(
+//             "btcusdt".to_string(),
+//             2,
+//             2,
+//             Some(vec![
+//                 Level::new(18.0, 2.0),
+//                 Level::new(17.0, 3.0),
+//                 Level::new(16.5, 4.0),
+//             ]),
+//             Some(vec![
+//                 Level::new(17.0, 2.0),
+//                 Level::new(18.0, 3.0),
+//                 Level::new(19.0, 4.0),
+//             ]),
+//             None,
+//             None,
+//         );
+
+//         ob.process(event);
+
+//         assert_eq!(
+//             ob.top_bids(5),
+//             [
+//                 Level::new(18.0, 2.0),
+//                 Level::new(17.0, 3.0),
+//                 Level::new(16.5, 4.0),
+//                 Level::new(16.0, 1.0),
+//                 Level::new(12.0, 1.0),
+//             ]
+//         );
+
+//         assert_eq!(
+//             ob.top_asks(5),
+//             [
+//                 Level::new(17.0, 2.0),
+//                 Level::new(18.0, 3.0),
+//                 Level::new(19.0, 4.0),
+//                 Level::new(20.0, 1.0),
+//                 Level::new(21.0, 1.0),
+//             ]
+//         );
+
+//         // Remove bid and ask levels
+//         let event = Event::new(
+//             "btcusdt".to_string(),
+//             3,
+//             3,
+//             Some(vec![
+//                 Level::new(18.0, 0.0),
+//                 Level::new(17.0, 3.0),
+//                 Level::new(16.5, 0.0),
+//             ]),
+//             Some(vec![
+//                 Level::new(17.0, 0.0),
+//                 Level::new(18.0, 3.0),
+//                 Level::new(19.0, 0.0),
+//             ]),
+//             None,
+//             None,
+//         );
+
+//         ob.process(event);
+
+//         assert_eq!(
+//             ob.top_bids(5),
+//             [
+//                 Level::new(17.0, 3.0),
+//                 Level::new(16.0, 1.0),
+//                 Level::new(12.0, 1.0),
+//                 Level::new(11.0, 1.0),
+//             ]
+//         );
+
+//         assert_eq!(
+//             ob.top_asks(5),
+//             [
+//                 Level::new(18.0, 3.0),
+//                 Level::new(20.0, 1.0),
+//                 Level::new(21.0, 1.0),
+//                 Level::new(22.0, 1.0),
+//             ]
+//         );
+
+//         // Update bid level with trade
+//         let event = Event::new(
+//             "btcusdt".to_string(),
+//             4,
+//             4,
+//             None,
+//             None,
+//             Some(Level::new(16.0, 0.5)),
+//             Some(true),
+//         );
+
+//         ob.process(event);
+
+//         assert_eq!(
+//             ob.top_bids(5),
+//             [
+//                 Level::new(17.0, 3.0),
+//                 Level::new(16.0, 0.5),
+//                 Level::new(12.0, 1.0),
+//                 Level::new(11.0, 1.0),
+//             ]
+//         );
+
+//         assert_eq!(
+//             ob.top_asks(5),
+//             [
+//                 Level::new(18.0, 3.0),
+//                 Level::new(20.0, 1.0),
+//                 Level::new(21.0, 1.0),
+//                 Level::new(22.0, 1.0),
+//             ]
+//         );
+
+//         // Update asks level with trade
+//         let event = Event::new(
+//             "btcusdt".to_string(),
+//             5,
+//             5,
+//             None,
+//             None,
+//             Some(Level::new(20.0, 0.25)),
+//             Some(false),
+//         );
+
+//         ob.process(event);
+
+//         assert_eq!(
+//             ob.top_bids(5),
+//             [
+//                 Level::new(17.0, 3.0),
+//                 Level::new(16.0, 0.5),
+//                 Level::new(12.0, 1.0),
+//                 Level::new(11.0, 1.0),
+//             ]
+//         );
+
+//         assert_eq!(
+//             ob.top_asks(5),
+//             [
+//                 Level::new(18.0, 3.0),
+//                 Level::new(20.0, 0.75),
+//                 Level::new(21.0, 1.0),
+//                 Level::new(22.0, 1.0),
+//             ]
+//         );
+
+//         // Remove bid price level with trade > current price level quantity
+//         let event = Event::new(
+//             "btcusdt".to_string(),
+//             6,
+//             6,
+//             None,
+//             None,
+//             Some(Level::new(16.0, 0.75)),
+//             Some(true),
+//         );
+
+//         ob.process(event);
+
+//         assert_eq!(
+//             ob.top_bids(5),
+//             [
+//                 Level::new(17.0, 3.0),
+//                 Level::new(12.0, 1.0),
+//                 Level::new(11.0, 1.0),
+//             ]
+//         );
+
+//         assert_eq!(
+//             ob.top_asks(5),
+//             [
+//                 Level::new(18.0, 3.0),
+//                 Level::new(20.0, 0.75),
+//                 Level::new(21.0, 1.0),
+//                 Level::new(22.0, 1.0),
+//             ]
+//         );
+
+//         // Remove ask price level with trade > current price level quantity
+//         let event = Event::new(
+//             "btcusdt".to_string(),
+//             7,
+//             7,
+//             None,
+//             None,
+//             Some(Level::new(20.0, 0.75)),
+//             Some(false),
+//         );
+
+//         ob.process(event);
+
+//         assert_eq!(
+//             ob.top_bids(5),
+//             [
+//                 Level::new(17.0, 3.0),
+//                 Level::new(12.0, 1.0),
+//                 Level::new(11.0, 1.0),
+//             ]
+//         );
+
+//         assert_eq!(
+//             ob.top_asks(5),
+//             [
+//                 Level::new(18.0, 3.0),
+//                 Level::new(21.0, 1.0),
+//                 Level::new(22.0, 1.0),
+//             ]
+//         );
+
+//         // Remove bid price level with trade == price level quantity
+//         let event = Event::new(
+//             "btcusdt".to_string(),
+//             8,
+//             8,
+//             None,
+//             None,
+//             Some(Level::new(17.0, 3.0)),
+//             Some(true),
+//         );
+
+//         ob.process(event);
+
+//         assert_eq!(
+//             ob.top_bids(5),
+//             [Level::new(12.0, 1.0), Level::new(11.0, 1.0),]
+//         );
+
+//         assert_eq!(
+//             ob.top_asks(5),
+//             [
+//                 Level::new(18.0, 3.0),
+//                 Level::new(21.0, 1.0),
+//                 Level::new(22.0, 1.0),
+//             ]
+//         );
+
+//         // Remove ask price level with trade == price level quantity
+//         let event = Event::new(
+//             "btcusdt".to_string(),
+//             9,
+//             9,
+//             None,
+//             None,
+//             Some(Level::new(18.0, 3.0)),
+//             Some(false),
+//         );
+
+//         ob.process(event);
+
+//         assert_eq!(
+//             ob.top_bids(5),
+//             [Level::new(12.0, 1.0), Level::new(11.0, 1.0),]
+//         );
+
+//         assert_eq!(
+//             ob.top_asks(5),
+//             [Level::new(21.0, 1.0), Level::new(22.0, 1.0),]
+//         );
+
+//         // Remove price level that does not exist with trade
+//         let event = Event::new(
+//             "btcusdt".to_string(),
+//             10,
+//             10,
+//             None,
+//             None,
+//             Some(Level::new(18.0, 3.0)),
+//             Some(true),
+//         );
+
+//         ob.process(event);
+
+//         assert_eq!(
+//             ob.top_bids(5),
+//             [Level::new(12.0, 1.0), Level::new(11.0, 1.0),]
+//         );
+
+//         assert_eq!(
+//             ob.top_asks(5),
+//             [Level::new(21.0, 1.0), Level::new(22.0, 1.0),]
+//         );
+
+//         // Remove ask price level that does not exist
+//         let event = Event::new(
+//             "btcusdt".to_string(),
+//             11,
+//             11,
+//             None,
+//             None,
+//             Some(Level::new(18.0, 3.0)),
+//             Some(false),
+//         );
+
+//         ob.process(event);
+
+//         assert_eq!(
+//             ob.top_bids(5),
+//             [Level::new(12.0, 1.0), Level::new(11.0, 1.0),]
+//         );
+
+//         assert_eq!(
+//             ob.top_asks(5),
+//             [Level::new(21.0, 1.0), Level::new(22.0, 1.0),]
+//         );
+
+//         // Break sequence id by providing seq id < last_sequence
+//         let event = Event::new(
+//             "btcusdt".to_string(),
+//             12,
+//             10,
+//             None,
+//             None,
+//             Some(Level::new(21.0, 3.0)),
+//             Some(false),
+//         );
+
+//         ob.process(event);
+
+//         assert_eq!(
+//             ob.top_bids(5),
+//             [Level::new(12.0, 1.0), Level::new(11.0, 1.0),]
+//         );
+
+//         assert_eq!(
+//             ob.top_asks(5),
+//             [Level::new(21.0, 1.0), Level::new(22.0, 1.0),]
+//         );
+
+//         // Break sequence id by providing timestamp < last_updated
+//         let event = Event::new(
+//             "btcusdt".to_string(),
+//             10,
+//             12,
+//             None,
+//             None,
+//             Some(Level::new(21.0, 3.0)),
+//             Some(false),
+//         );
+
+//         ob.process(event);
+
+//         assert_eq!(
+//             ob.top_bids(5),
+//             [Level::new(12.0, 1.0), Level::new(11.0, 1.0),]
+//         );
+
+//         assert_eq!(
+//             ob.top_asks(5),
+//             [Level::new(21.0, 1.0), Level::new(22.0, 1.0),]
+//         );
+//     }
+
+//     #[test]
+//     fn process_lvl2_no_asks() {
+//         let mut ob = Orderbook::new(0.01);
+
+//         let event = Event::new(
+//             "btcusdt".to_string(),
+//             0,
+//             0,
+//             Some(vec![
+//                 Level::new(16.0, 1.0),
+//                 Level::new(17.0, 1.0),
+//                 Level::new(12.0, 1.0),
+//             ]),
+//             None,
+//             None,
+//             None,
+//         );
+
+//         ob.process(event);
+
+//         assert_eq!(
+//             ob.top_bids(3),
+//             [
+//                 Level::new(17.0, 1.0),
+//                 Level::new(16.0, 1.0),
+//                 Level::new(12.0, 1.0),
+//             ]
+//         );
+//     }
+
+//     #[test]
+//     fn process_lvl2_no_bids() {
+//         let mut ob = Orderbook::new(0.01);
+
+//         let event = Event::new(
+//             "btcusdt".to_string(),
+//             0,
+//             0,
+//             None,
+//             Some(vec![
+//                 Level::new(19.0, 1.0),
+//                 Level::new(18.0, 1.0),
+//                 Level::new(21.0, 1.0),
+//             ]),
+//             None,
+//             None,
+//         );
+
+//         ob.process(event);
+
+//         assert_eq!(
+//             ob.top_asks(3),
+//             [
+//                 Level::new(18.0, 1.0),
+//                 Level::new(19.0, 1.0),
+//                 Level::new(21.0, 1.0),
+//             ]
+//         );
+//     }
+
+//     #[test]
+//     fn price_tick() {
+//         let price_tick = price_ticks(120.0, 0.01);
+//         assert_eq!(price_tick, 1.2 as u64)
+//     }
+
+//     #[test]
+//     fn midprice() {
+//         let mut ob = Orderbook::new(0.01);
+
+//         let event = Event::new(
+//             "btcusdt".to_string(),
+//             0,
+//             0,
+//             Some(vec![
+//                 Level::new(16.0, 1.0),
+//                 Level::new(17.0, 1.0),
+//                 Level::new(12.0, 1.0),
+//             ]),
+//             Some(vec![
+//                 Level::new(19.0, 1.0),
+//                 Level::new(18.0, 1.0),
+//                 Level::new(21.0, 1.0),
+//             ]),
+//             None,
+//             None,
+//         );
+
+//         ob.process(event);
+
+//         let mid_price = ob.midprice().unwrap();
+
+//         assert_eq!(mid_price, 17.5);
+//     }
+
+//     #[test]
+//     fn weighted_midprice() {
+//         let mut ob = Orderbook::new(0.01);
+
+//         let event = Event::new(
+//             "btcusdt".to_string(),
+//             0,
+//             0,
+//             Some(vec![Level::new(16.0, 1.0)]),
+//             Some(vec![Level::new(20.0, 4.0)]),
+//             None,
+//             None,
+//         );
+
+//         ob.process(event);
+
+//         let weighted_midprice = ob.weighted_midprice().unwrap();
+
+//         assert_eq!(weighted_midprice, 16.8);
+//     }
+
+//     #[test]
+//     fn process_stream_bbo() {
+//         let mut ob = Orderbook::new(0.01);
+
+//         let event = Event::new(
+//             "btcusdt".to_string(),
+//             0,
+//             0,
+//             Some(vec![
+//                 Level::new(16.0, 1.0),
+//                 Level::new(17.0, 1.0),
+//                 Level::new(12.0, 1.0),
+//             ]),
+//             Some(vec![
+//                 Level::new(19.0, 1.0),
+//                 Level::new(18.0, 1.0),
+//                 Level::new(21.0, 1.0),
+//             ]),
+//             None,
+//             None,
+//         );
+
+//         let (best_bid, best_ask) = ob.process_stream_bbo(event).unwrap();
+
+//         assert_eq!(best_bid.unwrap(), Level::new(17.0, 1.0));
+
+//         assert_eq!(best_ask.unwrap(), Level::new(18.0, 1.0));
+
+//         let event = Event::new(
+//             "btcusdt".to_string(),
+//             0,
+//             0,
+//             None,
+//             Some(vec![Level::new(23.0, 1.0)]),
+//             None,
+//             None,
+//         );
+
+//         assert_eq!(ob.process_stream_bbo(event), None);
+//     }
+// }

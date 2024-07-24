@@ -19,8 +19,8 @@ pub async fn consume<Exchange, StreamKind>(
     exchange_tx: UnboundedSender<MarketEvent<StreamKind::Event>>,
 ) -> SocketError
 where
-    Exchange: Connector + Send + StreamSelector<Exchange, StreamKind>,
     StreamKind: SubKind,
+    Exchange: Connector + Send + StreamSelector<Exchange, StreamKind>,
     MarketEvent<StreamKind::Event>: From<<Exchange::StreamTransformer as Transformer>::Output>,
 {
     let mut connection_attempt: u32 = 0;
