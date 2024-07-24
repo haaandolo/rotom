@@ -3,7 +3,6 @@ pub mod single;
 pub mod consume;
 
 use std::collections::HashMap;
-use std::fmt::Debug;
 use single::StreamBuilder;
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 use tokio_stream::{wrappers::UnboundedReceiverStream, StreamMap};
@@ -20,7 +19,7 @@ impl<T> Streams<T> {
     // Single StreamKind builder
     pub fn builder<StreamKind>() -> StreamBuilder<StreamKind>
     where
-        StreamKind: SubKind + Debug + Send + 'static,
+        StreamKind: SubKind + Send + 'static,
     {
         StreamBuilder::<StreamKind>::new()
     }

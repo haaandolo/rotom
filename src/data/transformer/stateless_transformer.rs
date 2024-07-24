@@ -1,4 +1,3 @@
-use std::fmt::Debug;
 use std::marker::PhantomData;
 use serde::{Deserialize, Serialize};
 
@@ -23,7 +22,7 @@ impl<Input, Output> StatelessTransformer<Input, Output> {
 
 impl<Input, Output> Transformer for StatelessTransformer<Input, Output>
 where
-    Input: Send + Debug + for<'de> Deserialize<'de> + Into<MarketEvent<Output::Event>>,
+    Input: Send + for<'de> Deserialize<'de> + Into<MarketEvent<Output::Event>>,
     Output: SubKind,
 {
     type Error = SocketError;

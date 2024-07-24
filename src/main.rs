@@ -101,7 +101,7 @@ async fn main() {
 // - proper error handling i.e, add mismatch sequence error in websocket
 // - process custom ping for poloniex
 // - fix poll next (err)
-// - DOCUMENTATION
+// - DOCUMENTATION + EXAMPLES
 
 // - instrumentId == subscriptionId
 

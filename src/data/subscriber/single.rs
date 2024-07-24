@@ -1,5 +1,5 @@
 use futures::Future;
-use std::{collections::HashMap, fmt::Debug, pin::Pin};
+use std::{collections::HashMap, pin::Pin};
 use tokio::sync::mpsc::{self};
 
 use crate::{
@@ -33,7 +33,7 @@ where
 
 impl<StreamKind> StreamBuilder<StreamKind>
 where
-    StreamKind: SubKind + Debug + Send + 'static,
+    StreamKind: SubKind + Send + 'static,
 {
     pub fn new() -> Self {
         Self {
@@ -45,8 +45,8 @@ where
     pub fn subscribe<SubIter, Sub, Exchange>(mut self, subscriptions: SubIter) -> Self
     where
         SubIter: IntoIterator<Item = Sub>,
-        Sub: Into<Subscription<Exchange, StreamKind>> + Debug,
-        Exchange: Connector + Debug + Send + StreamSelector<Exchange, StreamKind> + 'static,
+        Sub: Into<Subscription<Exchange, StreamKind>>,
+        Exchange: Connector + Send + StreamSelector<Exchange, StreamKind> + 'static,
         MarketEvent<StreamKind::Event>: From<<Exchange::StreamTransformer as Transformer>::Output>,
     {
         let exchange_sub = subscriptions
@@ -79,7 +79,6 @@ where
 /*----- */
 // Exchange channels
 /*----- */
-#[derive(Debug)]
 pub struct ExchangeChannel<T> {
     pub tx: mpsc::UnboundedSender<T>,
     pub rx: mpsc::UnboundedReceiver<T>,
