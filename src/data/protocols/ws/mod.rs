@@ -8,7 +8,6 @@ use pin_project::pin_project;
 use serde_json::Value;
 use std::{
     collections::VecDeque,
-    marker::PhantomData,
     pin::Pin,
     task::{Context, Poll},
 };
@@ -25,6 +24,9 @@ use crate::{
     error::SocketError,
 };
 
+/*----- */
+// Convenient types
+/*----- */
 pub type WsMessage = tokio_tungstenite::tungstenite::Message;
 pub type WsError = tokio_tungstenite::tungstenite::Error;
 pub type WebSocket = tokio_tungstenite::WebSocketStream<MaybeTlsStream<TcpStream>>;
@@ -33,14 +35,8 @@ pub type WsWrite = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, WsMessa
 pub type JoinHandle = tokio::task::JoinHandle<()>;
 
 /*----- */
-// Models
+// Exchange Stream
 /*----- */
-#[derive(Clone, Debug)]
-pub struct PingInterval {
-    pub time: u64,
-    pub message: Value,
-}
-
 #[derive(Debug)]
 #[pin_project]
 pub struct ExchangeStream<StreamTransformer>
@@ -116,49 +112,42 @@ where
 }
 
 /*----- */
-// WebSocket client
+// Create websocket
 /*----- */
-#[derive(Debug)]
-pub struct WebSocketClient<Exchange, StreamKind> {
-    pub phantom_markers: PhantomData<(Exchange, StreamKind)>,
-}
-
-impl<Exchange, StreamKind> WebSocketClient<Exchange, StreamKind>
+pub async fn create_websocket<Exchange, StreamKind>(
+    subs: &[Instrument],
+) -> Result<ExchangeStream<Exchange::StreamTransformer>, SocketError>
 where
     Exchange: Connector + StreamSelector<Exchange, StreamKind> + Send,
     StreamKind: SubKind,
 {
-    pub async fn create_websocket(
-        subs: &[Instrument],
-    ) -> Result<ExchangeStream<Exchange::StreamTransformer>, SocketError> {
-        // Make connection
-        let mut tasks = Vec::new();
-        let ws = connect_async(Exchange::url().clone())
+    // Make connection
+    let mut tasks = Vec::new();
+    let ws = connect_async(Exchange::url().clone())
+        .await
+        .map(|(ws, _)| ws)
+        .map_err(SocketError::WebSocketError);
+
+    // Split WS and make channels
+    let (mut ws_write, ws_read) = ws?.split();
+
+    // Handle subscription
+    if let Some(subcription) = Exchange::requests(subs).clone() {
+        ws_write
+            .send(subcription)
             .await
-            .map(|(ws, _)| ws)
-            .map_err(SocketError::WebSocketError);
-
-        // Split WS and make channels
-        let (mut ws_write, ws_read) = ws?.split();
-
-        // Handle subscription
-        if let Some(subcription) = Exchange::requests(subs).clone() {
-            ws_write
-                .send(subcription)
-                .await
-                .expect("Failed to send subscription")
-        }
-
-        // Spawn custom ping handle (application level ping)
-        if let Some(ping_interval) = Exchange::ping_interval().clone() {
-            let ping_handler = tokio::spawn(schedule_pings_to_exchange(ws_write, ping_interval));
-            tasks.push(ping_handler);
-        }
-
-        let transformer = Exchange::StreamTransformer::default();
-
-        Ok(ExchangeStream::new(ws_read, transformer, tasks))
+            .expect("Failed to send subscription")
     }
+
+    // Spawn custom ping handle (application level ping)
+    if let Some(ping_interval) = Exchange::ping_interval().clone() {
+        let ping_handler = tokio::spawn(schedule_pings_to_exchange(ws_write, ping_interval));
+        tasks.push(ping_handler);
+    }
+
+    let transformer = Exchange::StreamTransformer::default();
+
+    Ok(ExchangeStream::new(ws_read, transformer, tasks))
 }
 
 pub async fn schedule_pings_to_exchange(mut ws_write: WsWrite, ping_interval: PingInterval) {
@@ -169,4 +158,13 @@ pub async fn schedule_pings_to_exchange(mut ws_write: WsWrite, ping_interval: Pi
             .await
             .expect("Failed to send ping to ws");
     }
+}
+
+/*----- */
+// Models
+/*----- */
+#[derive(Clone, Debug)]
+pub struct PingInterval {
+    pub time: u64,
+    pub message: Value,
 }

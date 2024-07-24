@@ -2,7 +2,7 @@ use futures::StreamExt;
 use tokio::sync::mpsc::UnboundedSender;
 use tokio::{time::sleep, time::Duration};
 
-use crate::data::protocols::ws::{WebSocketClient, WsMessage};
+use crate::data::protocols::ws::{create_websocket, WsMessage};
 use crate::{
     data::{
         exchange::{Connector, StreamSelector},
@@ -23,8 +23,8 @@ where
     StreamKind: SubKind,
     MarketEvent<StreamKind::Event>: From<<Exchange::StreamTransformer as Transformer>::Output>,
 {
-    let mut _connection_attempt: u32 = 0;
-    let mut _backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
+    let mut connection_attempt: u32 = 0;
+    let mut backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
 
     // I DONT LIKE THIS - MAKE IT CLEANER
     let subs = exchange_sub
@@ -33,28 +33,27 @@ where
         .collect::<Vec<_>>();
 
     loop {
-        _connection_attempt += 1;
-        _backoff_ms *= 2;
+        connection_attempt += 1;
+        backoff_ms *= 2;
 
         // Attempt to connect to the stream
-        let mut stream =
-            match WebSocketClient::<Exchange, StreamKind>::create_websocket(&subs).await {
-                Ok(stream) => {
-                    _connection_attempt = 0;
-                    _backoff_ms = START_RECONNECTION_BACKOFF_MS;
-                    stream
+        let mut stream = match create_websocket::<Exchange, StreamKind>(&subs).await {
+            Ok(stream) => {
+                connection_attempt = 0;
+                backoff_ms = START_RECONNECTION_BACKOFF_MS;
+                stream
+            }
+            Err(error) => {
+                if connection_attempt == 1 {
+                    return SocketError::Subscribe(format!(
+                        "Subscription failed on first attempt: {}",
+                        error
+                    ));
+                } else {
+                    continue;
                 }
-                Err(error) => {
-                    if _connection_attempt == 1 {
-                        return SocketError::Subscribe(format!(
-                            "Subscription failed on first attempt: {}",
-                            error
-                        ));
-                    } else {
-                        continue;
-                    }
-                }
-            };
+            }
+        };
 
         // Validate subscriptions
         if let Some(Ok(WsMessage::Text(message))) = &stream.ws_read.next().await {
@@ -82,6 +81,6 @@ where
         }
 
         // Wait a certain ms before trying to reconnect
-        sleep(Duration::from_millis(_backoff_ms)).await;
+        sleep(Duration::from_millis(backoff_ms)).await;
     }
 }
