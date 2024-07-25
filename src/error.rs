@@ -34,11 +34,22 @@ pub enum SocketError {
 
     #[error("error subscribing to resources over the socket: {0}")]
     Subscribe(String),
-}
 
+    // Should be a data error
+    #[error(
+        "\
+        InvalidSequence: first_update_id {first_update_id} does not follow on from the \
+        prev_last_update_id {prev_last_update_id} \
+    "
+    )]
+    InvalidSequence {
+        prev_last_update_id: u64,
+        first_update_id: u64,
+    },
+}
 
 #[derive(Debug, Error)]
 pub enum StandardError {
     #[error("Std Error: {0}")]
-    StdError(#[from] Box<dyn std::error::Error>)
+    StdError(#[from] Box<dyn std::error::Error>),
 }

@@ -5,7 +5,7 @@ use tokio::sync::mpsc::{self};
 use crate::{
     data::{
         exchange::{Connector, StreamSelector},
-        models::{
+        model::{
             event::MarketEvent,
             subs::{ExchangeId, Subscription},
             SubKind,

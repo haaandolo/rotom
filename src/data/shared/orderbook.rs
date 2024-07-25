@@ -1,6 +1,8 @@
-use std::collections::BTreeMap;
+use chrono::{DateTime, Utc};
 
-use crate::data::models::level::Level;
+use crate::data::model::book::EventOrderBook;
+use crate::data::model::level::Level;
+use std::collections::BTreeMap;
 
 /*----- */
 // Event
@@ -16,112 +18,42 @@ pub struct Event {
     pub is_buy: Option<bool>,
 }
 
-impl Event {
-    pub fn new(
-        _symbol: String,
-        _timestamp: u64,
-        _seq: u64,
-        _bids: Option<Vec<Level>>,
-        _asks: Option<Vec<Level>>,
-        _trade: Option<Level>,
-        _is_buy: Option<bool>,
-    ) -> Self {
-        Self {
-            symbol: _symbol,
-            timestamp: _timestamp,
-            seq: _seq,
-            bids: _bids,
-            asks: _asks,
-            trade: _trade,
-            is_buy: _is_buy,
-        }
-    }
-}
-
-fn price_ticks(price: f64, tick_size: f64) -> u64 {
-    (price * tick_size) as u64
-}
-
 /*----- */
 // Orderbook
 /*----- */
 #[derive(Debug, Default, Clone)]
-pub struct Orderbook {
+pub struct OrderBook {
     best_bid: Option<Level>,
     best_ask: Option<Level>,
     bids: BTreeMap<u64, Level>,
     asks: BTreeMap<u64, Level>,
-    last_updated: u64,
-    last_sequence: u64,
     inv_tick_size: f64,
+    pub last_update_time: DateTime<Utc>,
 }
 
-impl Orderbook {
+impl OrderBook {
     pub fn new(tick_size: f64) -> Self {
         Self {
             best_bid: None,
             best_ask: None,
             bids: BTreeMap::new(),
             asks: BTreeMap::new(),
-            last_updated: 0,
-            last_sequence: 0,
             inv_tick_size: 1.0 / tick_size,
+            last_update_time: Utc::now(),
         }
     }
 
     #[inline]
-    pub fn process_raw(&mut self, event: Event) {
-        self.process(event);
+    fn price_ticks(&self, price: f64, tick_size: f64) -> u64 {
+        (price * tick_size) as u64
     }
 
     #[inline]
-    pub fn process_stream_bbo_raw(
-        &mut self,
-        event: Event,
-    ) -> Option<(Option<Level>, Option<Level>)> {
-        self.process_stream_bbo(event)
-    }
-
-    #[inline]
-    pub fn process(&mut self, event: Event) {
-        // let seq = event.seq;
-        // let timestamp = event.timestamp;
-        if event.timestamp < self.last_updated || event.seq < self.last_sequence {
-            return;
-        }
-
-        match event.trade {
-            Some(_) => self.process_trade(event),
-            None => self.process_lvl2(event),
-        }
-
-        // self.last_updated = timestamp;
-        // self.last_sequence = seq;
-    }
-
-    #[inline]
-    pub fn process_stream_bbo(&mut self, event: Event) -> Option<(Option<Level>, Option<Level>)> {
-        let old_bid = self.best_bid;
-        let old_ask = self.best_ask;
-
-        self.process(event);
-
-        let new_bid = self.best_bid;
-        let new_ask = self.best_ask;
-
-        if old_bid != new_bid || old_ask != new_ask {
-            Some((new_bid, new_ask))
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    fn process_lvl2(&mut self, event: Event) {
+    pub fn process_lvl2(&mut self, bids: Option<Vec<Level>>, asks: Option<Vec<Level>>) {
         // Process bids
-        if let Some(levels) = event.bids {
+        if let Some(levels) = bids {
             levels.into_iter().for_each(|level| {
-                let price_tick = price_ticks(level.price, self.inv_tick_size);
+                let price_tick = self.price_ticks(level.price, self.inv_tick_size);
                 if level.size == 0.0 {
                     if let Some(removed) = self.bids.remove(&price_tick) {
                         if let Some(best_bid) = self.best_bid {
@@ -149,9 +81,9 @@ impl Orderbook {
         }
 
         // Process asks
-        if let Some(levels) = event.asks {
+        if let Some(levels) = asks {
             levels.into_iter().for_each(|level| {
-                let price_tick = price_ticks(level.price, self.inv_tick_size);
+                let price_tick = self.price_ticks(level.price, self.inv_tick_size);
                 if level.size == 0.0 {
                     if let Some(removed) = self.asks.remove(&price_tick) {
                         if let Some(best_ask) = self.best_ask {
@@ -177,71 +109,78 @@ impl Orderbook {
                 }
             })
         }
-
-        self.last_updated = event.timestamp;
-        self.last_sequence = event.seq;
     }
 
     #[inline]
-    fn process_trade(&mut self, event: Event) {
-        let buf = if event.is_buy == Some(true) {
-            &mut self.bids
-        } else {
-            &mut self.asks
-        };
-
-        let trade_level = event.trade.unwrap();
-        let price_ticks = price_ticks(trade_level.price, self.inv_tick_size);
-
-        if let Some(level) = buf.get_mut(&price_ticks) {
-            if trade_level.size >= level.size {
-                buf.remove(&price_ticks);
-            } else {
-                level.size -= trade_level.size;
-            }
-        };
-
-        self.last_updated = event.timestamp;
-        self.last_sequence = event.seq;
-    }
-
-    pub fn best_bid(&self) -> Option<Level> {
-        self.best_bid
-    }
-
-    pub fn best_ask(&self) -> Option<Level> {
-        self.best_ask
+    pub fn snapshot(&self) -> Self {
+        self.clone()
     }
 
     #[inline]
-    pub fn top_bids(&self, n: usize) -> Vec<Level> {
-        self.bids.values().rev().take(n).cloned().collect()
+    pub fn book_snapshot(&self) -> EventOrderBook {
+        let bids = Some(self.bids.values().rev().take(10).cloned().collect()); //TODO: GET rid of some
+        let asks = Some(self.asks.values().take(10).cloned().collect());
+        EventOrderBook::new(bids, asks)
     }
 
-    #[inline]
-    pub fn top_asks(&self, n: usize) -> Vec<Level> {
-        self.asks.values().take(n).cloned().collect()
-    }
+    /*----- Good to have functions ----- */
+    // #[inline]
+    // fn process_trade(&mut self, event: Event) {
+    //     let buf = if event.is_buy == Some(true) {
+    //         &mut self.bids
+    //     } else {
+    //         &mut self.asks
+    //     };
 
-    #[inline]
-    pub fn midprice(&self) -> Option<f64> {
-        if let (Some(best_bid), Some(best_ask)) = (self.best_bid, self.best_ask) {
-            return Some((best_bid.price + best_ask.price) / 2.0);
-        }
+    //     let trade_level = event.trade.unwrap();
+    //     let price_ticks = self.price_ticks(trade_level.price, self.inv_tick_size);
 
-        None
-    }
+    //     if let Some(level) = buf.get_mut(&price_ticks) {
+    //         if trade_level.size >= level.size {
+    //             buf.remove(&price_ticks);
+    //         } else {
+    //             level.size -= trade_level.size;
+    //         }
+    //     };
+    // }
 
-    #[inline]
-    pub fn weighted_midprice(&self) -> Option<f64> {
-        if let (Some(best_bid), Some(best_ask)) = (self.best_bid, self.best_ask) {
-            let num = best_bid.size * best_ask.price + best_bid.price * best_ask.size;
-            let den = best_bid.size + best_ask.size;
-            return Some(num / den);
-        }
+    // pub fn best_bid(&self) -> Option<Level> {
+    //     self.best_bid
+    // }
 
-        None
-    }
+    // pub fn best_ask(&self) -> Option<Level> {
+    //     self.best_ask
+    // }
+
+    // #[inline]
+    // pub fn top_bids(&self, n: usize) -> Vec<Level> {
+    //     self.bids.values().rev().take(n).cloned().collect()
+    // }
+
+    // #[inline]
+    // pub fn top_asks(&self, n: usize) -> Vec<Level> {
+    //     self.asks.values().take(n).cloned().collect()
+    // }
+
+    // #[inline]
+    // pub fn midprice(&self) -> Option<f64> {
+    //     if let (Some(best_bid), Some(best_ask)) = (self.best_bid, self.best_ask) {
+    //         return Some((best_bid.price + best_ask.price) / 2.0);
+    //     }
+
+    //     None
+    // }
+
+    // #[inline]
+    // pub fn weighted_midprice(&self) -> Option<f64> {
+    //     if let (Some(best_bid), Some(best_ask)) = (self.best_bid, self.best_ask) {
+    //         let num = best_bid.size * best_ask.price + best_bid.price * best_ask.size;
+    //         let den = best_bid.size + best_ask.size;
+    //         return Some(num / den);
+    //     }
+
+    //     None
+    // }
 }
 
 // #[cfg(test)]

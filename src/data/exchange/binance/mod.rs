@@ -1,15 +1,16 @@
-pub mod book;
+pub mod model;
 pub mod channel;
 pub mod market;
+pub mod l2;
 
-use book::{BinanceBook, BinanceSubscriptionResponse, BinanceTrade};
+use model::{BinanceBook, BinanceSubscriptionResponse, BinanceTrade};
 use channel::BinanceChannel;
 use serde_json::json;
 use std::collections::HashSet;
 
 use super::{Connector, Instrument, StreamSelector};
 use crate::data::{
-    models::{
+    model::{
         book::OrderBookL2,
         subs::{ExchangeId, StreamType},
         trade::Trades,

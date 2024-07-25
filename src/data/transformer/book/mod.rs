@@ -1,17 +1,39 @@
 use std::{collections::HashMap, marker::PhantomData};
-
 use async_trait::async_trait;
 
-use crate::{data::models::subs::Instrument, error::SocketError};
+use crate::{
+    data::{model::subs::Instrument, shared::orderbook::OrderBook},
+    error::SocketError,
+};
 
 // Books on exchange likely has different sequencing and initialisation methods
 // 1. Have generalised orderbook but have exchange specific sequencer and init methods
 
-pub struct MultiBookTransformer<Input, Book> {
-    pub orderbooks: HashMap<String, Book>,
+/*----- */
+// Multi-book transformer
+/*----- */
+#[derive(Debug, Default)]
+pub struct Map<T>(pub HashMap<String, T>);
+
+#[derive(Debug, Default)]
+pub struct MultiBookTransformer<Input, InstrumentId, Updater> {
+    pub orderbooks: Map<InstrumentOrderBook<InstrumentId, Updater>>,
     marker: PhantomData<Input>,
 }
 
+/*----- */
+// Instrument orderbook
+/*----- */
+#[derive(Debug, Default)]
+pub struct InstrumentOrderBook<InstrumentId, Updater> {
+    pub instrument: InstrumentId,
+    pub updater: Updater,
+    pub book: OrderBook,
+}
+
+/*----- */
+// Orderbook updater
+/*----- */
 #[async_trait]
 pub trait OrderBookUpdater
 where
@@ -20,11 +42,13 @@ where
     type OrderBook;
     type UpdateEvent;
 
-    async fn init<Exchange, StreamKind>(instrument: Instrument) {}
+    async fn init<Exchange, StreamKind>(
+        instrument: Instrument,
+    ) -> Result<InstrumentOrderBook<Instrument, Self>, SocketError>;
 
     async fn update(
         &mut self,
         book: &mut Self::OrderBook,
         update: Self::UpdateEvent,
-    ) -> Result<Self::OrderBook, SocketError>;
+    ) -> Result<Option<Self::OrderBook>, SocketError>;
 }

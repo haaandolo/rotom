@@ -1,8 +1,8 @@
 use serde::Deserialize;
 
 use crate::data::{
-    models::{
-        book::OrderBook,
+    model::{
+        book::EventOrderBook,
         event::MarketEvent,
         level::Level,
         subs::{ExchangeId, StreamType},
@@ -53,7 +53,7 @@ pub struct BinanceBook {
     pub asks: Option<Vec<Level>>,
 }
 
-impl From<BinanceBook> for MarketEvent<OrderBook> {
+impl From<BinanceBook> for MarketEvent<EventOrderBook> {
     fn from(event: BinanceBook) -> Self {
         Self {
             exchange_time: event.timestamp,
@@ -62,7 +62,7 @@ impl From<BinanceBook> for MarketEvent<OrderBook> {
             exchange: ExchangeId::BinanceSpot,
             stream_type: StreamType::L2,
             symbol: event.symbol,
-            event_data: OrderBook::new(event.bids, event.asks),
+            event_data: EventOrderBook::new(event.bids, event.asks),
         }
     }
 }

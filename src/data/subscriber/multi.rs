@@ -2,7 +2,7 @@ use std::{collections::HashMap, pin::Pin};
 use futures::Future;
 
 use crate::{
-    data::models::{event::MarketEvent, subs::ExchangeId, SubKind},
+    data::model::{event::MarketEvent, subs::ExchangeId, SubKind},
     error::SocketError,
 };
 

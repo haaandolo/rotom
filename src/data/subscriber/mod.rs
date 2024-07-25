@@ -8,8 +8,8 @@ use tokio::sync::mpsc::{self, UnboundedReceiver};
 use tokio_stream::{wrappers::UnboundedReceiverStream, StreamMap};
 
 use multi::MultiStreamBuilder;
-use super::models::subs::ExchangeId;
-use super::models::SubKind;
+use super::model::subs::ExchangeId;
+use super::model::SubKind;
 
 pub struct Streams<T> {
     pub streams: HashMap<ExchangeId, UnboundedReceiver<T>>,

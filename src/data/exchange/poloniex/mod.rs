@@ -1,16 +1,16 @@
-pub mod book;
+pub mod model;
 pub mod channel;
 pub mod market;
 
-use book::{PoloniexBook, PoloniexSubscriptionResponse, PoloniexTrade};
+use model::{PoloniexBook, PoloniexSubscriptionResponse, PoloniexTrade};
 use channel::PoloniexChannel;
 use serde_json::json;
 use std::collections::HashSet;
 
 use super::{Connector, Instrument, StreamSelector};
-use crate::data::models::book::OrderBookL2;
-use crate::data::models::subs::{ExchangeId, StreamType};
-use crate::data::models::trade::Trades;
+use crate::data::model::book::OrderBookL2;
+use crate::data::model::subs::{ExchangeId, StreamType};
+use crate::data::model::trade::Trades;
 use crate::data::protocols::ws::{PingInterval, WsMessage};
 use crate::data::transformer::stateless_transformer::StatelessTransformer;
 

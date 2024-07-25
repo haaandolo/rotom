@@ -1,8 +1,8 @@
 use std::marker::PhantomData;
 use serde::{Deserialize, Serialize};
 
-use crate::data::models::event::MarketEvent;
-use crate::data::models::SubKind;
+use crate::data::model::event::MarketEvent;
+use crate::data::model::SubKind;
 use crate::error::SocketError;
 
 use super::Transformer;

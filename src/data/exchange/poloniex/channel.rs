@@ -1,6 +1,6 @@
 use crate::data::{
     exchange::Identifier,
-    models::{book::OrderBookL2, subs::Subscription, trade::Trades},
+    model::{book::OrderBookL2, subs::Subscription, trade::Trades},
 };
 use super::PoloniexSpot;
 

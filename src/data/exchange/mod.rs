@@ -4,7 +4,7 @@ pub mod poloniex;
 use serde::de::DeserializeOwned;
 
 use super::{
-    models::{
+    model::{
         subs::{ExchangeId, Instrument},
         SubKind,
     },

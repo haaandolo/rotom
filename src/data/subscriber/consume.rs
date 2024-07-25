@@ -6,7 +6,7 @@ use crate::data::protocols::ws::{create_websocket, WsMessage};
 use crate::{
     data::{
         exchange::{Connector, StreamSelector},
-        models::{event::MarketEvent, subs::Subscription, SubKind},
+        model::{event::MarketEvent, subs::Subscription, SubKind},
         transformer::Transformer,
     },
     error::SocketError,

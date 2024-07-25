@@ -13,7 +13,7 @@ use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
 use crate::{
     data::{
         exchange::{Connector, StreamSelector},
-        models::{subs::Instrument, SubKind},
+        model::{subs::Instrument, SubKind},
     },
     error::SocketError,
 };

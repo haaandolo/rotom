@@ -2,8 +2,8 @@ use std::mem;
 use serde::Deserialize;
 
 use crate::data::{
-    models::{
-        book::OrderBook,
+    model::{
+        book::EventOrderBook,
         event::MarketEvent,
         level::Level,
         subs::{ExchangeId, StreamType},
@@ -39,7 +39,7 @@ pub struct PoloniexBook {
     pub data: [PoloniexBookData; 1],
 }
 
-impl From<PoloniexBook> for MarketEvent<OrderBook> {
+impl From<PoloniexBook> for MarketEvent<EventOrderBook> {
     fn from(mut value: PoloniexBook) -> Self {
         let data = mem::take(&mut value.data[0]);
         Self {
@@ -49,7 +49,7 @@ impl From<PoloniexBook> for MarketEvent<OrderBook> {
             exchange: ExchangeId::PoloniexSpot,
             stream_type: StreamType::L2,
             symbol: data.symbol,
-            event_data: OrderBook::new(data.bids, data.asks),
+            event_data:EventOrderBook::new(data.bids, data.asks),
         }
     }
 }

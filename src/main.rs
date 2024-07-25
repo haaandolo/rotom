@@ -1,6 +1,6 @@
 use arb_bot::data::{
     exchange::{binance::BinanceSpot, poloniex::PoloniexSpot},
-    models::{
+    model::{
         book::OrderBookL2,
         event::{DataKind, MarketEvent},
         subs::{ExchangeId, StreamType},
