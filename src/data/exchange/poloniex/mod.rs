@@ -76,9 +76,11 @@ impl Connector for PoloniexSpot {
 // Stream selector
 /*----- */
 impl StreamSelector<PoloniexSpot, OrderBookL2> for PoloniexSpot {
-    type StreamTransformer = StatelessTransformer<PoloniexBook, OrderBookL2>;
+    type Stream = PoloniexBook;
+    type StreamTransformer = StatelessTransformer<Self::Stream, OrderBookL2>;
 }
 
 impl StreamSelector<PoloniexSpot, Trades> for PoloniexSpot {
-    type StreamTransformer = StatelessTransformer<PoloniexTrade, Trades>;
+    type Stream = PoloniexTrade;
+    type StreamTransformer = StatelessTransformer<Self::Stream, Trades>;
 }

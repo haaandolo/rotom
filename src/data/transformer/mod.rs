@@ -1,7 +1,12 @@
 pub mod book;
 pub mod stateless_transformer;
 
+use async_trait::async_trait;
 use serde::Deserialize;
+
+use crate::error::SocketError;
+
+use super::model::{event::MarketEvent, subs::Instrument, SubKind};
 
 /*----- */
 // WebSocket transformer
@@ -12,4 +17,17 @@ pub trait Transformer {
     type Output: Send;
     // type OutputIter: IntoIterator<Item = Result<Self::Output, Self::Error>>;
     fn transform(&mut self, input: Self::Input) -> Self::Output;
+}
+
+/*----- */
+// Exchange transformer
+/*----- */
+#[async_trait]
+pub trait ExchangeTransformer<Input, StreamKind>
+where
+    Self: Transformer<Input = Input, Output = MarketEvent<StreamKind::Event>, Error = SocketError>
+        + Sized,
+    StreamKind: SubKind,
+{
+    async fn new(subs: &[Instrument]) -> Result<Self, SocketError>;
 }

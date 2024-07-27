@@ -40,6 +40,7 @@ where
     Exchange: Connector,
     StreamKind: SubKind,
 {
+    type Stream;
     type StreamTransformer: Transformer + Default + Send;
 }
 

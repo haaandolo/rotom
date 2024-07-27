@@ -2,6 +2,7 @@ use futures::Future;
 use std::{collections::HashMap, pin::Pin};
 use tokio::sync::mpsc::{self};
 
+use super::{consume::consume, Streams};
 use crate::{
     data::{
         exchange::{Connector, StreamSelector},
@@ -10,11 +11,10 @@ use crate::{
             subs::{ExchangeId, Subscription},
             SubKind,
         },
-        transformer::Transformer,
+        transformer::ExchangeTransformer,
     },
     error::SocketError,
 };
-use super::{consume::consume, Streams};
 
 pub type SubscribeFuture = Pin<Box<dyn Future<Output = Result<(), SocketError>>>>;
 
@@ -46,7 +46,8 @@ where
         SubIter: IntoIterator<Item = Sub>,
         Sub: Into<Subscription<Exchange, StreamKind>>,
         Exchange: Connector + Send + StreamSelector<Exchange, StreamKind> + 'static,
-        MarketEvent<StreamKind::Event>: From<<Exchange::StreamTransformer as Transformer>::Output>,
+        // MarketEvent<StreamKind::Event>: From<<Exchange::StreamTransformer as Transformer>::Output>,
+        Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind>,
     {
         let exchange_sub = subscriptions
             .into_iter()

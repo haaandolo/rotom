@@ -3,11 +3,11 @@ use tokio::sync::mpsc::UnboundedSender;
 use tokio::{time::sleep, time::Duration};
 
 use crate::data::protocols::ws::{create_websocket, WsMessage};
+use crate::data::transformer::ExchangeTransformer;
 use crate::{
     data::{
         exchange::{Connector, StreamSelector},
         model::{event::MarketEvent, subs::Subscription, SubKind},
-        transformer::Transformer,
     },
     error::SocketError,
 };
@@ -21,7 +21,8 @@ pub async fn consume<Exchange, StreamKind>(
 where
     StreamKind: SubKind,
     Exchange: Connector + Send + StreamSelector<Exchange, StreamKind>,
-    MarketEvent<StreamKind::Event>: From<<Exchange::StreamTransformer as Transformer>::Output>,
+    // MarketEvent<StreamKind::Event>: From<<Exchange::StreamTransformer as Transformer>::Output>,
+    Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind>
 {
     let mut connection_attempt: u32 = 0;
     let mut backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
@@ -69,7 +70,7 @@ where
             match market_event {
                 Ok(market_event) => {
                     exchange_tx
-                        .send(market_event.into())
+                        .send(market_event)
                         .expect("failed to send message");
                 }
                 Err(_error) => {

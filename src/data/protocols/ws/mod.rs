@@ -14,6 +14,7 @@ use crate::{
     data::{
         exchange::{Connector, StreamSelector},
         model::{subs::Instrument, SubKind},
+        transformer::ExchangeTransformer,
     },
     error::SocketError,
 };
@@ -37,6 +38,7 @@ pub async fn create_websocket<Exchange, StreamKind>(
 where
     StreamKind: SubKind,
     Exchange: Connector + StreamSelector<Exchange, StreamKind> + Send,
+    Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind>,
 {
     // Make connection
     let mut tasks = Vec::new();
@@ -62,7 +64,8 @@ where
         tasks.push(ping_handler);
     }
 
-    let transformer = Exchange::StreamTransformer::default();
+    // let transformer = Exchange::StreamTransformer::default();
+    let transformer = Exchange::StreamTransformer::new(subs).await?;
 
     Ok(ExchangeStream::new(ws_read, transformer, tasks))
 }

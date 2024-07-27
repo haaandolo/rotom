@@ -1,5 +1,5 @@
-use std::{collections::HashMap, marker::PhantomData};
 use async_trait::async_trait;
+use std::{collections::HashMap, marker::PhantomData};
 
 use crate::{
     data::{model::subs::Instrument, shared::orderbook::OrderBook},
@@ -12,7 +12,7 @@ use crate::{
 /*----- */
 // Multi-book transformer
 /*----- */
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct Map<T>(pub HashMap<String, T>);
 
 #[derive(Debug, Default)]
