@@ -87,9 +87,6 @@ where
                     // If `StreamParser` returns None it's a safe-to-skip message
                     None => continue,
                 };
-            
-            // println!("$$$$ in poll_next $$$$");
-            // println!("{:?}", exchange_message);
 
             let transformed_message = self.transformer.transform(exchange_message);
             self.buffer.push_back(Ok(transformed_message?))

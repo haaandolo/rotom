@@ -18,17 +18,15 @@ async fn main() {
     /*----- */
     let streams: Streams<MarketEvent<DataKind>> = Streams::builder_multi()
         .add(
-            Streams::<OrderBookL2>::builder()
-                .subscribe([
-                    (BinanceSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
-                    (BinanceSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
-                    (BinanceSpot, "eth", "usdt", StreamType::L2, OrderBookL2),
-                    (BinanceSpot, "bnb", "usdt", StreamType::L2, OrderBookL2),
-                    (BinanceSpot, "ada", "usdt", StreamType::L2, OrderBookL2),
-                    (BinanceSpot, "avax", "usdt", StreamType::L2, OrderBookL2),
-                    (BinanceSpot, "pepe", "usdt", StreamType::L2, OrderBookL2),
-                ])
-                // .subscribe([
+            Streams::<OrderBookL2>::builder().subscribe([
+                (BinanceSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
+                (BinanceSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
+                (BinanceSpot, "eth", "usdt", StreamType::L2, OrderBookL2),
+                (BinanceSpot, "bnb", "usdt", StreamType::L2, OrderBookL2),
+                (BinanceSpot, "ada", "usdt", StreamType::L2, OrderBookL2),
+                (BinanceSpot, "avax", "usdt", StreamType::L2, OrderBookL2),
+                (BinanceSpot, "pepe", "usdt", StreamType::L2, OrderBookL2),
+            ]), // .subscribe([
                 //     (PoloniexSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
                 //     (PoloniexSpot, "arb", "usdt", StreamType::L2, OrderBookL2),
                 //     (PoloniexSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
@@ -97,26 +95,10 @@ async fn main() {
 /*----- */
 // todo
 /*----- */
-// - implement transformer
-// - make orderbooks
-// - make orderbook take in MarketEvent instead of Event
-// - properly check sequence
-// - proper error handling i.e, add mismatch sequence error in websocket
+// - proper error handling i.e, add mismatch sequence error in websocket && deserialisation errors
+// - poloniex l2
 // - process custom ping for poloniex
 // - fix poll next (err)
 // - are some traits meant to be async traits?
+// - logging
 // - DOCUMENTATION + EXAMPLES
-
-// - instrumentId == subscriptionId
-
-/*----- */
-// Binance OB sequencing - specific for each exchange
-/*----- */
-// first_update_id: 49056508893,
-// last_update_id: 49056508904,
-
-// first_update_id: 49056508876,
-// last_update_id: 49056508892,
-
-// first_update_id: 49056508841,
-// last_update_id: 49056508875,

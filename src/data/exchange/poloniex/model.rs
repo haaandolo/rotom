@@ -58,6 +58,7 @@ impl Identifier<String> for PoloniexBook {
         self.data[0].symbol.clone()
     }
 }
+
 /*----- */
 // Trades
 /*----- */

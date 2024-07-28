@@ -24,7 +24,7 @@ where
     StreamKind: SubKind,
     Exchange: Connector + Send + StreamSelector<Exchange, StreamKind>,
     Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind> + Debug,
-    <Exchange::StreamTransformer as Transformer>::Input: Debug
+    <Exchange::StreamTransformer as Transformer>::Input: Debug,
 {
     let mut connection_attempt: u32 = 0;
     let mut backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
@@ -62,6 +62,8 @@ where
         if let Some(Ok(WsMessage::Text(message))) = &stream.ws_read.next().await {
             let subscription_sucess = Exchange::validate_subscription(message.to_owned(), &subs);
 
+            println!("success: {:#?}", subscription_sucess);
+
             if !subscription_sucess {
                 break SocketError::Subscribe(String::from("Subscription failed"));
             }
@@ -76,9 +78,12 @@ where
                         .expect("failed to send message");
                 }
                 Err(_error) => {
-                    // SHOULD CHANGE THIS TO SEE WHAT ERRORS ACTUAL MEANS INSTEAD OF BREAKING
-                    stream.cancel_running_tasks();
-                    break;
+                    continue;
+                    // // SHOULD CHANGE THIS TO SEE WHAT ERRORS ACTUAL MEANS INSTEAD OF BREAKING
+                    // println!("---- consumer error ----");
+                    // println!("{:#?}", _error);
+                    // stream.cancel_running_tasks();
+                    // break;
                 } // ADD Error for if sequence is broken then have to restart
             }
         }

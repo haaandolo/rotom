@@ -4,7 +4,7 @@ use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
 use crate::{
     data::{
-        exchange::{binance::BinanceSpot, Identifier},
+        exchange::Identifier,
         model::{book::EventOrderBook, event::MarketEvent, subs::Instrument, SubKind},
         shared::orderbook::OrderBook,
     },
@@ -125,12 +125,10 @@ where
     type Input = Updater::UpdateEvent;
     type Output = MarketEvent<StreamKind::Event>;
     fn transform(&mut self, update: Self::Input) -> Result<Self::Output, Self::Error> {
-        // println!("--- in transformer");
-        // println!("{:#?}", update.id());
         let instrument_orderbook = self.orderbooks.find_mut(&update.id()).unwrap(); // TODO
-                                                                                    // println!("{:#?}", instrument_orderbook);
+
         let InstrumentOrderBook {
-            instrument,
+            instrument: _,
             book,
             updater,
         } = instrument_orderbook;

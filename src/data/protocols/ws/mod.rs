@@ -16,7 +16,7 @@ use crate::{
     data::{
         exchange::{Connector, StreamSelector},
         model::{subs::Instrument, SubKind},
-        transformer::{ExchangeTransformer, Transformer},
+        transformer::ExchangeTransformer,
     },
     error::SocketError,
 };
@@ -44,7 +44,7 @@ where
 {
     // Make connection
     let mut tasks = Vec::new();
-    let ws = connect_async(Exchange::url().clone())
+    let ws = connect_async(Exchange::url())
         .await
         .map(|(ws, _)| ws)
         .map_err(SocketError::WebSocketError);
@@ -53,7 +53,7 @@ where
     let (mut ws_write, ws_read) = ws?.split();
 
     // Handle subscription
-    if let Some(subcription) = Exchange::requests(subs).clone() {
+    if let Some(subcription) = Exchange::requests(subs) {
         ws_write
             .send(subcription)
             .await
@@ -61,13 +61,12 @@ where
     }
 
     // Spawn custom ping handle (application level ping)
-    if let Some(ping_interval) = Exchange::ping_interval().clone() {
+    if let Some(ping_interval) = Exchange::ping_interval() {
         let ping_handler = tokio::spawn(schedule_pings_to_exchange(ws_write, ping_interval));
         tasks.push(ping_handler);
     }
 
     let transformer = Exchange::StreamTransformer::new(subs).await?;
-    // println!("{:?}", transformer);
 
     Ok(ExchangeStream::new(ws_read, transformer, tasks))
 }
