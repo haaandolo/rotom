@@ -1,16 +1,17 @@
+use futures::Stream;
+use pin_project::pin_project;
 use std::{
     collections::VecDeque,
+    fmt::Debug,
     pin::Pin,
     task::{Context, Poll},
 };
-use futures::Stream;
-use pin_project::pin_project;
 
-use crate::data::transformer::Transformer;
 use super::{
     ws_parser::{StreamParser, WebSocketParser},
     JoinHandle, WsRead,
 };
+use crate::{data::transformer::Transformer, error::SocketError};
 
 /*----- */
 // Exchange Stream
@@ -54,7 +55,8 @@ where
 impl<StreamTransformer> Stream for ExchangeStream<StreamTransformer>
 where
     StreamTransformer: Transformer,
-    // StreamTransformer::Error: From<SocketError>,
+    StreamTransformer::Input: Debug, //DEL
+    StreamTransformer::Error: From<SocketError>,
 {
     type Item = Result<StreamTransformer::Output, StreamTransformer::Error>;
 
@@ -79,15 +81,18 @@ where
                     Some(Ok(exchange_message)) => exchange_message,
 
                     // If `StreamParser` returns an Err pass it downstream
-                    // Some(Err(err)) => return Poll::Ready(Some(Err(err.into()))),
-                    Some(Err(_err)) => continue,
+                    Some(Err(err)) => return Poll::Ready(Some(Err(err.into()))),
+                    // Some(Err(_err)) => continue,
 
                     // If `StreamParser` returns None it's a safe-to-skip message
                     None => continue,
                 };
+            
+            // println!("$$$$ in poll_next $$$$");
+            // println!("{:?}", exchange_message);
 
             let transformed_message = self.transformer.transform(exchange_message);
-            self.buffer.push_back(Ok(transformed_message))
+            self.buffer.push_back(Ok(transformed_message?))
         }
     }
 }

@@ -1,9 +1,11 @@
+use std::fmt::Debug;
+
 use futures::StreamExt;
 use tokio::sync::mpsc::UnboundedSender;
 use tokio::{time::sleep, time::Duration};
 
 use crate::data::protocols::ws::{create_websocket, WsMessage};
-use crate::data::transformer::ExchangeTransformer;
+use crate::data::transformer::{ExchangeTransformer, Transformer};
 use crate::{
     data::{
         exchange::{Connector, StreamSelector},
@@ -21,8 +23,8 @@ pub async fn consume<Exchange, StreamKind>(
 where
     StreamKind: SubKind,
     Exchange: Connector + Send + StreamSelector<Exchange, StreamKind>,
-    // MarketEvent<StreamKind::Event>: From<<Exchange::StreamTransformer as Transformer>::Output>,
-    Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind>
+    Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind> + Debug,
+    <Exchange::StreamTransformer as Transformer>::Input: Debug
 {
     let mut connection_attempt: u32 = 0;
     let mut backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
@@ -80,6 +82,9 @@ where
                 } // ADD Error for if sequence is broken then have to restart
             }
         }
+
+        println!("--- Loop ---");
+        println!("{:#?}", connection_attempt);
 
         // Wait a certain ms before trying to reconnect
         sleep(Duration::from_millis(backoff_ms)).await;

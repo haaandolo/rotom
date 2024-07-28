@@ -1,10 +1,11 @@
-pub mod model;
 pub mod channel;
-pub mod market;
 pub mod l2;
+pub mod market;
+pub mod model;
 
-use model::{BinanceBook, BinanceSubscriptionResponse, BinanceTrade};
 use channel::BinanceChannel;
+use l2::BinanceSpotBookUpdater;
+use model::{BinanceBook, BinanceSubscriptionResponse, BinanceTrade};
 use serde_json::json;
 use std::collections::HashSet;
 
@@ -14,7 +15,9 @@ use crate::data::{
         book::OrderBookL2,
         subs::{ExchangeId, StreamType},
         trade::Trades,
-    }, protocols::ws::WsMessage, transformer::stateless_transformer::StatelessTransformer
+    },
+    protocols::ws::WsMessage,
+    transformer::{book::MultiBookTransformer, stateless_transformer::StatelessTransformer},
 };
 
 /*----- */
@@ -67,9 +70,15 @@ impl Connector for BinanceSpot {
 /*----- */
 // Stream selector
 /*----- */
+// impl StreamSelector<BinanceSpot, OrderBookL2> for BinanceSpot {
+//     type Stream = BinanceBook;
+//     type StreamTransformer = StatelessTransformer<Self::Stream, OrderBookL2>;
+// }
+
 impl StreamSelector<BinanceSpot, OrderBookL2> for BinanceSpot {
     type Stream = BinanceBook;
-    type StreamTransformer = StatelessTransformer<Self::Stream, OrderBookL2>;
+    type StreamTransformer =
+        MultiBookTransformer<Self::Stream, BinanceSpotBookUpdater, OrderBookL2>;
 }
 
 impl StreamSelector<BinanceSpot, Trades> for BinanceSpot {

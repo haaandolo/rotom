@@ -22,17 +22,17 @@ pub struct StatelessTransformer<Input, Output> {
 /*----- */
 // Impl transformer for StatelessTransformer
 /*----- */
-impl<Input, Output> Transformer for StatelessTransformer<Input, Output>
+impl<DeStruct, StreamKind> Transformer for StatelessTransformer<DeStruct, StreamKind>
 where
-    Input: Send + for<'de> Deserialize<'de> + Into<MarketEvent<Output::Event>>,
-    Output: SubKind,
+    DeStruct: Send + for<'de> Deserialize<'de> + Into<MarketEvent<StreamKind::Event>>,
+    StreamKind: SubKind,
 {
     type Error = SocketError;
-    type Input = Input;
-    type Output = MarketEvent<Output::Event>;
+    type Input = DeStruct;
+    type Output = MarketEvent<StreamKind::Event>;
 
-    fn transform(&mut self, input: Self::Input) -> Self::Output {
-        input.into()
+    fn transform(&mut self, update: Self::Input) -> Result<Self::Output, Self::Error> {
+        Ok(update.into())
     }
 }
 
@@ -40,11 +40,12 @@ where
 // Impl ExchangeTransformer for StatelessTransformer
 /*----- */
 #[async_trait]
-impl<Input, Output> ExchangeTransformer<Input, Output> for StatelessTransformer<Input, Output>
+impl<DeStruct, StreamKind> ExchangeTransformer<DeStruct, StreamKind>
+    for StatelessTransformer<DeStruct, StreamKind>
 where
-    Output: SubKind,
-    Input: Send + for<'de> Deserialize<'de>,
-    MarketEvent<Output::Event>: From<Input>,
+    StreamKind: SubKind,
+    DeStruct: Send + for<'de> Deserialize<'de>,
+    MarketEvent<StreamKind::Event>: From<DeStruct>,
 {
     async fn new(subs: &[Instrument]) -> Result<Self, SocketError> {
         let instrument_map = Map(HashMap::with_capacity(subs.len()));

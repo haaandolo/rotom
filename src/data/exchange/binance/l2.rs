@@ -2,7 +2,10 @@ use async_trait::async_trait;
 use chrono::Utc;
 
 use super::model::{BinanceBook, BinanceSnapshot};
-use crate::data::model::subs::Instrument;
+use crate::data::model::book::EventOrderBook;
+use crate::data::model::event::MarketEvent;
+use crate::data::model::subs::{ExchangeId, Instrument, StreamType};
+use crate::data::shared::utils::current_timestamp_utc;
 use crate::{
     data::{
         shared::orderbook::OrderBook,
@@ -13,6 +16,7 @@ use crate::{
 
 pub const HTTP_BOOK_L2_SNAPSHOT_URL_BINANCE_SPOT: &str = "https://api.binance.com/api/v3/depth";
 
+#[derive(Default, Debug)]
 pub struct BinanceSpotBookUpdater {
     pub updates_processed: u64,
     pub last_update_id: u64,
@@ -62,14 +66,12 @@ impl OrderBookUpdater for BinanceSpotBookUpdater {
     type OrderBook = OrderBook;
     type UpdateEvent = BinanceBook;
 
-    async fn init<Exchange, StreamKind>(
-        instrument: Instrument,
-    ) -> Result<InstrumentOrderBook<Instrument, Self>, SocketError> {
+    async fn init(instrument: &Instrument) -> Result<InstrumentOrderBook<Self>, SocketError> {
         let snapshot_url = format!(
             "{}?symbol={}{}&limit=100",
             HTTP_BOOK_L2_SNAPSHOT_URL_BINANCE_SPOT,
-            instrument.base.clone().to_uppercase(), // TODO: CHNAGE TO .as_ref()
-            instrument.quote.clone().to_uppercase()  // TODO: CHNAGE TO .as_ref()
+            instrument.base.to_uppercase(), // TODO: CHNAGE TO .as_ref()
+            instrument.quote.to_uppercase()  // TODO: CHNAGE TO .as_ref()
         );
 
         let snapshot = reqwest::get(snapshot_url)
@@ -79,30 +81,31 @@ impl OrderBookUpdater for BinanceSpotBookUpdater {
             .await
             .unwrap(); // TODO
 
-        let mut orderbook_init = OrderBook::new(0.00001);
+        let mut orderbook_init = OrderBook::new(0.001);
         orderbook_init.process_lvl2(snapshot.bids, snapshot.asks);
 
         Ok(InstrumentOrderBook {
-            instrument,
+            instrument: instrument.clone(),
             updater: Self::new(snapshot.last_update_id),
             book: orderbook_init,
         })
     }
 
-    async fn update(
+    fn update(
         &mut self,
         book: &mut Self::OrderBook,
         update: Self::UpdateEvent,
-    ) -> Result<Option<Self::OrderBook>, SocketError> {
+    ) -> Result<Option<MarketEvent<EventOrderBook>>, SocketError> {
         if update.last_update_id <= self.last_update_id {
             return Ok(None);
         }
 
         if self.is_first_update() {
             self.validate_first_update(&update)?;
+        } else {
+            self.validate_next_update(&update)?;
         }
 
-        self.validate_next_update(&update)?;
         book.last_update_time = Utc::now();
         book.process_lvl2(update.bids, update.asks);
 
@@ -110,7 +113,17 @@ impl OrderBookUpdater for BinanceSpotBookUpdater {
         self.prev_last_update_id = self.last_update_id;
         self.last_update_id = update.last_update_id;
 
-        Ok(Some(book.snapshot()))
+        let book_snaphot = book.book_snapshot();
+
+        Ok(Some(MarketEvent {
+            exchange_time: update.timestamp,
+            received_time: current_timestamp_utc(),
+            seq: update.last_update_id,
+            exchange: ExchangeId::BinanceSpot,
+            stream_type: StreamType::L2,
+            symbol: update.symbol,
+            event_data: book_snaphot,
+        }))
     }
 }
 

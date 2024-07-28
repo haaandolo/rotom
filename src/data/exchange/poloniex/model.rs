@@ -2,17 +2,16 @@ use std::mem;
 use serde::Deserialize;
 
 use crate::data::{
-    model::{
+    exchange::Identifier, model::{
         book::EventOrderBook,
         event::MarketEvent,
         level::Level,
         subs::{ExchangeId, StreamType},
         trade::Trade,
-    },
-    shared::{
+    }, shared::{
         de::{de_str, de_str_symbol, deserialize_non_empty_vec},
         utils::current_timestamp_utc,
-    },
+    }
 };
 
 /*----- */
@@ -41,7 +40,7 @@ pub struct PoloniexBook {
 
 impl From<PoloniexBook> for MarketEvent<EventOrderBook> {
     fn from(mut value: PoloniexBook) -> Self {
-        let data = mem::take(&mut value.data[0]);
+        let data = mem::take(&mut value.data[0]); // TODO
         Self {
             exchange_time: data.timestamp,
             received_time: current_timestamp_utc(),
@@ -54,6 +53,11 @@ impl From<PoloniexBook> for MarketEvent<EventOrderBook> {
     }
 }
 
+impl Identifier<String> for PoloniexBook {
+    fn id(&self) -> String {
+        self.data[0].symbol.clone()
+    }
+}
 /*----- */
 // Trades
 /*----- */

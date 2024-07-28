@@ -1,6 +1,8 @@
 pub mod poll_next;
 pub mod ws_parser;
 
+use std::fmt::Debug;
+
 use futures::{
     stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
@@ -14,7 +16,7 @@ use crate::{
     data::{
         exchange::{Connector, StreamSelector},
         model::{subs::Instrument, SubKind},
-        transformer::ExchangeTransformer,
+        transformer::{ExchangeTransformer, Transformer},
     },
     error::SocketError,
 };
@@ -38,7 +40,7 @@ pub async fn create_websocket<Exchange, StreamKind>(
 where
     StreamKind: SubKind,
     Exchange: Connector + StreamSelector<Exchange, StreamKind> + Send,
-    Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind>,
+    Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind> + Debug, // DEL
 {
     // Make connection
     let mut tasks = Vec::new();
@@ -64,8 +66,8 @@ where
         tasks.push(ping_handler);
     }
 
-    // let transformer = Exchange::StreamTransformer::default();
     let transformer = Exchange::StreamTransformer::new(subs).await?;
+    // println!("{:?}", transformer);
 
     Ok(ExchangeStream::new(ws_read, transformer, tasks))
 }

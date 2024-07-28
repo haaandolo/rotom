@@ -1,5 +1,5 @@
 use futures::Future;
-use std::{collections::HashMap, pin::Pin};
+use std::{collections::HashMap, fmt::Debug, pin::Pin};
 use tokio::sync::mpsc::{self};
 
 use super::{consume::consume, Streams};
@@ -11,7 +11,7 @@ use crate::{
             subs::{ExchangeId, Subscription},
             SubKind,
         },
-        transformer::ExchangeTransformer,
+        transformer::{ExchangeTransformer, Transformer},
     },
     error::SocketError,
 };
@@ -46,8 +46,8 @@ where
         SubIter: IntoIterator<Item = Sub>,
         Sub: Into<Subscription<Exchange, StreamKind>>,
         Exchange: Connector + Send + StreamSelector<Exchange, StreamKind> + 'static,
-        // MarketEvent<StreamKind::Event>: From<<Exchange::StreamTransformer as Transformer>::Output>,
-        Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind>,
+        Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind> + Debug,
+        <Exchange::StreamTransformer as Transformer>::Input: Debug, // DEL
     {
         let exchange_sub = subscriptions
             .into_iter()

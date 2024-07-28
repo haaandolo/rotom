@@ -22,26 +22,31 @@ async fn main() {
                 .subscribe([
                     (BinanceSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
                     (BinanceSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
+                    (BinanceSpot, "eth", "usdt", StreamType::L2, OrderBookL2),
+                    (BinanceSpot, "bnb", "usdt", StreamType::L2, OrderBookL2),
+                    (BinanceSpot, "ada", "usdt", StreamType::L2, OrderBookL2),
+                    (BinanceSpot, "avax", "usdt", StreamType::L2, OrderBookL2),
+                    (BinanceSpot, "pepe", "usdt", StreamType::L2, OrderBookL2),
                 ])
-                .subscribe([
-                    (PoloniexSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
-                    (PoloniexSpot, "arb", "usdt", StreamType::L2, OrderBookL2),
-                    (PoloniexSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
-                ]),
+                // .subscribe([
+                //     (PoloniexSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
+                //     (PoloniexSpot, "arb", "usdt", StreamType::L2, OrderBookL2),
+                //     (PoloniexSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
+                // ]),
         )
-        .add(
-            Streams::<Trades>::builder()
-                .subscribe([
-                    (BinanceSpot, "sol", "usdt", StreamType::Trades, Trades),
-                    (BinanceSpot, "arb", "usdt", StreamType::Trades, Trades),
-                    (BinanceSpot, "btc", "usdt", StreamType::Trades, Trades),
-                ])
-                .subscribe([
-                    (PoloniexSpot, "sol", "usdt", StreamType::Trades, Trades),
-                    (PoloniexSpot, "btc", "usdt", StreamType::Trades, Trades),
-                    (PoloniexSpot, "arb", "usdt", StreamType::Trades, Trades),
-                ]),
-        )
+        // .add(
+        //     Streams::<Trades>::builder()
+        //         .subscribe([
+        //             (BinanceSpot, "sol", "usdt", StreamType::Trades, Trades),
+        //             (BinanceSpot, "arb", "usdt", StreamType::Trades, Trades),
+        //             (BinanceSpot, "btc", "usdt", StreamType::Trades, Trades),
+        //         ])
+        //         .subscribe([
+        //             (PoloniexSpot, "sol", "usdt", StreamType::Trades, Trades),
+        //             (PoloniexSpot, "btc", "usdt", StreamType::Trades, Trades),
+        //             (PoloniexSpot, "arb", "usdt", StreamType::Trades, Trades),
+        //         ]),
+        // )
         .init()
         .await
         .unwrap();
@@ -49,6 +54,7 @@ async fn main() {
     let mut joined_stream = streams.join_map().await;
 
     while let Some(data) = joined_stream.next().await {
+        println!("@@@@ Market event @@@@");
         println!("{:?}", data);
     }
 

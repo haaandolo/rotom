@@ -1,17 +1,16 @@
 use serde::Deserialize;
 
 use crate::data::{
-    model::{
+    exchange::Identifier, model::{
         book::EventOrderBook,
         event::MarketEvent,
         level::Level,
         subs::{ExchangeId, StreamType},
         trade::Trade,
-    },
-    shared::{
+    }, shared::{
         de::{de_str, de_str_symbol, deserialize_non_empty_vec},
         utils::{current_timestamp_utc, snapshot_symbol_default_value},
-    },
+    }
 };
 
 /*----- */
@@ -64,6 +63,12 @@ impl From<BinanceBook> for MarketEvent<EventOrderBook> {
             symbol: event.symbol,
             event_data: EventOrderBook::new(event.bids, event.asks),
         }
+    }
+}
+
+impl Identifier<String> for BinanceBook {
+    fn id(&self) -> String {
+        self.symbol.clone()
     }
 }
 
