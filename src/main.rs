@@ -97,10 +97,10 @@ async fn main() {
 /*----- */
 // todo
 /*----- */
-// - proper error handling i.e, add mismatch sequence error in websocket && deserialisation errors
 // - poloniex l2
 // - process custom ping for poloniex
 // - fix poll next (err)
 // - are some traits meant to be async traits?
 // - logging
+// - rm Some from EventOrderBook
 // - DOCUMENTATION + EXAMPLES

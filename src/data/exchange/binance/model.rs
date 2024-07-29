@@ -17,7 +17,7 @@ use crate::data::{
 // Snapshot
 /*----- */
 #[derive(PartialEq, PartialOrd, Debug, Deserialize)]
-pub struct BinanceSnapshot {
+pub struct BinanceSpotSnapshot {
     #[serde(default = "snapshot_symbol_default_value")]
     symbol: String,
     #[serde(default = "current_timestamp_utc")]
@@ -34,7 +34,7 @@ pub struct BinanceSnapshot {
 // Orderbook L2
 /*----- */
 #[derive(PartialEq, PartialOrd, Debug, Deserialize, Default)]
-pub struct BinanceBook {
+pub struct BinanceSpotBookUpdate {
     #[serde(alias = "s")]
     #[serde(alias = "p", deserialize_with = "de_str_symbol")]
     pub symbol: String,
@@ -52,8 +52,8 @@ pub struct BinanceBook {
     pub asks: Option<Vec<Level>>,
 }
 
-impl From<BinanceBook> for MarketEvent<EventOrderBook> {
-    fn from(event: BinanceBook) -> Self {
+impl From<BinanceSpotBookUpdate> for MarketEvent<EventOrderBook> {
+    fn from(event: BinanceSpotBookUpdate) -> Self {
         Self {
             exchange_time: event.timestamp,
             received_time: current_timestamp_utc(),
@@ -66,7 +66,7 @@ impl From<BinanceBook> for MarketEvent<EventOrderBook> {
     }
 }
 
-impl Identifier<String> for BinanceBook {
+impl Identifier<String> for BinanceSpotBookUpdate {
     fn id(&self) -> String {
         self.symbol.clone()
     }
@@ -117,8 +117,8 @@ pub struct BinanceSubscriptionResponse {
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(untagged, rename_all = "snake_case")]
 pub enum BinanceMessage {
-    Book(BinanceBook),
-    Snapshot(BinanceSnapshot),
+    Book(BinanceSpotBookUpdate),
+    Snapshot(BinanceSpotSnapshot),
     Trade(BinanceTrade),
 }
 

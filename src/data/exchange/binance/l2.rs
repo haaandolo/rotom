@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use chrono::Utc;
 
-use super::model::{BinanceBook, BinanceSnapshot};
+use super::model::{BinanceSpotBookUpdate, BinanceSpotSnapshot};
 use crate::data::model::book::EventOrderBook;
 use crate::data::model::event::MarketEvent;
 use crate::data::model::subs::{ExchangeId, Instrument, StreamType};
@@ -36,7 +36,7 @@ impl BinanceSpotBookUpdater {
         self.updates_processed == 0
     }
 
-    pub fn validate_first_update(&self, update: &BinanceBook) -> Result<(), SocketError> {
+    pub fn validate_first_update(&self, update: &BinanceSpotBookUpdate) -> Result<(), SocketError> {
         let expected_next_id = self.last_update_id + 1;
         if update.first_update_id <= expected_next_id && update.last_update_id >= expected_next_id {
             Ok(())
@@ -48,7 +48,7 @@ impl BinanceSpotBookUpdater {
         }
     }
 
-    pub fn validate_next_update(&self, update: &BinanceBook) -> Result<(), SocketError> {
+    pub fn validate_next_update(&self, update: &BinanceSpotBookUpdate) -> Result<(), SocketError> {
         let expected_next_id = self.last_update_id + 1;
         if update.first_update_id == expected_next_id {
             Ok(())
@@ -64,7 +64,7 @@ impl BinanceSpotBookUpdater {
 #[async_trait]
 impl OrderBookUpdater for BinanceSpotBookUpdater {
     type OrderBook = OrderBook;
-    type UpdateEvent = BinanceBook;
+    type UpdateEvent = BinanceSpotBookUpdate;
 
     async fn init(instrument: &Instrument) -> Result<InstrumentOrderBook<Self>, SocketError> {
         let snapshot_url = format!(
@@ -77,7 +77,7 @@ impl OrderBookUpdater for BinanceSpotBookUpdater {
         let snapshot = reqwest::get(snapshot_url)
             .await
             .map_err(SocketError::Http)?
-            .json::<BinanceSnapshot>()
+            .json::<BinanceSpotSnapshot>()
             .await
             .map_err(SocketError::Http)?;
 

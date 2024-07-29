@@ -5,7 +5,7 @@ pub mod model;
 
 use channel::BinanceChannel;
 use l2::BinanceSpotBookUpdater;
-use model::{BinanceBook, BinanceSubscriptionResponse, BinanceTrade};
+use model::{BinanceSpotBookUpdate, BinanceSubscriptionResponse, BinanceTrade};
 use serde_json::json;
 use std::collections::HashSet;
 
@@ -76,7 +76,7 @@ impl Connector for BinanceSpot {
 // }
 
 impl StreamSelector<BinanceSpot, OrderBookL2> for BinanceSpot {
-    type Stream = BinanceBook;
+    type Stream = BinanceSpotBookUpdate;
     type StreamTransformer =
         MultiBookTransformer<Self::Stream, BinanceSpotBookUpdater, OrderBookL2>;
 }

@@ -18,7 +18,7 @@ use crate::data::{
 // Orderbook L2
 /*----- */
 #[derive(Deserialize, Debug, PartialEq, Default)]
-pub struct PoloniexBookData {
+pub struct PoloniexSpotBookData {
     #[serde(deserialize_with = "de_str_symbol")]
     pub symbol: String,
     #[serde(alias = "createTime")]
@@ -34,12 +34,12 @@ pub struct PoloniexBookData {
 }
 
 #[derive(Debug, Deserialize, PartialEq, Default)]
-pub struct PoloniexBook {
-    pub data: [PoloniexBookData; 1],
+pub struct PoloniexSpotBookUpdate {
+    pub data: [PoloniexSpotBookData; 1],
 }
 
-impl From<PoloniexBook> for MarketEvent<EventOrderBook> {
-    fn from(mut value: PoloniexBook) -> Self {
+impl From<PoloniexSpotBookUpdate> for MarketEvent<EventOrderBook> {
+    fn from(mut value: PoloniexSpotBookUpdate) -> Self {
         let data = mem::take(&mut value.data[0]); // TODO
         Self {
             exchange_time: data.timestamp,
@@ -53,7 +53,7 @@ impl From<PoloniexBook> for MarketEvent<EventOrderBook> {
     }
 }
 
-impl Identifier<String> for PoloniexBook {
+impl Identifier<String> for PoloniexSpotBookUpdate {
     fn id(&self) -> String {
         self.data[0].symbol.clone()
     }
@@ -115,7 +115,7 @@ pub struct PoloniexSubscriptionResponse {
 #[serde(untagged, rename_all = "snake_case")]
 pub enum PoloniexMessage {
     Trade(PoloniexTrade),
-    Book(PoloniexBook),
+    Book(PoloniexSpotBookUpdate),
 }
 
 /*----- */

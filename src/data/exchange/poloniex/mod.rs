@@ -2,7 +2,7 @@ pub mod model;
 pub mod channel;
 pub mod market;
 
-use model::{PoloniexBook, PoloniexSubscriptionResponse, PoloniexTrade};
+use model::{PoloniexSpotBookUpdate, PoloniexSubscriptionResponse, PoloniexTrade};
 use channel::PoloniexChannel;
 use serde_json::json;
 use std::collections::HashSet;
@@ -36,7 +36,7 @@ impl Connector for PoloniexSpot {
             .map(|s| match s.stream_type {
                 StreamType::L2 => PoloniexChannel::ORDER_BOOK_L2.as_ref(),
                 StreamType::Trades => PoloniexChannel::TRADES.as_ref(),
-                _ => panic!("Invalid stream was enter for poloniex"),
+                _ => panic!("Invalid stream was enter for poloniex"), // TODO
             })
             .collect::<HashSet<_>>()
             .into_iter()
@@ -76,7 +76,7 @@ impl Connector for PoloniexSpot {
 // Stream selector
 /*----- */
 impl StreamSelector<PoloniexSpot, OrderBookL2> for PoloniexSpot {
-    type Stream = PoloniexBook;
+    type Stream = PoloniexSpotBookUpdate;
     type StreamTransformer = StatelessTransformer<Self::Stream, OrderBookL2>;
 }
 
