@@ -94,6 +94,7 @@ where
             .into_iter()
             .map(|orderbook| {
                 let orderbook = orderbook.unwrap(); // TODO
+
                 let map_key = format!(
                     "{}{}",
                     orderbook.instrument.base, orderbook.instrument.quote
@@ -102,6 +103,7 @@ where
                 (map_key, orderbook)
             })
             .collect::<HashMap<String, InstrumentOrderBook<_>>>();
+
         let orderbooks = Map(init_orderbooks);
 
         Ok(Self {
@@ -125,7 +127,12 @@ where
     type Input = Updater::UpdateEvent;
     type Output = MarketEvent<StreamKind::Event>;
     fn transform(&mut self, update: Self::Input) -> Result<Self::Output, Self::Error> {
-        let instrument_orderbook = self.orderbooks.find_mut(&update.id()).unwrap(); // TODO
+        let instrument_orderbook =
+            self.orderbooks
+                .find_mut(&update.id())
+                .ok_or(SocketError::OrderBookFindError {
+                    symbol: update.id(),
+                })?;
 
         let InstrumentOrderBook {
             instrument: _,
@@ -133,21 +140,10 @@ where
             updater,
         } = instrument_orderbook;
 
-        // TODO: clean up error handling
         match updater.update(book, update) {
-            Ok(Some(book)) => {
-                // println!("--- book ---");
-                Ok(book)
-            }
-            Ok(None) => {
-                println!("--- OK(None) ----");
-                Err(SocketError::ConsumeError(String::from("TODO")))
-            }
-            Err(error) => {
-                println!("--- Err(error) ---");
-                println!("{:#?}", error);
-                Err(error)
-            }
+            Ok(Some(book)) => Ok(book),
+            Ok(None) => Err(SocketError::OrderBookDropError),
+            Err(error) => Err(error),
         }
     }
 }

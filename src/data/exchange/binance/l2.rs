@@ -70,16 +70,16 @@ impl OrderBookUpdater for BinanceSpotBookUpdater {
         let snapshot_url = format!(
             "{}?symbol={}{}&limit=100",
             HTTP_BOOK_L2_SNAPSHOT_URL_BINANCE_SPOT,
-            instrument.base.to_uppercase(), // TODO: CHNAGE TO .as_ref()
-            instrument.quote.to_uppercase()  // TODO: CHNAGE TO .as_ref()
+            instrument.base.to_uppercase(),
+            instrument.quote.to_uppercase()
         );
 
         let snapshot = reqwest::get(snapshot_url)
             .await
-            .unwrap() // TODO
+            .map_err(SocketError::Http)?
             .json::<BinanceSnapshot>()
             .await
-            .unwrap(); // TODO
+            .map_err(SocketError::Http)?;
 
         let mut orderbook_init = OrderBook::new(0.001);
         orderbook_init.process_lvl2(snapshot.bids, snapshot.asks);

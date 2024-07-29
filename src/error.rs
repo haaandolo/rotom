@@ -1,8 +1,8 @@
 use thiserror::Error;
 
-// pub type Result<T> = core::result::Result<T, SocketError>;
-// pub type Error = Box<dyn std::error::Error>;
-
+/*----- */
+// WebSocketError
+/*----- */
 #[derive(Debug, Error)]
 pub enum SocketError {
     #[error("WebSocket error: {0}")]
@@ -26,8 +26,11 @@ pub enum SocketError {
     #[error("Serialising JSON error: {0}")]
     Serialise(serde_json::Error),
 
-    #[error("Error to consume: {0}")]
-    ConsumeError(String),
+    #[error("Unable to find orderbook for {symbol}")]
+    OrderBookFindError { symbol: String },
+
+    #[error("Order book update sequence ID less than current orderbook ID")]
+    OrderBookDropError,
 
     #[error("ExchangeStream terminated with closing frame: {0}")]
     Terminated(String),
@@ -35,7 +38,13 @@ pub enum SocketError {
     #[error("error subscribing to resources over the socket: {0}")]
     Subscribe(String),
 
-    // Should be a data error
+    #[error("HTTP error: {0}")]
+    Http(reqwest::Error),
+
+    #[error("Init method failed for ticker some tickers")]
+    Init,
+
+    // Data errors
     #[error(
         "\
         InvalidSequence: first_update_id {first_update_id} does not follow on from the \
@@ -48,8 +57,35 @@ pub enum SocketError {
     },
 }
 
-#[derive(Debug, Error)]
-pub enum StandardError {
-    #[error("Std Error: {0}")]
-    StdError(#[from] Box<dyn std::error::Error>),
+impl SocketError {
+    #[allow(clippy::match_like_matches_macro)]
+    pub fn is_terminal(&self) -> bool {
+        match self {
+            SocketError::InvalidSequence { .. } => true,
+            _ => false,
+        }
+    }
 }
+
+/*----- */
+// ThisError example
+/*----- */
+/*
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum AppError {
+    #[error("Didn't get a query string")]
+    MissingQuery,
+    #[error("Didn't get a file name")]
+    MissingFilename,
+    #[error("Could not load config")]
+    ConfigLoad {
+        #[from]
+        source: io::Error,
+    },
+}
+
+The above ConfigLoad error will produce this error:
+Could not load config: Os { code: 2, kind: NotFound, message: "No such file or directory" }
+*/

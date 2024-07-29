@@ -29,7 +29,7 @@ where
     let mut connection_attempt: u32 = 0;
     let mut backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
 
-    // I DONT LIKE THIS - MAKE IT CLEANER
+    // TODO: I DONT LIKE THIS - MAKE IT CLEANER
     let subs = exchange_sub
         .into_iter()
         .map(|s| s.instrument)
@@ -62,8 +62,6 @@ where
         if let Some(Ok(WsMessage::Text(message))) = &stream.ws_read.next().await {
             let subscription_sucess = Exchange::validate_subscription(message.to_owned(), &subs);
 
-            println!("success: {:#?}", subscription_sucess);
-
             if !subscription_sucess {
                 break SocketError::Subscribe(String::from("Subscription failed"));
             }
@@ -77,19 +75,21 @@ where
                         .send(market_event)
                         .expect("failed to send message");
                 }
-                Err(_error) => {
+
+                // If error is terminal e.g. invalid sequence, then break
+                Err(error) if error.is_terminal() => {
+                    stream.cancel_running_tasks();
+                    println!("Encountered a terminal error, attempting to reconnect "); // TODO: log
+                    break;
+                }
+
+                // If error is non-terminal, just continue
+                Err(error) => {
+                    println!("Encountered a non terminal error: {}", error); // TODO: log
                     continue;
-                    // // SHOULD CHANGE THIS TO SEE WHAT ERRORS ACTUAL MEANS INSTEAD OF BREAKING
-                    // println!("---- consumer error ----");
-                    // println!("{:#?}", _error);
-                    // stream.cancel_running_tasks();
-                    // break;
-                } // ADD Error for if sequence is broken then have to restart
+                }
             }
         }
-
-        println!("--- Loop ---");
-        println!("{:#?}", connection_attempt);
 
         // Wait a certain ms before trying to reconnect
         sleep(Duration::from_millis(backoff_ms)).await;
