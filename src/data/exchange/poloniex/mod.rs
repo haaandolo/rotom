@@ -1,9 +1,8 @@
-pub mod model;
 pub mod channel;
+pub mod l2;
 pub mod market;
+pub mod model;
 
-use model::{PoloniexSpotBookUpdate, PoloniexSubscriptionResponse, PoloniexTrade};
-use channel::PoloniexChannel;
 use serde_json::json;
 use std::collections::HashSet;
 
@@ -13,6 +12,8 @@ use crate::data::model::subs::{ExchangeId, StreamType};
 use crate::data::model::trade::Trades;
 use crate::data::protocols::ws::{PingInterval, WsMessage};
 use crate::data::transformer::stateless_transformer::StatelessTransformer;
+use channel::PoloniexChannel;
+use model::{PoloniexSpotBookUpdate, PoloniexSubscriptionResponse, PoloniexTrade};
 
 /*----- */
 // Poloniex connector

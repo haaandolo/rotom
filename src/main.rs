@@ -98,8 +98,9 @@ async fn main() {
 // todo
 /*----- */
 // - poloniex l2
-// - process custom ping for poloniex
+// - remove debugs in traits
 // - fix poll next (err)
+// - process custom ping for poloniex
 // - are some traits meant to be async traits?
 // - logging
 // - rm Some from EventOrderBook

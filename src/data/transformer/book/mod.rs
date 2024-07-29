@@ -2,13 +2,11 @@ use async_trait::async_trait;
 use serde::Deserialize;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
-use crate::{
-    data::{
-        exchange::Identifier,
-        model::{book::EventOrderBook, event::MarketEvent, subs::Instrument, SubKind},
-        shared::orderbook::OrderBook,
-    },
+use crate::data::{
     error::SocketError,
+    exchange::Identifier,
+    model::{book::EventOrderBook, event::MarketEvent, subs::Instrument, SubKind},
+    shared::orderbook::OrderBook,
 };
 
 use super::{ExchangeTransformer, Transformer};

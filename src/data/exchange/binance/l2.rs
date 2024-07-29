@@ -2,16 +2,14 @@ use async_trait::async_trait;
 use chrono::Utc;
 
 use super::model::{BinanceSpotBookUpdate, BinanceSpotSnapshot};
+use crate::data::error::SocketError;
 use crate::data::model::book::EventOrderBook;
 use crate::data::model::event::MarketEvent;
 use crate::data::model::subs::{ExchangeId, Instrument, StreamType};
 use crate::data::shared::utils::current_timestamp_utc;
-use crate::{
-    data::{
-        shared::orderbook::OrderBook,
-        transformer::book::{InstrumentOrderBook, OrderBookUpdater},
-    },
-    error::SocketError,
+use crate::data::{
+    shared::orderbook::OrderBook,
+    transformer::book::{InstrumentOrderBook, OrderBookUpdater},
 };
 
 pub const HTTP_BOOK_L2_SNAPSHOT_URL_BINANCE_SPOT: &str = "https://api.binance.com/api/v3/depth";

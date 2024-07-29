@@ -4,14 +4,12 @@ use futures::StreamExt;
 use tokio::sync::mpsc::UnboundedSender;
 use tokio::{time::sleep, time::Duration};
 
+use crate::data::error::SocketError;
 use crate::data::protocols::ws::{create_websocket, WsMessage};
 use crate::data::transformer::{ExchangeTransformer, Transformer};
-use crate::{
-    data::{
-        exchange::{Connector, StreamSelector},
-        model::{event::MarketEvent, subs::Subscription, SubKind},
-    },
-    error::SocketError,
+use crate::data::{
+    exchange::{Connector, StreamSelector},
+    model::{event::MarketEvent, subs::Subscription, SubKind},
 };
 
 pub const START_RECONNECTION_BACKOFF_MS: u64 = 125;

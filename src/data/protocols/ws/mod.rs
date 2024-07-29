@@ -12,13 +12,8 @@ use serde_json::Value;
 use tokio::{net::TcpStream, time::sleep, time::Duration};
 use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
 
-use crate::{
-    data::{
-        exchange::{Connector, StreamSelector},
-        model::{subs::Instrument, SubKind},
-        transformer::ExchangeTransformer,
-    },
-    error::SocketError,
+use crate::data::{
+    error::SocketError, exchange::{Connector, StreamSelector}, model::{subs::Instrument, SubKind}, transformer::ExchangeTransformer
 };
 
 /*----- */

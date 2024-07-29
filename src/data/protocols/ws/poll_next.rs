@@ -11,7 +11,7 @@ use super::{
     ws_parser::{StreamParser, WebSocketParser},
     JoinHandle, WsRead,
 };
-use crate::{data::transformer::Transformer, error::SocketError};
+use crate::data::{error::SocketError, transformer::Transformer};
 
 /*----- */
 // Exchange Stream

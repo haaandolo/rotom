@@ -5,10 +5,10 @@ use std::marker::PhantomData;
 
 use super::book::Map;
 use super::{ExchangeTransformer, Transformer};
+use crate::data::error::SocketError;
 use crate::data::model::event::MarketEvent;
 use crate::data::model::subs::Instrument;
 use crate::data::model::SubKind;
-use crate::error::SocketError;
 
 /*----- */
 // Stateless transformer

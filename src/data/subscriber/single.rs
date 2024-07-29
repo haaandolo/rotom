@@ -3,17 +3,15 @@ use std::{collections::HashMap, fmt::Debug, pin::Pin};
 use tokio::sync::mpsc::{self};
 
 use super::{consume::consume, Streams};
-use crate::{
-    data::{
-        exchange::{Connector, StreamSelector},
-        model::{
-            event::MarketEvent,
-            subs::{ExchangeId, Subscription},
-            SubKind,
-        },
-        transformer::{ExchangeTransformer, Transformer},
-    },
+use crate::data::{
     error::SocketError,
+    exchange::{Connector, StreamSelector},
+    model::{
+        event::MarketEvent,
+        subs::{ExchangeId, Subscription},
+        SubKind,
+    },
+    transformer::{ExchangeTransformer, Transformer},
 };
 
 pub type SubscribeFuture = Pin<Box<dyn Future<Output = Result<(), SocketError>>>>;

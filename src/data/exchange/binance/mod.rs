@@ -70,11 +70,6 @@ impl Connector for BinanceSpot {
 /*----- */
 // Stream selector
 /*----- */
-// impl StreamSelector<BinanceSpot, OrderBookL2> for BinanceSpot {
-//     type Stream = BinanceBook;
-//     type StreamTransformer = StatelessTransformer<Self::Stream, OrderBookL2>;
-// }
-
 impl StreamSelector<BinanceSpot, OrderBookL2> for BinanceSpot {
     type Stream = BinanceSpotBookUpdate;
     type StreamTransformer =

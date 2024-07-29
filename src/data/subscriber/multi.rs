@@ -1,9 +1,9 @@
-use std::{collections::HashMap, pin::Pin};
 use futures::Future;
+use std::{collections::HashMap, pin::Pin};
 
-use crate::{
-    data::model::{event::MarketEvent, subs::ExchangeId, SubKind},
+use crate::data::{
     error::SocketError,
+    model::{event::MarketEvent, subs::ExchangeId, SubKind},
 };
 
 use super::{

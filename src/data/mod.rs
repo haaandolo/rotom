@@ -4,3 +4,4 @@ pub mod shared;
 pub mod subscriber;
 pub mod model;
 pub mod transformer;
+pub mod error;

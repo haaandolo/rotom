@@ -2,7 +2,8 @@ use futures::Stream;
 use serde::de::DeserializeOwned;
 use tokio_tungstenite::tungstenite::{error::ProtocolError, protocol::{frame::Frame, CloseFrame}};
 
-use crate::error::SocketError;
+use crate::data::error::SocketError;
+
 use super::{WebSocket, WsError, WsMessage};
 
 /*----- */
