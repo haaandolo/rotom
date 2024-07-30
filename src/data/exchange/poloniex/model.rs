@@ -1,17 +1,19 @@
-use std::mem;
 use serde::Deserialize;
+use std::mem;
 
 use crate::data::{
-    exchange::Identifier, model::{
+    exchange::Identifier,
+    model::{
         book::EventOrderBook,
         event::MarketEvent,
         level::Level,
         subs::{ExchangeId, StreamType},
         trade::Trade,
-    }, shared::{
+    },
+    shared::{
         de::{de_str, de_str_symbol, deserialize_non_empty_vec},
         utils::current_timestamp_utc,
-    }
+    },
 };
 
 /*----- */
@@ -36,6 +38,7 @@ pub struct PoloniexSpotBookData {
 #[derive(Debug, Deserialize, PartialEq, Default)]
 pub struct PoloniexSpotBookUpdate {
     pub data: [PoloniexSpotBookData; 1],
+    pub action: String,
 }
 
 impl From<PoloniexSpotBookUpdate> for MarketEvent<EventOrderBook> {
@@ -48,7 +51,7 @@ impl From<PoloniexSpotBookUpdate> for MarketEvent<EventOrderBook> {
             exchange: ExchangeId::PoloniexSpot,
             stream_type: StreamType::L2,
             symbol: data.symbol,
-            event_data:EventOrderBook::new(data.bids, data.asks),
+            event_data: EventOrderBook::new(data.bids, data.asks),
         }
     }
 }

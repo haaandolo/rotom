@@ -88,6 +88,8 @@ where
                     None => continue,
                 };
 
+            println!("{:?}", exchange_message);
+
             let transformed_message = self.transformer.transform(exchange_message);
             self.buffer.push_back(Ok(transformed_message?))
         }

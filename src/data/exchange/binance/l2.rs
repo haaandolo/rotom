@@ -111,7 +111,7 @@ impl OrderBookUpdater for BinanceSpotBookUpdater {
         self.prev_last_update_id = self.last_update_id;
         self.last_update_id = update.last_update_id;
 
-        let book_snaphot = book.book_snapshot();
+        let book_snapshot = book.book_snapshot();
 
         Ok(Some(MarketEvent {
             exchange_time: update.timestamp,
@@ -120,16 +120,14 @@ impl OrderBookUpdater for BinanceSpotBookUpdater {
             exchange: ExchangeId::BinanceSpot,
             stream_type: StreamType::L2,
             symbol: update.symbol,
-            event_data: book_snaphot,
+            event_data: book_snapshot,
         }))
     }
 }
 
 /*----- */
-// How to manage local orderbook
+// How to manage local orderbook - Binance Spot
 /*----- */
-// BinanceSpot: How To Manage A Local OrderBook Correctly
-//
 // 1. Open a stream to wss://stream.binance.com:9443/ws/BTCUSDT@depth.
 // 2. Buffer the events you receive from the stream.
 // 3. Get a depth snapshot from <https://api.binance.com/api/v3/depth?symbol=BNBBTC&limit=1000>.
@@ -148,4 +146,4 @@ impl OrderBookUpdater for BinanceSpotBookUpdater {
 //  - Uppercase U => first_update_id
 //  - Lowercase u => last_update_id,
 //
-// See docs: <https://binance-docs.github.io/apidocs/spot/en/#how-to-manage-a-local-order-book-correctly>
+// See docs: https://binance-docs.github.io/apidocs/spot/en/#how-to-manage-a-local-order-book-correctly

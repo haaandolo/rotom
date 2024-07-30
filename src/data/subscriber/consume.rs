@@ -77,7 +77,10 @@ where
                 // If error is terminal e.g. invalid sequence, then break
                 Err(error) if error.is_terminal() => {
                     stream.cancel_running_tasks();
-                    println!("Encountered a terminal error, attempting to reconnect "); // TODO: log
+                    println!(
+                        "Encountered a terminal error, attempting to reconnect: {:#?}",
+                        error
+                    ); // TODO: log
                     break;
                 }
 

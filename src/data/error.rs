@@ -29,8 +29,8 @@ pub enum SocketError {
     #[error("Unable to find orderbook for {symbol}")]
     OrderBookFindError { symbol: String },
 
-    #[error("Order book update sequence ID less than current orderbook ID")]
-    OrderBookDropError,
+    #[error("Encountered non-terminal error: {message}")]
+    OrderBookNonTerminal { message: String },
 
     #[error("ExchangeStream terminated with closing frame: {0}")]
     Terminated(String),

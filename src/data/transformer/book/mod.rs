@@ -140,7 +140,9 @@ where
 
         match updater.update(book, update) {
             Ok(Some(book)) => Ok(book),
-            Ok(None) => Err(SocketError::OrderBookDropError),
+            Ok(None) => Err(SocketError::OrderBookNonTerminal {
+                message: String::from("Ok(None) in transformer"),
+            }),
             Err(error) => Err(error),
         }
     }

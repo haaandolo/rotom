@@ -3,6 +3,7 @@ pub mod l2;
 pub mod market;
 pub mod model;
 
+use l2::PoloniexSpotBookUpdater;
 use serde_json::json;
 use std::collections::HashSet;
 
@@ -11,6 +12,7 @@ use crate::data::model::book::OrderBookL2;
 use crate::data::model::subs::{ExchangeId, StreamType};
 use crate::data::model::trade::Trades;
 use crate::data::protocols::ws::{PingInterval, WsMessage};
+use crate::data::transformer::book::MultiBookTransformer;
 use crate::data::transformer::stateless_transformer::StatelessTransformer;
 use channel::PoloniexChannel;
 use model::{PoloniexSpotBookUpdate, PoloniexSubscriptionResponse, PoloniexTrade};
@@ -76,9 +78,15 @@ impl Connector for PoloniexSpot {
 /*----- */
 // Stream selector
 /*----- */
-impl StreamSelector<PoloniexSpot, OrderBookL2> for PoloniexSpot {
+// impl StreamSelector<PoloniexSpot, OrderBookL2> for PoloniexSpot {
+//     type Stream = PoloniexSpotBookUpdate;
+//     type StreamTransformer = StatelessTransformer<Self::Stream, OrderBookL2>;
+// }
+
+impl StreamSelector<PoloniexSpot, OrderBookL2> for PoloniexSpot{
     type Stream = PoloniexSpotBookUpdate;
-    type StreamTransformer = StatelessTransformer<Self::Stream, OrderBookL2>;
+    type StreamTransformer =
+        MultiBookTransformer<Self::Stream, PoloniexSpotBookUpdater, OrderBookL2>;
 }
 
 impl StreamSelector<PoloniexSpot, Trades> for PoloniexSpot {

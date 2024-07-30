@@ -5,20 +5,6 @@ use crate::data::model::level::Level;
 use std::collections::BTreeMap;
 
 /*----- */
-// Event
-/*----- */
-#[derive(PartialEq, Debug)]
-pub struct Event {
-    pub symbol: String,
-    pub timestamp: u64,
-    pub seq: u64,
-    pub bids: Option<Vec<Level>>,
-    pub asks: Option<Vec<Level>>,
-    pub trade: Option<Level>,
-    pub is_buy: Option<bool>,
-}
-
-/*----- */
 // Orderbook
 /*----- */
 #[derive(Debug, Default, Clone)]
@@ -123,6 +109,13 @@ impl OrderBook {
         EventOrderBook::new(bids, asks)
     }
 
+    #[inline]
+    pub fn reset(&mut self) {
+        self.best_bid = None;
+        self.best_ask = None;
+        self.bids = BTreeMap::new();
+        self.asks = BTreeMap::new();
+    }
     /*----- Good to have functions ----- */
     // #[inline]
     // fn process_trade(&mut self, event: Event) {
