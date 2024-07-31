@@ -4,7 +4,6 @@ use std::mem;
 use crate::data::{
     exchange::Identifier,
     model::{
-        book::EventOrderBook,
         event::MarketEvent,
         level::Level,
         subs::{ExchangeId, StreamType},
@@ -39,21 +38,6 @@ pub struct PoloniexSpotBookData {
 pub struct PoloniexSpotBookUpdate {
     pub data: [PoloniexSpotBookData; 1],
     pub action: String,
-}
-
-impl From<PoloniexSpotBookUpdate> for MarketEvent<EventOrderBook> {
-    fn from(mut value: PoloniexSpotBookUpdate) -> Self {
-        let data = mem::take(&mut value.data[0]); // TODO
-        Self {
-            exchange_time: data.timestamp,
-            received_time: current_timestamp_utc(),
-            seq: data.id,
-            exchange: ExchangeId::PoloniexSpot,
-            stream_type: StreamType::L2,
-            symbol: data.symbol,
-            event_data: EventOrderBook::new(data.bids, data.asks),
-        }
-    }
 }
 
 impl Identifier<String> for PoloniexSpotBookUpdate {

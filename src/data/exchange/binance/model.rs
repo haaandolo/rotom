@@ -1,8 +1,8 @@
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
+use serde_json::Value;
 
 use crate::data::{
     exchange::Identifier, model::{
-        book::EventOrderBook,
         event::MarketEvent,
         level::Level,
         subs::{ExchangeId, StreamType},
@@ -50,20 +50,6 @@ pub struct BinanceSpotBookUpdate {
     #[serde(alias = "a")]
     #[serde(deserialize_with = "deserialize_non_empty_vec")]
     pub asks: Option<Vec<Level>>,
-}
-
-impl From<BinanceSpotBookUpdate> for MarketEvent<EventOrderBook> {
-    fn from(event: BinanceSpotBookUpdate) -> Self {
-        Self {
-            exchange_time: event.timestamp,
-            received_time: current_timestamp_utc(),
-            seq: event.first_update_id,
-            exchange: ExchangeId::BinanceSpot,
-            stream_type: StreamType::L2,
-            symbol: event.symbol,
-            event_data: EventOrderBook::new(event.bids, event.asks),
-        }
-    }
 }
 
 impl Identifier<String> for BinanceSpotBookUpdate {
@@ -120,6 +106,63 @@ pub enum BinanceMessage {
     Book(BinanceSpotBookUpdate),
     Snapshot(BinanceSpotSnapshot),
     Trade(BinanceTrade),
+}
+
+/*----- */
+// Ticker info
+/*----- */
+#[derive(Debug, Deserialize)]
+pub struct BinanceSpotTickereInfo {
+    pub timezone: Option<String>,
+    #[serde(rename = "serverTime")]
+    pub server_time: Option<u64>,
+    #[serde(rename = "rateLimits")]
+    pub rate_limits: Option<Vec<serde_json::Value>>,
+    #[serde(rename = "exchangeFilters")]
+    pub exchange_filters: Option<Vec<serde_json::Value>>,
+    pub symbols: Vec<TickerInfo>,
+    pub permissions: Option<Vec<String>>,
+    #[serde(rename = "defaultSelfTradePreventionMode")]
+    pub default_self_trade_prevention_mode: Option<String>,
+    #[serde(rename = "allowedSelfTradePreventionModes")]
+    pub allowed_self_trade_prevention_modes: Option<Vec<String>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct TickerInfo {
+    pub symbol: String,
+    pub status: String,
+    #[serde(rename = "baseAsset")]
+    pub base_asset: String,
+    #[serde(rename = "baseAssetPrecision")]
+    pub base_asset_precision: u8,
+    #[serde(rename = "quoteAsset")]
+    pub quote_asset: String,
+    #[serde(rename = "quotePrecision")]
+    pub quote_precision: u8,
+    #[serde(rename = "quoteAssetPrecision")]
+    pub quote_asset_precision: u8,
+    #[serde(rename = "baseCommissionPrecision")]
+    pub base_commission_precision: u8,
+    #[serde(rename = "quoteCommissionPrecision")]
+    pub quote_commission_precision: u8,
+    #[serde(rename = "orderTypes")]
+    pub order_types: Vec<String>,
+    #[serde(rename = "icebergAllowed")]
+    pub iceberg_allowed: bool,
+    #[serde(rename = "ocoAllowed")]
+    pub oco_allowed: bool,
+    #[serde(rename = "quoteOrderQtyMarketAllowed")]
+    pub quote_order_qty_market_allowed: bool,
+    #[serde(rename = "allowTrailingStop")]
+    pub allow_trailing_stop: bool,
+    #[serde(rename = "cancelReplaceAllowed")]
+    pub cancel_replace_allowed: bool,
+    #[serde(rename = "isSpotTradingAllowed")]
+    pub is_spot_trading_allowed: bool,
+    #[serde(rename = "isMarginTradingAllowed")]
+    pub is_margin_trading_allowed: bool,
+    pub filters: Vec<serde_json::Value>,
 }
 
 // /*----- */

@@ -74,7 +74,7 @@ where
                 Poll::Pending => return Poll::Pending,
             };
 
-            // println!("{:?}", input);
+            println!("{:?}", input);
 
             // Parse input protocol message into `ExchangeMessage`
             let exchange_message =

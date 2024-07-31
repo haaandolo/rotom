@@ -1,18 +1,21 @@
 use async_trait::async_trait;
 use chrono::Utc;
+use serde_json::Value;
 
-use super::model::{BinanceSpotBookUpdate, BinanceSpotSnapshot};
+use super::model::{BinanceSpotBookUpdate, BinanceSpotSnapshot, BinanceSpotTickereInfo};
 use crate::data::error::SocketError;
 use crate::data::model::book::EventOrderBook;
 use crate::data::model::event::MarketEvent;
 use crate::data::model::subs::{ExchangeId, Instrument, StreamType};
-use crate::data::shared::utils::current_timestamp_utc;
+use crate::data::shared::utils::{current_timestamp_utc, decimal_places_to_number};
 use crate::data::{
     shared::orderbook::OrderBook,
     transformer::book::{InstrumentOrderBook, OrderBookUpdater},
 };
 
 pub const HTTP_BOOK_L2_SNAPSHOT_URL_BINANCE_SPOT: &str = "https://api.binance.com/api/v3/depth";
+pub const HTTP_TICKER_INFO_URL_BINANCE_SPOT: &str =
+    "https://api.binance.us/api/v3/exchangeInfo?symbol=";
 
 #[derive(Default, Debug)]
 pub struct BinanceSpotBookUpdater {
@@ -67,6 +70,7 @@ impl OrderBookUpdater for BinanceSpotBookUpdater {
     type UpdateEvent = BinanceSpotBookUpdate;
 
     async fn init(instrument: &Instrument) -> Result<InstrumentOrderBook<Self>, SocketError> {
+        // Get snapshot
         let snapshot_url = format!(
             "{}?symbol={}{}&limit=100",
             HTTP_BOOK_L2_SNAPSHOT_URL_BINANCE_SPOT,
@@ -81,7 +85,34 @@ impl OrderBookUpdater for BinanceSpotBookUpdater {
             .await
             .map_err(SocketError::Http)?;
 
-        let mut orderbook_init = OrderBook::new(0.00000001);
+        // Get ticker info
+        let ticker_info_url = format!(
+            "{}{}{}",
+            HTTP_TICKER_INFO_URL_BINANCE_SPOT,
+            instrument.base.to_uppercase(),
+            instrument.quote.to_uppercase()
+        );
+
+        let ticker_info = reqwest::get(ticker_info_url)
+            .await
+            .map_err(SocketError::Http)?
+            .json::<BinanceSpotTickereInfo>()
+            .await
+            .map_err(SocketError::Http)?;
+
+        println!(
+            "--- ticker info {}{}---",
+            instrument.base.to_uppercase(),
+            instrument.quote.to_uppercase()
+        );
+        println!("{:#?}", ticker_info);
+
+        let precision = &ticker_info.symbols[0].filters[0][0]["tickSize"];
+        // let tick_size = decimal_places_to_number(precision);
+
+        println!("Precision {}", precision);
+
+        let mut orderbook_init = OrderBook::new(0.001);
         orderbook_init.process_lvl2(snapshot.bids, snapshot.asks);
 
         Ok(InstrumentOrderBook {
