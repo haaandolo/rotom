@@ -74,6 +74,8 @@ where
                 Poll::Pending => return Poll::Pending,
             };
 
+            // println!("{:?}", input);
+
             // Parse input protocol message into `ExchangeMessage`
             let exchange_message =
                 match <WebSocketParser as StreamParser>::parse::<StreamTransformer::Input>(input) {
@@ -88,7 +90,7 @@ where
                     None => continue,
                 };
 
-            println!("{:?}", exchange_message);
+            // println!("{:?}", exchange_message);
 
             let transformed_message = self.transformer.transform(exchange_message);
             self.buffer.push_back(Ok(transformed_message?))

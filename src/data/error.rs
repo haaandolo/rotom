@@ -47,11 +47,13 @@ pub enum SocketError {
     // Data errors
     #[error(
         "\
-        InvalidSequence: first_update_id {first_update_id} does not follow on from the \
+        Symbol: {symbol}
+        InvalidSequence, first_update_id {first_update_id} does not follow on from the \
         prev_last_update_id {prev_last_update_id} \
     "
     )]
     InvalidSequence {
+        symbol: String,
         prev_last_update_id: u64,
         first_update_id: u64,
     },

@@ -19,20 +19,26 @@ async fn main() {
     let mut streams: Streams<MarketEvent<DataKind>> = Streams::builder_multi()
         .add(
             Streams::<OrderBookL2>::builder()
-                // .subscribe([
-                //     (BinanceSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
-                //     (BinanceSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
-                //     (BinanceSpot, "eth", "usdt", StreamType::L2, OrderBookL2),
-                //     (BinanceSpot, "bnb", "usdt", StreamType::L2, OrderBookL2),
-                //     (BinanceSpot, "ada", "usdt", StreamType::L2, OrderBookL2),
-                //     (BinanceSpot, "avax", "usdt", StreamType::L2, OrderBookL2),
-                //     (BinanceSpot, "pepe", "usdt", StreamType::L2, OrderBookL2),
-                // ])
                 .subscribe([
-                    // (PoloniexSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
-                    (PoloniexSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
-                    // (PoloniexSpot, "sui", "usdt", StreamType::L2, OrderBookL2),
-                ]),
+                    (BinanceSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
+                    (BinanceSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
+                    (BinanceSpot, "eth", "usdt", StreamType::L2, OrderBookL2),
+                    (BinanceSpot, "bnb", "usdt", StreamType::L2, OrderBookL2),
+                    (BinanceSpot, "ada", "usdt", StreamType::L2, OrderBookL2),
+                    (BinanceSpot, "avax", "usdt", StreamType::L2, OrderBookL2),
+                    (BinanceSpot, "pepe", "usdt", StreamType::L2, OrderBookL2),
+                ])
+                // .subscribe([
+                //     // (PoloniexSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
+                //     // (PoloniexSpot, "eth", "usdt", StreamType::L2, OrderBookL2),
+                //     // (PoloniexSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
+                //     // (PoloniexSpot, "arb", "usdt", StreamType::L2, OrderBookL2),
+                //     // (PoloniexSpot, "sui", "usdt", StreamType::L2, OrderBookL2),
+                //     // (PoloniexSpot, "trx", "usdt", StreamType::L2, OrderBookL2),
+                //     // (PoloniexSpot, "naka", "usdt", StreamType::L2, OrderBookL2),
+                //     // (PoloniexSpot, "matic", "usdt", StreamType::L2, OrderBookL2),
+                //     // (PoloniexSpot, "ada", "usdt", StreamType::L2, OrderBookL2),
+                // ]),
         )
         // .add(
         //     Streams::<Trades>::builder()
@@ -54,8 +60,8 @@ async fn main() {
     let mut joined_stream = streams.join_map().await;
 
     while let Some(data) = joined_stream.next().await {
-        // println!("@@@@ Market event @@@@");
-        // println!("{:?}", data);
+        println!("@@@@ Market event @@@@");
+        println!("{:?}", data);
     }
 
     /*----- */
@@ -97,14 +103,13 @@ async fn main() {
 /*----- */
 // todo
 /*----- */
-// - poloniex l2
-// - remove debugs in traits
-// - fix poll next (err)
-// - double sub check
-// - process custom ping for poloniex
-// - are some traits meant to be async traits?
-// - logging
 // - tick size mapper
-// - custom poloniex deserializers
 // - rm Some from EventOrderBook
+// - remove debugs in traits
+// - double sub check
+// - are some traits meant to be async traits?
+// - process custom ping for poloniex
+// - logging
+// - custom poloniex deserializers
+// - how is barter doing exchnage time and received time?
 // - DOCUMENTATION + EXAMPLES

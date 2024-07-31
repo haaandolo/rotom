@@ -40,6 +40,7 @@ impl BinanceSpotBookUpdater {
             Ok(())
         } else {
             Err(SocketError::InvalidSequence {
+                symbol: update.symbol.clone(),
                 prev_last_update_id: self.last_update_id,
                 first_update_id: update.first_update_id,
             })
@@ -52,6 +53,7 @@ impl BinanceSpotBookUpdater {
             Ok(())
         } else {
             Err(SocketError::InvalidSequence {
+                symbol: update.symbol.clone(),
                 prev_last_update_id: self.last_update_id,
                 first_update_id: update.first_update_id,
             })
@@ -79,7 +81,7 @@ impl OrderBookUpdater for BinanceSpotBookUpdater {
             .await
             .map_err(SocketError::Http)?;
 
-        let mut orderbook_init = OrderBook::new(0.001);
+        let mut orderbook_init = OrderBook::new(0.00000001);
         orderbook_init.process_lvl2(snapshot.bids, snapshot.asks);
 
         Ok(InstrumentOrderBook {

@@ -13,7 +13,7 @@ use crate::data::{
     transformer::book::{InstrumentOrderBook, OrderBookUpdater},
 };
 
-use super::model::PoloniexSpotBookUpdate;
+use super::model::{PoloniexSpotBookData, PoloniexSpotBookUpdate};
 
 #[derive(Default, Debug)]
 pub struct PoloniexSpotBookUpdater {
@@ -21,18 +21,16 @@ pub struct PoloniexSpotBookUpdater {
 }
 
 impl PoloniexSpotBookUpdater {
-    pub fn validate_next_update(&self, current_update_id: u64) -> Result<(), SocketError> {
+    pub fn validate_next_update(&self, update: &PoloniexSpotBookData) -> Result<(), SocketError> {
         let expected_next_id = self.prev_last_update_id + 1;
-        if current_update_id == expected_next_id {
+        if update.id == expected_next_id {
             Ok(())
         } else {
             Err(SocketError::InvalidSequence {
+                symbol: update.symbol.clone(),
                 prev_last_update_id: self.prev_last_update_id,
-                first_update_id: current_update_id,
+                first_update_id: update.id,
             })
-            // Err(SocketError::OrderBookNonTerminal {
-            //     message: String::from("Sequence broken for Poloniex Spot L2"),
-            // })
         }
     }
 }
@@ -63,7 +61,7 @@ impl OrderBookUpdater for PoloniexSpotBookUpdater {
             self.prev_last_update_id = update_data.id;
             Ok(None)
         } else {
-            self.validate_next_update(update_data.id)?;
+            self.validate_next_update(&update_data)?;
 
             book.last_update_time = Utc::now();
             book.process_lvl2(update_data.bids, update_data.asks);
