@@ -1,16 +1,17 @@
-use serde::{Deserialize, Deserializer};
-use serde_json::Value;
+use serde::Deserialize;
 
 use crate::data::{
-    exchange::Identifier, model::{
+    exchange::Identifier,
+    model::{
         event::MarketEvent,
         level::Level,
         subs::{ExchangeId, StreamType},
         trade::Trade,
-    }, shared::{
+    },
+    shared::{
         de::{de_str, de_str_symbol, deserialize_non_empty_vec},
         utils::{current_timestamp_utc, snapshot_symbol_default_value},
-    }
+    },
 };
 
 /*----- */
@@ -111,58 +112,157 @@ pub enum BinanceMessage {
 /*----- */
 // Ticker info
 /*----- */
-#[derive(Debug, Deserialize)]
-pub struct BinanceSpotTickereInfo {
-    pub timezone: Option<String>,
+#[derive(Deserialize, Debug)]
+#[allow(dead_code)]
+pub struct BinanceSpotTickerInfo {
+    timezone: String,
     #[serde(rename = "serverTime")]
-    pub server_time: Option<u64>,
+    server_time: u64,
     #[serde(rename = "rateLimits")]
-    pub rate_limits: Option<Vec<serde_json::Value>>,
+    rate_limits: Vec<RateLimit>,
     #[serde(rename = "exchangeFilters")]
-    pub exchange_filters: Option<Vec<serde_json::Value>>,
-    pub symbols: Vec<TickerInfo>,
-    pub permissions: Option<Vec<String>>,
-    #[serde(rename = "defaultSelfTradePreventionMode")]
-    pub default_self_trade_prevention_mode: Option<String>,
-    #[serde(rename = "allowedSelfTradePreventionModes")]
-    pub allowed_self_trade_prevention_modes: Option<Vec<String>>,
+    exchange_filters: Vec<serde_json::Value>,
+    pub symbols: Vec<Ticker>,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct TickerInfo {
-    pub symbol: String,
-    pub status: String,
+#[derive(Deserialize, Debug)]
+#[allow(dead_code)]
+pub struct RateLimit {
+    #[serde(rename = "rateLimitType")]
+    rate_limit_type: String,
+    interval: String,
+    #[serde(rename = "intervalNum")]
+    interval_num: u32,
+    limit: u32,
+}
+
+#[derive(Deserialize, Debug)]
+#[allow(dead_code)]
+pub struct Ticker {
+    symbol: String,
+    status: String,
     #[serde(rename = "baseAsset")]
-    pub base_asset: String,
+    base_asset: String,
     #[serde(rename = "baseAssetPrecision")]
-    pub base_asset_precision: u8,
+    base_asset_precision: u8,
     #[serde(rename = "quoteAsset")]
-    pub quote_asset: String,
+    quote_asset: String,
     #[serde(rename = "quotePrecision")]
-    pub quote_precision: u8,
+    quote_precision: u8,
     #[serde(rename = "quoteAssetPrecision")]
-    pub quote_asset_precision: u8,
+    quote_asset_precision: u8,
     #[serde(rename = "baseCommissionPrecision")]
-    pub base_commission_precision: u8,
+    base_commission_precision: u8,
     #[serde(rename = "quoteCommissionPrecision")]
-    pub quote_commission_precision: u8,
+    quote_commission_precision: u8,
     #[serde(rename = "orderTypes")]
-    pub order_types: Vec<String>,
+    order_types: Vec<String>,
     #[serde(rename = "icebergAllowed")]
-    pub iceberg_allowed: bool,
+    iceberg_allowed: bool,
     #[serde(rename = "ocoAllowed")]
-    pub oco_allowed: bool,
+    oco_allowed: bool,
     #[serde(rename = "quoteOrderQtyMarketAllowed")]
-    pub quote_order_qty_market_allowed: bool,
+    quote_order_qty_market_allowed: bool,
     #[serde(rename = "allowTrailingStop")]
-    pub allow_trailing_stop: bool,
+    allow_trailing_stop: bool,
     #[serde(rename = "cancelReplaceAllowed")]
-    pub cancel_replace_allowed: bool,
+    cancel_replace_allowed: bool,
     #[serde(rename = "isSpotTradingAllowed")]
-    pub is_spot_trading_allowed: bool,
+    is_spot_trading_allowed: bool,
     #[serde(rename = "isMarginTradingAllowed")]
-    pub is_margin_trading_allowed: bool,
-    pub filters: Vec<serde_json::Value>,
+    is_margin_trading_allowed: bool,
+    pub filters: Vec<Filter>,
+    permissions: Vec<String>,
+    #[serde(rename = "defaultSelfTradePreventionMode")]
+    default_self_trade_prevention_mode: String,
+    #[serde(rename = "allowedSelfTradePreventionModes")]
+    allowed_self_trade_prevention_modes: Vec<String>,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(tag = "filterType")]
+pub enum Filter {
+    #[serde(rename = "PRICE_FILTER")]
+    PriceFilter {
+        #[serde(rename = "minPrice", deserialize_with = "de_str")]
+        min_price: f64,
+        #[serde(rename = "maxPrice", deserialize_with = "de_str")]
+        max_price: f64,
+        #[serde(rename = "tickSize", deserialize_with = "de_str")]
+        tick_size: f64,
+    },
+    #[serde(rename = "PERCENT_PRICE")]
+    PercentPrice {
+        #[serde(rename = "multiplierUp")]
+        multiplier_up: String,
+        #[serde(rename = "multiplierDown")]
+        multiplier_down: String,
+        #[serde(rename = "avgPriceMins")]
+        avg_price_mins: u32,
+    },
+    #[serde(rename = "LOT_SIZE")]
+    LotSize {
+        #[serde(rename = "minQty")]
+        min_qty: String,
+        #[serde(rename = "maxQty")]
+        max_qty: String,
+        #[serde(rename = "stepSize")]
+        step_size: String,
+    },
+    #[serde(rename = "MIN_NOTIONAL")]
+    MinNotional {
+        #[serde(rename = "minNotional")]
+        min_notional: String,
+        #[serde(rename = "applyToMarket")]
+        apply_to_market: bool,
+        #[serde(rename = "avgPriceMins")]
+        avg_price_mins: u32,
+    },
+    #[serde(rename = "ICEBERG_PARTS")]
+    IcebergParts { limit: u32 },
+    #[serde(rename = "MARKET_LOT_SIZE")]
+    MarketLotSize {
+        #[serde(rename = "minQty")]
+        min_qty: String,
+        #[serde(rename = "maxQty")]
+        max_qty: String,
+        #[serde(rename = "stepSize")]
+        step_size: String,
+    },
+    #[serde(rename = "TRAILING_DELTA")]
+    TrailingDelta {
+        #[serde(rename = "minTrailingAboveDelta")]
+        min_trailing_above_delta: u32,
+        #[serde(rename = "maxTrailingAboveDelta")]
+        max_trailing_above_delta: u32,
+        #[serde(rename = "minTrailingBelowDelta")]
+        min_trailing_below_delta: u32,
+        #[serde(rename = "maxTrailingBelowDelta")]
+        max_trailing_below_delta: u32,
+    },
+    #[serde(rename = "PERCENT_PRICE_BY_SIDE")]
+    PercentPriceBySide {
+        #[serde(rename = "bidMultiplierUp")]
+        bid_multiplier_up: String,
+        #[serde(rename = "bidMultiplierDown")]
+        bid_multiplier_down: String,
+        #[serde(rename = "askMultiplierUp")]
+        ask_multiplier_up: String,
+        #[serde(rename = "askMultiplierDown")]
+        ask_multiplier_down: String,
+        #[serde(rename = "avgPriceMins")]
+        avg_price_mins: u32,
+    },
+    #[serde(rename = "MAX_NUM_ORDERS")]
+    MaxNumOrders {
+        #[serde(rename = "maxNumOrders")]
+        max_num_orders: u32,
+    },
+    #[serde(rename = "MAX_NUM_ALGO_ORDERS")]
+    MaxNumAlgoOrders {
+        #[serde(rename = "maxNumAlgoOrders")]
+        max_num_algo_orders: u32,
+    },
 }
 
 // /*----- */

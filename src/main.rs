@@ -20,12 +20,12 @@ async fn main() {
         .add(
             Streams::<OrderBookL2>::builder()
                 .subscribe([
-                    // (BinanceSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
-                    // (BinanceSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
-                    // (BinanceSpot, "eth", "usdt", StreamType::L2, OrderBookL2),
-                    // (BinanceSpot, "bnb", "usdt", StreamType::L2, OrderBookL2),
-                    // (BinanceSpot, "ada", "usdt", StreamType::L2, OrderBookL2),
-                    // (BinanceSpot, "avax", "usdt", StreamType::L2, OrderBookL2),
+                    (BinanceSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
+                    (BinanceSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
+                    (BinanceSpot, "eth", "usdt", StreamType::L2, OrderBookL2),
+                    (BinanceSpot, "bnb", "usdt", StreamType::L2, OrderBookL2),
+                    (BinanceSpot, "ada", "usdt", StreamType::L2, OrderBookL2),
+                    (BinanceSpot, "avax", "usdt", StreamType::L2, OrderBookL2),
                     (BinanceSpot, "celo", "usdt", StreamType::L2, OrderBookL2),
                 ])
                 // .subscribe([

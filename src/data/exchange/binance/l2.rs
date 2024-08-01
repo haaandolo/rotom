@@ -1,13 +1,14 @@
 use async_trait::async_trait;
 use chrono::Utc;
-use serde_json::Value;
 
-use super::model::{BinanceSpotBookUpdate, BinanceSpotSnapshot, BinanceSpotTickereInfo};
+use super::model::{BinanceSpotBookUpdate, BinanceSpotSnapshot};
 use crate::data::error::SocketError;
+use crate::data::exchange::binance::model::BinanceSpotTickerInfo;
+use crate::data::exchange::binance::model::Filter;
 use crate::data::model::book::EventOrderBook;
 use crate::data::model::event::MarketEvent;
 use crate::data::model::subs::{ExchangeId, Instrument, StreamType};
-use crate::data::shared::utils::{current_timestamp_utc, decimal_places_to_number};
+use crate::data::shared::utils::current_timestamp_utc;
 use crate::data::{
     shared::orderbook::OrderBook,
     transformer::book::{InstrumentOrderBook, OrderBookUpdater},
@@ -96,23 +97,29 @@ impl OrderBookUpdater for BinanceSpotBookUpdater {
         let ticker_info = reqwest::get(ticker_info_url)
             .await
             .map_err(SocketError::Http)?
-            .json::<BinanceSpotTickereInfo>()
+            .json::<BinanceSpotTickerInfo>()
             .await
             .map_err(SocketError::Http)?;
 
-        println!(
-            "--- ticker info {}{}---",
-            instrument.base.to_uppercase(),
-            instrument.quote.to_uppercase()
-        );
-        println!("{:#?}", ticker_info);
+        let tick_size = ticker_info.symbols[0]
+            .filters
+            .iter()
+            .find_map(|filter| {
+                if let Filter::PriceFilter {
+                    min_price: _,
+                    max_price: _,
+                    tick_size,
+                } = filter
+                {
+                    Some(tick_size)
+                } else {
+                    None
+                }
+            })
+            .expect("Failed to get tick size for .... ") // TODO: log
+            .to_owned();
 
-        let precision = &ticker_info.symbols[0].filters[0][0]["tickSize"];
-        // let tick_size = decimal_places_to_number(precision);
-
-        println!("Precision {}", precision);
-
-        let mut orderbook_init = OrderBook::new(0.001);
+        let mut orderbook_init = OrderBook::new(tick_size);
         orderbook_init.process_lvl2(snapshot.bids, snapshot.asks);
 
         Ok(InstrumentOrderBook {
