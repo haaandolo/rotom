@@ -2,8 +2,10 @@ use async_trait::async_trait;
 use chrono::Utc;
 use std::mem;
 
+use super::model::{PoloniexSpotBookData, PoloniexSpotBookUpdate};
 use crate::data::{
     error::SocketError,
+    exchange::{binance::l2::HTTP_TICKER_INFO_URL_BINANCE_SPOT, poloniex::model::PoloniexSpotTickerInfo},
     model::{
         book::EventOrderBook,
         event::MarketEvent,
@@ -13,8 +15,7 @@ use crate::data::{
     transformer::book::{InstrumentOrderBook, OrderBookUpdater},
 };
 
-use super::model::{PoloniexSpotBookData, PoloniexSpotBookUpdate};
-
+pub const HTTP_TICKER_INFO_URL_POLONIEX_SPOT: &str = "https://api.poloniex.com/markets/";
 #[derive(Default, Debug)]
 pub struct PoloniexSpotBookUpdater {
     pub prev_last_update_id: u64,
@@ -41,6 +42,23 @@ impl OrderBookUpdater for PoloniexSpotBookUpdater {
     type UpdateEvent = PoloniexSpotBookUpdate;
 
     async fn init(instrument: &Instrument) -> Result<InstrumentOrderBook<Self>, SocketError> {
+        let ticker_info_url = format!(
+            "{}{}_{}",
+            HTTP_TICKER_INFO_URL_POLONIEX_SPOT,
+            instrument.base.to_uppercase(),
+            instrument.quote.to_uppercase()
+        );
+
+        let ticker_info = reqwest::get(ticker_info_url)
+            .await
+            .map_err(SocketError::Http)?
+            .json::<PoloniexSpotTickerInfo>()
+            .await
+            .map_err(SocketError::Http)?;
+
+        println!("--- poloniex ticker info ---");
+        println!("{:#?}", ticker_info);
+
         let orderbook_init = OrderBook::new(0.001);
         Ok(InstrumentOrderBook {
             instrument: instrument.clone(),

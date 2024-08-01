@@ -19,26 +19,26 @@ async fn main() {
     let mut streams: Streams<MarketEvent<DataKind>> = Streams::builder_multi()
         .add(
             Streams::<OrderBookL2>::builder()
+//                .subscribe([
+//                    (BinanceSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
+//                    (BinanceSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
+//                    (BinanceSpot, "eth", "usdt", StreamType::L2, OrderBookL2),
+//                    (BinanceSpot, "bnb", "usdt", StreamType::L2, OrderBookL2),
+//                    (BinanceSpot, "ada", "usdt", StreamType::L2, OrderBookL2),
+//                    (BinanceSpot, "avax", "usdt", StreamType::L2, OrderBookL2),
+//                    (BinanceSpot, "celo", "usdt", StreamType::L2, OrderBookL2),
+//                ])
                 .subscribe([
-                    (BinanceSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
-                    (BinanceSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
-                    (BinanceSpot, "eth", "usdt", StreamType::L2, OrderBookL2),
-                    (BinanceSpot, "bnb", "usdt", StreamType::L2, OrderBookL2),
-                    (BinanceSpot, "ada", "usdt", StreamType::L2, OrderBookL2),
-                    (BinanceSpot, "avax", "usdt", StreamType::L2, OrderBookL2),
-                    (BinanceSpot, "celo", "usdt", StreamType::L2, OrderBookL2),
-                ])
-                // .subscribe([
-                //     // (PoloniexSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
-                //     // (PoloniexSpot, "eth", "usdt", StreamType::L2, OrderBookL2),
-                //     // (PoloniexSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
-                //     // (PoloniexSpot, "arb", "usdt", StreamType::L2, OrderBookL2),
-                //     // (PoloniexSpot, "sui", "usdt", StreamType::L2, OrderBookL2),
-                //     // (PoloniexSpot, "trx", "usdt", StreamType::L2, OrderBookL2),
-                //     // (PoloniexSpot, "naka", "usdt", StreamType::L2, OrderBookL2),
-                //     // (PoloniexSpot, "matic", "usdt", StreamType::L2, OrderBookL2),
-                //     // (PoloniexSpot, "ada", "usdt", StreamType::L2, OrderBookL2),
-                // ]),
+                    // (PoloniexSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
+                    (PoloniexSpot, "eth", "usdt", StreamType::L2, OrderBookL2),
+                    // (PoloniexSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
+                    // (PoloniexSpot, "arb", "usdt", StreamType::L2, OrderBookL2),
+                    // (PoloniexSpot, "sui", "usdt", StreamType::L2, OrderBookL2),
+                    // (PoloniexSpot, "trx", "usdt", StreamType::L2, OrderBookL2),
+                    // (PoloniexSpot, "naka", "usdt", StreamType::L2, OrderBookL2),
+                    // (PoloniexSpot, "matic", "usdt", StreamType::L2, OrderBookL2),
+                    // (PoloniexSpot, "ada", "usdt", StreamType::L2, OrderBookL2),
+                ]),
         )
         // .add(
         //     Streams::<Trades>::builder()

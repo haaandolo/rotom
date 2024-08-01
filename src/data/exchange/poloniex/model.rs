@@ -115,6 +115,56 @@ where
     <&str as Deserialize>::deserialize(deserializer).map(|buyer_is_maker| buyer_is_maker == "buy")
 }
 
+/*----- */
+// Ticker info
+/*----- */
+#[derive(Deserialize, Debug)]
+pub struct PoloniexSpotTickerInfo {
+    pub symbol: String,
+    #[serde(rename = "baseCurrencyName")]
+    pub base_currency_name: String,
+    #[serde(rename = "quoteCurrencyName")]
+    pub quote_currency_name: String,
+    #[serde(rename = "displayName")]
+    pub display_name: String,
+    pub state: String,
+    #[serde(rename = "visibleStartTime")]
+    pub visible_start_time: u64,
+    #[serde(rename = "tradableStartTime")]
+    pub tradable_start_time: u64,
+    #[serde(rename = "symbolTradeLimit")]
+    pub symbol_trade_limit: SymbolTradeLimit,
+    #[serde(rename = "crossMargin")]
+    pub cross_margin: CrossMargin,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct SymbolTradeLimit {
+    pub symbol: String,
+    #[serde(rename = "priceScale")]
+    pub price_scale: u8,
+    #[serde(rename = "quantityScale")]
+    pub quantity_scale: u8,
+    #[serde(rename = "amountScale")]
+    pub amount_scale: u8,
+    #[serde(rename = "minQuantity")]
+    pub min_quantity: String,
+    #[serde(rename = "minAmount")]
+    pub min_amount: String,
+    #[serde(rename = "highestBid")]
+    pub highest_bid: String,
+    #[serde(rename = "lowestAsk")]
+    pub lowest_ask: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct CrossMargin {
+    #[serde(rename = "supportCrossMargin")]
+    pub support_cross_margin: bool,
+    #[serde(rename = "maxLeverage")]
+    pub max_leverage: u8,
+}
+
 // /*----- */
 // // Tests
 // /*----- */
