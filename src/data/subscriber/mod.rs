@@ -1,16 +1,15 @@
-use std::collections::HashMap;
-use std::fmt::Debug;
+pub mod multi;
+pub mod single;
+pub mod consume;
 
-use multi::MultiStreamBuilder;
+use std::collections::HashMap;
 use single::StreamBuilder;
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 use tokio_stream::{wrappers::UnboundedReceiverStream, StreamMap};
 
-use super::models::subs::ExchangeId;
-use super::models::SubKind;
-
-pub mod multi;
-pub mod single;
+use multi::MultiStreamBuilder;
+use super::model::subs::ExchangeId;
+use super::model::SubKind;
 
 pub struct Streams<T> {
     pub streams: HashMap<ExchangeId, UnboundedReceiver<T>>,
@@ -20,7 +19,7 @@ impl<T> Streams<T> {
     // Single StreamKind builder
     pub fn builder<StreamKind>() -> StreamBuilder<StreamKind>
     where
-        StreamKind: SubKind + Debug + Send + 'static,
+        StreamKind: SubKind + Send + Ord + 'static,
     {
         StreamBuilder::<StreamKind>::new()
     }

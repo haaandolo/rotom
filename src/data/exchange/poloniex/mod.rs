@@ -1,18 +1,26 @@
-pub mod book;
 pub mod channel;
+pub mod l2;
+pub mod market;
+pub mod model;
 
-use book::{PoloniexBook, PoloniexSubscriptionResponse, PoloniexTrade};
-use channel::PoloniexChannel;
+use l2::PoloniexSpotBookUpdater;
 use serde_json::json;
 use std::collections::HashSet;
 
 use super::{Connector, Instrument, StreamSelector};
-use crate::data::models::trade::Trades;
-use crate::data::protocols::ws::ws_client::{PingInterval, WsMessage};
-use crate::data::models::book::OrderBookL2;
-use crate::data::models::subs::{ExchangeId, StreamType};
+use crate::data::model::event_book::OrderBookL2;
+use crate::data::model::subs::{ExchangeId, StreamType};
+use crate::data::model::event_trade::Trades;
+use crate::data::protocols::ws::{PingInterval, WsMessage};
+use crate::data::transformer::book::MultiBookTransformer;
+use crate::data::transformer::stateless_transformer::StatelessTransformer;
+use channel::PoloniexChannel;
+use model::{PoloniexSpotBookUpdate, PoloniexSubscriptionResponse, PoloniexTrade};
 
-#[derive(Debug, Default, Eq, PartialEq, Hash)]
+/*----- */
+// Poloniex connector
+/*----- */
+#[derive(Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct PoloniexSpot;
 
 impl Connector for PoloniexSpot {
@@ -31,7 +39,7 @@ impl Connector for PoloniexSpot {
             .map(|s| match s.stream_type {
                 StreamType::L2 => PoloniexChannel::ORDER_BOOK_L2.as_ref(),
                 StreamType::Trades => PoloniexChannel::TRADES.as_ref(),
-                _ => panic!("Invalid stream was enter for poloniex"),
+                _ => panic!("Invalid stream was enter for poloniex"), // TODO
             })
             .collect::<HashSet<_>>()
             .into_iter()
@@ -67,10 +75,21 @@ impl Connector for PoloniexSpot {
     }
 }
 
-impl StreamSelector<PoloniexSpot, OrderBookL2> for PoloniexSpot {
-    type Stream = PoloniexBook;
+/*----- */
+// Stream selector
+/*----- */
+// impl StreamSelector<PoloniexSpot, OrderBookL2> for PoloniexSpot {
+//     type Stream = PoloniexSpotBookUpdate;
+//     type StreamTransformer = StatelessTransformer<Self::Stream, OrderBookL2>;
+// }
+
+impl StreamSelector<PoloniexSpot, OrderBookL2> for PoloniexSpot{
+    type Stream = PoloniexSpotBookUpdate;
+    type StreamTransformer =
+        MultiBookTransformer<Self::Stream, PoloniexSpotBookUpdater, OrderBookL2>;
 }
 
 impl StreamSelector<PoloniexSpot, Trades> for PoloniexSpot {
     type Stream = PoloniexTrade;
+    type StreamTransformer = StatelessTransformer<Self::Stream, Trades>;
 }

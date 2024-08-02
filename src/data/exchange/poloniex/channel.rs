@@ -1,3 +1,9 @@
+use crate::data::{
+    exchange::Identifier,
+    model::{event_book::OrderBookL2, subs::Subscription, event_trade::Trades},
+};
+use super::PoloniexSpot;
+
 pub struct PoloniexChannel(pub &'static str);
 
 impl PoloniexChannel {
@@ -9,5 +15,17 @@ impl PoloniexChannel {
 impl AsRef<str> for PoloniexChannel {
     fn as_ref(&self) -> &str {
         self.0
+    }
+}
+
+impl Identifier<PoloniexChannel> for Subscription<PoloniexSpot, OrderBookL2> {
+    fn id(&self) -> PoloniexChannel {
+        PoloniexChannel::ORDER_BOOK_L2
+    }
+}
+
+impl Identifier<PoloniexChannel> for Subscription<PoloniexSpot, Trades> {
+    fn id(&self) -> PoloniexChannel {
+        PoloniexChannel::TRADES
     }
 }

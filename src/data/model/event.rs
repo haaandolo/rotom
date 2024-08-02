@@ -1,13 +1,13 @@
 use super::{
-    book::OrderBook,
+    event_book::EventOrderBook,
     subs::{ExchangeId, StreamType},
-    trade::Trade,
+    event_trade::EventTrade,
 };
 
 #[derive(Debug)]
 pub enum DataKind {
-    Trade(Trade),
-    OrderBook(OrderBook),
+    Trade(EventTrade),
+    OrderBook(EventOrderBook),
 }
 
 #[derive(Debug)]
@@ -21,8 +21,8 @@ pub struct MarketEvent<T> {
     pub event_data: T,
 }
 
-impl From<MarketEvent<Trade>> for MarketEvent<DataKind> {
-    fn from(event: MarketEvent<Trade>) -> Self {
+impl From<MarketEvent<EventTrade>> for MarketEvent<DataKind> {
+    fn from(event: MarketEvent<EventTrade>) -> Self {
         Self {
             exchange_time: event.exchange_time,
             received_time: event.received_time,
@@ -35,8 +35,8 @@ impl From<MarketEvent<Trade>> for MarketEvent<DataKind> {
     }
 }
 
-impl From<MarketEvent<OrderBook>> for MarketEvent<DataKind> {
-    fn from(event: MarketEvent<OrderBook>) -> Self {
+impl From<MarketEvent<EventOrderBook>> for MarketEvent<DataKind> {
+    fn from(event: MarketEvent<EventOrderBook>) -> Self {
         Self {
             exchange_time: event.exchange_time,
             received_time: event.received_time,

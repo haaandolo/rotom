@@ -1,10 +1,10 @@
 use arb_bot::data::{
     exchange::{binance::BinanceSpot, poloniex::PoloniexSpot},
-    models::{
-        book::OrderBookL2,
+    model::{
+        event_book::OrderBookL2,
         event::{DataKind, MarketEvent},
         subs::{ExchangeId, StreamType},
-        trade::Trades,
+        event_trade::Trades,
     },
     subscriber::{single::StreamBuilder, Streams},
 };
@@ -19,15 +19,25 @@ async fn main() {
     let mut streams: Streams<MarketEvent<DataKind>> = Streams::builder_multi()
         .add(
             Streams::<OrderBookL2>::builder()
+               .subscribe([
+                   (BinanceSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
+                   (BinanceSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
+                   (BinanceSpot, "eth", "usdt", StreamType::L2, OrderBookL2),
+                   (BinanceSpot, "bnb", "usdt", StreamType::L2, OrderBookL2),
+                   (BinanceSpot, "ada", "usdt", StreamType::L2, OrderBookL2),
+                   (BinanceSpot, "avax", "usdt", StreamType::L2, OrderBookL2),
+                   (BinanceSpot, "celo", "usdt", StreamType::L2, OrderBookL2),
+               ])
                 .subscribe([
-                    (BinanceSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
-                    (BinanceSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
-                    (BinanceSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
-                ])
-                .subscribe([
+                    // (PoloniexSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
+                    // (PoloniexSpot, "eth", "usdt", StreamType::L2, OrderBookL2),
                     (PoloniexSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
-                    (PoloniexSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
-                    (PoloniexSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
+                    (PoloniexSpot, "arb", "usdt", StreamType::L2, OrderBookL2),
+                    (PoloniexSpot, "sui", "usdt", StreamType::L2, OrderBookL2),
+                    (PoloniexSpot, "trx", "usdt", StreamType::L2, OrderBookL2),
+                    (PoloniexSpot, "naka", "usdt", StreamType::L2, OrderBookL2),
+                    (PoloniexSpot, "matic", "usdt", StreamType::L2, OrderBookL2),
+                    (PoloniexSpot, "ada", "usdt", StreamType::L2, OrderBookL2),
                 ]),
         )
         .add(
@@ -49,15 +59,9 @@ async fn main() {
 
     let mut joined_stream = streams.join_map().await;
 
-    for keys in joined_stream.keys() {
-        println!("{:#?}", keys)
-    }
-
-    while let Some((exchange, data)) = joined_stream.next().await {
-        println!(
-            "Exchange: {:#?}, MarketEvent<DataKind>: {:#?}",
-            exchange, data
-        );
+    while let Some(data) = joined_stream.next().await {
+        println!("@@@@ Market event @@@@");
+        println!("{:?}", data);
     }
 
     /*----- */
@@ -96,8 +100,12 @@ async fn main() {
     // }
 }
 
+/*----- */
 // todo
-// - add mismatch sequence error in websocket
-// - make orderbooks
-// - make orderbook take in MarketEvent instead of Event
+/*----- */
+// - logging
 // - process custom ping for poloniex
+// - custom poloniex deserializers
+// - how is barter doing exchnage time and received time?
+// - DOCUMENTATION + EXAMPLES
+// - DOUBLE CHECK TICKER SIZE BEFORE PRODUCTION

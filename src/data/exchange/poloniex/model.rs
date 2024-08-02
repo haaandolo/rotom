@@ -1,14 +1,13 @@
+use serde::Deserialize;
 use std::mem;
 
-use serde::Deserialize;
-
 use crate::data::{
-    models::{
-        book::OrderBook,
+    exchange::Identifier,
+    model::{
         event::MarketEvent,
         level::Level,
         subs::{ExchangeId, StreamType},
-        trade::Trade,
+        event_trade::EventTrade,
     },
     shared::{
         de::{de_str, de_str_symbol, deserialize_non_empty_vec},
@@ -20,7 +19,7 @@ use crate::data::{
 // Orderbook L2
 /*----- */
 #[derive(Deserialize, Debug, PartialEq, Default)]
-pub struct PoloniexBookData {
+pub struct PoloniexSpotBookData {
     #[serde(deserialize_with = "de_str_symbol")]
     pub symbol: String,
     #[serde(alias = "createTime")]
@@ -36,22 +35,14 @@ pub struct PoloniexBookData {
 }
 
 #[derive(Debug, Deserialize, PartialEq, Default)]
-pub struct PoloniexBook {
-    pub data: [PoloniexBookData; 1],
+pub struct PoloniexSpotBookUpdate {
+    pub data: [PoloniexSpotBookData; 1],
+    pub action: String,
 }
 
-impl From<PoloniexBook> for MarketEvent<OrderBook> {
-    fn from(mut value: PoloniexBook) -> Self {
-        let data = mem::take(&mut value.data[0]);
-        Self {
-            exchange_time: data.timestamp,
-            received_time: current_timestamp_utc(),
-            seq: data.id,
-            exchange: ExchangeId::PoloniexSpot,
-            stream_type: StreamType::L2,
-            symbol: data.symbol,
-            event_data: OrderBook::new(data.bids, data.asks),
-        }
+impl Identifier<String> for PoloniexSpotBookUpdate {
+    fn id(&self) -> String {
+        self.data[0].symbol.clone()
     }
 }
 
@@ -82,7 +73,7 @@ pub struct PoloniexTrade {
     pub data: [PoloniexTradeData; 1],
 }
 
-impl From<PoloniexTrade> for MarketEvent<Trade> {
+impl From<PoloniexTrade> for MarketEvent<EventTrade> {
     fn from(mut value: PoloniexTrade) -> Self {
         let data = mem::take(&mut value.data[0]);
         Self {
@@ -92,7 +83,7 @@ impl From<PoloniexTrade> for MarketEvent<Trade> {
             exchange: ExchangeId::PoloniexSpot,
             stream_type: StreamType::Trades,
             symbol: data.symbol,
-            event_data: Trade::new(Level::new(data.price, data.quantity), data.is_buy),
+            event_data: EventTrade::new(Level::new(data.price, data.quantity), data.is_buy),
         }
     }
 }
@@ -111,7 +102,7 @@ pub struct PoloniexSubscriptionResponse {
 #[serde(untagged, rename_all = "snake_case")]
 pub enum PoloniexMessage {
     Trade(PoloniexTrade),
-    Book(PoloniexBook),
+    Book(PoloniexSpotBookUpdate),
 }
 
 /*----- */
@@ -122,6 +113,59 @@ where
     D: serde::de::Deserializer<'de>,
 {
     <&str as Deserialize>::deserialize(deserializer).map(|buyer_is_maker| buyer_is_maker == "buy")
+}
+
+/*----- */
+// Ticker info
+/*----- */
+#[allow(dead_code)]
+#[derive(Deserialize, Debug)]
+pub struct PoloniexSpotTickerInfo {
+    symbol: String,
+    #[serde(rename = "baseCurrencyName")]
+    base_currency_name: String,
+    #[serde(rename = "quoteCurrencyName")]
+    quote_currency_name: String,
+    #[serde(rename = "displayName")]
+    display_name: String,
+    state: String,
+    #[serde(rename = "visibleStartTime")]
+    visible_start_time: u64,
+    #[serde(rename = "tradableStartTime")]
+    tradable_start_time: u64,
+    #[serde(rename = "symbolTradeLimit")]
+    pub symbol_trade_limit: SymbolTradeLimit,
+    #[serde(rename = "crossMargin")]
+    cross_margin: CrossMargin,
+}
+
+#[allow(dead_code)]
+#[derive(Deserialize, Debug)]
+pub struct SymbolTradeLimit {
+    symbol: String,
+    #[serde(rename = "priceScale")]
+    price_scale: u8,
+    #[serde(rename = "quantityScale")]
+    pub quantity_scale: u8,
+    #[serde(rename = "amountScale")]
+    amount_scale: u8,
+    #[serde(rename = "minQuantity")]
+    min_quantity: String,
+    #[serde(rename = "minAmount")]
+    min_amount: String,
+    #[serde(rename = "highestBid")]
+    highest_bid: String,
+    #[serde(rename = "lowestAsk")]
+    lowest_ask: String,
+}
+
+#[allow(dead_code)]
+#[derive(Deserialize, Debug)]
+pub struct CrossMargin {
+    #[serde(rename = "supportCrossMargin")]
+    support_cross_margin: bool,
+    #[serde(rename = "maxLeverage")]
+    max_leverage: u8,
 }
 
 // /*----- */

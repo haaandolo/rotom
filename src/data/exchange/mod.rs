@@ -1,13 +1,15 @@
 pub mod binance;
 pub mod poloniex;
 
-use std::fmt::Debug;
-
 use serde::de::DeserializeOwned;
 
 use super::{
-    protocols::ws::ws_client::{PingInterval, WsMessage},
-    models::{event::MarketEvent, subs::{ExchangeId, Instrument}, SubKind},
+    model::{
+        subs::{ExchangeId, Instrument},
+        SubKind,
+    },
+    protocols::ws::{PingInterval, WsMessage},
+    transformer::Transformer,
 };
 
 /*----- */
@@ -15,7 +17,7 @@ use super::{
 /*----- */
 pub trait Connector {
     type ExchangeId;
-    type SubscriptionResponse;
+    type SubscriptionResponse: DeserializeOwned;
 
     const ID: ExchangeId;
 
@@ -38,7 +40,8 @@ where
     Exchange: Connector,
     StreamKind: SubKind,
 {
-    type Stream: DeserializeOwned + Into<MarketEvent<StreamKind::Event>> + Debug;
+    type Stream;
+    type StreamTransformer: Transformer + Default + Send;
 }
 
 /*----- */

@@ -1,15 +1,29 @@
-pub mod book;
 pub mod channel;
+pub mod l2;
+pub mod market;
+pub mod model;
 
-use book::{BinanceBook, BinanceSubscriptionResponse, BinanceTrade};
 use channel::BinanceChannel;
+use l2::BinanceSpotBookUpdater;
+use model::{BinanceSpotBookUpdate, BinanceSubscriptionResponse, BinanceTrade};
 use serde_json::json;
 use std::collections::HashSet;
 
 use super::{Connector, Instrument, StreamSelector};
-use crate::data::{models::{book::OrderBookL2, subs::{ExchangeId, StreamType}, trade::Trades}, protocols::ws::ws_client::WsMessage};
+use crate::data::{
+    model::{
+        event_book::OrderBookL2,
+        subs::{ExchangeId, StreamType},
+        event_trade::Trades,
+    },
+    protocols::ws::WsMessage,
+    transformer::{book::MultiBookTransformer, stateless_transformer::StatelessTransformer},
+};
 
-#[derive(Debug, Default, Eq, PartialEq, Hash)]
+/*----- */
+// Binance connector
+/*----- */
+#[derive(Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct BinanceSpot;
 
 impl Connector for BinanceSpot {
@@ -53,13 +67,16 @@ impl Connector for BinanceSpot {
     }
 }
 
+/*----- */
+// Stream selector
+/*----- */
 impl StreamSelector<BinanceSpot, OrderBookL2> for BinanceSpot {
-    type Stream = BinanceBook;
+    type Stream = BinanceSpotBookUpdate;
+    type StreamTransformer =
+        MultiBookTransformer<Self::Stream, BinanceSpotBookUpdater, OrderBookL2>;
 }
-
 
 impl StreamSelector<BinanceSpot, Trades> for BinanceSpot {
     type Stream = BinanceTrade;
+    type StreamTransformer = StatelessTransformer<Self::Stream, Trades>;
 }
-
-

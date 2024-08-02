@@ -1,8 +1,7 @@
-
 /*----- */
 // Exchange subscription
 /*----- */
-#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Default, Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct Instrument {
     pub base: String,
     pub quote: String,
@@ -65,9 +64,10 @@ impl ExchangeId {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Hash, Eq, Ord, PartialOrd)]
+#[derive(Default, Debug, PartialEq, Clone, Hash, Eq, Ord, PartialOrd)]
 pub enum StreamType {
     L1,
+    #[default]
     L2,
     Trades,
 }
