@@ -5,13 +5,16 @@ use std::mem;
 use super::model::{PoloniexSpotBookData, PoloniexSpotBookUpdate};
 use crate::data::{
     error::SocketError,
-    exchange::{binance::l2::HTTP_TICKER_INFO_URL_BINANCE_SPOT, poloniex::model::PoloniexSpotTickerInfo},
+    exchange::poloniex::model::PoloniexSpotTickerInfo,
     model::{
         book::EventOrderBook,
         event::MarketEvent,
         subs::{ExchangeId, Instrument, StreamType},
     },
-    shared::{orderbook::OrderBook, utils::current_timestamp_utc},
+    shared::{
+        orderbook::OrderBook,
+        utils::{current_timestamp_utc, decimal_places_to_number},
+    },
     transformer::book::{InstrumentOrderBook, OrderBookUpdater},
 };
 
@@ -52,14 +55,14 @@ impl OrderBookUpdater for PoloniexSpotBookUpdater {
         let ticker_info = reqwest::get(ticker_info_url)
             .await
             .map_err(SocketError::Http)?
-            .json::<PoloniexSpotTickerInfo>()
+            .json::<Vec<PoloniexSpotTickerInfo>>()
             .await
             .map_err(SocketError::Http)?;
 
-        println!("--- poloniex ticker info ---");
-        println!("{:#?}", ticker_info);
+        let price_scale = ticker_info[0].symbol_trade_limit.quantity_scale;
+        let tick_size = decimal_places_to_number(price_scale);
+        let orderbook_init = OrderBook::new(tick_size);
 
-        let orderbook_init = OrderBook::new(0.001);
         Ok(InstrumentOrderBook {
             instrument: instrument.clone(),
             updater: Self::default(),
@@ -106,7 +109,7 @@ impl OrderBookUpdater for PoloniexSpotBookUpdater {
 // 1. Send a book_lv2 subscription message.
 // 2. Receive a snapshot message from the server.
 // 3. Use an appropriate data structure to store the received book.
-// 4. Receive an incremental order book message (update) from the server and make changes depending on [price, quantity] pair data:
+// 4, Receive an incremental order book message (update) from the server and make changes depending on
 //    - When quantity is positive, update the corresponding price of your order book with this quantity.
 //    - When quantity is 0, delete this price from your order book.
 // 5. Receive an order book message (snapshot) from the server, reset your order book data structure to match this new order book.
@@ -114,3 +117,7 @@ impl OrderBookUpdater for PoloniexSpotBookUpdater {
 // Notes:
 // If id of the last message does not match lastId of the current message then the client has lost connection with the server and must re-subscribe to the channel.
 // See docs: https://api-docs.poloniex.com/spot/websocket/market-data
+//
+// Price scale:
+// priceScale is referring to the max number of decimals allowed for a given symbol. For example, priceScale of 2 implies accepted values like 200.34, 13.2, 100 and priceScale of 0 implies accepted values like 200, 92, 13.
+// Source: https://api-docs.poloniex.com/spot/api/public/reference-data

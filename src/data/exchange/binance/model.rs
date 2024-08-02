@@ -112,8 +112,8 @@ pub enum BinanceMessage {
 /*----- */
 // Ticker info
 /*----- */
-#[derive(Deserialize, Debug)]
 #[allow(dead_code)]
+#[derive(Deserialize, Debug)]
 pub struct BinanceSpotTickerInfo {
     timezone: String,
     #[serde(rename = "serverTime")]
@@ -125,8 +125,8 @@ pub struct BinanceSpotTickerInfo {
     pub symbols: Vec<Ticker>,
 }
 
-#[derive(Deserialize, Debug)]
 #[allow(dead_code)]
+#[derive(Deserialize, Debug)]
 pub struct RateLimit {
     #[serde(rename = "rateLimitType")]
     rate_limit_type: String,
@@ -136,8 +136,8 @@ pub struct RateLimit {
     limit: u32,
 }
 
-#[derive(Deserialize, Debug)]
 #[allow(dead_code)]
+#[derive(Deserialize, Debug)]
 pub struct Ticker {
     symbol: String,
     status: String,

@@ -29,15 +29,15 @@ async fn main() {
 //                    (BinanceSpot, "celo", "usdt", StreamType::L2, OrderBookL2),
 //                ])
                 .subscribe([
-                    // (PoloniexSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
+                    (PoloniexSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
                     (PoloniexSpot, "eth", "usdt", StreamType::L2, OrderBookL2),
-                    // (PoloniexSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
-                    // (PoloniexSpot, "arb", "usdt", StreamType::L2, OrderBookL2),
-                    // (PoloniexSpot, "sui", "usdt", StreamType::L2, OrderBookL2),
-                    // (PoloniexSpot, "trx", "usdt", StreamType::L2, OrderBookL2),
-                    // (PoloniexSpot, "naka", "usdt", StreamType::L2, OrderBookL2),
-                    // (PoloniexSpot, "matic", "usdt", StreamType::L2, OrderBookL2),
-                    // (PoloniexSpot, "ada", "usdt", StreamType::L2, OrderBookL2),
+                    (PoloniexSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
+                    (PoloniexSpot, "arb", "usdt", StreamType::L2, OrderBookL2),
+                    (PoloniexSpot, "sui", "usdt", StreamType::L2, OrderBookL2),
+                    (PoloniexSpot, "trx", "usdt", StreamType::L2, OrderBookL2),
+                    (PoloniexSpot, "naka", "usdt", StreamType::L2, OrderBookL2),
+                    (PoloniexSpot, "matic", "usdt", StreamType::L2, OrderBookL2),
+                    (PoloniexSpot, "ada", "usdt", StreamType::L2, OrderBookL2),
                 ]),
         )
         // .add(
@@ -103,7 +103,6 @@ async fn main() {
 /*----- */
 // todo
 /*----- */
-// - tick size mapper
 // - rm Some from EventOrderBook
 // - remove debugs in traits
 // - double sub check
