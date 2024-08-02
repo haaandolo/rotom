@@ -20,7 +20,7 @@ use model::{PoloniexSpotBookUpdate, PoloniexSubscriptionResponse, PoloniexTrade}
 /*----- */
 // Poloniex connector
 /*----- */
-#[derive(Debug, Default, Eq, PartialEq, Hash)]
+#[derive(Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct PoloniexSpot;
 
 impl Connector for PoloniexSpot {

@@ -19,7 +19,7 @@ impl<T> Streams<T> {
     // Single StreamKind builder
     pub fn builder<StreamKind>() -> StreamBuilder<StreamKind>
     where
-        StreamKind: SubKind + Send + 'static,
+        StreamKind: SubKind + Send + Ord + 'static,
     {
         StreamBuilder::<StreamKind>::new()
     }

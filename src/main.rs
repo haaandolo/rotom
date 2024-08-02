@@ -103,7 +103,6 @@ async fn main() {
 /*----- */
 // todo
 /*----- */
-// - rm Some from EventOrderBook
 // - remove debugs in traits
 // - double sub check
 // - are some traits meant to be async traits?

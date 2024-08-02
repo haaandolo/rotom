@@ -23,7 +23,7 @@ use crate::data::{
 /*----- */
 // Binance connector
 /*----- */
-#[derive(Debug, Default, Eq, PartialEq, Hash)]
+#[derive(Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct BinanceSpot;
 
 impl Connector for BinanceSpot {
