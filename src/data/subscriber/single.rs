@@ -1,17 +1,17 @@
 use futures::Future;
-use std::{collections::HashMap, fmt::Debug, pin::Pin};
+use std::{collections::HashMap, pin::Pin};
 use tokio::sync::mpsc::{self};
 
 use super::{consume::consume, Streams};
 use crate::data::{
     error::SocketError,
-    exchange::{self, Connector, StreamSelector},
+    exchange::{Connector, StreamSelector},
     model::{
         event::MarketEvent,
         subs::{ExchangeId, Subscription},
         SubKind,
     },
-    transformer::{ExchangeTransformer, Transformer},
+    transformer::ExchangeTransformer,
 };
 
 pub type SubscribeFuture = Pin<Box<dyn Future<Output = Result<(), SocketError>>>>;
@@ -43,22 +43,21 @@ where
     where
         SubIter: IntoIterator<Item = Sub>,
         Sub: Into<Subscription<Exchange, StreamKind>>,
+        Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind>,
         Exchange: Connector + Send + StreamSelector<Exchange, StreamKind> + Ord + 'static,
-        Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind> + Debug,
-        <Exchange::StreamTransformer as Transformer>::Input: Debug, // DEL
     {
         let mut exchange_sub = subscriptions
             .into_iter()
             .map(Sub::into)
             .collect::<Vec<Subscription<Exchange, StreamKind>>>();
 
-        // Remove duplicates
-        exchange_sub.sort();
-        exchange_sub.dedup();
-
         let exchange_tx = self.channels.entry(Exchange::ID).or_default().tx.clone();
 
         self.futures.push(Box::pin(async move {
+            // Remove duplicates
+            exchange_sub.sort();
+            exchange_sub.dedup();
+
             tokio::spawn(consume(exchange_sub, exchange_tx));
             Ok(())
         }));

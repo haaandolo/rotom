@@ -35,7 +35,7 @@ pub async fn create_websocket<Exchange, StreamKind>(
 where
     StreamKind: SubKind,
     Exchange: Connector + StreamSelector<Exchange, StreamKind> + Send,
-    Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind> + Debug, // DEL
+    Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind>,
 {
     // Make connection
     let mut tasks = Vec::new();

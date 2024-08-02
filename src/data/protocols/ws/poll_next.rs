@@ -55,7 +55,6 @@ where
 impl<StreamTransformer> Stream for ExchangeStream<StreamTransformer>
 where
     StreamTransformer: Transformer,
-    StreamTransformer::Input: Debug, //DEL
     StreamTransformer::Error: From<SocketError>,
 {
     type Item = Result<StreamTransformer::Output, StreamTransformer::Error>;
@@ -74,8 +73,6 @@ where
                 Poll::Pending => return Poll::Pending,
             };
 
-            // println!("{:?}", input);
-
             // Parse input protocol message into `ExchangeMessage`
             let exchange_message =
                 match <WebSocketParser as StreamParser>::parse::<StreamTransformer::Input>(input) {
@@ -89,8 +86,6 @@ where
                     // If `StreamParser` returns None it's a safe-to-skip message
                     None => continue,
                 };
-
-            // println!("{:?}", exchange_message);
 
             let transformed_message = self.transformer.transform(exchange_message);
             self.buffer.push_back(Ok(transformed_message?))

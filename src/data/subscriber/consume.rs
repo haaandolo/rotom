@@ -1,12 +1,10 @@
-use std::fmt::Debug;
-
 use futures::StreamExt;
 use tokio::sync::mpsc::UnboundedSender;
 use tokio::{time::sleep, time::Duration};
 
 use crate::data::error::SocketError;
 use crate::data::protocols::ws::{create_websocket, WsMessage};
-use crate::data::transformer::{ExchangeTransformer, Transformer};
+use crate::data::transformer::ExchangeTransformer;
 use crate::data::{
     exchange::{Connector, StreamSelector},
     model::{event::MarketEvent, subs::Subscription, SubKind},
@@ -21,8 +19,7 @@ pub async fn consume<Exchange, StreamKind>(
 where
     StreamKind: SubKind,
     Exchange: Connector + Send + StreamSelector<Exchange, StreamKind>,
-    Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind> + Debug,
-    <Exchange::StreamTransformer as Transformer>::Input: Debug,
+    Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind>,
 {
     let mut connection_attempt: u32 = 0;
     let mut backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
