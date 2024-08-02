@@ -4,9 +4,9 @@ use crate::data::{
     exchange::Identifier,
     model::{
         event::MarketEvent,
+        event_trade::EventTrade,
         level::Level,
         subs::{ExchangeId, StreamType},
-        trade::Trade,
     },
     shared::{
         de::{de_str, de_str_symbol, deserialize_non_empty_vec},
@@ -78,7 +78,7 @@ pub struct BinanceTrade {
     pub side: bool,
 }
 
-impl From<BinanceTrade> for MarketEvent<Trade> {
+impl From<BinanceTrade> for MarketEvent<EventTrade> {
     fn from(event: BinanceTrade) -> Self {
         Self {
             exchange_time: event.timestamp,
@@ -87,7 +87,7 @@ impl From<BinanceTrade> for MarketEvent<Trade> {
             exchange: ExchangeId::BinanceSpot,
             stream_type: StreamType::Trades,
             symbol: event.symbol,
-            event_data: Trade::new(Level::new(event.price, event.amount), event.side),
+            event_data: EventTrade::new(Level::new(event.price, event.amount), event.side),
         }
     }
 }

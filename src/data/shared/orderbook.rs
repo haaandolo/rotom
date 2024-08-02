@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 
-use crate::data::model::book::EventOrderBook;
+use crate::data::model::event_book::EventOrderBook;
 use crate::data::model::level::Level;
 use std::collections::BTreeMap;
 
@@ -104,8 +104,8 @@ impl OrderBook {
 
     #[inline]
     pub fn book_snapshot(&self) -> EventOrderBook {
-        let bids = Some(self.bids.values().rev().take(10).cloned().collect()); //TODO: GET rid of some
-        let asks = Some(self.asks.values().take(10).cloned().collect());
+        let bids = self.bids.values().rev().take(10).cloned().collect();
+        let asks = self.asks.values().take(10).cloned().collect();
         EventOrderBook::new(bids, asks)
     }
 

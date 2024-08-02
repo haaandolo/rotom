@@ -12,9 +12,9 @@ use std::collections::HashSet;
 use super::{Connector, Instrument, StreamSelector};
 use crate::data::{
     model::{
-        book::OrderBookL2,
+        event_book::OrderBookL2,
         subs::{ExchangeId, StreamType},
-        trade::Trades,
+        event_trade::Trades,
     },
     protocols::ws::WsMessage,
     transformer::{book::MultiBookTransformer, stateless_transformer::StatelessTransformer},

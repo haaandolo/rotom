@@ -1,10 +1,10 @@
 use arb_bot::data::{
     exchange::{binance::BinanceSpot, poloniex::PoloniexSpot},
     model::{
-        book::OrderBookL2,
+        event_book::OrderBookL2,
         event::{DataKind, MarketEvent},
         subs::{ExchangeId, StreamType},
-        trade::Trades,
+        event_trade::Trades,
     },
     subscriber::{single::StreamBuilder, Streams},
 };
@@ -29,9 +29,9 @@ async fn main() {
 //                    (BinanceSpot, "celo", "usdt", StreamType::L2, OrderBookL2),
 //                ])
                 .subscribe([
-                    (PoloniexSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
-                    (PoloniexSpot, "eth", "usdt", StreamType::L2, OrderBookL2),
-                    (PoloniexSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
+                    // (PoloniexSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
+                    // (PoloniexSpot, "eth", "usdt", StreamType::L2, OrderBookL2),
+                    // (PoloniexSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
                     (PoloniexSpot, "arb", "usdt", StreamType::L2, OrderBookL2),
                     (PoloniexSpot, "sui", "usdt", StreamType::L2, OrderBookL2),
                     (PoloniexSpot, "trx", "usdt", StreamType::L2, OrderBookL2),
@@ -60,8 +60,8 @@ async fn main() {
     let mut joined_stream = streams.join_map().await;
 
     while let Some(data) = joined_stream.next().await {
-        // println!("@@@@ Market event @@@@");
-        // println!("{:?}", data);
+        println!("@@@@ Market event @@@@");
+        println!("{:?}", data);
     }
 
     /*----- */
@@ -112,3 +112,4 @@ async fn main() {
 // - custom poloniex deserializers
 // - how is barter doing exchnage time and received time?
 // - DOCUMENTATION + EXAMPLES
+// - DOUBLE CHECK TICKER SIZE BEFORE PRODUCTION

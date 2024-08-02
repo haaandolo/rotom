@@ -7,7 +7,7 @@ use crate::data::{
         event::MarketEvent,
         level::Level,
         subs::{ExchangeId, StreamType},
-        trade::Trade,
+        event_trade::EventTrade,
     },
     shared::{
         de::{de_str, de_str_symbol, deserialize_non_empty_vec},
@@ -73,7 +73,7 @@ pub struct PoloniexTrade {
     pub data: [PoloniexTradeData; 1],
 }
 
-impl From<PoloniexTrade> for MarketEvent<Trade> {
+impl From<PoloniexTrade> for MarketEvent<EventTrade> {
     fn from(mut value: PoloniexTrade) -> Self {
         let data = mem::take(&mut value.data[0]);
         Self {
@@ -83,7 +83,7 @@ impl From<PoloniexTrade> for MarketEvent<Trade> {
             exchange: ExchangeId::PoloniexSpot,
             stream_type: StreamType::Trades,
             symbol: data.symbol,
-            event_data: Trade::new(Level::new(data.price, data.quantity), data.is_buy),
+            event_data: EventTrade::new(Level::new(data.price, data.quantity), data.is_buy),
         }
     }
 }

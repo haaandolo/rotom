@@ -5,7 +5,7 @@ use super::model::{BinanceSpotBookUpdate, BinanceSpotSnapshot};
 use crate::data::error::SocketError;
 use crate::data::exchange::binance::model::BinanceSpotTickerInfo;
 use crate::data::exchange::binance::model::Filter;
-use crate::data::model::book::EventOrderBook;
+use crate::data::model::event_book::EventOrderBook;
 use crate::data::model::event::MarketEvent;
 use crate::data::model::subs::{ExchangeId, Instrument, StreamType};
 use crate::data::shared::utils::current_timestamp_utc;

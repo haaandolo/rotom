@@ -1,5 +1,5 @@
-pub mod book;
-pub mod trade;
+pub mod event_book;
+pub mod event_trade;
 pub mod level;
 pub mod event;
 pub mod subs;

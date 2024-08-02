@@ -7,7 +7,7 @@ use crate::data::{
     error::SocketError,
     exchange::poloniex::model::PoloniexSpotTickerInfo,
     model::{
-        book::EventOrderBook,
+        event_book::EventOrderBook,
         event::MarketEvent,
         subs::{ExchangeId, Instrument, StreamType},
     },
