@@ -1,6 +1,5 @@
 use async_trait::async_trait;
 use chrono::Utc;
-use tracing::error;
 
 use super::model::{BinanceSpotBookUpdate, BinanceSpotSnapshot};
 use crate::data::error::SocketError;
