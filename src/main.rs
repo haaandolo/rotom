@@ -87,14 +87,13 @@ fn init_logging() {
 /*----- */
 // todo
 /*----- */
-// - how is barter doing exchnage time and received time?
-// - process custom ping for poloniex
+// - Dynamic streams
+// - Reconnection attempt not working
+// - Is websocket disconnect handling
 // - DOCUMENTATION + EXAMPLES
 // - DOUBLE CHECK TICKER SIZE BEFORE PRODUCTION
-// - Is websocket disconnect handling
-// - Reconnection attempt not working
-// - Dynamic streams
 // - custom poloniex deserializers
+// - process custom ping for poloniex
 
 /*----- */
 // Single Streams
