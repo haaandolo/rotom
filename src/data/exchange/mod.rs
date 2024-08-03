@@ -23,7 +23,7 @@ pub trait Connector {
 
     const ID: ExchangeId;
 
-    fn url() -> String;
+    fn url() -> &'static str;
 
     fn ping_interval() -> Option<PingInterval> {
         None

@@ -8,7 +8,6 @@ use crate::data::exchange::binance::model::Filter;
 use crate::data::model::event::MarketEvent;
 use crate::data::model::event_book::EventOrderBook;
 use crate::data::model::subs::{ExchangeId, Instrument, StreamType};
-use crate::data::shared::utils::current_timestamp_utc;
 use crate::data::{
     shared::orderbook::OrderBook,
     transformer::book::{InstrumentOrderBook, OrderBookUpdater},
@@ -156,9 +155,8 @@ impl OrderBookUpdater for BinanceSpotBookUpdater {
         let book_snapshot = book.book_snapshot();
 
         Ok(Some(MarketEvent {
-            exchange_time: update.timestamp,
-            received_time: current_timestamp_utc(),
-            seq: update.last_update_id,
+            exchange_time: book.last_update_time,
+            received_time: Utc::now(),
             exchange: ExchangeId::BinanceSpot,
             stream_type: StreamType::L2,
             symbol: update.symbol,

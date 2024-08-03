@@ -17,6 +17,8 @@ use crate::data::transformer::stateless_transformer::StatelessTransformer;
 use channel::PoloniexChannel;
 use model::{PoloniexSpotBookUpdate, PoloniexSubscriptionResponse, PoloniexTrade};
 
+const POLONIEX_SPOT_WS_URL: &str = "wss://ws.poloniex.com/ws/public";
+
 /*----- */
 // Poloniex connector
 /*----- */
@@ -31,8 +33,8 @@ impl Connector for PoloniexSpot {
 
     const ID: ExchangeId = ExchangeId::PoloniexSpot;
 
-    fn url() -> String {
-        PoloniexChannel::SPOT_WS_URL.as_ref().to_string()
+    fn url() -> &'static str{
+        POLONIEX_SPOT_WS_URL
     }
 
     fn requests(

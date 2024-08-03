@@ -1,3 +1,5 @@
+use chrono::{DateTime, Utc};
+
 use super::{
     event_book::EventOrderBook,
     event_trade::EventTrade,
@@ -13,9 +15,8 @@ pub enum DataKind {
 
 #[derive(Debug)]
 pub struct MarketEvent<Event> {
-    pub exchange_time: u64,
-    pub received_time: u64,
-    pub seq: u64,
+    pub exchange_time: DateTime<Utc>,
+    pub received_time: DateTime<Utc>,
     pub exchange: ExchangeId,
     pub stream_type: StreamType,
     pub symbol: String,
@@ -28,9 +29,8 @@ where
 {
     fn default() -> Self {
         Self {
-            exchange_time: 0,
-            received_time: 0,
-            seq: 0,
+            exchange_time: Utc::now(),
+            received_time: Utc::now(),
             exchange: ExchangeId::Default,
             stream_type: StreamType::Default,
             symbol: String::new(),
@@ -45,7 +45,6 @@ impl From<MarketEvent<EventTrade>> for MarketEvent<DataKind> {
             exchange_time: event.exchange_time,
             received_time: event.received_time,
             exchange: event.exchange,
-            seq: event.seq,
             stream_type: event.stream_type,
             symbol: event.symbol,
             event_data: DataKind::Trade(event.event_data),
@@ -59,7 +58,6 @@ impl From<MarketEvent<EventOrderBook>> for MarketEvent<DataKind> {
             exchange_time: event.exchange_time,
             received_time: event.received_time,
             exchange: event.exchange,
-            seq: event.seq,
             stream_type: event.stream_type,
             symbol: event.symbol,
             event_data: DataKind::OrderBook(event.event_data),

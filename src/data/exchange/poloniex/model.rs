@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use std::mem;
 
@@ -5,13 +6,12 @@ use crate::data::{
     exchange::Identifier,
     model::{
         event::MarketEvent,
+        event_trade::EventTrade,
         level::Level,
         subs::{ExchangeId, StreamType},
-        event_trade::EventTrade,
     },
-    shared::{
-        de::{de_str, de_str_symbol, deserialize_non_empty_vec},
-        utils::current_timestamp_utc,
+    shared::de::{
+        de_str, de_str_symbol, de_u64_epoch_ms_as_datetime_utc, deserialize_non_empty_vec,
     },
 };
 
@@ -22,8 +22,11 @@ use crate::data::{
 pub struct PoloniexSpotBookData {
     #[serde(deserialize_with = "de_str_symbol")]
     pub symbol: String,
-    #[serde(alias = "createTime")]
-    pub timestamp: u64,
+    #[serde(
+        alias = "createTime",
+        deserialize_with = "de_u64_epoch_ms_as_datetime_utc"
+    )]
+    pub timestamp: DateTime<Utc>,
     #[serde(deserialize_with = "deserialize_non_empty_vec")]
     pub asks: Option<Vec<Level>>,
     #[serde(deserialize_with = "deserialize_non_empty_vec")]
@@ -59,8 +62,11 @@ pub struct PoloniexTradeData {
     pub quantity: f64,
     #[serde(alias = "takerSide", deserialize_with = "de_buyer_is_maker_poloniex")]
     pub is_buy: bool,
-    #[serde(alias = "createTime")]
-    pub timestamp: u64,
+    #[serde(
+        alias = "createTime",
+        deserialize_with = "de_u64_epoch_ms_as_datetime_utc"
+    )]
+    pub timestamp: DateTime<Utc>,
     #[serde(deserialize_with = "de_str")]
     pub price: f64,
     #[serde(deserialize_with = "de_str")]
@@ -78,8 +84,7 @@ impl From<PoloniexTrade> for MarketEvent<EventTrade> {
         let data = mem::take(&mut value.data[0]);
         Self {
             exchange_time: data.timestamp,
-            received_time: current_timestamp_utc(),
-            seq: data.id,
+            received_time: Utc::now(),
             exchange: ExchangeId::PoloniexSpot,
             stream_type: StreamType::Trades,
             symbol: data.symbol,
