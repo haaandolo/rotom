@@ -40,10 +40,10 @@ pub async fn create_websocket<Exchange, StreamKind>(
 ) -> Result<ExchangeStream<Exchange::StreamTransformer>, SocketError>
 where
     StreamKind: SubKind,
-    Exchange: Connector + StreamSelector<Exchange, StreamKind> + Send + Clone,
+    Exchange: Connector + StreamSelector<Exchange, StreamKind> + Send + Clone + Debug,
     Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind>,
     Subscription<Exchange, StreamKind>:
-        Identifier<Exchange::Channel> + Identifier<Exchange::Market>,
+        Identifier<Exchange::Channel> + Identifier<Exchange::Market> + Debug,
 {
     // Convert subscription to internal subscription
     let exchange_subs = subs

@@ -53,7 +53,7 @@ where
             + Sync
             + 'static,
         Subscription<Exchange, StreamKind>:
-            Identifier<Exchange::Channel> + Identifier<Exchange::Market>,
+            Identifier<Exchange::Channel> + Identifier<Exchange::Market> + Debug,
     {
         let mut exchange_sub = subscriptions
             .into_iter()

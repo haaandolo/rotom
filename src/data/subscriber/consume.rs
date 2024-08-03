@@ -25,7 +25,7 @@ where
     Exchange: Connector + Send + StreamSelector<Exchange, StreamKind> + Debug + Clone,
     Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind>,
     Subscription<Exchange, StreamKind>:
-        Identifier<Exchange::Channel> + Identifier<Exchange::Market>,
+        Identifier<Exchange::Channel> + Identifier<Exchange::Market> + Debug,
 {
     let exchange_id = Exchange::ID;
     let mut connection_attempt: u32 = 0;
@@ -42,7 +42,7 @@ where
         backoff_ms *= 2;
 
         // Attempt to connect to the stream
-        let mut stream = match create_websocket::<Exchange, StreamKind>(&exchange_sub).await {
+        let mut stream = match create_websocket(&exchange_sub).await {
             Ok(stream) => {
                 connection_attempt = 0;
                 backoff_ms = START_RECONNECTION_BACKOFF_MS;

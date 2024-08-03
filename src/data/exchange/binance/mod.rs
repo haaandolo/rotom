@@ -43,7 +43,7 @@ impl Connector for BinanceSpot {
     ) -> Option<WsMessage> {
         let binance_subs = subscriptions
             .iter()
-            .map(|s| format!("{}{}", s.market.as_ref(), s.channel.as_ref()))
+            .map(|s| format!("{}{}", s.market.as_ref(), s.channel.as_ref()).to_lowercase())
             .collect::<Vec<_>>();
 
         let binance_request = json!({
