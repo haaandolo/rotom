@@ -9,7 +9,7 @@ impl SubKind for OrderBookL2 {
     type Event = EventOrderBook;
 }
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize)]
+#[derive(Default, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize)]
 pub struct EventOrderBook {
     pub bids: Vec<Level>,
     pub asks: Vec<Level>,

@@ -1,5 +1,5 @@
 use futures::Future;
-use std::{collections::HashMap, pin::Pin};
+use std::{collections::HashMap, fmt::Debug, pin::Pin};
 use tokio::sync::mpsc::{self};
 
 use super::{consume::consume, Streams};
@@ -44,7 +44,7 @@ where
         SubIter: IntoIterator<Item = Sub>,
         Sub: Into<Subscription<Exchange, StreamKind>>,
         Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind>,
-        Exchange: Connector + Send + StreamSelector<Exchange, StreamKind> + Ord + 'static,
+        Exchange: Connector + Send + StreamSelector<Exchange, StreamKind> + Ord + Debug + 'static,
     {
         let mut exchange_sub = subscriptions
             .into_iter()

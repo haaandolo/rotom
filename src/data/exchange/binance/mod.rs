@@ -13,8 +13,8 @@ use super::{Connector, Instrument, StreamSelector};
 use crate::data::{
     model::{
         event_book::OrderBookL2,
-        subs::{ExchangeId, StreamType},
         event_trade::Trades,
+        subs::{ExchangeId, StreamType},
     },
     protocols::ws::WsMessage,
     transformer::{book::MultiBookTransformer, stateless_transformer::StatelessTransformer},
@@ -44,6 +44,7 @@ impl Connector for BinanceSpot {
                     StreamType::L1 => BinanceChannel::ORDER_BOOK_L1.as_ref(),
                     StreamType::L2 => BinanceChannel::ORDER_BOOK_L2.as_ref(),
                     StreamType::Trades => BinanceChannel::TRADES.as_ref(),
+                    _ => panic!("Invalid stream was enter for binance"), // TODO
                 };
                 format!("{}{}{}", s.base, s.quote, stream).to_lowercase()
             })
