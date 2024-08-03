@@ -1,6 +1,7 @@
 use super::PoloniexSpot;
 use crate::data::{exchange::Identifier, model::subs::Subscription};
 
+#[derive(Debug)]
 pub struct PoloniexMarket(pub String);
 
 impl<StreamKind> Identifier<PoloniexMarket> for Subscription<PoloniexSpot, StreamKind> {

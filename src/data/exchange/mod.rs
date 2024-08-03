@@ -5,7 +5,7 @@ use serde::de::DeserializeOwned;
 
 use super::{
     model::{
-        subs::{ExchangeId, Instrument},
+        subs::{ExchangeId, ExchangeSubscription},
         SubKind,
     },
     protocols::ws::{PingInterval, WsMessage},
@@ -18,6 +18,8 @@ use super::{
 pub trait Connector {
     type ExchangeId;
     type SubscriptionResponse: DeserializeOwned;
+    type Channel: Send;
+    type Market: Send;
 
     const ID: ExchangeId;
 
@@ -27,9 +29,15 @@ pub trait Connector {
         None
     }
 
-    fn requests(subscriptions: &[Instrument]) -> Option<WsMessage>;
+    fn requests(
+        subscriptions: &[ExchangeSubscription<Self, Self::Channel, Self::Market>],
+    ) -> Option<WsMessage>
+    where
+        Self: Sized;
 
-    fn validate_subscription(subscription_repsonse: String, subscriptions: &[Instrument]) -> bool;
+    fn validate_subscription(subscription_repsonse: String, number_of_tickers: usize) -> bool
+    where
+        Self: Sized;
 }
 
 /*----- */

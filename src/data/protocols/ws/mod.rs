@@ -13,7 +13,13 @@ use tokio::{net::TcpStream, time::sleep, time::Duration};
 use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
 
 use crate::data::{
-    error::SocketError, exchange::{Connector, StreamSelector}, model::{subs::Instrument, SubKind}, transformer::ExchangeTransformer
+    error::SocketError,
+    exchange::{Connector, Identifier, StreamSelector},
+    model::{
+        subs::{ExchangeSubscription, Subscription},
+        SubKind,
+    },
+    transformer::ExchangeTransformer,
 };
 
 /*----- */
@@ -30,13 +36,21 @@ pub type JoinHandle = tokio::task::JoinHandle<()>;
 // Create websocket
 /*----- */
 pub async fn create_websocket<Exchange, StreamKind>(
-    subs: &[Instrument],
+    subs: &[Subscription<Exchange, StreamKind>],
 ) -> Result<ExchangeStream<Exchange::StreamTransformer>, SocketError>
 where
     StreamKind: SubKind,
-    Exchange: Connector + StreamSelector<Exchange, StreamKind> + Send,
+    Exchange: Connector + StreamSelector<Exchange, StreamKind> + Send + Clone,
     Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind>,
+    Subscription<Exchange, StreamKind>:
+        Identifier<Exchange::Channel> + Identifier<Exchange::Market>,
 {
+    // Convert subscription to internal subscription
+    let exchange_subs = subs
+        .iter()
+        .map(|sub| ExchangeSubscription::new(sub))
+        .collect::<Vec<_>>();
+
     // Make connection
     let mut tasks = Vec::new();
     let ws = connect_async(Exchange::url())
@@ -48,11 +62,8 @@ where
     let (mut ws_write, ws_read) = ws?.split();
 
     // Handle subscription
-    if let Some(subcription) = Exchange::requests(subs) {
-        ws_write
-            .send(subcription)
-            .await
-            .expect("Failed to send subscription")
+    if let Some(subcription) = Exchange::requests(&exchange_subs) {
+        let _ = ws_write.send(subcription).await;
     }
 
     // Spawn custom ping handle (application level ping)
@@ -61,7 +72,13 @@ where
         tasks.push(ping_handler);
     }
 
-    let transformer = Exchange::StreamTransformer::new(subs).await?;
+    // Make instruments to for transformer
+    let instruments = subs
+        .iter()
+        .map(|sub| sub.instrument.clone())
+        .collect::<Vec<_>>();
+
+    let transformer = Exchange::StreamTransformer::new(&instruments).await?;
 
     Ok(ExchangeStream::new(ws_read, transformer, tasks))
 }
@@ -69,10 +86,9 @@ where
 pub async fn schedule_pings_to_exchange(mut ws_write: WsWrite, ping_interval: PingInterval) {
     loop {
         sleep(Duration::from_secs(ping_interval.time)).await;
-        ws_write
+        let _ = ws_write
             .send(WsMessage::Text(ping_interval.message.to_string()))
-            .await
-            .expect("Failed to send ping to ws");
+            .await;
     }
 }
 

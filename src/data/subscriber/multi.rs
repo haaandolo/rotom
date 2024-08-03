@@ -31,7 +31,7 @@ impl<Output> MultiStreamBuilder<Output> {
     pub fn add<StreamKind>(mut self, builder: StreamBuilder<StreamKind>) -> Self
     where
         Output: From<MarketEvent<StreamKind::Event>> + Send + 'static,
-        StreamKind: SubKind + Send + Ord + 'static,
+        StreamKind: SubKind + Send + Ord + Sync + 'static,
         StreamKind::Event: Send,
     {
         // Allocate HashMap to hold the exchange_tx<Output> for each StreamBuilder exchange present

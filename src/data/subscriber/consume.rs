@@ -6,6 +6,7 @@ use tokio::{time::sleep, time::Duration};
 use tracing::{error, info, warn};
 
 use crate::data::error::SocketError;
+use crate::data::exchange::Identifier;
 use crate::data::protocols::ws::{create_websocket, WsMessage};
 use crate::data::transformer::ExchangeTransformer;
 use crate::data::{
@@ -21,10 +22,14 @@ pub async fn consume<Exchange, StreamKind>(
 ) -> SocketError
 where
     StreamKind: SubKind,
-    Exchange: Connector + Send + StreamSelector<Exchange, StreamKind> + Debug,
+    Exchange: Connector + Send + StreamSelector<Exchange, StreamKind> + Debug + Clone,
     Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind>,
+    Subscription<Exchange, StreamKind>:
+        Identifier<Exchange::Channel> + Identifier<Exchange::Market>,
 {
     let exchange_id = Exchange::ID;
+    let mut connection_attempt: u32 = 0;
+    let mut backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
 
     info!(
         exchange = %exchange_id,
@@ -32,21 +37,12 @@ where
         action = "Attempting to subscribe to websocket"
     );
 
-    let mut connection_attempt: u32 = 0;
-    let mut backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
-
-    // TODO: I DONT LIKE THIS - MAKE IT CLEANER
-    let subs = exchange_sub
-        .into_iter()
-        .map(|s| s.instrument)
-        .collect::<Vec<_>>();
-
     loop {
         connection_attempt += 1;
         backoff_ms *= 2;
 
         // Attempt to connect to the stream
-        let mut stream = match create_websocket::<Exchange, StreamKind>(&subs).await {
+        let mut stream = match create_websocket::<Exchange, StreamKind>(&exchange_sub).await {
             Ok(stream) => {
                 connection_attempt = 0;
                 backoff_ms = START_RECONNECTION_BACKOFF_MS;
@@ -66,7 +62,8 @@ where
 
         // Validate subscriptions
         if let Some(Ok(WsMessage::Text(message))) = &stream.ws_read.next().await {
-            let subscription_sucess = Exchange::validate_subscription(message.to_owned(), &subs);
+            let subscription_sucess =
+                Exchange::validate_subscription(message.to_owned(), exchange_sub.len());
 
             if !subscription_sucess {
                 break SocketError::Subscribe(String::from("Subscription failed"));
@@ -77,9 +74,7 @@ where
         while let Some(market_event) = stream.next().await {
             match market_event {
                 Ok(market_event) => {
-                    exchange_tx
-                        .send(market_event)
-                        .expect("failed to send message");
+                    let _ = exchange_tx.send(market_event);
                 }
 
                 // If error is terminal e.g. invalid sequence, then break

@@ -4,6 +4,7 @@ use crate::data::{
 };
 use super::PoloniexSpot;
 
+#[derive(Debug)]
 pub struct PoloniexChannel(pub &'static str);
 
 impl PoloniexChannel {
