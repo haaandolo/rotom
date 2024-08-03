@@ -1,6 +1,7 @@
 use crate::data::{exchange::Identifier, model::{event_book::OrderBookL2, subs::Subscription, event_trade::Trades}};
 use super::BinanceSpot;
 
+#[derive(Debug)]
 pub struct BinanceChannel(pub &'static str);
 
 impl BinanceChannel {

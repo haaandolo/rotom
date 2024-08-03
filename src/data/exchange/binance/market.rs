@@ -1,6 +1,7 @@
 use crate::data::{exchange::Identifier, model::subs::Subscription};
 use super::BinanceSpot;
 
+#[derive(Debug)]
 pub struct BinanceMarket(pub String);
 
 impl<StreamKind> Identifier<BinanceMarket> for Subscription<BinanceSpot, StreamKind> {

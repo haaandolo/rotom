@@ -5,16 +5,16 @@ pub mod model;
 
 use channel::BinanceChannel;
 use l2::BinanceSpotBookUpdater;
+use market::BinanceMarket;
 use model::{BinanceSpotBookUpdate, BinanceSubscriptionResponse, BinanceTrade};
 use serde_json::json;
-use std::collections::HashSet;
 
-use super::{Connector, Instrument, StreamSelector};
+use super::{Connector, StreamSelector};
 use crate::data::{
     model::{
         event_book::OrderBookL2,
         event_trade::Trades,
-        subs::{ExchangeId, StreamType},
+        subs::{ExchangeId, ExchangeSubscription},
     },
     protocols::ws::WsMessage,
     transformer::{book::MultiBookTransformer, stateless_transformer::StatelessTransformer},
@@ -23,12 +23,14 @@ use crate::data::{
 /*----- */
 // Binance connector
 /*----- */
-#[derive(Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[derive(Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd, Clone)]
 pub struct BinanceSpot;
 
 impl Connector for BinanceSpot {
     type ExchangeId = ExchangeId;
     type SubscriptionResponse = BinanceSubscriptionResponse;
+    type Channel = BinanceChannel;
+    type Market = BinanceMarket;
 
     const ID: ExchangeId = ExchangeId::BinanceSpot;
 
@@ -36,32 +38,24 @@ impl Connector for BinanceSpot {
         BinanceChannel::SPOT_WS_URL.as_ref().to_string()
     }
 
-    fn requests(subscriptions: &[Instrument]) -> Option<WsMessage> {
-        let channels = subscriptions
+    fn requests(
+        subscriptions: &[ExchangeSubscription<Self, Self::Channel, Self::Market>],
+    ) -> Option<WsMessage> {
+        let binance_subs = subscriptions
             .iter()
-            .map(|s| {
-                let stream = match s.stream_type {
-                    StreamType::L1 => BinanceChannel::ORDER_BOOK_L1.as_ref(),
-                    StreamType::L2 => BinanceChannel::ORDER_BOOK_L2.as_ref(),
-                    StreamType::Trades => BinanceChannel::TRADES.as_ref(),
-                    _ => panic!("Invalid stream was enter for binance"), // TODO
-                };
-                format!("{}{}{}", s.base, s.quote, stream).to_lowercase()
-            })
-            .collect::<HashSet<_>>()
-            .into_iter()
+            .map(|s| format!("{}{}", s.market.as_ref(), s.channel.as_ref()))
             .collect::<Vec<_>>();
 
         let binance_request = json!({
             "method": "SUBSCRIBE",
-            "params": channels,
+            "params": binance_subs,
             "id": 1
         });
 
         Some(WsMessage::Text(binance_request.to_string()))
     }
 
-    fn validate_subscription(subscription_response: String, _subscriptions: &[Instrument]) -> bool {
+    fn validate_subscription(subscription_response: String, _number_of_tickers: usize) -> bool {
         let subscription_response =
             serde_json::from_str::<BinanceSubscriptionResponse>(&subscription_response).unwrap();
         subscription_response.result.is_none()

@@ -5,7 +5,7 @@ use tokio::sync::mpsc::{self};
 use super::{consume::consume, Streams};
 use crate::data::{
     error::SocketError,
-    exchange::{Connector, StreamSelector},
+    exchange::{Connector, Identifier, StreamSelector},
     model::{
         event::MarketEvent,
         subs::{ExchangeId, Subscription},
@@ -30,7 +30,7 @@ where
 
 impl<StreamKind> StreamBuilder<StreamKind>
 where
-    StreamKind: SubKind + Send + Ord + 'static,
+    StreamKind: SubKind + Send + Ord + Sync + 'static,
 {
     pub fn new() -> Self {
         Self {
@@ -44,7 +44,16 @@ where
         SubIter: IntoIterator<Item = Sub>,
         Sub: Into<Subscription<Exchange, StreamKind>>,
         Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind>,
-        Exchange: Connector + Send + StreamSelector<Exchange, StreamKind> + Ord + Debug + 'static,
+        Exchange: Connector
+            + Send
+            + StreamSelector<Exchange, StreamKind>
+            + Ord
+            + Debug
+            + Clone
+            + Sync
+            + 'static,
+        Subscription<Exchange, StreamKind>:
+            Identifier<Exchange::Channel> + Identifier<Exchange::Market>,
     {
         let mut exchange_sub = subscriptions
             .into_iter()

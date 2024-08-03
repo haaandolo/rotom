@@ -63,8 +63,8 @@ async fn main() {
     let mut joined_stream = streams.join_map().await;
 
     while let Some(data) = joined_stream.next().await {
-        // println!("@@@@ Market event @@@@");
-        // println!("{:?}", data);
+        println!("@@@@ Market event @@@@");
+        println!("{:?}", data);
     }
 }
 // Initialise an INFO `Subscriber` for `Tracing` Json logs and install it as the global default.

@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use crate::data::exchange::{Connector, Identifier};
+
 /*----- */
 // Exchange subscription
 /*----- */
@@ -33,23 +35,53 @@ impl From<(String, String, StreamType)> for Instrument {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct Subscription<Exchange, Kind> {
+pub struct Subscription<Exchange, StreamKind> {
     pub exchange: Exchange,
     pub instrument: Instrument,
-    pub kind: Kind,
+    pub kind: StreamKind,
 }
 
-impl<Exchange, S, Kind> From<(Exchange, S, S, StreamType, Kind)> for Subscription<Exchange, Kind>
+impl<Exchange, S, StreamKind> From<(Exchange, S, S, StreamType, StreamKind)>
+    for Subscription<Exchange, StreamKind>
 where
     S: Into<String>,
 {
     fn from(
-        (exchange, base, quote, stream_type, kind): (Exchange, S, S, StreamType, Kind),
+        (exchange, base, quote, stream_type, kind): (Exchange, S, S, StreamType, StreamKind),
     ) -> Self {
         Self {
             exchange,
             instrument: Instrument::new(base.into(), quote.into(), stream_type),
             kind,
+        }
+    }
+}
+
+/*----- */
+// Internal exchange subscription
+/*----- */
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub struct ExchangeSubscription<Exchange, Channel, Market> {
+    pub exchange: Exchange,
+    pub channel: Channel,
+    pub market: Market,
+    pub instrument: Instrument,
+}
+
+impl<Exchange> ExchangeSubscription<Exchange, Exchange::Channel, Exchange::Market>
+where
+    Exchange: Connector + Clone,
+{
+    pub fn new<StreamKind>(subs: &Subscription<Exchange, StreamKind>) -> Self
+    where
+        Subscription<Exchange, StreamKind>:
+            Identifier<Exchange::Channel> + Identifier<Exchange::Market>,
+    {
+        Self {
+            exchange: subs.exchange.clone(),
+            channel: subs.id(),
+            market: subs.id(),
+            instrument: subs.instrument.clone(),
         }
     }
 }

@@ -4,13 +4,13 @@ pub mod market;
 pub mod model;
 
 use l2::PoloniexSpotBookUpdater;
+use market::PoloniexMarket;
 use serde_json::json;
-use std::collections::HashSet;
 
-use super::{Connector, Instrument, StreamSelector};
+use super::{Connector, StreamSelector};
 use crate::data::model::event_book::OrderBookL2;
-use crate::data::model::subs::{ExchangeId, StreamType};
 use crate::data::model::event_trade::Trades;
+use crate::data::model::subs::{ExchangeId, ExchangeSubscription};
 use crate::data::protocols::ws::{PingInterval, WsMessage};
 use crate::data::transformer::book::MultiBookTransformer;
 use crate::data::transformer::stateless_transformer::StatelessTransformer;
@@ -20,12 +20,14 @@ use model::{PoloniexSpotBookUpdate, PoloniexSubscriptionResponse, PoloniexTrade}
 /*----- */
 // Poloniex connector
 /*----- */
-#[derive(Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[derive(Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd, Clone)]
 pub struct PoloniexSpot;
 
 impl Connector for PoloniexSpot {
     type ExchangeId = ExchangeId;
     type SubscriptionResponse = PoloniexSubscriptionResponse;
+    type Channel = PoloniexChannel;
+    type Market = PoloniexMarket;
 
     const ID: ExchangeId = ExchangeId::PoloniexSpot;
 
@@ -33,31 +35,16 @@ impl Connector for PoloniexSpot {
         PoloniexChannel::SPOT_WS_URL.as_ref().to_string()
     }
 
-    fn requests(sub: &[Instrument]) -> Option<WsMessage> {
-        let channels = sub
-            .iter()
-            .map(|s| match s.stream_type {
-                StreamType::L2 => PoloniexChannel::ORDER_BOOK_L2.as_ref(),
-                StreamType::Trades => PoloniexChannel::TRADES.as_ref(),
-                _ => panic!("Invalid stream was enter for poloniex"), // TODO
-            })
-            .collect::<HashSet<_>>()
-            .into_iter()
-            .collect::<Vec<_>>();
-
-        let tickers = sub
-            .iter()
-            .map(|s| format!("{}_{}", s.base, s.quote))
-            .collect::<HashSet<_>>()
-            .into_iter()
-            .collect::<Vec<_>>();
-
+    fn requests(
+        sub: &[ExchangeSubscription<Self, Self::Channel, Self::Market>],
+    ) -> Option<WsMessage> {
+        let channels = sub.iter().map(|s| s.channel.as_ref()).collect::<Vec<_>>();
+        let tickers = sub.iter().map(|s| s.market.as_ref()).collect::<Vec<_>>();
         let poloniex_sub = json!({
             "event": "subscribe",
             "channel": channels,
             "symbols": tickers
         });
-
         Some(WsMessage::text(poloniex_sub.to_string()))
     }
 
@@ -68,10 +55,10 @@ impl Connector for PoloniexSpot {
         })
     }
 
-    fn validate_subscription(subscription_response: String, sub: &[Instrument]) -> bool {
+    fn validate_subscription(subscription_response: String, number_of_tickers: usize) -> bool {
         let subscription_response =
             serde_json::from_str::<PoloniexSubscriptionResponse>(&subscription_response).unwrap();
-        subscription_response.symbols.len() == sub.len()
+        subscription_response.symbols.len() == number_of_tickers
     }
 }
 
@@ -83,7 +70,7 @@ impl Connector for PoloniexSpot {
 //     type StreamTransformer = StatelessTransformer<Self::Stream, OrderBookL2>;
 // }
 
-impl StreamSelector<PoloniexSpot, OrderBookL2> for PoloniexSpot{
+impl StreamSelector<PoloniexSpot, OrderBookL2> for PoloniexSpot {
     type Stream = PoloniexSpotBookUpdate;
     type StreamTransformer =
         MultiBookTransformer<Self::Stream, PoloniexSpotBookUpdater, OrderBookL2>;
