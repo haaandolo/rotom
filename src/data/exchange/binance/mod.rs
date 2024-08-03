@@ -20,6 +20,7 @@ use crate::data::{
     transformer::{book::MultiBookTransformer, stateless_transformer::StatelessTransformer},
 };
 
+const BINANCE_SPOT_WS_URL: &str = "wss://stream.binance.com:9443/ws";
 /*----- */
 // Binance connector
 /*----- */
@@ -34,8 +35,8 @@ impl Connector for BinanceSpot {
 
     const ID: ExchangeId = ExchangeId::BinanceSpot;
 
-    fn url() -> String {
-        BinanceChannel::SPOT_WS_URL.as_ref().to_string()
+    fn url() -> &'static str {
+        BINANCE_SPOT_WS_URL
     }
 
     fn requests(

@@ -7,14 +7,11 @@ use crate::data::{
     error::SocketError,
     exchange::poloniex::model::PoloniexSpotTickerInfo,
     model::{
-        event_book::EventOrderBook,
         event::MarketEvent,
+        event_book::EventOrderBook,
         subs::{ExchangeId, Instrument, StreamType},
     },
-    shared::{
-        orderbook::OrderBook,
-        utils::{current_timestamp_utc, decimal_places_to_number},
-    },
+    shared::{orderbook::OrderBook, utils::decimal_places_to_number},
     transformer::book::{InstrumentOrderBook, OrderBookUpdater},
 };
 
@@ -77,7 +74,6 @@ impl OrderBookUpdater for PoloniexSpotBookUpdater {
     ) -> Result<Option<MarketEvent<EventOrderBook>>, SocketError> {
         let update_data = mem::take(&mut update.data[0]); // TODO
         if update.action == "snapshot" {
-            book.reset();
             book.process_lvl2(update_data.bids, update_data.asks);
             self.prev_last_update_id = update_data.id;
             Ok(None)
@@ -91,9 +87,8 @@ impl OrderBookUpdater for PoloniexSpotBookUpdater {
 
             let book_snapshot = book.book_snapshot();
             Ok(Some(MarketEvent {
-                exchange_time: update_data.timestamp,
-                received_time: current_timestamp_utc(),
-                seq: update_data.id,
+                exchange_time: book.last_update_time,
+                received_time: Utc::now(),
                 exchange: ExchangeId::PoloniexSpot,
                 stream_type: StreamType::L2,
                 symbol: update_data.symbol,

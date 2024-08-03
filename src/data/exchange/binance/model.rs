@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
 use crate::data::{
@@ -9,8 +10,8 @@ use crate::data::{
         subs::{ExchangeId, StreamType},
     },
     shared::{
-        de::{de_str, de_str_symbol, deserialize_non_empty_vec},
-        utils::{current_timestamp_utc, snapshot_symbol_default_value},
+        de::{de_str, de_str_symbol, de_u64_epoch_ms_as_datetime_utc, deserialize_non_empty_vec},
+        utils::snapshot_symbol_default_value,
     },
 };
 
@@ -21,8 +22,6 @@ use crate::data::{
 pub struct BinanceSpotSnapshot {
     #[serde(default = "snapshot_symbol_default_value")]
     symbol: String,
-    #[serde(default = "current_timestamp_utc")]
-    pub timestamp: u64,
     #[serde(rename = "lastUpdateId")]
     pub last_update_id: u64,
     #[serde(deserialize_with = "deserialize_non_empty_vec")]
@@ -39,8 +38,6 @@ pub struct BinanceSpotBookUpdate {
     #[serde(alias = "s")]
     #[serde(alias = "p", deserialize_with = "de_str_symbol")]
     pub symbol: String,
-    #[serde(alias = "E")]
-    pub timestamp: u64,
     #[serde(alias = "U")]
     pub first_update_id: u64,
     #[serde(alias = "u")]
@@ -59,8 +56,6 @@ impl Identifier<String> for BinanceSpotBookUpdate {
     }
 }
 
-
-
 /*----- */
 // Trade
 /*----- */
@@ -68,8 +63,8 @@ impl Identifier<String> for BinanceSpotBookUpdate {
 pub struct BinanceTrade {
     #[serde(alias = "s", deserialize_with = "de_str_symbol")]
     pub symbol: String,
-    #[serde(alias = "T")]
-    pub timestamp: u64,
+    #[serde(alias = "T", deserialize_with = "de_u64_epoch_ms_as_datetime_utc")]
+    pub timestamp: DateTime<Utc>,
     #[serde(alias = "t")]
     pub id: u64,
     #[serde(alias = "p", deserialize_with = "de_str")]
@@ -84,8 +79,7 @@ impl From<BinanceTrade> for MarketEvent<EventTrade> {
     fn from(event: BinanceTrade) -> Self {
         Self {
             exchange_time: event.timestamp,
-            received_time: current_timestamp_utc(),
-            seq: event.id,
+            received_time: Utc::now(),
             exchange: ExchangeId::BinanceSpot,
             stream_type: StreamType::Trades,
             symbol: event.symbol,
