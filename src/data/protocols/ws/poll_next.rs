@@ -81,7 +81,6 @@ where
 
                     // If `StreamParser` returns an Err pass it downstream
                     Some(Err(err)) => return Poll::Ready(Some(Err(err.into()))),
-                    // Some(Err(_err)) => continue,
 
                     // If `StreamParser` returns None it's a safe-to-skip message
                     None => continue,

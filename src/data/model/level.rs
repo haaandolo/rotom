@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 use crate::data::shared::de::de_str;
 
-#[derive(Debug, Clone, Copy, Default, Deserialize)]
+#[derive(Default, Debug, Clone, Copy, Deserialize)]
 pub struct Level {
     #[serde(deserialize_with = "de_str")]
     pub price: f64,

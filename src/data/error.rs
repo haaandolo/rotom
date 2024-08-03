@@ -1,5 +1,7 @@
 use thiserror::Error;
 
+use super::model::subs::ExchangeId;
+
 /*----- */
 // WebSocketError
 /*----- */
@@ -29,8 +31,8 @@ pub enum SocketError {
     #[error("Unable to find orderbook for {symbol}")]
     OrderBookFindError { symbol: String },
 
-    #[error("Encountered non-terminal error: {message}")]
-    OrderBookNonTerminal { message: String },
+    #[error("Transformer returned None")]
+    TransformerNone,
 
     #[error("ExchangeStream terminated with closing frame: {0}")]
     Terminated(String),
@@ -45,17 +47,18 @@ pub enum SocketError {
     Init,
 
     // Data errors
-    #[error(
-        "\
-        Symbol: {symbol}
-        InvalidSequence, first_update_id {first_update_id} does not follow on from the \
-        prev_last_update_id {prev_last_update_id} \
-    "
-    )]
+    #[error("{symbol} got InvalidSequence, first_update_id {first_update_id} does not follow on from the prev_last_update_id {prev_last_update_id}")]
     InvalidSequence {
         symbol: String,
         prev_last_update_id: u64,
         first_update_id: u64,
+    },
+
+    #[error("Could not retrieve tick size for {base}{quote}, {exchange}")]
+    TickSizeError {
+        base: String,
+        quote: String,
+        exchange: ExchangeId,
     },
 }
 

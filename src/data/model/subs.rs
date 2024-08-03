@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 /*----- */
 // Exchange subscription
 /*----- */
@@ -15,6 +17,12 @@ impl Instrument {
             quote,
             stream_type,
         }
+    }
+}
+
+impl Display for Instrument {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}{}, {}", self.base, self.quote, self.stream_type)
     }
 }
 
@@ -53,6 +61,7 @@ where
 pub enum ExchangeId {
     BinanceSpot,
     PoloniexSpot,
+    Default,
 }
 
 impl ExchangeId {
@@ -60,16 +69,24 @@ impl ExchangeId {
         match self {
             ExchangeId::BinanceSpot => "binancespot",
             ExchangeId::PoloniexSpot => "poloniexspot",
+            ExchangeId::Default => "default",
         }
+    }
+}
+
+impl Display for ExchangeId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
     }
 }
 
 #[derive(Default, Debug, PartialEq, Clone, Hash, Eq, Ord, PartialOrd)]
 pub enum StreamType {
     L1,
-    #[default]
     L2,
     Trades,
+    #[default]
+    Default,
 }
 
 impl StreamType {
@@ -78,6 +95,13 @@ impl StreamType {
             StreamType::L1 => "l1",
             StreamType::L2 => "l2",
             StreamType::Trades => "trade",
+            StreamType::Default => "default",
         }
+    }
+}
+
+impl Display for StreamType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
     }
 }

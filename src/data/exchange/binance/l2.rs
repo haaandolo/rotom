@@ -1,12 +1,13 @@
 use async_trait::async_trait;
 use chrono::Utc;
+use tracing::error;
 
 use super::model::{BinanceSpotBookUpdate, BinanceSpotSnapshot};
 use crate::data::error::SocketError;
 use crate::data::exchange::binance::model::BinanceSpotTickerInfo;
 use crate::data::exchange::binance::model::Filter;
-use crate::data::model::event_book::EventOrderBook;
 use crate::data::model::event::MarketEvent;
+use crate::data::model::event_book::EventOrderBook;
 use crate::data::model::subs::{ExchangeId, Instrument, StreamType};
 use crate::data::shared::utils::current_timestamp_utc;
 use crate::data::{
@@ -71,7 +72,6 @@ impl OrderBookUpdater for BinanceSpotBookUpdater {
     type UpdateEvent = BinanceSpotBookUpdate;
 
     async fn init(instrument: &Instrument) -> Result<InstrumentOrderBook<Self>, SocketError> {
-        // Get snapshot
         let snapshot_url = format!(
             "{}?symbol={}{}&limit=100",
             HTTP_BOOK_L2_SNAPSHOT_URL_BINANCE_SPOT,
@@ -86,7 +86,6 @@ impl OrderBookUpdater for BinanceSpotBookUpdater {
             .await
             .map_err(SocketError::Http)?;
 
-        // Get ticker info
         let ticker_info_url = format!(
             "{}{}{}",
             HTTP_TICKER_INFO_URL_BINANCE_SPOT,
@@ -101,32 +100,36 @@ impl OrderBookUpdater for BinanceSpotBookUpdater {
             .await
             .map_err(SocketError::Http)?;
 
-        let tick_size = ticker_info.symbols[0]
-            .filters
-            .iter()
-            .find_map(|filter| {
-                if let Filter::PriceFilter {
-                    min_price: _,
-                    max_price: _,
-                    tick_size,
-                } = filter
-                {
-                    Some(tick_size)
-                } else {
-                    None
-                }
-            })
-            .expect("Failed to get tick size for .... ") // TODO: log
-            .to_owned();
+        let tick_size = ticker_info.symbols[0].filters.iter().find_map(|filter| {
+            if let Filter::PriceFilter {
+                min_price: _,
+                max_price: _,
+                tick_size,
+            } = filter
+            {
+                Some(tick_size.to_owned())
+            } else {
+                None
+            }
+        });
 
-        let mut orderbook_init = OrderBook::new(tick_size);
-        orderbook_init.process_lvl2(snapshot.bids, snapshot.asks);
+        match tick_size {
+            Some(tick_size) => {
+                let mut orderbook_init = OrderBook::new(tick_size);
+                orderbook_init.process_lvl2(snapshot.bids, snapshot.asks);
 
-        Ok(InstrumentOrderBook {
-            instrument: instrument.clone(),
-            updater: Self::new(snapshot.last_update_id),
-            book: orderbook_init,
-        })
+                Ok(InstrumentOrderBook {
+                    instrument: instrument.clone(),
+                    updater: Self::new(snapshot.last_update_id),
+                    book: orderbook_init,
+                })
+            }
+            None => Err(SocketError::TickSizeError {
+                base: instrument.base.clone(),
+                quote: instrument.quote.clone(),
+                exchange: ExchangeId::BinanceSpot,
+            }),
+        }
     }
 
     fn update(

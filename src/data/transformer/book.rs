@@ -1,4 +1,3 @@
-
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
@@ -6,7 +5,7 @@ use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 use crate::data::{
     error::SocketError,
     exchange::Identifier,
-    model::{event_book::EventOrderBook, event::MarketEvent, subs::Instrument, SubKind},
+    model::{event::MarketEvent, event_book::EventOrderBook, subs::Instrument, SubKind},
     shared::orderbook::OrderBook,
 };
 
@@ -91,19 +90,21 @@ where
         let init_orderbooks = futures::future::join_all(init_orderbooks)
             .await
             .into_iter()
-            .map(|orderbook| {
-                let orderbook = orderbook.unwrap(); // TODO
+            .collect::<Result<Vec<InstrumentOrderBook<Updater>>, SocketError>>()?;
 
+        let book_map = init_orderbooks
+            .into_iter()
+            .map(|instrument_orderbook| {
                 let map_key = format!(
                     "{}{}",
-                    orderbook.instrument.base, orderbook.instrument.quote
+                    &instrument_orderbook.instrument.base, &instrument_orderbook.instrument.quote
                 )
                 .to_lowercase();
-                (map_key, orderbook)
+                (map_key, instrument_orderbook)
             })
-            .collect::<HashMap<String, InstrumentOrderBook<_>>>();
+            .collect::<HashMap<String, InstrumentOrderBook<Updater>>>();
 
-        let orderbooks = Map(init_orderbooks);
+        let orderbooks = Map(book_map);
 
         Ok(Self {
             orderbooks,
@@ -141,9 +142,7 @@ where
 
         match updater.update(book, update) {
             Ok(Some(book)) => Ok(book),
-            Ok(None) => Err(SocketError::OrderBookNonTerminal {
-                message: String::from("Ok(None) in transformer"),
-            }),
+            Ok(None) => Err(SocketError::TransformerNone),
             Err(error) => Err(error),
         }
     }

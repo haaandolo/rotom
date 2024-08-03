@@ -1,6 +1,9 @@
+use std::fmt::Debug;
+
 use futures::StreamExt;
 use tokio::sync::mpsc::UnboundedSender;
 use tokio::{time::sleep, time::Duration};
+use tracing::{error, info, warn};
 
 use crate::data::error::SocketError;
 use crate::data::protocols::ws::{create_websocket, WsMessage};
@@ -18,9 +21,17 @@ pub async fn consume<Exchange, StreamKind>(
 ) -> SocketError
 where
     StreamKind: SubKind,
-    Exchange: Connector + Send + StreamSelector<Exchange, StreamKind>,
+    Exchange: Connector + Send + StreamSelector<Exchange, StreamKind> + Debug,
     Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind>,
 {
+    let exchange_id = Exchange::ID;
+
+    info!(
+        exchange = %exchange_id,
+        ?exchange_sub,
+        action = "Attempting to subscribe to websocket"
+    );
+
     let mut connection_attempt: u32 = 0;
     let mut backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
 
@@ -74,22 +85,34 @@ where
                 // If error is terminal e.g. invalid sequence, then break
                 Err(error) if error.is_terminal() => {
                     stream.cancel_running_tasks();
-                    println!(
-                        "Encountered a terminal error, attempting to reconnect: {:#?}",
-                        error
-                    ); // TODO: log
+                    error!(
+                        exchange = %exchange_id,
+                        error = %error,
+                        action = "Reconnecting web socket",
+                        message = "Encounted a terminal error"
+                    );
                     break;
                 }
 
                 // If error is non-terminal, just continue
                 Err(error) => {
-                    println!("Encountered a non terminal error: {}", error); // TODO: log
+                    warn!(
+                        exchange = %exchange_id,
+                        error = %error,
+                        action = "Continuing...",
+                        message = "Encountered a non-terminal error",
+                    );
                     continue;
                 }
             }
         }
 
         // Wait a certain ms before trying to reconnect
+        warn!(
+            exchange = %exchange_id,
+            action = "attempting re-connection after backoff",
+            reconnection_attempts = connection_attempt,
+        );
         sleep(Duration::from_millis(backoff_ms)).await;
     }
 }
