@@ -1,6 +1,6 @@
 use arb_bot::data::{
     event_models::{
-        event::{DataKind, MarketEvent},
+        market_event::{DataKind, MarketEvent},
         event_book::OrderBookL2,
         event_trade::Trades,
     },

@@ -4,7 +4,7 @@ use chrono::Utc;
 use super::model::{BinanceSpotBookUpdate, BinanceSpotSnapshot};
 use crate::data::assets::orderbook::OrderBook;
 use crate::data::error::SocketError;
-use crate::data::event_models::event::MarketEvent;
+use crate::data::event_models::market_event::MarketEvent;
 use crate::data::event_models::event_book::EventOrderBook;
 use crate::data::exchange::binance::model::BinanceSpotTickerInfo;
 use crate::data::exchange::binance::model::Filter;

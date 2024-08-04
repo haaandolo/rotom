@@ -11,7 +11,7 @@ use super::single::ExchangeChannel;
 use crate::data::{
     error::SocketError,
     event_models::{
-        event::MarketEvent,
+        market_event::MarketEvent,
         event_book::{EventOrderBook, OrderBookL2},
         event_trade::{EventTrade, Trades},
     },

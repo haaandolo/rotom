@@ -1,6 +1,8 @@
 use serde::Deserialize;
 
-use super::{level::Level, SubKind};
+use crate::data::assets::level::Level;
+
+use super::SubKind;
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize, Default)]
 pub struct Trades;

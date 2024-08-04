@@ -6,7 +6,7 @@ use super::model::{PoloniexSpotBookData, PoloniexSpotBookUpdate};
 use crate::data::{
     assets::orderbook::OrderBook,
     error::SocketError,
-    event_models::{event::MarketEvent, event_book::EventOrderBook},
+    event_models::{market_event::MarketEvent, event_book::EventOrderBook},
     exchange::poloniex::model::PoloniexSpotTickerInfo,
     shared::{
         subscription_models::{ExchangeId, Instrument},

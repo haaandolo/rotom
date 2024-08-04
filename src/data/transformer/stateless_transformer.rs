@@ -6,7 +6,7 @@ use std::marker::PhantomData;
 use super::book::Map;
 use super::{ExchangeTransformer, Transformer};
 use crate::data::error::SocketError;
-use crate::data::event_models::event::MarketEvent;
+use crate::data::event_models::market_event::MarketEvent;
 use crate::data::event_models::SubKind;
 use crate::data::shared::subscription_models::Instrument;
 
