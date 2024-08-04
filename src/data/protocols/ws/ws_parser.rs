@@ -1,6 +1,9 @@
 use futures::Stream;
 use serde::de::DeserializeOwned;
-use tokio_tungstenite::tungstenite::{error::ProtocolError, protocol::{frame::Frame, CloseFrame}};
+use tokio_tungstenite::tungstenite::{
+    error::ProtocolError,
+    protocol::{frame::Frame, CloseFrame},
+};
 
 use crate::data::error::SocketError;
 
@@ -125,6 +128,6 @@ pub fn is_websocket_disconnected(error: &WsError) -> bool {
             | WsError::AlreadyClosed
             | WsError::Io(_)
             | WsError::Protocol(ProtocolError::SendAfterClosing)
-            | WsError::Protocol(ProtocolError::ResetWithoutClosingHandshake) // | WsError::Protocol(_)
+            | WsError::Protocol(ProtocolError::ResetWithoutClosingHandshake) // WsError::Protocol(_)
     )
 }

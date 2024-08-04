@@ -70,6 +70,7 @@ impl OrderBookUpdater for PoloniexSpotBookUpdater {
     ) -> Result<Option<MarketEvent<EventOrderBook>>, SocketError> {
         let update_data = mem::take(&mut update.data[0]); // TODO
         if update.action == "snapshot" {
+            book.reset();
             book.process_lvl2(update_data.bids, update_data.asks);
             self.prev_last_update_id = update_data.id;
             Ok(None)

@@ -18,6 +18,7 @@ use crate::data::{
 };
 
 const BINANCE_SPOT_WS_URL: &str = "wss://stream.binance.com:9443/ws";
+
 /*----- */
 // BinanceSpot connector
 /*----- */

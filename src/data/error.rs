@@ -46,7 +46,14 @@ pub enum SocketError {
     #[error("Init method failed for ticker some tickers")]
     Init,
 
-    // Data errors
+    #[error("Could not retrieve tick size for {base}{quote}, {exchange}")]
+    TickSizeError {
+        base: String,
+        quote: String,
+        exchange: ExchangeId,
+    },
+
+    // Terminal errors
     #[error("{symbol} got InvalidSequence, first_update_id {first_update_id} does not follow on from the prev_last_update_id {prev_last_update_id}")]
     InvalidSequence {
         symbol: String,
@@ -54,12 +61,9 @@ pub enum SocketError {
         first_update_id: u64,
     },
 
-    #[error("Could not retrieve tick size for {base}{quote}, {exchange}")]
-    TickSizeError {
-        base: String,
-        quote: String,
-        exchange: ExchangeId,
-    },
+
+    // #[error("Closed connection error")]
+    // ConnectionClosed(#[from] tokio_tungstenite::tungstenite::Error::ConnectionClosed)
 }
 
 impl SocketError {

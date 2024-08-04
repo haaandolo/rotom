@@ -13,7 +13,11 @@ use tokio::{net::TcpStream, time::sleep, time::Duration};
 use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
 
 use crate::data::{
-    error::SocketError, exchange::{Connector, Identifier, StreamSelector}, event_models::SubKind, shared::subscription_models::{ExchangeSubscription, Subscription}, transformer::ExchangeTransformer
+    error::SocketError,
+    event_models::SubKind,
+    exchange::{Connector, Identifier, StreamSelector},
+    shared::subscription_models::{ExchangeSubscription, Subscription},
+    transformer::ExchangeTransformer,
 };
 
 /*----- */
@@ -45,19 +49,34 @@ where
         .map(|sub| ExchangeSubscription::new(sub))
         .collect::<Vec<_>>();
 
-    // Make connection
+    // Make stream connection
     let mut tasks = Vec::new();
     let ws = connect_async(Exchange::url())
         .await
         .map(|(ws, _)| ws)
         .map_err(SocketError::WebSocketError);
 
-    // Split WS and make channels
-    let (mut ws_write, ws_read) = ws?.split();
+    // Split WS and make into read and write
+    let (mut ws_write, mut ws_read) = ws?.split();
 
     // Handle subscription
     if let Some(subcription) = Exchange::requests(&exchange_subs) {
         let _ = ws_write.send(subcription).await;
+    }
+
+    // // Validate subscription
+    // if let Some(Ok(WsMessage::Text(message))) = ws_read.next().await {
+    //     let subscription_sucess = Exchange::validate_subscription(message, exchange_subs.len());
+    //     println!("--- sub sucess ---");
+    //     println!("{}", subscription_sucess);
+    //     if !subscription_sucess {
+    //         return Err(SocketError::Subscribe(String::from("Subscription failed")));
+    //     }
+    // }
+
+    while let Some(msg) = &ws_read.next().await {
+        println!("--- hereerreereg ---");
+        println!("{:#?}", msg);
     }
 
     // Spawn custom ping handle (application level ping)
