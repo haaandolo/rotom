@@ -8,10 +8,10 @@ use market::PoloniexMarket;
 use serde_json::json;
 
 use super::{Connector, StreamSelector};
-use crate::data::model::event_book::OrderBookL2;
-use crate::data::model::event_trade::Trades;
-use crate::data::model::subs::{ExchangeId, ExchangeSubscription};
+use crate::data::event_models::event_book::OrderBookL2;
+use crate::data::event_models::event_trade::Trades;
 use crate::data::protocols::ws::{PingInterval, WsMessage};
+use crate::data::shared::subscription_models::{ExchangeId, ExchangeSubscription};
 use crate::data::transformer::book::MultiBookTransformer;
 use crate::data::transformer::stateless_transformer::StatelessTransformer;
 use channel::PoloniexChannel;
@@ -20,7 +20,7 @@ use model::{PoloniexSpotBookUpdate, PoloniexSubscriptionResponse, PoloniexTrade}
 const POLONIEX_SPOT_WS_URL: &str = "wss://ws.poloniex.com/ws/public";
 
 /*----- */
-// Poloniex connector
+// PoloniexSpot connector
 /*----- */
 #[derive(Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd, Clone)]
 pub struct PoloniexSpot;

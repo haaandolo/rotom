@@ -13,13 +13,7 @@ use tokio::{net::TcpStream, time::sleep, time::Duration};
 use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
 
 use crate::data::{
-    error::SocketError,
-    exchange::{Connector, Identifier, StreamSelector},
-    model::{
-        subs::{ExchangeSubscription, Subscription},
-        SubKind,
-    },
-    transformer::ExchangeTransformer,
+    error::SocketError, exchange::{Connector, Identifier, StreamSelector}, event_models::SubKind, shared::subscription_models::{ExchangeSubscription, Subscription}, transformer::ExchangeTransformer
 };
 
 /*----- */

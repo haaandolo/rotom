@@ -11,18 +11,15 @@ use serde_json::json;
 
 use super::{Connector, StreamSelector};
 use crate::data::{
-    model::{
+    event_models::{
         event_book::OrderBookL2,
         event_trade::Trades,
-        subs::{ExchangeId, ExchangeSubscription},
-    },
-    protocols::ws::WsMessage,
-    transformer::{book::MultiBookTransformer, stateless_transformer::StatelessTransformer},
+    }, protocols::ws::WsMessage, shared::subscription_models::{ExchangeId, ExchangeSubscription}, transformer::{book::MultiBookTransformer, stateless_transformer::StatelessTransformer}
 };
 
 const BINANCE_SPOT_WS_URL: &str = "wss://stream.binance.com:9443/ws";
 /*----- */
-// Binance connector
+// BinanceSpot connector
 /*----- */
 #[derive(Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd, Clone)]
 pub struct BinanceSpot;

@@ -1,14 +1,9 @@
-use core::str;
-
 use arb_bot::data::{
-    exchange::{binance::BinanceSpot, poloniex::PoloniexSpot},
-    model::{
+    builder::{dynamic::DynamicStreams, Streams}, exchange::{binance::BinanceSpot, poloniex::PoloniexSpot}, event_models::{
         event::{DataKind, MarketEvent},
         event_book::OrderBookL2,
         event_trade::Trades,
-        subs::{ExchangeId, StreamKind, StreamType},
-    },
-    subscriber::{dynamic::DynamicStreams, single::StreamBuilder, Streams},
+    }, shared::subscription_models::{ExchangeId, StreamKind}
 };
 
 use tokio_stream::StreamExt;
@@ -21,24 +16,20 @@ async fn main() {
     /*----- */
     // Dynamic streams
     /*----- */
-    let mut streams = DynamicStreams::init([
+    let streams = DynamicStreams::init([
         vec![
-            // (ExchangeId::PoloniexSpot, "eth", "usdt", StreamType::L2, StreamKind::Trades),
-            // (ExchangeId::PoloniexSpot, "eth", "usdt", StreamType::L2, StreamKind::OrderBookL2),
-            // (ExchangeId::BinanceSpot, "sui", "usdt", StreamType::L2, StreamKind::OrderBookL2),
-            (ExchangeId::BinanceSpot, "sui", "usdt", StreamType::L2, StreamKind::Trades),
+            (ExchangeId::PoloniexSpot, "eth", "usdt", StreamKind::Trades),
+            (ExchangeId::PoloniexSpot, "eth", "usdt", StreamKind::L2),
+            (ExchangeId::BinanceSpot, "sui", "usdt", StreamKind::L2),
         ],
         vec![
-            (ExchangeId::BinanceSpot, "sui", "usdt", StreamType::L2, StreamKind::OrderBookL2),
-        //     (ExchangeId::BinanceSpot, "arb", "usdt", StreamType::L2, StreamKind::Trades),
-        //     (ExchangeId::PoloniexSpot, "btc", "usdt", StreamType::L2, StreamKind::Trades)
+            (ExchangeId::BinanceSpot, "arb", "usdt", StreamKind::Trades),
+            (ExchangeId::PoloniexSpot, "btc", "usdt", StreamKind::Trades),
         ],
         vec![
-        //     (ExchangeId::BinanceSpot, "ada", "usdt", StreamType::L2, StreamKind::OrderBookL2),
-            (ExchangeId::PoloniexSpot, "avax", "usdt", StreamType::L2, StreamKind::Trades)
-        ],
-        vec![
-            (ExchangeId::PoloniexSpot, "avax", "usdt", StreamType::L2, StreamKind::OrderBookL2)
+            (ExchangeId::BinanceSpot, "ada", "usdt", StreamKind::L2),
+            (ExchangeId::PoloniexSpot, "arb", "usdt", StreamKind::L2),
+            (ExchangeId::BinanceSpot, "celo", "usdt", StreamKind::L2),
         ],
     ])
     .await
@@ -49,8 +40,81 @@ async fn main() {
     while let Some(event) = merged.next().await {
         println!("{:?}", event)
     }
+
+    // /*----- */
+    // // Multi Streams
+    // /*----- */
+    // let streams: Streams<MarketEvent<DataKind>> = Streams::builder_multi()
+    //     .add(
+    //         Streams::<OrderBookL2>::builder()
+    //             .subscribe([
+    //                 (BinanceSpot, "avax", "usdt", OrderBookL2),
+    //                 (BinanceSpot, "celo", "usdt", OrderBookL2),
+    //             ])
+    //             .subscribe([
+    //                 (PoloniexSpot, "naka", "usdt", OrderBookL2),
+    //                 (PoloniexSpot, "matic", "usdt", OrderBookL2),
+    //                 (PoloniexSpot, "ada", "usdt", OrderBookL2),
+    //             ]),
+    //     )
+    //     .add(
+    //         Streams::<Trades>::builder()
+    //             .subscribe([
+    //                 (BinanceSpot, "sol", "usdt", Trades),
+    //                 (BinanceSpot, "btc", "usdt", Trades),
+    //                 (BinanceSpot, "btc", "usdt", Trades),
+    //             ])
+    //             .subscribe([
+    //                 (PoloniexSpot, "sol", "usdt", Trades),
+    //                 (PoloniexSpot, "btc", "usdt", Trades),
+    //                 (PoloniexSpot, "btc", "usdt", Trades),
+    //             ]),
+    //     )
+    //     .init()
+    //     .await
+    //     .unwrap();
+
+    // let mut joined_stream = streams.join_map().await;
+
+    // while let Some(data) = joined_stream.next().await {
+    //     println!("{:?}", data);
+    // }
+
+    // /*----- */
+    // // Single Streams
+    // /*----- */
+    // let mut streams = Streams::<OrderBookL2>::builder()
+    //     .subscribe([
+    //         (BinanceSpot, "sol", "usdt", OrderBookL2),
+    //         (BinanceSpot, "btc", "usdt", OrderBookL2),
+    //         (BinanceSpot, "btc", "usdt", OrderBookL2),
+    //     ])
+    //     .subscribe([
+    //         (PoloniexSpot, "btc", "usdt", OrderBookL2),
+    //         (PoloniexSpot, "eth", "usdt", OrderBookL2),
+    //     ])
+    //     .init()
+    //     .await
+    //     .unwrap();
+
+    // if let Some(mut receiver) = streams.select(ExchangeId::BinanceSpot) {
+    //     while let Some(msg) = receiver.recv().await {
+    //         println!("----- Binance -----");
+    //         println!("{:?}", msg);
+    //     }
+    // }
+
+    // if let Some(mut receiver) = streams.select(ExchangeId::PoloniexSpot) {
+    //     while let Some(msg) = receiver.recv().await {
+    //         println!("----- Poloniex -----");
+    //         println!("{:?}", msg);
+    //     }
+    // }
 }
-// Initialise an INFO `Subscriber` for `Tracing` Json logs and install it as the global default.
+
+/*----- */
+// Logging config
+/*----- */
 fn init_logging() {
     tracing_subscriber::fmt()
         // Filter messages based on the INFO
@@ -70,45 +134,9 @@ fn init_logging() {
 /*----- */
 // todo
 /*----- */
-// - Dynamic streams
 // - Reconnection attempt not working
 // - Is websocket disconnect handling
 // - DOCUMENTATION + EXAMPLES
 // - DOUBLE CHECK TICKER SIZE BEFORE PRODUCTION
 // - custom poloniex deserializers
 // - process custom ping for poloniex
-
-/*----- */
-// Single Streams
-/*----- */
-// let mut streams = Streams::<OrderBookL2>::builder()
-//     .subscribe([
-//         (BinanceSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
-//         (BinanceSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
-//         (BinanceSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
-//     ])
-//     .subscribe([
-//         (PoloniexSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
-//         (PoloniexSpot, "arb", "usdt", StreamType::L2, OrderBookL2),
-//     ])
-//     .init()
-//     .await
-//     .unwrap();
-
-// // Read from socket
-// if let Some(mut receiver) = streams.select(ExchangeId::BinanceSpot) {
-//     while let Some(msg) = receiver.recv().await {
-//         // Some(msg);
-//         println!("----- Binance -----");
-//         println!("{:#?}", msg);
-//     }
-// }
-
-// // Read from socket
-// if let Some(mut receiver) = streams.select(ExchangeId::PoloniexSpot) {
-//     while let Some(msg) = receiver.recv().await {
-//         // Some(msg);
-//         println!("----- Poloniex -----");
-//         println!("{:#?}", msg);
-//     }
-// }

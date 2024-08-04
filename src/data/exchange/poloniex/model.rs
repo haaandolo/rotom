@@ -4,15 +4,10 @@ use std::mem;
 
 use crate::data::{
     exchange::Identifier,
-    model::{
-        event::MarketEvent,
-        event_trade::EventTrade,
-        level::Level,
-        subs::{ExchangeId, StreamType},
-    },
-    shared::de::{
+    event_models::{event::MarketEvent, event_trade::EventTrade, level::Level},
+    shared::{de::{
         de_str, de_str_symbol, de_u64_epoch_ms_as_datetime_utc, deserialize_non_empty_vec,
-    },
+    }, subscription_models::ExchangeId},
 };
 
 /*----- */
@@ -86,7 +81,6 @@ impl From<PoloniexTrade> for MarketEvent<EventTrade> {
             exchange_time: data.timestamp,
             received_time: Utc::now(),
             exchange: ExchangeId::PoloniexSpot,
-            stream_type: StreamType::Trades,
             symbol: data.symbol,
             event_data: EventTrade::new(Level::new(data.price, data.quantity), data.is_buy),
         }

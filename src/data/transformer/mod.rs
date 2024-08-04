@@ -6,7 +6,7 @@ use serde::Deserialize;
 
 use super::{
     error::SocketError,
-    model::{event::MarketEvent, subs::Instrument, SubKind},
+    event_models::{event::MarketEvent,  SubKind}, shared::subscription_models::Instrument
 };
 
 /*----- */

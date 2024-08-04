@@ -11,12 +11,11 @@ use super::{consume::consume, single::ExchangeChannel};
 use crate::data::{
     error::SocketError,
     exchange::{binance::BinanceSpot, poloniex::PoloniexSpot},
-    model::{
+    event_models::{
         event::MarketEvent,
         event_book::{EventOrderBook, OrderBookL2},
         event_trade::{EventTrade, Trades},
-        subs::{ExchangeId, StreamKind, Subscription},
-    },
+    }, shared::subscription_models::{ExchangeId, StreamKind, Subscription},
 };
 
 /*----- */
@@ -52,7 +51,7 @@ impl DynamicStreams {
             // Group batches by exchange and stream kind
             let grouped = exchange_sub
                 .into_iter()
-                .chunk_by(|sub| (sub.exchange, sub.kind));
+                .chunk_by(|sub| (sub.exchange, sub.stream_kind));
 
             // Spawn the releveant streams for a specific exchange
             for ((exchange, stream_kind), subs) in grouped.into_iter() {
@@ -60,7 +59,7 @@ impl DynamicStreams {
                     /*----- */
                     // Binance Spot
                     /*----- */
-                    (ExchangeId::BinanceSpot, StreamKind::OrderBookL2) => {
+                    (ExchangeId::BinanceSpot, StreamKind::L2) => {
                         tokio::spawn(consume::<BinanceSpot, OrderBookL2>(
                             subs.into_iter()
                                 .map(|sub| {
@@ -81,7 +80,7 @@ impl DynamicStreams {
                     /*----- */
                     // Poloniex Spot
                     /*----- */
-                    (ExchangeId::PoloniexSpot, StreamKind::OrderBookL2) => {
+                    (ExchangeId::PoloniexSpot, StreamKind::L2) => {
                         tokio::spawn(consume::<PoloniexSpot, OrderBookL2>(
                             subs.into_iter()
                                 .map(|sub| {

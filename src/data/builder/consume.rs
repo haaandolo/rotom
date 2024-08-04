@@ -8,10 +8,11 @@ use tracing::{error, info, warn};
 use crate::data::error::SocketError;
 use crate::data::exchange::Identifier;
 use crate::data::protocols::ws::{create_websocket, WsMessage};
+use crate::data::shared::subscription_models::Subscription;
 use crate::data::transformer::ExchangeTransformer;
 use crate::data::{
     exchange::{Connector, StreamSelector},
-    model::{event::MarketEvent, subs::Subscription, SubKind},
+    event_models::{event::MarketEvent, SubKind},
 };
 
 pub const START_RECONNECTION_BACKOFF_MS: u64 = 125;
