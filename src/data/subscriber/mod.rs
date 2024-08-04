@@ -1,6 +1,7 @@
 pub mod multi;
 pub mod single;
 pub mod consume;
+pub mod dynamic;
 
 use std::collections::HashMap;
 use single::StreamBuilder;

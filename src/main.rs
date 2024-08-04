@@ -1,12 +1,14 @@
+use core::str;
+
 use arb_bot::data::{
     exchange::{binance::BinanceSpot, poloniex::PoloniexSpot},
     model::{
         event::{DataKind, MarketEvent},
         event_book::OrderBookL2,
         event_trade::Trades,
-        subs::{ExchangeId, StreamType},
+        subs::{ExchangeId, StreamKind, StreamType},
     },
-    subscriber::{single::StreamBuilder, Streams},
+    subscriber::{dynamic::DynamicStreams, single::StreamBuilder, Streams},
 };
 
 use tokio_stream::StreamExt;
@@ -17,54 +19,35 @@ async fn main() {
     init_logging();
 
     /*----- */
-    // Multi Streams
+    // Dynamic streams
     /*----- */
-    let streams: Streams<MarketEvent<DataKind>> = Streams::builder_multi()
-        .add(
-            Streams::<OrderBookL2>::builder()
-                // .subscribe([
-                //     (BinanceSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
-                //     (BinanceSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
-                //     (BinanceSpot, "eth", "usdt", StreamType::L2, OrderBookL2),
-                //     (BinanceSpot, "bnb", "usdt", StreamType::L2, OrderBookL2),
-                //     (BinanceSpot, "ada", "usdt", StreamType::L2, OrderBookL2),
-                //     (BinanceSpot, "avax", "usdt", StreamType::L2, OrderBookL2),
-                //     (BinanceSpot, "celo", "usdt", StreamType::L2, OrderBookL2),
-                // ])
-                .subscribe([
-                    // (PoloniexSpot, "btc", "usdt", StreamType::L2, OrderBookL2),
-                    // (PoloniexSpot, "eth", "usdt", StreamType::L2, OrderBookL2),
-                    (PoloniexSpot, "sol", "usdt", StreamType::L2, OrderBookL2),
-                    (PoloniexSpot, "arb", "usdt", StreamType::L2, OrderBookL2),
-                    (PoloniexSpot, "sui", "usdt", StreamType::L2, OrderBookL2),
-                    (PoloniexSpot, "trx", "usdt", StreamType::L2, OrderBookL2),
-                    (PoloniexSpot, "naka", "usdt", StreamType::L2, OrderBookL2),
-                    (PoloniexSpot, "matic", "usdt", StreamType::L2, OrderBookL2),
-                    (PoloniexSpot, "ada", "usdt", StreamType::L2, OrderBookL2),
-                ]),
-        )
-        // .add(
-        //     Streams::<Trades>::builder()
-        //         .subscribe([
-        //             (BinanceSpot, "sol", "usdt", StreamType::Trades, Trades),
-        //             (BinanceSpot, "btc", "usdt", StreamType::Trades, Trades),
-        //             (BinanceSpot, "btc", "usdt", StreamType::Trades, Trades),
-        //         ])
-        //         .subscribe([
-        //             (PoloniexSpot, "sol", "usdt", StreamType::Trades, Trades),
-        //             (PoloniexSpot, "btc", "usdt", StreamType::Trades, Trades),
-        //             (PoloniexSpot, "btc", "usdt", StreamType::Trades, Trades),
-        //         ]),
-        // )
-        .init()
-        .await
-        .unwrap();
+    let mut streams = DynamicStreams::init([
+        vec![
+            // (ExchangeId::PoloniexSpot, "eth", "usdt", StreamType::L2, StreamKind::Trades),
+            // (ExchangeId::PoloniexSpot, "eth", "usdt", StreamType::L2, StreamKind::OrderBookL2),
+            // (ExchangeId::BinanceSpot, "sui", "usdt", StreamType::L2, StreamKind::OrderBookL2),
+            (ExchangeId::BinanceSpot, "sui", "usdt", StreamType::L2, StreamKind::Trades),
+        ],
+        vec![
+            (ExchangeId::BinanceSpot, "sui", "usdt", StreamType::L2, StreamKind::OrderBookL2),
+        //     (ExchangeId::BinanceSpot, "arb", "usdt", StreamType::L2, StreamKind::Trades),
+        //     (ExchangeId::PoloniexSpot, "btc", "usdt", StreamType::L2, StreamKind::Trades)
+        ],
+        vec![
+        //     (ExchangeId::BinanceSpot, "ada", "usdt", StreamType::L2, StreamKind::OrderBookL2),
+            (ExchangeId::PoloniexSpot, "avax", "usdt", StreamType::L2, StreamKind::Trades)
+        ],
+        vec![
+            (ExchangeId::PoloniexSpot, "avax", "usdt", StreamType::L2, StreamKind::OrderBookL2)
+        ],
+    ])
+    .await
+    .unwrap();
 
-    let mut joined_stream = streams.join_map().await;
+    let mut merged = streams.select_all::<MarketEvent<DataKind>>();
 
-    while let Some(data) = joined_stream.next().await {
-        println!("@@@@ Market event @@@@");
-        println!("{:?}", data);
+    while let Some(event) = merged.next().await {
+        println!("{:?}", event)
     }
 }
 // Initialise an INFO `Subscriber` for `Tracing` Json logs and install it as the global default.

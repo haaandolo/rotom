@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use serde::Deserialize;
+
 use crate::data::exchange::{Connector, Identifier};
 
 /*----- */
@@ -57,6 +59,19 @@ where
     }
 }
 
+impl<Exchange, StreamKind> Subscription<Exchange, StreamKind> {
+    pub fn new<I>(exchange: Exchange, instrument: I, stream_kind: StreamKind) -> Self
+    where
+        I: Into<Instrument>,
+    {
+        Self {
+            exchange,
+            instrument: instrument.into(),
+            kind: stream_kind,
+        }
+    }
+}
+
 /*----- */
 // Internal exchange subscription
 /*----- */
@@ -93,7 +108,6 @@ where
 pub enum ExchangeId {
     BinanceSpot,
     PoloniexSpot,
-    Default,
 }
 
 impl ExchangeId {
@@ -101,7 +115,6 @@ impl ExchangeId {
         match self {
             ExchangeId::BinanceSpot => "binancespot",
             ExchangeId::PoloniexSpot => "poloniexspot",
-            ExchangeId::Default => "default",
         }
     }
 }
@@ -133,6 +146,31 @@ impl StreamType {
 }
 
 impl Display for StreamType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+//*----- */
+// Stream kind
+//*----- */
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize, Default, Copy)]
+pub enum StreamKind {
+    Trades,
+    #[default]
+    OrderBookL2,
+}
+
+impl StreamKind {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            StreamKind::Trades => "trade",
+            StreamKind::OrderBookL2 => "l2",
+        }
+    }
+}
+
+impl Display for StreamKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.as_str())
     }

@@ -23,22 +23,6 @@ pub struct MarketEvent<Event> {
     pub event_data: Event,
 }
 
-impl<Event> Default for MarketEvent<Event>
-where
-    Event: Default,
-{
-    fn default() -> Self {
-        Self {
-            exchange_time: Utc::now(),
-            received_time: Utc::now(),
-            exchange: ExchangeId::Default,
-            stream_type: StreamType::Default,
-            symbol: String::new(),
-            event_data: Event::default(),
-        }
-    }
-}
-
 impl From<MarketEvent<EventTrade>> for MarketEvent<DataKind> {
     fn from(event: MarketEvent<EventTrade>) -> Self {
         Self {
