@@ -3,10 +3,11 @@ use serde::Deserialize;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
 use crate::data::{
+    assets::orderbook::OrderBook,
     error::SocketError,
+    event_models::{event::MarketEvent, event_book::EventOrderBook, SubKind},
     exchange::Identifier,
-    model::{event::MarketEvent, event_book::EventOrderBook, subs::Instrument, SubKind},
-    shared::orderbook::OrderBook,
+    shared::subscription_models::Instrument,
 };
 
 use super::{ExchangeTransformer, Transformer};

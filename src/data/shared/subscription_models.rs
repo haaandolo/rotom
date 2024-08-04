@@ -1,64 +1,74 @@
+use serde::Deserialize;
 use std::fmt::Display;
 
 use crate::data::exchange::{Connector, Identifier};
 
 /*----- */
-// Exchange subscription
+// Instrument model
 /*----- */
 #[derive(Default, Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct Instrument {
     pub base: String,
     pub quote: String,
-    pub stream_type: StreamType,
 }
 
 impl Instrument {
-    pub fn new(base: String, quote: String, stream_type: StreamType) -> Self {
-        Self {
-            base,
-            quote,
-            stream_type,
-        }
+    pub fn new(base: String, quote: String) -> Self {
+        Self { base, quote }
     }
 }
 
 impl Display for Instrument {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}{}, {}", self.base, self.quote, self.stream_type)
+        write!(f, "{}{}", self.base, self.quote)
     }
 }
 
-impl From<(String, String, StreamType)> for Instrument {
-    fn from((base, quote, stream_type): (String, String, StreamType)) -> Self {
-        Self::new(base, quote, stream_type)
+impl From<(String, String)> for Instrument {
+    fn from((base, quote): (String, String)) -> Self {
+        Self::new(base, quote)
     }
 }
 
+/*----- */
+// Subscription model
+/*----- */
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct Subscription<Exchange, StreamKind> {
     pub exchange: Exchange,
     pub instrument: Instrument,
-    pub kind: StreamKind,
+    pub stream_kind: StreamKind,
 }
 
-impl<Exchange, S, StreamKind> From<(Exchange, S, S, StreamType, StreamKind)>
+impl<Exchange, S, StreamKind> From<(Exchange, S, S, StreamKind)>
     for Subscription<Exchange, StreamKind>
 where
     S: Into<String>,
 {
-    fn from(
-        (exchange, base, quote, stream_type, kind): (Exchange, S, S, StreamType, StreamKind),
-    ) -> Self {
+    fn from((exchange, base, quote, stream_kind): (Exchange, S, S, StreamKind)) -> Self {
         Self {
             exchange,
-            instrument: Instrument::new(base.into(), quote.into(), stream_type),
-            kind,
+            instrument: Instrument::new(base.into(), quote.into()),
+            stream_kind,
+        }
+    }
+}
+
+impl<Exchange, StreamKind> Subscription<Exchange, StreamKind> {
+    pub fn new<I>(exchange: Exchange, instrument: I, stream_kind: StreamKind) -> Self
+    where
+        I: Into<Instrument>,
+    {
+        Self {
+            exchange,
+            instrument: instrument.into(),
+            stream_kind,
         }
     }
 }
 
 /*----- */
-// Internal exchange subscription
+// Exchange subscription model
 /*----- */
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct ExchangeSubscription<Exchange, Channel, Market> {
@@ -87,13 +97,12 @@ where
 }
 
 /*----- */
-// Exchange ID's & stream types
+// Exchange IDs
 /*----- */
 #[derive(Debug, PartialEq, Hash, Eq, Clone, Copy, Ord, PartialOrd)]
 pub enum ExchangeId {
     BinanceSpot,
     PoloniexSpot,
-    Default,
 }
 
 impl ExchangeId {
@@ -101,7 +110,6 @@ impl ExchangeId {
         match self {
             ExchangeId::BinanceSpot => "binancespot",
             ExchangeId::PoloniexSpot => "poloniexspot",
-            ExchangeId::Default => "default",
         }
     }
 }
@@ -112,27 +120,26 @@ impl Display for ExchangeId {
     }
 }
 
-#[derive(Default, Debug, PartialEq, Clone, Hash, Eq, Ord, PartialOrd)]
-pub enum StreamType {
-    L1,
-    L2,
+//*----- */
+// Stream kind
+//*----- */
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize, Default, Copy)]
+pub enum StreamKind {
     Trades,
     #[default]
-    Default,
+    L2,
 }
 
-impl StreamType {
+impl StreamKind {
     pub fn as_str(&self) -> &'static str {
         match self {
-            StreamType::L1 => "l1",
-            StreamType::L2 => "l2",
-            StreamType::Trades => "trade",
-            StreamType::Default => "default",
+            StreamKind::Trades => "trade",
+            StreamKind::L2 => "l2",
         }
     }
 }
 
-impl Display for StreamType {
+impl Display for StreamKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.as_str())
     }

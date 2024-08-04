@@ -4,18 +4,14 @@ use std::mem;
 
 use super::model::{PoloniexSpotBookData, PoloniexSpotBookUpdate};
 use crate::data::{
-    error::SocketError,
-    exchange::poloniex::model::PoloniexSpotTickerInfo,
-    model::{
-        event::MarketEvent,
-        event_book::EventOrderBook,
-        subs::{ExchangeId, Instrument, StreamType},
-    },
-    shared::{orderbook::OrderBook, utils::decimal_places_to_number},
-    transformer::book::{InstrumentOrderBook, OrderBookUpdater},
+    assets::orderbook::OrderBook, error::SocketError, event_models::{event::MarketEvent, event_book::EventOrderBook}, exchange::poloniex::model::PoloniexSpotTickerInfo, shared::{
+        subscription_models::{ExchangeId, Instrument},
+        utils::decimal_places_to_number,
+    }, transformer::book::{InstrumentOrderBook, OrderBookUpdater}
 };
 
 pub const HTTP_TICKER_INFO_URL_POLONIEX_SPOT: &str = "https://api.poloniex.com/markets/";
+
 #[derive(Default, Debug)]
 pub struct PoloniexSpotBookUpdater {
     pub prev_last_update_id: u64,
@@ -90,7 +86,6 @@ impl OrderBookUpdater for PoloniexSpotBookUpdater {
                 exchange_time: book.last_update_time,
                 received_time: Utc::now(),
                 exchange: ExchangeId::PoloniexSpot,
-                stream_type: StreamType::L2,
                 symbol: update_data.symbol,
                 event_data: book_snapshot,
             }))

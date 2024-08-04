@@ -1,5 +1,5 @@
-use crate::data::{exchange::Identifier, model::subs::Subscription};
 use super::BinanceSpot;
+use crate::data::{exchange::Identifier, shared::subscription_models::Subscription};
 
 #[derive(Debug)]
 pub struct BinanceMarket(pub String);

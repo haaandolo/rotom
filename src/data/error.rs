@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use super::model::subs::ExchangeId;
+use super::shared::subscription_models::ExchangeId;
 
 /*----- */
 // WebSocketError

@@ -4,12 +4,7 @@ pub mod poloniex;
 use serde::de::DeserializeOwned;
 
 use super::{
-    model::{
-        subs::{ExchangeId, ExchangeSubscription},
-        SubKind,
-    },
-    protocols::ws::{PingInterval, WsMessage},
-    transformer::Transformer,
+    event_models::SubKind, protocols::ws::{PingInterval, WsMessage}, shared::subscription_models::{ExchangeId, ExchangeSubscription}, transformer::Transformer
 };
 
 /*----- */

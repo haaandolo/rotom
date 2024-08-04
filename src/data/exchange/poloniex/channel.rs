@@ -1,8 +1,8 @@
+use super::PoloniexSpot;
 use crate::data::{
     exchange::Identifier,
-    model::{event_book::OrderBookL2, subs::Subscription, event_trade::Trades},
+    event_models::{event_book::OrderBookL2, event_trade::Trades}, shared::subscription_models::Subscription, 
 };
-use super::PoloniexSpot;
 
 #[derive(Debug)]
 pub struct PoloniexChannel(pub &'static str);

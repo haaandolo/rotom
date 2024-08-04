@@ -3,16 +3,10 @@ use serde::Deserialize;
 
 use crate::data::{
     exchange::Identifier,
-    model::{
-        event::MarketEvent,
-        event_trade::EventTrade,
-        level::Level,
-        subs::{ExchangeId, StreamType},
-    },
+    event_models::{event::MarketEvent, event_trade::EventTrade, level::Level},
     shared::{
-        de::{de_str, de_str_symbol, de_u64_epoch_ms_as_datetime_utc, deserialize_non_empty_vec},
-        utils::snapshot_symbol_default_value,
-    },
+        de::{de_str, de_str_symbol, de_u64_epoch_ms_as_datetime_utc, deserialize_non_empty_vec}, subscription_models::ExchangeId, utils::snapshot_symbol_default_value
+    }, 
 };
 
 /*----- */
@@ -81,7 +75,6 @@ impl From<BinanceTrade> for MarketEvent<EventTrade> {
             exchange_time: event.timestamp,
             received_time: Utc::now(),
             exchange: ExchangeId::BinanceSpot,
-            stream_type: StreamType::Trades,
             symbol: event.symbol,
             event_data: EventTrade::new(Level::new(event.price, event.amount), event.side),
         }

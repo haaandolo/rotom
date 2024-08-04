@@ -1,5 +1,8 @@
-use crate::data::{exchange::Identifier, model::{event_book::OrderBookL2, subs::Subscription, event_trade::Trades}};
 use super::BinanceSpot;
+use crate::data::{
+    exchange::Identifier,
+    event_models::{event_book::OrderBookL2, event_trade::Trades}, shared::subscription_models::Subscription
+};
 
 #[derive(Debug)]
 pub struct BinanceChannel(pub &'static str);
