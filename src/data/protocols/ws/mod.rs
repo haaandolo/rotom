@@ -17,6 +17,7 @@ use crate::data::{
     event_models::SubKind,
     exchange::{Connector, Identifier, StreamSelector},
     shared::subscription_models::{ExchangeSubscription, Subscription},
+    streams::validator::{SubscriptionValidator, WebSocketValidator},
     transformer::ExchangeTransformer,
 };
 
@@ -38,7 +39,7 @@ pub async fn create_websocket<Exchange, StreamKind>(
 ) -> Result<ExchangeStream<Exchange::StreamTransformer>, SocketError>
 where
     StreamKind: SubKind,
-    Exchange: Connector + StreamSelector<Exchange, StreamKind> + Send + Clone + Debug,
+    Exchange: Connector + StreamSelector<Exchange, StreamKind> + Send + Clone + Debug + Sync,
     Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind>,
     Subscription<Exchange, StreamKind>:
         Identifier<Exchange::Channel> + Identifier<Exchange::Market> + Debug,
@@ -57,27 +58,16 @@ where
         .map_err(SocketError::WebSocketError);
 
     // Split WS and make into read and write
-    let (mut ws_write, mut ws_read) = ws?.split();
+    let (mut ws_write, ws_read) = ws?.split();
 
     // Handle subscription
     if let Some(subcription) = Exchange::requests(&exchange_subs) {
         let _ = ws_write.send(subcription).await;
     }
 
-    // // Validate subscription
-    // if let Some(Ok(WsMessage::Text(message))) = ws_read.next().await {
-    //     let subscription_sucess = Exchange::validate_subscription(message, exchange_subs.len());
-    //     println!("--- sub sucess ---");
-    //     println!("{}", subscription_sucess);
-    //     if !subscription_sucess {
-    //         return Err(SocketError::Subscribe(String::from("Subscription failed")));
-    //     }
-    // }
-
-    while let Some(msg) = &ws_read.next().await {
-        println!("--- hereerreereg ---");
-        println!("{:#?}", msg);
-    }
+    // Validate subscription
+    let validated_stream =
+        <WebSocketValidator as SubscriptionValidator>::validate(&exchange_subs, ws_read).await?;
 
     // Spawn custom ping handle (application level ping)
     if let Some(ping_interval) = Exchange::ping_interval() {
@@ -93,7 +83,7 @@ where
 
     let transformer = Exchange::StreamTransformer::new(&instruments).await?;
 
-    Ok(ExchangeStream::new(ws_read, transformer, tasks))
+    Ok(ExchangeStream::new(validated_stream, transformer, tasks))
 }
 
 pub async fn schedule_pings_to_exchange(mut ws_write: WsWrite, ping_interval: PingInterval) {

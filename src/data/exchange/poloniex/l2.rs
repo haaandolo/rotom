@@ -4,10 +4,15 @@ use std::mem;
 
 use super::model::{PoloniexSpotBookData, PoloniexSpotBookUpdate};
 use crate::data::{
-    assets::orderbook::OrderBook, error::SocketError, event_models::{event::MarketEvent, event_book::EventOrderBook}, exchange::poloniex::model::PoloniexSpotTickerInfo, shared::{
+    assets::orderbook::OrderBook,
+    error::SocketError,
+    event_models::{event::MarketEvent, event_book::EventOrderBook},
+    exchange::poloniex::model::PoloniexSpotTickerInfo,
+    shared::{
         subscription_models::{ExchangeId, Instrument},
         utils::decimal_places_to_number,
-    }, transformer::book::{InstrumentOrderBook, OrderBookUpdater}
+    },
+    transformer::book::{InstrumentOrderBook, OrderBookUpdater},
 };
 
 pub const HTTP_TICKER_INFO_URL_POLONIEX_SPOT: &str = "https://api.poloniex.com/markets/";

@@ -23,7 +23,7 @@ pub async fn consume<Exchange, StreamKind>(
 ) -> SocketError
 where
     StreamKind: SubKind,
-    Exchange: Connector + Send + StreamSelector<Exchange, StreamKind> + Debug + Clone,
+    Exchange: Connector + Send + StreamSelector<Exchange, StreamKind> + Debug + Clone + Sync,
     Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind>,
     Subscription<Exchange, StreamKind>:
         Identifier<Exchange::Channel> + Identifier<Exchange::Market> + Debug,

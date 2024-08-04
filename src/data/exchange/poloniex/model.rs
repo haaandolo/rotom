@@ -3,11 +3,14 @@ use serde::Deserialize;
 use std::mem;
 
 use crate::data::{
-    exchange::Identifier,
+    error::SocketError,
     event_models::{event::MarketEvent, event_trade::EventTrade, level::Level},
-    shared::{de::{
-        de_str, de_str_symbol, de_u64_epoch_ms_as_datetime_utc, deserialize_non_empty_vec,
-    }, subscription_models::ExchangeId},
+    exchange::Identifier,
+    shared::{
+        de::{de_str, de_str_symbol, de_u64_epoch_ms_as_datetime_utc, deserialize_non_empty_vec},
+        subscription_models::ExchangeId,
+    },
+    streams::validator::Validator,
 };
 
 /*----- */
@@ -91,11 +94,42 @@ impl From<PoloniexTrade> for MarketEvent<EventTrade> {
 // Subscription response
 /*----- */
 #[derive(Debug, Deserialize, PartialEq)]
-pub struct PoloniexSubscriptionResponse {
-    pub event: String,
-    pub symbols: Vec<String>,
-    pub channel: String,
+#[serde(untagged)]
+pub enum PoloniexSubscriptionResponse {
+    Success {
+        event: String,
+        symbols: Vec<String>,
+        channel: String,
+    },
+    Error {
+        message: String,
+        event: String,
+    },
 }
+
+impl Validator for PoloniexSubscriptionResponse {
+    fn validate(self) -> Result<Self, SocketError> {
+        match &self {
+            PoloniexSubscriptionResponse::Success {
+                event: _,
+                symbols: _,
+                channel: _,
+            } => Ok(self),
+            PoloniexSubscriptionResponse::Error { message, event } => {
+                Err(SocketError::Subscribe(format!(
+                    "Error while subscribing to poloniex spot, event: {} & message: {}",
+                    event, message
+                )))
+            }
+        }
+    }
+}
+
+// pub struct PoloniexSubscriptionResponse {
+//     pub event: String,
+//     pub symbols: Vec<String>,
+//     pub channel: String,
+// }
 
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(untagged, rename_all = "snake_case")]

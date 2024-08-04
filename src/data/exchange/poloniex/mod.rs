@@ -33,7 +33,7 @@ impl Connector for PoloniexSpot {
 
     const ID: ExchangeId = ExchangeId::PoloniexSpot;
 
-    fn url() -> &'static str{
+    fn url() -> &'static str {
         POLONIEX_SPOT_WS_URL
     }
 
@@ -56,22 +56,11 @@ impl Connector for PoloniexSpot {
             message: json!({"event": "ping"}),
         })
     }
-
-    fn validate_subscription(subscription_response: String, number_of_tickers: usize) -> bool {
-        let subscription_response =
-            serde_json::from_str::<PoloniexSubscriptionResponse>(&subscription_response).unwrap();
-        subscription_response.symbols.len() == number_of_tickers
-    }
 }
 
 /*----- */
 // Stream selector
 /*----- */
-// impl StreamSelector<PoloniexSpot, OrderBookL2> for PoloniexSpot {
-//     type Stream = PoloniexSpotBookUpdate;
-//     type StreamTransformer = StatelessTransformer<Self::Stream, OrderBookL2>;
-// }
-
 impl StreamSelector<PoloniexSpot, OrderBookL2> for PoloniexSpot {
     type Stream = PoloniexSpotBookUpdate;
     type StreamTransformer =
