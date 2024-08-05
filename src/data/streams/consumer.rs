@@ -7,7 +7,7 @@ use tracing::{debug, error, info, warn};
 
 use crate::data::error::SocketError;
 use crate::data::exchange::Identifier;
-use crate::data::protocols::ws::create_websocket;
+use crate::data::protocols::ws::WebSocket;
 use crate::data::shared::subscription_models::Subscription;
 use crate::data::transformer::ExchangeTransformer;
 use crate::data::{
@@ -43,7 +43,7 @@ where
         backoff_ms *= 2;
 
         // Attempt to connect to the stream
-        let mut stream = match create_websocket(&exchange_sub).await {
+        let mut stream = match WebSocket::init(&exchange_sub).await {
             Ok(stream) => {
                 // Comment-out below if you want reconnection attempt to at each loop iteration
                 connection_attempt = 0;

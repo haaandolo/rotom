@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use super::shared::subscription_models::ExchangeId;
+use super::{protocols::ws::WsError, shared::subscription_models::ExchangeId};
 
 /*----- */
 // WebSocketError
@@ -61,9 +61,8 @@ pub enum SocketError {
         first_update_id: u64,
     },
 
-
-    // #[error("Closed connection error")]
-    // ConnectionClosed(#[from] tokio_tungstenite::tungstenite::Error::ConnectionClosed)
+    #[error("WebSocket disconnected: {error}")]
+    WebSocketDisconnected { error: WsError },
 }
 
 impl SocketError {
@@ -71,6 +70,7 @@ impl SocketError {
     pub fn is_terminal(&self) -> bool {
         match self {
             SocketError::InvalidSequence { .. } => true,
+            SocketError::WebSocketDisconnected { .. } => true,
             _ => false,
         }
     }

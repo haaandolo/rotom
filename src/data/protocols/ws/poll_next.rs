@@ -74,17 +74,16 @@ where
             };
 
             // Parse input protocol message into `ExchangeMessage`
-            let exchange_message =
-                match <WebSocketParser as StreamParser>::parse::<StreamTransformer::Input>(input) {
-                    // `StreamParser` successfully deserialised `ExchangeMessage`
-                    Some(Ok(exchange_message)) => exchange_message,
+            let exchange_message = match WebSocketParser::parse::<StreamTransformer::Input>(input) {
+                // `StreamParser` successfully deserialised `ExchangeMessage`
+                Some(Ok(exchange_message)) => exchange_message,
 
-                    // If `StreamParser` returns an Err pass it downstream
-                    Some(Err(err)) => return Poll::Ready(Some(Err(err.into()))),
+                // If `StreamParser` returns an Err pass it downstream
+                Some(Err(err)) => return Poll::Ready(Some(Err(err.into()))),
 
-                    // If `StreamParser` returns None it's a safe-to-skip message
-                    None => continue,
-                };
+                // If `StreamParser` returns None it's a safe-to-skip message
+                None => continue,
+            };
 
             let transformed_message = self.transformer.transform(exchange_message);
             self.buffer.push_back(Ok(transformed_message?))

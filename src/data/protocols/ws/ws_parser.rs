@@ -7,7 +7,7 @@ use tokio_tungstenite::tungstenite::{
 
 use crate::data::error::SocketError;
 
-use super::{WebSocket, WsError, WsMessage};
+use super::{WebSocketTokio, WsError, WsMessage};
 
 /*----- */
 // Websocket parser
@@ -27,7 +27,7 @@ pub trait StreamParser {
 }
 
 impl StreamParser for WebSocketParser {
-    type Stream = WebSocket;
+    type Stream = WebSocketTokio;
     type Message = WsMessage;
     type Error = WsError;
 
@@ -46,7 +46,13 @@ impl StreamParser for WebSocketParser {
                 WsMessage::Close(close_frame) => process_close_frame(close_frame),
                 WsMessage::Frame(frame) => process_frame(frame),
             },
-            Err(ws_err) => Some(Err(SocketError::WebSocketError(ws_err))),
+            Err(ws_err) => {
+                if is_websocket_disconnected(&ws_err) {
+                    Some(Err(SocketError::WebSocketDisconnected { error: ws_err }))
+                } else {
+                    Some(Err(SocketError::WebSocketError(ws_err)))
+                }
+            }
         }
     }
 }

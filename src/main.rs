@@ -47,7 +47,7 @@ async fn main() {
     let mut merged = streams.select_all::<MarketEvent<DataKind>>();
 
     while let Some(event) = merged.next().await {
-        println!("{:?}", event)
+        // println!("{:?}", event)
     }
 
     // /*----- */
@@ -144,6 +144,7 @@ fn init_logging() {
 // todo
 /*----- */
 // - Is websocket disconnect handling
+// - Better logging
 // - DOCUMENTATION + EXAMPLES
 // - DOUBLE CHECK TICKER SIZE BEFORE PRODUCTION
 // - custom poloniex deserializers
