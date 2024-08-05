@@ -1,6 +1,9 @@
 use futures::Stream;
 use serde::de::DeserializeOwned;
-use tokio_tungstenite::tungstenite::{error::ProtocolError, protocol::{frame::Frame, CloseFrame}};
+use tokio_tungstenite::tungstenite::{
+    error::ProtocolError,
+    protocol::{frame::Frame, CloseFrame},
+};
 
 use crate::data::error::SocketError;
 
@@ -43,7 +46,13 @@ impl StreamParser for WebSocketParser {
                 WsMessage::Close(close_frame) => process_close_frame(close_frame),
                 WsMessage::Frame(frame) => process_frame(frame),
             },
-            Err(ws_err) => Some(Err(SocketError::WebSocketError(ws_err))),
+            Err(ws_err) => {
+                if is_websocket_disconnected(&ws_err) {
+                    Some(Err(SocketError::WebSocketDisconnected { error: ws_err }))
+                } else {
+                    Some(Err(SocketError::WebSocketError(ws_err)))
+                }
+            }
         }
     }
 }
@@ -125,6 +134,6 @@ pub fn is_websocket_disconnected(error: &WsError) -> bool {
             | WsError::AlreadyClosed
             | WsError::Io(_)
             | WsError::Protocol(ProtocolError::SendAfterClosing)
-            | WsError::Protocol(ProtocolError::ResetWithoutClosingHandshake) // | WsError::Protocol(_)
+            | WsError::Protocol(ProtocolError::ResetWithoutClosingHandshake) // WsError::Protocol(_)
     )
 }

@@ -1,6 +1,5 @@
 pub mod multi;
 pub mod single;
-pub mod consume;
 pub mod dynamic;
 
 use std::collections::HashMap;
@@ -9,7 +8,8 @@ use tokio::sync::mpsc::{self, UnboundedReceiver};
 use tokio_stream::{wrappers::UnboundedReceiverStream, StreamMap};
 
 use multi::MultiStreamBuilder;
-use super::{event_models::SubKind, shared::subscription_models::ExchangeId};
+
+use crate::data::{event_models::SubKind, shared::subscription_models::ExchangeId};
 
 pub struct Streams<T> {
     pub streams: HashMap<ExchangeId, UnboundedReceiver<T>>,

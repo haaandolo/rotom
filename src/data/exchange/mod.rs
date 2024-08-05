@@ -1,20 +1,28 @@
 pub mod binance;
 pub mod poloniex;
 
+use std::{fmt::Debug, time::Duration};
+
 use serde::de::DeserializeOwned;
 
 use super::{
-    event_models::SubKind, protocols::ws::{PingInterval, WsMessage}, shared::subscription_models::{ExchangeId, ExchangeSubscription}, transformer::Transformer
+    event_models::SubKind,
+    protocols::ws::{PingInterval, WsMessage},
+    shared::subscription_models::{ExchangeId, ExchangeSubscription},
+    streams::validator::Validator,
+    transformer::Transformer,
 };
+
+pub const DEFAULT_SUBSCRIPTION_TIMEOUT: Duration = Duration::from_secs(10);
 
 /*----- */
 // Exchange connector trait
 /*----- */
 pub trait Connector {
     type ExchangeId;
-    type SubscriptionResponse: DeserializeOwned;
-    type Channel: Send;
-    type Market: Send;
+    type Channel: Send + Sync;
+    type Market: Send + Sync;
+    type SubscriptionResponse: DeserializeOwned + Validator + Send + Debug;
 
     const ID: ExchangeId;
 
@@ -30,9 +38,18 @@ pub trait Connector {
     where
         Self: Sized;
 
-    fn validate_subscription(subscription_repsonse: String, number_of_tickers: usize) -> bool
+    fn expected_responses(
+        subscriptions: &[ExchangeSubscription<Self, Self::Channel, Self::Market>],
+    ) -> usize
     where
-        Self: Sized;
+        Self: Sized,
+    {
+        subscriptions.len()
+    }
+
+    fn subscription_validation_timeout() -> Duration {
+        DEFAULT_SUBSCRIPTION_TIMEOUT
+    }
 }
 
 /*----- */

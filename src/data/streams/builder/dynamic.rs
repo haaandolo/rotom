@@ -7,15 +7,16 @@ use std::{collections::HashMap, fmt::Debug};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use vecmap::VecMap;
 
-use super::{consume::consume, single::ExchangeChannel};
+use super::single::ExchangeChannel;
 use crate::data::{
     error::SocketError,
-    exchange::{binance::BinanceSpot, poloniex::PoloniexSpot},
     event_models::{
-        event::MarketEvent,
+        market_event::MarketEvent,
         event_book::{EventOrderBook, OrderBookL2},
         event_trade::{EventTrade, Trades},
-    }, shared::subscription_models::{ExchangeId, StreamKind, Subscription},
+    },
+    exchange::{binance::BinanceSpot, poloniex::PoloniexSpot},
+    shared::subscription_models::{ExchangeId, StreamKind, Subscription}, streams::consumer::consume,
 };
 
 /*----- */

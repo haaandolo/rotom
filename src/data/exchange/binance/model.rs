@@ -2,11 +2,11 @@ use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
 use crate::data::{
-    exchange::Identifier,
-    event_models::{event::MarketEvent, event_trade::EventTrade, level::Level},
-    shared::{
-        de::{de_str, de_str_symbol, de_u64_epoch_ms_as_datetime_utc, deserialize_non_empty_vec}, subscription_models::ExchangeId, utils::snapshot_symbol_default_value
-    }, 
+    assets::level::Level, error::SocketError, event_models::{event_trade::EventTrade, market_event::MarketEvent}, exchange::Identifier, shared::{
+        de::{de_str, de_str_symbol, de_u64_epoch_ms_as_datetime_utc, deserialize_non_empty_vec},
+        subscription_models::ExchangeId,
+        utils::snapshot_symbol_default_value,
+    }, streams::validator::Validator
 };
 
 /*----- */
@@ -88,6 +88,21 @@ impl From<BinanceTrade> for MarketEvent<EventTrade> {
 pub struct BinanceSubscriptionResponse {
     pub result: Option<String>,
     pub id: u32,
+}
+
+impl Validator for BinanceSubscriptionResponse {
+    fn validate(self) -> Result<Self, SocketError>
+    where
+        Self: Sized,
+    {
+        if self.result.is_none() {
+            Ok(self)
+        } else {
+            Err(SocketError::Subscribe(
+                "received failure subscription response".to_owned(),
+            ))
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, PartialEq)]

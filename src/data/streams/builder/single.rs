@@ -2,9 +2,9 @@ use futures::Future;
 use std::{collections::HashMap, fmt::Debug, pin::Pin};
 use tokio::sync::mpsc::{self};
 
-use super::{consume::consume, Streams};
+use super::Streams;
 use crate::data::{
-    error::SocketError, exchange::{Connector, Identifier, StreamSelector}, event_models::{event::MarketEvent, SubKind}, shared::subscription_models::{ExchangeId, Subscription}, transformer::ExchangeTransformer
+    error::SocketError, event_models::{market_event::MarketEvent, SubKind}, exchange::{Connector, Identifier, StreamSelector}, shared::subscription_models::{ExchangeId, Subscription}, streams::consumer::consume, transformer::ExchangeTransformer
 };
 
 pub type SubscribeFuture = Pin<Box<dyn Future<Output = Result<(), SocketError>>>>;

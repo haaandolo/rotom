@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use super::shared::subscription_models::ExchangeId;
+use super::{protocols::ws::WsError, shared::subscription_models::ExchangeId};
 
 /*----- */
 // WebSocketError
@@ -46,7 +46,14 @@ pub enum SocketError {
     #[error("Init method failed for ticker some tickers")]
     Init,
 
-    // Data errors
+    #[error("Could not retrieve tick size for {base}{quote}, {exchange}")]
+    TickSizeError {
+        base: String,
+        quote: String,
+        exchange: ExchangeId,
+    },
+
+    // Terminal errors
     #[error("{symbol} got InvalidSequence, first_update_id {first_update_id} does not follow on from the prev_last_update_id {prev_last_update_id}")]
     InvalidSequence {
         symbol: String,
@@ -54,12 +61,8 @@ pub enum SocketError {
         first_update_id: u64,
     },
 
-    #[error("Could not retrieve tick size for {base}{quote}, {exchange}")]
-    TickSizeError {
-        base: String,
-        quote: String,
-        exchange: ExchangeId,
-    },
+    #[error("WebSocket disconnected: {error}")]
+    WebSocketDisconnected { error: WsError },
 }
 
 impl SocketError {
@@ -67,6 +70,7 @@ impl SocketError {
     pub fn is_terminal(&self) -> bool {
         match self {
             SocketError::InvalidSequence { .. } => true,
+            SocketError::WebSocketDisconnected { .. } => true,
             _ => false,
         }
     }

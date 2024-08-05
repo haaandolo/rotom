@@ -1,8 +1,9 @@
 use chrono::{DateTime, Utc};
 
 use crate::data::event_models::event_book::EventOrderBook;
-use crate::data::event_models::level::Level;
 use std::collections::BTreeMap;
+
+use super::level::Level;
 
 /*----- */
 // Orderbook
