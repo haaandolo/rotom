@@ -7,7 +7,7 @@ use tokio_tungstenite::tungstenite::{
 
 use crate::data::error::SocketError;
 
-use super::{WebSocketTokio, WsError, WsMessage};
+use super::{WebSocket, WsError, WsMessage};
 
 /*----- */
 // Websocket parser
@@ -27,7 +27,7 @@ pub trait StreamParser {
 }
 
 impl StreamParser for WebSocketParser {
-    type Stream = WebSocketTokio;
+    type Stream = WebSocket;
     type Message = WsMessage;
     type Error = WsError;
 
