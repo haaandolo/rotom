@@ -42,29 +42,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "arb-bot"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "chrono",
- "csv",
- "futures",
- "futures-util",
- "itertools",
- "pin-project",
- "reqwest",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
- "tokio-stream",
- "tokio-tungstenite",
- "tracing",
- "tracing-subscriber",
- "vecmap-rs",
-]
-
-[[package]]
 name = "async-trait"
 version = "0.1.81"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1029,6 +1006,29 @@ dependencies = [
  "wasm-bindgen-futures",
  "web-sys",
  "winreg",
+]
+
+[[package]]
+name = "rotom-data"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "csv",
+ "futures",
+ "futures-util",
+ "itertools",
+ "pin-project",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-stream",
+ "tokio-tungstenite",
+ "tracing",
+ "tracing-subscriber",
+ "vecmap-rs",
 ]
 
 [[package]]

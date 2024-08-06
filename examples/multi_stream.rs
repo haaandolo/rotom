@@ -1,6 +1,6 @@
 use futures::StreamExt;
 
-use arb_bot::{
+use rotom_data::{
     event_models::{
         event_book::OrderBookL2,
         event_trade::Trades,
