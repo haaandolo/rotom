@@ -1,35 +1,3 @@
-[package]
-name = "rotom-data"
-version = "0.1.0"
-edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-# Async
-tokio = { version = "1", features = ["full"] }
-tokio-tungstenite = { version = "*", features = ["native-tls"]}
-futures-util = { version = "0.3.28", default-features = false, features = ["sink", "std"] }
-futures = "0.3.3"
-tokio-stream = { version = "0.1.9", features = ["sync"] }
-pin-project = "1.1.5"
-async-trait = "0.1.57"
-
-# Protocol
-reqwest = {version="0.12.4", features = ["json"]}
-
-# SerDe
-serde_json = "*"
-serde = { version = "1.0.197", features = ["derive"] }
-
-# Logging
-tracing = "0.1.40"
-tracing-subscriber = { version = "0.3.16", features = ["env-filter", "json"] }
-
-# Misc
-# csv = "1.3.0"
-thiserror = "*"
-chrono = "0.4.38"
-vecmap-rs = "0.2.1"
-itertools = "0.13.0"
-
+[workspace]
+members = [ "rotom-main", "rotom-data" ]
+resolver = "2"
