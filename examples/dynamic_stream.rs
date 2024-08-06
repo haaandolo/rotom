@@ -2,8 +2,7 @@ use futures::StreamExt;
 
 use arb_bot::{
     event_models::market_event::{DataKind, MarketEvent},
-    shared::subscription_models::{ExchangeId, StreamKind},
-    streams::builder::dynamic::DynamicStreams,
+    shared::subscription_models::{ExchangeId, StreamKind}, streams::builder::dynamic::DynamicStreams,
 };
 
 #[tokio::main]
@@ -18,8 +17,6 @@ pub async fn main() {
         vec![
             (ExchangeId::PoloniexSpot, "eth", "usdt", StreamKind::Trades),
             (ExchangeId::BinanceSpot, "sui", "usdt", StreamKind::L2),
-            (ExchangeId::PoloniexSpot, "arb", "usdt", StreamKind::L2),
-            (ExchangeId::BinanceSpot, "btc", "usdt", StreamKind::Trades),
         ],
         vec![
             (ExchangeId::BinanceSpot, "btc", "usdt", StreamKind::Trades),
@@ -33,6 +30,8 @@ pub async fn main() {
         ],
         vec![
             (ExchangeId::BinanceSpot, "arb", "usdt", StreamKind::L2),
+            (ExchangeId::BinanceSpot, "eth", "usdt", StreamKind::Trades),
+            (ExchangeId::BinanceSpot, "btc", "usdt", StreamKind::Trades),
             (ExchangeId::BinanceSpot, "celo", "usdt", StreamKind::Trades),
         ],
     ])
@@ -45,12 +44,12 @@ pub async fn main() {
         println!("{:?}", event)
     }
 }
+
 /*----- */
 // Logging config
 /*----- */
 fn init_logging() {
     tracing_subscriber::fmt()
-        // Filter messages based on the INFO
         .with_env_filter(
             tracing_subscriber::filter::EnvFilter::builder()
                 .with_default_directive(tracing_subscriber::filter::LevelFilter::INFO.into())
