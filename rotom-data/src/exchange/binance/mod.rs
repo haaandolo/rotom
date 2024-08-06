@@ -59,12 +59,6 @@ impl Connector for BinanceSpot {
     {
         1
     }
-
-    // fn validate_subscription(subscription_response: String, _number_of_tickers: usize) -> bool {
-    //     let subscription_response =
-    //         serde_json::from_str::<BinanceSubscriptionResponse>(&subscription_response).unwrap();
-    //     subscription_response.result.is_none()
-    // }
 }
 
 /*----- */
