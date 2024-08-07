@@ -84,6 +84,7 @@ If a specific stream kind does not currently exist, you will need to create it. 
 *Note: Please see the `/examples` as a reference*
 
 <h3>Single</h3>
+
 - Each `.subscribe()` call will create a separate web socket
 - This builder can only take the same exchange and stream kind combination in each `.subscribe()` call. For example, this is not allowed:
 
@@ -102,14 +103,17 @@ or
 ```
 
 <h3>Multi</h3>
+
 - Each `.subscribe()` call will create a separate web socket
 - `.subscribe()` is encased in a `.add()` to be able to add muli exchnanges to a particular trade
 - Please see `/examples`
 
 <h3>Dynamic</h3>
+
 - Each `vec[]!` inside the `init()` method will create at least one web socket. The total number of web sockets created depends on the different combinations of `Exchange` and `StreamKind` provided in the `vec![]`. Below are examples of how this works:
 
 One web socket:
+
 ```
 vec![
     (ExchangeId::PoloniexSpot, "ada", "usdt", StreamKind::L2),
@@ -120,6 +124,7 @@ vec![
 ```
 
 Two web sockets:
+
 ```
 vec![
     (ExchangeId::PoloniexSpot, "ada", "usdt", StreamKind::L2),
@@ -130,6 +135,7 @@ vec![
 ```
 
 Three web sockets:
+
 ```
 vec![
     (ExchangeId::PoloniexSpot, "ada", "usdt", StreamKind::L2),
@@ -140,6 +146,7 @@ vec![
 ```
 
 Four web sockets:
+
 ```
 vec![
     (ExchangeId::PoloniexSpot, "ada", "usdt", StreamKind::L2),
