@@ -1,12 +1,17 @@
 # Rotom Data
-The Rotom data serves as the data layer to the other parts of the system. 
-It can be thought of as the heart-beat of the trading system.
+The Rotom Data functions as the core data layer for the other components of the system. It can be thought of as the heart-beat the trading system. This layer needs to be solid as other parts of the system will make decisions based on the data transmitted from this layer.
+
+## Terminology
+<h5>Unit Struct<h5>
+A struct that contains no fields. They are valueless and only has a impl body associated with it. For instance:
+```
+pub struct OrderBookL2;
+pub struct WebSocketClient;
+pub struct Trades
+```
 
 ## High Level Overview
-The system can handle types of market events in one unified stream. Streams 
-can be built using the builder methods in the streams/builder directory. There
-is an example of how each of these streams can be build in the /examples
-directory.
+The system can process various types of MarketEvent within a single unified stream. Streams can be constructed using the builder methods located in the `/src/streams/builder` directory. An example of creating each of these streams can be found in the `/examples` directory.
 
 The system subscribes to a market event in this format:
 ```
@@ -18,50 +23,48 @@ The system subscribes to a market event in this format:
 ```
 
 Note:
-How you subscribe to the single and multi stream in different to the dynamic.
-The dynamic one uses enums instead of the actual event unit struct in the 
-/event_models directory. This is just to get around the rust type system. Further
-down the chain, these enums will get translated into the same event types that
-the multi and single streams use.
+The approach to subscribing to the single and multi streams differs from the dynamic stream. The dynamic stream utilises enums from `/src/shared/subscription_models.rs` rather than the actual MarketEvent unit struct in the `/src/event_models/market_event.rs` file. This is a workaround to bypass the Rust type system as a Vec<( _, _)> (vec of tuples) require the same types. Hence, we cannot use `(BinanceSpot, "btc", "usdt", OrderBookL2)` and `(PoloniexSpot, "btc", "usdt", Trades)` in the same vec, so we replace it with a enum of the same type. However, further down the process, specifically in the `WebSocketClient::init()` function, these enums and unit structs will be transformed into their corresponding concrete types for the specific exchange via the `StreamSelector`.
 
 ## Market Event Process flow
-When using the builder methods, the stream kind will either be a unit struct from
-the /event_model directory, or a enum. As mentioned the enums eventually get
-turned into the unit structs in the event model. 
+The process flow to subscribe to a web socket stream is depicted below in the format `[ filename, function ]`. If you ever need a refresher on how the data layer operates, please refer to this process flow.
+```
+1. [dynamic_stream.rs, init()] -> 2.[consumer.rs, consume()] -> 3.[protocol::ws::mod.rs, WebSocketClient::init()] -> 4.[poll_next.rs, ExchangeStream::new()]
+```
 
-So what exactly is a unit struct. They are structs with no fields in them. For example,
-the orderbook unit struct is "pub struct OrderBookL2;". While the trade one is 
-"pub struct Trades;". These unit stucts have a "Event" type as an associative type.
-These associative types are what the system will use to encase the data from the streams.
-For example, if I subscribe to a OrderBookL2, the data the will be received is a
-MarketEvent<EventOrderBook>. Where as, if I subscribe to a Trades stream kind then I will
-receive a MarketEvent<EventTrade>. Underneath the hood, the system translates the unit
-structs into these MarketEvents using Rust powerful type system.
+In the `poll_next.rs` is where the events get deserialised and transformered into MarketEvent<T>. These events then travel back in the reverse order of
+the depicted flow above, i.e:
 
-Note:
-If you are ever lost on how things happens. Follow these functions step by step to see
-what is happening, format = (filename, function):
-(dynamic_stream.rs, init()) ->
-(consumer.rs, consume()) -> 
-(protocol::ws::mod.rs, WebSocketClient::init()) -> 
-(poll_next.rs, ExchangeStream::new())
+```
+1.[poll_next.rs, ExchangeStream::new()] -> 2.[protocol::ws::mod.rs, WebSocketClient::init()] -> 3.[consumer.rs, consume()] -> 4. [dynamic_stream.rs, init()]
+```
+
+## Types of MaketEvents
+Every unit struct in the `/src/event_models` has to implement a SubKind trait, short for subscription kind. The SubKind trait requires an
+associative type called `Event`. This associatve type should NOT be a unit type and have the fields for the corresponding unit type. Lets look at the
+L2 order book as an example. This can be found in `/src/event_models/event_book.rs`. The unit struct for this is:
+
+All unit structs in the `/src/event_models` directory must implement a SubKind trait, short for subscription kind. The SubKind trait mandates an associated type called Event. This associated type should NOT be a unit type and must contain the fields for the corresponding unit type struct. Let's consider the L2 order book as an example, which can be located in `/src/event_models/event_book.rs`. The unit struct for this is:
+```
+pub struct OrderBookL2;
+```
+
+While the associative type is:
+```
+pub struct EventOrderBook {
+    pub bids: Vec<Level>,
+    pub asks: Vec<Level>,
+}
+```
+
+The unit struct itself does not contain fields, but it includes an associated type that does have the necessary fields. Specifically, the MarketEvent utilises this associated type to encapsulate the most recent book order before broadcasting the event to the entire system. Subscribing to an `OrderBookL2` will produce a `MarketEvent<EventOrderBook>`, while subscribing to a `Trades` stream will generate a `MarketEvent<EventTrade>`. Beneath the surface, the system harnesses Rust's robust type system to transform the unit structs into these MarketEvents.
 
 ## Trasformers
-p.s Since the ExchangeStream struct impl the Stream trait from the futures crate. This whole
-struct becomes a Stream that you can call next() on. The ExchangeStream struct plays a vital
-role in how the transformers work. The tranformers are essentially structs that have function
-associated with them to transform the data and buffering it before it can be polled. There
-are 2 main transfomers to deal with:
+The ExchangeStream struct impl the Stream trait from the futures crate. This whole struct becomes a Stream that you can call `.next()` on. The ExchangeStream struct plays a vital role in how the transformers work. The tranformers are essentially structs embedded inside the ExchangeStream struct that houses a transform function to transform the data before buffering it so it can be polled.There are 2 main transfomers to deal with:
+
 1. StatelessTransformer
 2. Book
-The stateless transformer are used for MarketEvents such as trades because we really do not
-want to perform and transformations before emitting the event to the rest of the system.
-The book transformer is an important. This transformer intialises the orderbooks with a
-snapshot (if required) and the tick sizes and receives orderbook updates and updates the
-the local orderbook before emitting the update orderbook to the rest of the system. The
-book transformer is more complex than the statelessTransformer as the statelessTransformer
-one essentially only deserialises the data from the stream. Whereas the book transformer
-deserialised book updates, updates the local orderbook before sending update MarketEvents.
+
+The stateless transformer is used for MarketEvents such as trades because no transformations are desired before emitting the event to the rest of the system. On the other hand, the book transformer plays a crucial role and is not stateless. This transformer initialises the orderbooks with a snapshot (if required), the tick sizes, and then receives updates to updated the local orderbook before emitting the updated orderbook to the rest of the system. The book transformer is more intricate than the statelessTransformer, as the statelessTransformer essentially only function as deserialisation mechanism. While the book transformer deserialises book updates, updates the local orderbook, and then transmits the updated `MarketEvent<EventOrderBook>`.
 
 ## Consumer
 The consume function in the /streams directory plays another important part of the system.
