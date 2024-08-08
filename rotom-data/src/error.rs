@@ -79,22 +79,20 @@ impl SocketError {
 /*----- */
 // ThisError example
 /*----- */
-/*
-use thiserror::Error;
-
-#[derive(Debug, Error)]
-pub enum AppError {
-    #[error("Didn't get a query string")]
-    MissingQuery,
-    #[error("Didn't get a file name")]
-    MissingFilename,
-    #[error("Could not load config")]
-    ConfigLoad {
-        #[from]
-        source: io::Error,
-    },
-}
-
-The above ConfigLoad error will produce this error:
-Could not load config: Os { code: 2, kind: NotFound, message: "No such file or directory" }
-*/
+// use thiserror::Error;
+//
+// #[derive(Debug, Error)]
+// pub enum AppError {
+//     #[error("Didn't get a query string")]
+//     MissingQuery,
+//     #[error("Didn't get a file name")]
+//     MissingFilename,
+//     #[error("Could not load config")]
+//     ConfigLoad {
+//         #[from]
+//         source: io::Error,
+//     },
+// }
+//
+// The above ConfigLoad error will produce this error:
+// Could not load config: Os { code: 2, kind: NotFound, message: "No such file or directory" }
