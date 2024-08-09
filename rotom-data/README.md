@@ -161,6 +161,7 @@ vec![
 
 # Todos
 - TESTING
+- TOP LEVEL SUBSCRIPTION VALIDATOR ie. does binance supppot spot or does poloniex support options. Simple match statement will suffice
 - DOUBLE CHECK TICK SIZE BEFORE PRODUCTION
 - CUSTOM POLONIEX DESERIALIZERS
 - PROCESS CUSTOM PING FOR POLONIEX
