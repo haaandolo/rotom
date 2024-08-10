@@ -4,45 +4,51 @@ use rotom_data::{
     shared::subscription_models::{ExchangeId, StreamKind},
     streams::builder::dynamic,
 };
+use rotom_main::{data::{live, MarketGenerator}, engine::Trader};
+use tokio::sync::mpsc::{self, UnboundedReceiver};
+use tracing::info;
 
+/*----- */
+// Main
+/*----- */
 #[tokio::main]
 pub async fn main() {
     // Initialise logging
     init_logging();
 
-    /*----- */
-    // Dynamic streams
-    /*----- */
-    let streams = dynamic::DynamicStreams::init([
-        vec![
-            (ExchangeId::PoloniexSpot, "eth", "usdt", StreamKind::Trades),
-            (ExchangeId::BinanceSpot, "sui", "usdt", StreamKind::L2),
-        ],
-        vec![
-            (ExchangeId::BinanceSpot, "btc", "usdt", StreamKind::Trades),
-            (ExchangeId::PoloniexSpot, "btc", "usdt", StreamKind::Trades),
-        ],
-        vec![
-            (ExchangeId::PoloniexSpot, "ada", "usdt", StreamKind::L2),
-            (ExchangeId::PoloniexSpot, "arb", "usdt", StreamKind::L2),
-            (ExchangeId::PoloniexSpot, "eth", "usdt", StreamKind::L2),
-            (ExchangeId::PoloniexSpot, "btc", "usdt", StreamKind::L2),
-        ],
-        vec![
-            (ExchangeId::BinanceSpot, "arb", "usdt", StreamKind::L2),
-            (ExchangeId::BinanceSpot, "eth", "usdt", StreamKind::Trades),
-            (ExchangeId::BinanceSpot, "btc", "usdt", StreamKind::Trades),
-            (ExchangeId::BinanceSpot, "celo", "usdt", StreamKind::Trades),
-        ],
-    ])
+
+    // Build a trader
+    let trader = Trader::builder()
+        .data(live::MarketFeed::new(stream_trades().await))
+        .build()
+        .unwrap();
+
+    trader.run()
+}
+
+/*----- */
+// Setup data feed
+/*----- */
+async fn stream_trades() -> UnboundedReceiver<MarketEvent<DataKind>> {
+    let mut streams = dynamic::DynamicStreams::init([vec![(
+        ExchangeId::BinanceSpot,
+        "btc",
+        "usdt",
+        StreamKind::Trades,
+    )]])
     .await
     .unwrap();
 
-    let mut merged = streams.select_all::<MarketEvent<DataKind>>();
+    let mut data = streams.select_trades(ExchangeId::BinanceSpot).unwrap();
 
-    while let Some(event) = merged.next().await {
-        println!("{:?}", event)
-    }
+    let (tx, rx) = mpsc::unbounded_channel();
+    tokio::spawn(async move {
+        while let Some(event) = data.next().await {
+            let _ = tx.send(MarketEvent::from(event));
+        }
+    });
+
+    rx
 }
 
 /*----- */
