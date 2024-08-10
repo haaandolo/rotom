@@ -4,9 +4,8 @@ use rotom_data::{
     shared::subscription_models::{ExchangeId, StreamKind},
     streams::builder::dynamic,
 };
-use rotom_main::{data::{live, MarketGenerator}, engine::Trader};
+use rotom_main::{data::live, engine::trader::Trader, strategy::spread::SpreadStategy, };
 use tokio::sync::mpsc::{self, UnboundedReceiver};
-use tracing::info;
 
 /*----- */
 // Main
@@ -16,10 +15,10 @@ pub async fn main() {
     // Initialise logging
     init_logging();
 
-
     // Build a trader
     let trader = Trader::builder()
         .data(live::MarketFeed::new(stream_trades().await))
+        .strategy(SpreadStategy::default())
         .build()
         .unwrap();
 
@@ -32,14 +31,21 @@ pub async fn main() {
 async fn stream_trades() -> UnboundedReceiver<MarketEvent<DataKind>> {
     let mut streams = dynamic::DynamicStreams::init([vec![(
         ExchangeId::BinanceSpot,
-        "btc",
+        "arb",
         "usdt",
-        StreamKind::Trades,
-    )]])
+        StreamKind::L2,
+    ),
+    (
+        ExchangeId::PoloniexSpot,
+        "arb",
+        "usdt",
+        StreamKind::L2,
+    )
+    ]])
     .await
     .unwrap();
 
-    let mut data = streams.select_trades(ExchangeId::BinanceSpot).unwrap();
+    let mut data = streams.select_all_l2s();
 
     let (tx, rx) = mpsc::unbounded_channel();
     tokio::spawn(async move {
