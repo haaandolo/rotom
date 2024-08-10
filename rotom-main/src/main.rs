@@ -4,7 +4,7 @@ use rotom_data::{
     shared::subscription_models::{ExchangeId, StreamKind},
     streams::builder::dynamic,
 };
-use rotom_main::{data::live, engine::trader::Trader, strategy::spread::SpreadStategy, };
+use rotom_main::{data::live, engine::trader::Trader, strategy::spread::SpreadStategy};
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 
 /*----- */
@@ -29,28 +29,21 @@ pub async fn main() {
 // Setup data feed
 /*----- */
 async fn stream_trades() -> UnboundedReceiver<MarketEvent<DataKind>> {
-    let mut streams = dynamic::DynamicStreams::init([vec![(
-        ExchangeId::BinanceSpot,
-        "arb",
-        "usdt",
-        StreamKind::L2,
-    ),
-    (
-        ExchangeId::PoloniexSpot,
-        "arb",
-        "usdt",
-        StreamKind::L2,
-    )
+    let streams = dynamic::DynamicStreams::init([vec![
+        (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::L2),
+        (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::L2),
+        (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::Trades),
+        (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::Trades),
     ]])
     .await
     .unwrap();
 
-    let mut data = streams.select_all_l2s();
+    let mut data = streams.select_all::<MarketEvent<DataKind>>();
 
     let (tx, rx) = mpsc::unbounded_channel();
     tokio::spawn(async move {
         while let Some(event) = data.next().await {
-            let _ = tx.send(MarketEvent::from(event));
+            let _ = tx.send(event);
         }
     });
 

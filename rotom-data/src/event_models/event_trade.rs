@@ -13,8 +13,8 @@ impl SubKind for Trades {
 
 #[derive(Default, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize)]
 pub struct EventTrade {
-    trade: Level,
-    is_buy: bool,
+    pub trade: Level,
+    pub is_buy: bool,
 }
 
 impl EventTrade {

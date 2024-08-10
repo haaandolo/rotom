@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 use rotom_data::{
     event_models::market_event::{DataKind, MarketEvent},
-    shared::subscription_models::{ExchangeId, Instrument},
+    shared::subscription_models::ExchangeId,
 };
 
 /*----- */
@@ -16,20 +16,22 @@ pub trait SignalGenerator {
 }
 
 /*----- */
-// Signal 
+// Signal
 /*----- */
 pub struct Signal {
     pub time: DateTime<Utc>,
     pub exchange: ExchangeId,
-    pub instrument: Instrument,
+    pub instrument: String,
     pub signals: HashMap<Decision, SignalStrength>,
 }
 
+#[derive(Debug)]
 pub struct SignalStrength(pub f64);
 
 /*----- */
 // Decision
 /*----- */
+#[derive(Debug, Eq, PartialEq, Hash)]
 pub enum Decision {
     Long,
     CloseLong,

@@ -1,10 +1,16 @@
+use std::collections::HashMap;
+
+use chrono::Utc;
 use rotom_data::{
     event_models::market_event::{DataKind, MarketEvent},
     shared::subscription_models::ExchangeId,
 };
 
-use super::{Signal, SignalGenerator};
-
+use super::{Decision, Signal, SignalGenerator, SignalStrength};
+/*----- */
+// Spread strategy
+/*----- */
+#[derive(Debug)]
 pub struct SpreadStategy {
     exchange_one_bid: f64,
     exchange_one_ask: f64,
@@ -25,28 +31,51 @@ impl Default for SpreadStategy {
 
 impl SignalGenerator for SpreadStategy {
     fn generate_signal(&mut self, market: &MarketEvent<DataKind>) -> Option<Signal> {
-        let book_data = match &market.event_data {
-            DataKind::OrderBook(book) => book,
+        match &market.event_data {
+            DataKind::OrderBook(book_data) => match market.exchange {
+                ExchangeId::BinanceSpot => {
+                    self.exchange_one_bid = book_data.bids[0].price;
+                    self.exchange_one_ask = book_data.asks[0].price;
+                }
+                ExchangeId::PoloniexSpot => {
+                    self.exchange_two_bid = book_data.bids[0].price;
+                    self.exchange_two_ask = book_data.asks[0].price;
+                }
+            },
+            // DataKind::Trade(trade) => {
+            //     println!("Trade {:?}: {:?}", market.exchange, trade.trade.price)
+            // }
             _ => return None,
-        };
+        }
+        let bid_spread = (self.exchange_one_bid - self.exchange_two_bid).abs();
+        let signals = SpreadStategy::generate_signal_map(bid_spread);
 
-        match market.exchange {
-            ExchangeId::BinanceSpot => {
-                self.exchange_one_bid = book_data.bids[0].price;
-                self.exchange_one_ask = book_data.asks[0].price;
-            }
-            ExchangeId::PoloniexSpot => {
-                self.exchange_two_bid = book_data.bids[0].price;
-                self.exchange_two_ask = book_data.asks[0].price;
-            }
+        if signals.is_empty() {
+            return None;
         }
 
-        let bid_spread = (self.exchange_one_bid - self.exchange_two_bid).abs();
-        let ask_spread = (self.exchange_one_ask - self.exchange_two_ask).abs();
+        Some(Signal {
+            time: Utc::now(),
+            exchange: market.exchange,
+            instrument: market.symbol.clone(),
+            signals,
+        })
+    }
+}
 
-        println!("Bid spread: {}", bid_spread);
-        println!("Ask spread: {}", ask_spread);
+impl SpreadStategy {
+    pub fn generate_signal_map(bid_spread: f64) -> HashMap<Decision, SignalStrength> {
+        let mut signals = HashMap::with_capacity(4);
+        if bid_spread > 0.001 {
+            signals.insert(Decision::Long, SignalStrength(1.0));
+        }
 
-        None
+        if bid_spread < 0.0001 {
+            signals.insert(Decision::Short, SignalStrength(-1.0));
+        }
+
+        println!("{:#?}", signals);
+
+        signals
     }
 }
