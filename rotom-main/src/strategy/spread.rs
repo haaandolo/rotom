@@ -30,6 +30,8 @@ impl Default for SpreadStategy {
 }
 
 impl SignalGenerator for SpreadStategy {
+    // Note: rn the exchange dont send data at the same time
+    // make sure to implement some logic that takes in takes this into account
     fn generate_signal(&mut self, market: &MarketEvent<DataKind>) -> Option<Signal> {
         match &market.event_data {
             DataKind::OrderBook(book_data) => match market.exchange {

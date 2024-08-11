@@ -4,6 +4,7 @@ use super::error::EngineError;
 use crate::{
     data::{Feed, MarketGenerator},
     event::Event,
+    execution::ExecutionClient,
     strategy::SignalGenerator,
 };
 use rotom_data::event_models::market_event::{DataKind, MarketEvent};
@@ -11,42 +12,48 @@ use rotom_data::event_models::market_event::{DataKind, MarketEvent};
 /*----- */
 // Trader Lego
 /*----- */
-pub struct TraderLego<Data, Strategy>
+pub struct TraderLego<Data, Strategy, Execution>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
+    Execution: ExecutionClient,
 {
     pub data: Data,
     pub stategy: Strategy,
+    pub execution: Execution,
 }
 
 /*----- */
 // Trader
 /*----- */
-pub struct Trader<Data, Strategy>
+pub struct Trader<Data, Strategy, Execution>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
+    Execution: ExecutionClient,
 {
     pub data: Data,
     pub stategy: Strategy,
+    pub execution: Execution,
     pub event_queue: VecDeque<Event>,
 }
 
-impl<Data, Strategy> Trader<Data, Strategy>
+impl<Data, Strategy, Execution> Trader<Data, Strategy, Execution>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
+    Execution: ExecutionClient,
 {
-    pub fn new(lego: TraderLego<Data, Strategy>) -> Self {
+    pub fn new(lego: TraderLego<Data, Strategy, Execution>) -> Self {
         Self {
             data: lego.data,
             stategy: lego.stategy,
+            execution: lego.execution,
             event_queue: VecDeque::with_capacity(4),
         }
     }
 
-    pub fn builder() -> TraderBuilder<Data, Strategy> {
+    pub fn builder() -> TraderBuilder<Data, Strategy, Execution> {
         TraderBuilder::new()
     }
 
@@ -72,7 +79,10 @@ where
                             self.event_queue.push_back(Event::Signal(signal))
                         }
                     }
-                    Event::Signal(_signal) => (),
+                    Event::Signal(_signal) => {
+                        // self.event_queue.push_back(Event::OrderNew(signal))
+                    }
+                    _ => {}
                 }
             }
         }
@@ -83,24 +93,28 @@ where
 // Trader builder
 /*----- */
 #[derive(Debug, Default)]
-pub struct TraderBuilder<Data, Strategy>
+pub struct TraderBuilder<Data, Strategy, Execution>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
+    Execution: ExecutionClient,
 {
     pub data: Option<Data>,
     pub strategy: Option<Strategy>,
+    pub execution: Option<Execution>,
 }
 
-impl<Data, Strategy> TraderBuilder<Data, Strategy>
+impl<Data, Strategy, Execution> TraderBuilder<Data, Strategy, Execution>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
+    Execution: ExecutionClient,
 {
     pub fn new() -> Self {
         Self {
             data: None,
             strategy: None,
+            execution: None,
         }
     }
 
@@ -118,12 +132,22 @@ where
         }
     }
 
-    pub fn build(self) -> Result<Trader<Data, Strategy>, EngineError> {
+    pub fn execution(self, value: Execution) -> Self {
+        Self {
+            execution: Some(value),
+            ..self
+        }
+    }
+
+    pub fn build(self) -> Result<Trader<Data, Strategy, Execution>, EngineError> {
         Ok(Trader {
             data: self.data.ok_or(EngineError::BuilderIncomplete("data"))?,
             stategy: self
                 .strategy
                 .ok_or(EngineError::BuilderIncomplete("strategy"))?,
+            execution: self
+                .execution
+                .ok_or(EngineError::BuilderIncomplete("execution"))?,
             event_queue: VecDeque::with_capacity(2),
         })
     }

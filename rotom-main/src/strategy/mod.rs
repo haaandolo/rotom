@@ -31,7 +31,7 @@ pub struct SignalStrength(pub f64);
 /*----- */
 // Decision
 /*----- */
-#[derive(Debug, Eq, PartialEq, Hash)]
+#[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub enum Decision {
     Long,
     CloseLong,

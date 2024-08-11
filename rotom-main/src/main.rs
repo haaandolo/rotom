@@ -4,7 +4,7 @@ use rotom_data::{
     shared::subscription_models::{ExchangeId, StreamKind},
     streams::builder::dynamic,
 };
-use rotom_main::{data::live, engine::trader::Trader, strategy::spread::SpreadStategy};
+use rotom_main::{data::live, engine::trader::Trader, execution::{simulated::{Config, SimulatedExecution}, Fees}, strategy::spread::SpreadStategy};
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 
 /*----- */
@@ -19,6 +19,13 @@ pub async fn main() {
     let trader = Trader::builder()
         .data(live::MarketFeed::new(stream_trades().await))
         .strategy(SpreadStategy::default())
+        .execution(SimulatedExecution::new(Config {
+            simulated_fees_pct : Fees {
+                exchange: 0.01,
+                slippage: 0.05,
+                network: 0.0
+            }
+        }))
         .build()
         .unwrap();
 
