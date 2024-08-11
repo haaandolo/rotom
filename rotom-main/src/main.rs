@@ -4,7 +4,15 @@ use rotom_data::{
     shared::subscription_models::{ExchangeId, StreamKind},
     streams::builder::dynamic,
 };
-use rotom_main::{data::live, engine::trader::Trader, execution::{simulated::{Config, SimulatedExecution}, Fees}, strategy::spread::SpreadStategy};
+use rotom_main::{
+    data::live,
+    engine::trader::Trader,
+    execution::{
+        simulated::{Config, SimulatedExecution},
+        Fees,
+    },
+    strategy::spread::SpreadStategy,
+};
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 
 /*----- */
@@ -20,11 +28,11 @@ pub async fn main() {
         .data(live::MarketFeed::new(stream_trades().await))
         .strategy(SpreadStategy::default())
         .execution(SimulatedExecution::new(Config {
-            simulated_fees_pct : Fees {
+            simulated_fees_pct: Fees {
                 exchange: 0.01,
                 slippage: 0.05,
-                network: 0.0
-            }
+                network: 0.0,
+            },
         }))
         .build()
         .unwrap();
@@ -38,9 +46,9 @@ pub async fn main() {
 async fn stream_trades() -> UnboundedReceiver<MarketEvent<DataKind>> {
     let streams = dynamic::DynamicStreams::init([vec![
         (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::L2),
-        (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::L2),
+        // (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::L2),
         (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::Trades),
-        (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::Trades),
+        // (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::Trades),
     ]])
     .await
     .unwrap();
@@ -50,6 +58,7 @@ async fn stream_trades() -> UnboundedReceiver<MarketEvent<DataKind>> {
     let (tx, rx) = mpsc::unbounded_channel();
     tokio::spawn(async move {
         while let Some(event) = data.next().await {
+            println!("{:?}", event);
             let _ = tx.send(event);
         }
     });

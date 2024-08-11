@@ -8,7 +8,8 @@ use super::{ExchangeTransformer, Transformer};
 use crate::error::SocketError;
 use crate::event_models::market_event::MarketEvent;
 use crate::event_models::SubKind;
-use crate::shared::subscription_models::Instrument;
+use crate::exchange::Connector;
+use crate::shared::subscription_models::{ExchangeSubscription, Instrument};
 
 /*----- */
 // Stateless transformer
@@ -40,14 +41,17 @@ where
 // Impl ExchangeTransformer for StatelessTransformer
 /*----- */
 #[async_trait]
-impl<DeStruct, StreamKind> ExchangeTransformer<DeStruct, StreamKind>
+impl<Exchange, DeStruct, StreamKind> ExchangeTransformer<Exchange, DeStruct, StreamKind>
     for StatelessTransformer<DeStruct, StreamKind>
 where
+    Exchange: Connector + Sync,
     StreamKind: SubKind,
     DeStruct: Send + for<'de> Deserialize<'de>,
     MarketEvent<StreamKind::Event>: From<DeStruct>,
 {
-    async fn new(subs: &[Instrument]) -> Result<Self, SocketError> {
+    async fn new(
+        subs: &[ExchangeSubscription<Exchange, Exchange::Channel, Exchange::Market>],
+    ) -> Result<Self, SocketError> {
         let instrument_map = Map(HashMap::with_capacity(subs.len()));
         Ok(Self {
             instrument_map,

@@ -5,9 +5,9 @@ use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 use crate::{
     assets::orderbook::OrderBook,
     error::SocketError,
-    event_models::{market_event::MarketEvent, event_book::EventOrderBook, SubKind},
-    exchange::Identifier,
-    shared::subscription_models::Instrument,
+    event_models::{event_book::EventOrderBook, market_event::MarketEvent, SubKind},
+    exchange::{Connector, Identifier},
+    shared::subscription_models::{ExchangeSubscription, Instrument},
 };
 
 use super::{ExchangeTransformer, Transformer};
@@ -75,34 +75,36 @@ where
 // Impl ExchangeTransformer for MultiBookTransformer
 /*----- */
 #[async_trait]
-impl<Updater, StreamKind> ExchangeTransformer<Updater::UpdateEvent, StreamKind>
+impl<Exchange, Updater, StreamKind> ExchangeTransformer<Exchange, Updater::UpdateEvent, StreamKind>
     for MultiBookTransformer<Updater::UpdateEvent, Updater, StreamKind>
 where
+    Exchange: Connector + Sync,
+    Exchange::Market: AsRef<str>,
     StreamKind: SubKind<Event = EventOrderBook>,
     Updater: OrderBookUpdater<OrderBook = OrderBook> + Debug,
     Updater::UpdateEvent: Identifier<String> + for<'de> Deserialize<'de>,
 {
-    async fn new(subs: &[Instrument]) -> Result<Self, SocketError> {
-        let init_orderbooks = subs
+    async fn new(
+        subs: &[ExchangeSubscription<Exchange, Exchange::Channel, Exchange::Market>],
+    ) -> Result<Self, SocketError> {
+        let (symbols, init_orderbooks): (Vec<_>, Vec<_>) = subs
             .iter()
-            .map(|sub| Updater::init(sub))
-            .collect::<Vec<_>>();
+            .map(|sub| {
+                (
+                    String::from(sub.market.as_ref()),
+                    Updater::init(&sub.instrument),
+                )
+            })
+            .unzip();
 
         let init_orderbooks = futures::future::join_all(init_orderbooks)
             .await
             .into_iter()
             .collect::<Result<Vec<InstrumentOrderBook<Updater>>, SocketError>>()?;
 
-        let book_map = init_orderbooks
+        let book_map = symbols
             .into_iter()
-            .map(|instrument_orderbook| {
-                let map_key = format!(
-                    "{}{}",
-                    &instrument_orderbook.instrument.base, &instrument_orderbook.instrument.quote
-                )
-                .to_lowercase();
-                (map_key, instrument_orderbook)
-            })
+            .zip(init_orderbooks.into_iter())
             .collect::<HashMap<String, InstrumentOrderBook<Updater>>>();
 
         let orderbooks = Map(book_map);

@@ -4,9 +4,11 @@ pub mod stateless_transformer;
 use async_trait::async_trait;
 use serde::Deserialize;
 
+use crate::{exchange::Connector, shared::subscription_models::ExchangeSubscription};
+
 use super::{
     error::SocketError,
-    event_models::{market_event::MarketEvent,  SubKind}, shared::subscription_models::Instrument
+    event_models::{market_event::MarketEvent, SubKind},
 };
 
 /*----- */
@@ -24,11 +26,14 @@ pub trait Transformer {
 // Exchange transformer
 /*----- */
 #[async_trait]
-pub trait ExchangeTransformer<DeStruct, StreamKind>
+pub trait ExchangeTransformer<Exchange, DeStruct, StreamKind>
 where
     Self: Transformer<Input = DeStruct, Output = MarketEvent<StreamKind::Event>, Error = SocketError>
         + Sized,
     StreamKind: SubKind,
+    Exchange: Connector,
 {
-    async fn new(subs: &[Instrument]) -> Result<Self, SocketError>;
+    async fn new(
+        subs: &[ExchangeSubscription<Exchange, Exchange::Channel, Exchange::Market>],
+    ) -> Result<Self, SocketError>;
 }

@@ -44,7 +44,7 @@ impl WebSocketClient {
     where
         StreamKind: SubKind,
         Exchange: Connector + StreamSelector<Exchange, StreamKind> + Send + Clone + Debug + Sync,
-        Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind>,
+        Exchange::StreamTransformer: ExchangeTransformer<Exchange, Exchange::Stream, StreamKind>,
         Subscription<Exchange, StreamKind>:
             Identifier<Exchange::Channel> + Identifier<Exchange::Market> + Debug,
     {
@@ -85,7 +85,7 @@ impl WebSocketClient {
             .map(|sub| sub.instrument.clone())
             .collect::<Vec<_>>();
 
-        let transformer = Exchange::StreamTransformer::new(&instruments).await?;
+        let transformer = Exchange::StreamTransformer::new(&exchange_subs).await?;
 
         // Log connection success message
         info!(

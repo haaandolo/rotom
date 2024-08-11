@@ -36,7 +36,7 @@ where
     where
         SubIter: IntoIterator<Item = Sub>,
         Sub: Into<Subscription<Exchange, StreamKind>>,
-        Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind>,
+        Exchange::StreamTransformer: ExchangeTransformer<Exchange, Exchange::Stream, StreamKind>,
         Exchange: Connector
             + Send
             + StreamSelector<Exchange, StreamKind>

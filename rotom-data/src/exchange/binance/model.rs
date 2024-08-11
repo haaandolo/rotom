@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 use crate::{
     assets::level::Level, error::SocketError, event_models::{event_trade::EventTrade, market_event::MarketEvent}, exchange::Identifier, shared::{
-        de::{de_str, de_str_symbol, de_u64_epoch_ms_as_datetime_utc, deserialize_non_empty_vec},
+        de::{de_str, de_u64_epoch_ms_as_datetime_utc, deserialize_non_empty_vec},
         subscription_models::ExchangeId,
         utils::snapshot_symbol_default_value,
     }, streams::validator::Validator
@@ -30,7 +30,7 @@ pub struct BinanceSpotSnapshot {
 #[derive(PartialEq, PartialOrd, Debug, Deserialize, Default)]
 pub struct BinanceSpotBookUpdate {
     #[serde(alias = "s")]
-    #[serde(alias = "p", deserialize_with = "de_str_symbol")]
+    #[serde(alias = "p")]
     pub symbol: String,
     #[serde(alias = "U")]
     pub first_update_id: u64,
@@ -55,7 +55,6 @@ impl Identifier<String> for BinanceSpotBookUpdate {
 /*----- */
 #[derive(PartialEq, PartialOrd, Debug, Deserialize, Default)]
 pub struct BinanceTrade {
-    #[serde(alias = "s", deserialize_with = "de_str_symbol")]
     pub symbol: String,
     #[serde(alias = "T", deserialize_with = "de_u64_epoch_ms_as_datetime_utc")]
     pub timestamp: DateTime<Utc>,

@@ -76,8 +76,6 @@ impl SpreadStategy {
             signals.insert(Decision::Short, SignalStrength(-1.0));
         }
 
-        println!("{:#?}", signals);
-
         signals
     }
 }

@@ -6,7 +6,7 @@ pub struct PoloniexMarket(pub String);
 
 impl<StreamKind> Identifier<PoloniexMarket> for Subscription<PoloniexSpot, StreamKind> {
     fn id(&self) -> PoloniexMarket {
-        PoloniexMarket(format!("{}_{}", self.instrument.base, self.instrument.quote).to_lowercase())
+        PoloniexMarket(format!("{}_{}", self.instrument.base, self.instrument.quote).to_uppercase())
     }
 }
 

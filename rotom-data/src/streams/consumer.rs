@@ -24,7 +24,7 @@ pub async fn consume<Exchange, StreamKind>(
 where
     StreamKind: SubKind,
     Exchange: Connector + Send + StreamSelector<Exchange, StreamKind> + Debug + Clone + Sync,
-    Exchange::StreamTransformer: ExchangeTransformer<Exchange::Stream, StreamKind>,
+    Exchange::StreamTransformer: ExchangeTransformer<Exchange, Exchange::Stream, StreamKind>,
     Subscription<Exchange, StreamKind>:
         Identifier<Exchange::Channel> + Identifier<Exchange::Market> + Debug,
 {
