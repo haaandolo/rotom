@@ -9,7 +9,6 @@ use super::{event_book::EventOrderBook, event_trade::EventTrade};
 pub enum DataKind {
     Trade(EventTrade),
     OrderBook(EventOrderBook),
-    Default,
 }
 
 #[derive(Debug)]

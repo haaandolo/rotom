@@ -30,7 +30,6 @@ pub struct BinanceSpotSnapshot {
 #[derive(PartialEq, PartialOrd, Debug, Deserialize, Default)]
 pub struct BinanceSpotBookUpdate {
     #[serde(alias = "s")]
-    #[serde(alias = "p")]
     pub symbol: String,
     #[serde(alias = "U")]
     pub first_update_id: u64,
@@ -55,6 +54,7 @@ impl Identifier<String> for BinanceSpotBookUpdate {
 /*----- */
 #[derive(PartialEq, PartialOrd, Debug, Deserialize, Default)]
 pub struct BinanceTrade {
+    #[serde(alias = "s")]
     pub symbol: String,
     #[serde(alias = "T", deserialize_with = "de_u64_epoch_ms_as_datetime_utc")]
     pub timestamp: DateTime<Utc>,
