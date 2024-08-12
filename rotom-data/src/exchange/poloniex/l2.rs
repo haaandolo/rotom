@@ -6,12 +6,9 @@ use super::model::{PoloniexSpotBookData, PoloniexSpotBookUpdate};
 use crate::{
     assets::orderbook::OrderBook,
     error::SocketError,
-    event_models::{market_event::MarketEvent, event_book::EventOrderBook},
+    event_models::event_book::EventOrderBook,
     exchange::poloniex::model::PoloniexSpotTickerInfo,
-    shared::{
-        subscription_models::{ExchangeId, Instrument},
-        utils::decimal_places_to_number,
-    },
+    shared::{subscription_models::Instrument, utils::decimal_places_to_number},
     transformer::book::{InstrumentOrderBook, OrderBookUpdater},
 };
 
@@ -72,7 +69,7 @@ impl OrderBookUpdater for PoloniexSpotBookUpdater {
         &mut self,
         book: &mut Self::OrderBook,
         mut update: Self::UpdateEvent,
-    ) -> Result<Option<MarketEvent<EventOrderBook>>, SocketError> {
+    ) -> Result<Option<EventOrderBook>, SocketError> {
         let update_data = mem::take(&mut update.data[0]); // TODO
         if update.action == "snapshot" {
             book.reset();
@@ -87,14 +84,7 @@ impl OrderBookUpdater for PoloniexSpotBookUpdater {
 
             self.prev_last_update_id = update_data.id;
 
-            let book_snapshot = book.book_snapshot();
-            Ok(Some(MarketEvent {
-                exchange_time: book.last_update_time,
-                received_time: Utc::now(),
-                exchange: ExchangeId::PoloniexSpot,
-                symbol: update_data.symbol,
-                event_data: book_snapshot,
-            }))
+            Ok(Some(book.book_snapshot()))
         }
     }
 }

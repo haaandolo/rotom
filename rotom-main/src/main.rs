@@ -87,5 +87,6 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
+// - update rotom data documentation
 // - Start work on the portfolio
 // - Forced exit logic

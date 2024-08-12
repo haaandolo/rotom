@@ -59,7 +59,7 @@ impl SignalGenerator for SpreadStategy {
         Some(Signal {
             time: Utc::now(),
             exchange: market.exchange,
-            instrument: market.symbol.clone(),
+            instrument: market.instrument.clone(),
             signals,
         })
     }

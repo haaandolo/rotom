@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use chrono::Utc;
 use serde::Deserialize;
 use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 
@@ -36,9 +37,9 @@ impl<T> Map<T> {
 // Multi-book transformer
 /*----- */
 #[derive(Debug, Default)]
-pub struct MultiBookTransformer<DeStruct, Updater, StreamKind> {
+pub struct MultiBookTransformer<Exchange, Updater, StreamKind> {
     pub orderbooks: Map<InstrumentOrderBook<Updater>>,
-    marker: PhantomData<(DeStruct, StreamKind)>,
+    marker: PhantomData<(Exchange, StreamKind)>,
 }
 
 /*----- */
@@ -68,7 +69,7 @@ where
         &mut self,
         book: &mut Self::OrderBook,
         update: Self::UpdateEvent,
-    ) -> Result<Option<MarketEvent<EventOrderBook>>, SocketError>;
+    ) -> Result<Option<EventOrderBook>, SocketError>;
 }
 
 /*----- */
@@ -76,7 +77,7 @@ where
 /*----- */
 #[async_trait]
 impl<Exchange, Updater, StreamKind> ExchangeTransformer<Exchange, Updater::UpdateEvent, StreamKind>
-    for MultiBookTransformer<Updater::UpdateEvent, Updater, StreamKind>
+    for MultiBookTransformer<Exchange, Updater, StreamKind>
 where
     Exchange: Connector + Sync,
     Exchange::Market: AsRef<str>,
@@ -119,9 +120,10 @@ where
 /*----- */
 // Impl Transformer for MultiBookTransformer
 /*----- */
-impl<Updater, StreamKind> Transformer
-    for MultiBookTransformer<Updater::UpdateEvent, Updater, StreamKind>
+impl<Exchange, Updater, StreamKind> Transformer
+    for MultiBookTransformer<Exchange, Updater, StreamKind>
 where
+    Exchange: Connector,
     StreamKind: SubKind<Event = EventOrderBook>,
     Updater: OrderBookUpdater<OrderBook = OrderBook> + Debug,
     Updater::UpdateEvent: Identifier<String> + for<'de> Deserialize<'de>,
@@ -138,13 +140,19 @@ where
                 })?;
 
         let InstrumentOrderBook {
-            instrument: _,
+            instrument,
             book,
             updater,
         } = instrument_orderbook;
 
         match updater.update(book, update) {
-            Ok(Some(book)) => Ok(book),
+            Ok(Some(book)) => Ok(MarketEvent {
+                exchange_time: book.last_update_time,
+                received_time: Utc::now(),
+                exchange: Exchange::ID,
+                instrument: instrument.clone(),
+                event_data: book,
+            }),
             Ok(None) => Err(SocketError::TransformerNone),
             Err(error) => Err(error),
         }

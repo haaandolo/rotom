@@ -4,7 +4,6 @@ use chrono::Utc;
 use super::model::{BinanceSpotBookUpdate, BinanceSpotSnapshot};
 use crate::assets::orderbook::OrderBook;
 use crate::error::SocketError;
-use crate::event_models::market_event::MarketEvent;
 use crate::event_models::event_book::EventOrderBook;
 use crate::exchange::binance::model::BinanceSpotTickerInfo;
 use crate::exchange::binance::model::Filter;
@@ -133,7 +132,7 @@ impl OrderBookUpdater for BinanceSpotBookUpdater {
         &mut self,
         book: &mut Self::OrderBook,
         update: Self::UpdateEvent,
-    ) -> Result<Option<MarketEvent<EventOrderBook>>, SocketError> {
+    ) -> Result<Option<EventOrderBook>, SocketError> {
         if update.last_update_id <= self.last_update_id {
             return Ok(None);
         }
@@ -151,15 +150,8 @@ impl OrderBookUpdater for BinanceSpotBookUpdater {
         self.prev_last_update_id = self.last_update_id;
         self.last_update_id = update.last_update_id;
 
-        let book_snapshot = book.book_snapshot();
+        Ok(Some(book.book_snapshot()))
 
-        Ok(Some(MarketEvent {
-            exchange_time: book.last_update_time,
-            received_time: Utc::now(),
-            exchange: ExchangeId::BinanceSpot,
-            symbol: update.symbol,
-            event_data: book_snapshot,
-        }))
     }
 }
 

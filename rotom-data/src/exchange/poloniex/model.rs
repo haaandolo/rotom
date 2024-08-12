@@ -3,10 +3,15 @@ use serde::Deserialize;
 use std::mem;
 
 use crate::{
-    assets::level::Level, error::SocketError, event_models::{event_trade::EventTrade, market_event::MarketEvent}, exchange::Identifier, shared::{
+    assets::level::Level,
+    error::SocketError,
+    event_models::{event_trade::EventTrade, market_event::MarketEvent},
+    exchange::Identifier,
+    shared::{
         de::{de_str, de_u64_epoch_ms_as_datetime_utc, deserialize_non_empty_vec},
-        subscription_models::ExchangeId,
-    }, streams::validator::Validator
+        subscription_models::{ExchangeId, Instrument},
+    },
+    streams::validator::Validator,
 };
 
 /*----- */
@@ -71,14 +76,20 @@ pub struct PoloniexTrade {
     pub data: [PoloniexTradeData; 1],
 }
 
-impl From<PoloniexTrade> for MarketEvent<EventTrade> {
-    fn from(mut value: PoloniexTrade) -> Self {
+impl Identifier<String> for PoloniexTrade {
+    fn id(&self) -> String {
+        self.data[0].symbol.clone()
+    }
+}
+
+impl From<(PoloniexTrade, Instrument)> for MarketEvent<EventTrade> {
+    fn from((mut value, instrument): (PoloniexTrade, Instrument)) -> Self {
         let data = mem::take(&mut value.data[0]);
         Self {
             exchange_time: data.timestamp,
             received_time: Utc::now(),
             exchange: ExchangeId::PoloniexSpot,
-            symbol: data.symbol,
+            instrument,
             event_data: EventTrade::new(Level::new(data.price, data.quantity), data.is_buy),
         }
     }

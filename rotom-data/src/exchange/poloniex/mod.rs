@@ -64,10 +64,10 @@ impl Connector for PoloniexSpot {
 impl StreamSelector<PoloniexSpot, OrderBookL2> for PoloniexSpot {
     type Stream = PoloniexSpotBookUpdate;
     type StreamTransformer =
-        MultiBookTransformer<Self::Stream, PoloniexSpotBookUpdater, OrderBookL2>;
+        MultiBookTransformer<PoloniexSpot, PoloniexSpotBookUpdater, OrderBookL2>;
 }
 
 impl StreamSelector<PoloniexSpot, Trades> for PoloniexSpot {
     type Stream = PoloniexTrade;
-    type StreamTransformer = StatelessTransformer<Self::Stream, Trades>;
+    type StreamTransformer = StatelessTransformer<PoloniexSpot, Self::Stream, Trades>;
 }

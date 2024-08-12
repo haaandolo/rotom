@@ -2,11 +2,16 @@ use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
 use crate::{
-    assets::level::Level, error::SocketError, event_models::{event_trade::EventTrade, market_event::MarketEvent}, exchange::Identifier, shared::{
+    assets::level::Level,
+    error::SocketError,
+    event_models::{event_trade::EventTrade, market_event::MarketEvent},
+    exchange::Identifier,
+    shared::{
         de::{de_str, de_u64_epoch_ms_as_datetime_utc, deserialize_non_empty_vec},
-        subscription_models::ExchangeId,
+        subscription_models::{ExchangeId, Instrument},
         utils::snapshot_symbol_default_value,
-    }, streams::validator::Validator
+    },
+    streams::validator::Validator,
 };
 
 /*----- */
@@ -68,13 +73,19 @@ pub struct BinanceTrade {
     pub side: bool,
 }
 
-impl From<BinanceTrade> for MarketEvent<EventTrade> {
-    fn from(event: BinanceTrade) -> Self {
+impl Identifier<String> for BinanceTrade {
+    fn id(&self) -> String {
+        self.symbol.clone()
+    }
+}
+
+impl From<(BinanceTrade, Instrument)> for MarketEvent<EventTrade> {
+    fn from((event, instrument): (BinanceTrade, Instrument)) -> Self {
         Self {
             exchange_time: event.timestamp,
             received_time: Utc::now(),
             exchange: ExchangeId::BinanceSpot,
-            symbol: event.symbol,
+            instrument,
             event_data: EventTrade::new(Level::new(event.price, event.amount), event.side),
         }
     }
