@@ -45,9 +45,9 @@ pub async fn main() {
 /*----- */
 async fn stream_trades() -> UnboundedReceiver<MarketEvent<DataKind>> {
     let streams = dynamic::DynamicStreams::init([vec![
-        // (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::L2),
+        (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::L2),
         (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::L2),
-        // (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::Trades),
+        (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::Trades),
         (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::Trades),
     ]])
     .await
@@ -83,3 +83,8 @@ fn init_logging() {
         // Install this Tracing subscriber as global default
         .init()
 }
+
+/*----- */
+// Todo
+/*----- */
+// - Start work on the portfolio

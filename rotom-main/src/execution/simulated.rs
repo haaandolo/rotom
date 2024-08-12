@@ -1,6 +1,6 @@
 use chrono::Utc;
 
-use crate::portfolio::OrderEvent;
+use crate::oms::OrderEvent;
 
 use super::{error::ExecutionError, ExecutionClient, Fees, FillEvent};
 

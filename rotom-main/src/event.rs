@@ -1,4 +1,4 @@
-use crate::{portfolio::OrderEvent, strategy::Signal};
+use crate::{oms::OrderEvent, strategy::Signal};
 use rotom_data::event_models::market_event::{DataKind, MarketEvent};
 
 pub enum Event {

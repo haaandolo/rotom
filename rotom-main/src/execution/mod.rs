@@ -5,7 +5,7 @@ use chrono::{DateTime, Utc};
 use error::ExecutionError;
 use rotom_data::shared::subscription_models::ExchangeId;
 
-use crate::{data::MarketMeta, portfolio::OrderEvent, strategy::Decision};
+use crate::{data::MarketMeta, oms::OrderEvent, strategy::Decision};
 
 
 /*----- */
