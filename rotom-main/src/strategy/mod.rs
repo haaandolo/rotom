@@ -31,7 +31,7 @@ pub struct SignalStrength(pub f64);
 /*----- */
 // Decision
 /*----- */
-#[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
+#[derive(Debug, Eq, PartialEq, PartialOrd, Hash, Clone, Copy)]
 pub enum Decision {
     Long,
     CloseLong,
@@ -60,3 +60,8 @@ impl Decision {
 /*----- */
 // Forced signal
 /*----- */
+pub struct SignalForceExit {
+    pub time: DateTime<Utc>,
+    pub exchange: ExchangeId,
+    pub instrument: Instrument
+}

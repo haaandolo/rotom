@@ -3,7 +3,8 @@ pub mod error;
 
 use chrono::{DateTime, Utc};
 use error::ExecutionError;
-use rotom_data::shared::subscription_models::ExchangeId;
+use rotom_data::shared::subscription_models::{ExchangeId, Instrument};
+use serde::{Deserialize, Serialize};
 
 use crate::{data::MarketMeta, oms::OrderEvent, strategy::Decision};
 
@@ -18,11 +19,11 @@ pub trait ExecutionClient {
 /*----- */
 // Fill Event
 /*----- */
-#[derive(Debug)]
+#[derive(Debug, PartialEq, PartialOrd)]
 pub struct FillEvent {
     pub time: DateTime<Utc>,
     pub exchange: ExchangeId,
-    pub instrument: String,
+    pub instrument: Instrument,
     pub market_meta: MarketMeta,
     pub decision: Decision,
     pub quantity: f64,
@@ -30,7 +31,7 @@ pub struct FillEvent {
     pub fees: Fees,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, PartialOrd, Clone, Deserialize, Serialize)]
 pub struct Fees {
     pub exchange: FeeAmount,
     pub slippage: FeeAmount,
@@ -54,7 +55,7 @@ pub type FeeAmount = f64;
 pub struct FillEventBuilder {
     pub time: Option<DateTime<Utc>>,
     pub exchange: Option<ExchangeId>,
-    pub instrument: Option<String>,
+    pub instrument: Option<Instrument>,
     pub market_meta: Option<MarketMeta>,
     pub decision: Option<Decision>,
     pub quantity: Option<f64>,
@@ -81,7 +82,7 @@ impl FillEventBuilder {
         }
     }
 
-    pub fn instrument(self, value: String) -> Self {
+    pub fn instrument(self, value: Instrument) -> Self {
         Self {
             instrument: Some(value),
             ..self

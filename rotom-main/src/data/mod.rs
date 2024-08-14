@@ -17,7 +17,7 @@ pub enum Feed<Event> {
 /*----- */
 // Market metadata
 /*----- */
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct MarketMeta {
     pub close: f64,
     pub time: DateTime<Utc>

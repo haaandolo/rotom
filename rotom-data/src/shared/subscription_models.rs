@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
 use crate::exchange::{Connector, Identifier};
@@ -6,7 +6,7 @@ use crate::exchange::{Connector, Identifier};
 /*----- */
 // Instrument model
 /*----- */
-#[derive(Default, Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Default, Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Deserialize, Serialize)]
 pub struct Instrument {
     pub base: String,
     pub quote: String,
@@ -99,7 +99,7 @@ where
 /*----- */
 // Exchange IDs
 /*----- */
-#[derive(Debug, PartialEq, Hash, Eq, Clone, Copy, Ord, PartialOrd)]
+#[derive(Debug, PartialEq, Hash, Eq, Clone, Copy, Ord, PartialOrd, Deserialize)]
 pub enum ExchangeId {
     BinanceSpot,
     PoloniexSpot,
