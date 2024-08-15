@@ -1,59 +1,63 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque, sync::Arc};
 
 use super::error::EngineError;
 use crate::{
-    data::{Feed, MarketGenerator},
-    event::Event,
-    execution::ExecutionClient,
-    strategy::SignalGenerator,
+    data::{Feed, MarketGenerator}, event::Event, execution::ExecutionClient, oms::{FillUpdater, MarketUpdater, OrderGenerator}, strategy::SignalGenerator
 };
+use futures::lock::Mutex;
 use rotom_data::event_models::market_event::{DataKind, MarketEvent};
 
 /*----- */
 // Trader Lego
 /*----- */
-pub struct TraderLego<Data, Strategy, Execution>
+pub struct TraderLego<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
     Execution: ExecutionClient,
+    Portfolio: MarketUpdater + OrderGenerator + FillUpdater
 {
     pub data: Data,
     pub stategy: Strategy,
     pub execution: Execution,
+    pub porfolio: Arc<Mutex<Portfolio>>,
 }
 
 /*----- */
 // Trader
 /*----- */
-pub struct Trader<Data, Strategy, Execution>
+pub struct Trader<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
     Execution: ExecutionClient,
+    Portfolio: MarketUpdater + OrderGenerator + FillUpdater
 {
     pub data: Data,
     pub stategy: Strategy,
     pub execution: Execution,
     pub event_queue: VecDeque<Event>,
+    pub portfolio: Arc<Mutex<Portfolio>>
 }
 
-impl<Data, Strategy, Execution> Trader<Data, Strategy, Execution>
+impl<Data, Strategy, Execution, Portfolio> Trader<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
     Execution: ExecutionClient,
+    Portfolio: MarketUpdater + OrderGenerator + FillUpdater
 {
-    pub fn new(lego: TraderLego<Data, Strategy, Execution>) -> Self {
+    pub fn new(lego: TraderLego<Data, Strategy, Execution, Portfolio>) -> Self {
         Self {
             data: lego.data,
             stategy: lego.stategy,
             execution: lego.execution,
             event_queue: VecDeque::with_capacity(4),
+            portfolio: lego.porfolio
         }
     }
 
-    pub fn builder() -> TraderBuilder<Data, Strategy, Execution> {
+    pub fn builder() -> TraderBuilder<Data, Strategy, Execution, Portfolio> {
         TraderBuilder::new()
     }
 
@@ -93,28 +97,32 @@ where
 // Trader builder
 /*----- */
 #[derive(Debug, Default)]
-pub struct TraderBuilder<Data, Strategy, Execution>
+pub struct TraderBuilder<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
     Execution: ExecutionClient,
+    Portfolio: MarketUpdater + OrderGenerator + FillUpdater
 {
     pub data: Option<Data>,
     pub strategy: Option<Strategy>,
     pub execution: Option<Execution>,
+    pub portfolio: Option<Arc<Mutex<Portfolio>>>
 }
 
-impl<Data, Strategy, Execution> TraderBuilder<Data, Strategy, Execution>
+impl<Data, Strategy, Execution, Portfolio> TraderBuilder<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
     Execution: ExecutionClient,
+    Portfolio: MarketUpdater + OrderGenerator + FillUpdater
 {
     pub fn new() -> Self {
         Self {
             data: None,
             strategy: None,
             execution: None,
+            portfolio: None
         }
     }
 
@@ -139,7 +147,14 @@ where
         }
     }
 
-    pub fn build(self) -> Result<Trader<Data, Strategy, Execution>, EngineError> {
+    pub fn portfolio(self, value: Arc<Mutex<Portfolio>>) -> Self {
+        Self {
+            portfolio: Some(value),
+            ..self
+        }
+    }
+
+    pub fn build(self) -> Result<Trader<Data, Strategy, Execution, Portfolio>, EngineError> {
         Ok(Trader {
             data: self.data.ok_or(EngineError::BuilderIncomplete("data"))?,
             stategy: self
@@ -149,6 +164,7 @@ where
                 .execution
                 .ok_or(EngineError::BuilderIncomplete("execution"))?,
             event_queue: VecDeque::with_capacity(2),
+            portfolio: self.portfolio.ok_or(EngineError::BuilderIncomplete("portfolio"))?
         })
     }
 }

@@ -7,8 +7,9 @@ use crate::oms::{
     Balance, BalanceId,
 };
 
-use super::{determine_exited_positions_id, error::RepositoryError, BalanceHandler, PositionHandler};
-
+use super::{
+    determine_exited_positions_id, error::RepositoryError, BalanceHandler, PositionHandler,
+};
 
 /*----- */
 // InMemoryRepository
@@ -20,6 +21,15 @@ pub struct InMemoryRepository {
     current_balance: HashMap<BalanceId, Balance>, // TODO: Statistics
 }
 
+impl InMemoryRepository {
+    pub fn new() -> Self {
+        Self {
+            open_positions: HashMap::new(),
+            closed_positions: HashMap::new(),
+            current_balance: HashMap::new(),
+        }
+    }
+}
 /*----- */
 // Impl PositionHandler for InMemoryRepository
 /*----- */
@@ -38,10 +48,7 @@ impl PositionHandler for InMemoryRepository {
     }
 
     // TODO: look at barter
-    fn get_open_positions(
-        &mut self,
-        position_id: PositionId,
-    ) -> Result<Option<Position>, RepositoryError> {
+    fn get_open_positions(&mut self, engine_id: Uuid) -> Result<Option<Position>, RepositoryError> {
         Ok(None)
     }
 
@@ -82,17 +89,16 @@ impl PositionHandler for InMemoryRepository {
     }
 }
 
-
 /*----- */
 // Impl BalanceHandler for InMemoryRepository
 /*----- */
 impl BalanceHandler for InMemoryRepository {
     fn set_balance(&mut self, engine_id: Uuid, balance: Balance) -> Result<(), RepositoryError> {
-       self.current_balance
-        .insert(Balance::balance_id(engine_id), balance);
+        self.current_balance
+            .insert(Balance::balance_id(engine_id), balance);
         Ok(())
     }
-    
+
     fn get_balance(&mut self, engine_id: Uuid) -> Result<Balance, RepositoryError> {
         self.current_balance
             .get(&Balance::balance_id(engine_id))

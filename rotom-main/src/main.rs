@@ -1,4 +1,6 @@
-use futures::StreamExt;
+use std::sync::Arc;
+
+use futures::{lock::Mutex, StreamExt};
 use rotom_data::{
     event_models::market_event::{DataKind, MarketEvent},
     shared::subscription_models::{ExchangeId, StreamKind},
@@ -11,9 +13,14 @@ use rotom_main::{
         simulated::{Config, SimulatedExecution},
         Fees,
     },
+    oms::{
+        allocator::DefaultAllocator, portfolio::MetaPortfolio,
+        repository::in_memory::InMemoryRepository, risk::DefaultRisk,
+    },
     strategy::spread::SpreadStategy,
 };
 use tokio::sync::mpsc::{self, UnboundedReceiver};
+use uuid::Uuid;
 
 /*----- */
 // Main
@@ -23,8 +30,26 @@ pub async fn main() {
     // Initialise logging
     init_logging();
 
+    // Engine id
+    let engine_id = Uuid::new_v4();
+
+    // Portfolio
+    let portfolio = Arc::new(Mutex::new(
+        MetaPortfolio::builder()
+            .engine_id(engine_id)
+            .starting_cash(10000.0)
+            .repository(InMemoryRepository::new())
+            .allocation_manager(DefaultAllocator {
+                default_order_value: 100.0,
+            })
+            .risk_manager(DefaultRisk {})
+            .build_init()
+            .unwrap(),
+    ));
+
     // Build a trader
     let trader = Trader::builder()
+        .portfolio(Arc::clone(&portfolio))
         .data(live::MarketFeed::new(stream_trades().await))
         .strategy(SpreadStategy::default())
         .execution(SimulatedExecution::new(Config {
@@ -87,6 +112,5 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - update rotom data documentation
-// - Start work on the portfolio
+// - impl order generator and fill updater for metaportfolio
 // - Forced exit logic

@@ -24,7 +24,7 @@ pub trait PositionHandler {
     // TODO: look at barter
     fn get_open_positions(
         &mut self,
-        position_id: &PositionId,
+        engine_id: Uuid,
     ) -> Result<Option<Position>, RepositoryError>;
 
     fn remove_positions(

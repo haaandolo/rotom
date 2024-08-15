@@ -1,5 +1,5 @@
-pub mod simulated;
 pub mod error;
+pub mod simulated;
 
 use chrono::{DateTime, Utc};
 use error::ExecutionError;
@@ -7,7 +7,6 @@ use rotom_data::shared::subscription_models::{ExchangeId, Instrument};
 use serde::{Deserialize, Serialize};
 
 use crate::{data::MarketMeta, oms::OrderEvent, strategy::Decision};
-
 
 /*----- */
 // Execution Client
@@ -31,13 +30,6 @@ pub struct FillEvent {
     pub fees: Fees,
 }
 
-#[derive(Debug, PartialEq, PartialOrd, Clone, Deserialize, Serialize)]
-pub struct Fees {
-    pub exchange: FeeAmount,
-    pub slippage: FeeAmount,
-    pub network: FeeAmount,
-}
-
 impl FillEvent {
     pub const EVENT_TYPE: &'static str = "Fill";
 
@@ -46,8 +38,23 @@ impl FillEvent {
     }
 }
 
-pub type FeeAmount = f64;
+/*----- */
+// Fees
+/*----- */
+#[derive(Default, Debug, PartialEq, PartialOrd, Clone, Deserialize, Serialize, Copy)]
+pub struct Fees {
+    pub exchange: FeeAmount,
+    pub slippage: FeeAmount,
+    pub network: FeeAmount,
+}
 
+impl Fees {
+    pub fn calculate_total_fees(&self) -> f64 {
+        self.exchange + self.network + self.slippage
+    }
+}
+
+pub type FeeAmount = f64;
 /*----- */
 // Fill Event Builder
 /*----- */
