@@ -23,9 +23,13 @@ thiserror = { version = "1.0.61" }
 
 # Misc
 chrono = "0.4.38"
+uuid = { version = "1.9.1", features = ["v4", "serde"]}
 
 # SerDe
 serde_json = { version = "1.0.120" }
 serde = { version = "1.0.197", features = ["derive"] }
+
+# Persistence
+redis = "0.25.4"
 
 # Strategy

@@ -1,74 +1,90 @@
 use std::fmt::{Display, Formatter};
 
 use chrono::{DateTime, Utc};
-use rotom_data::shared::subscription_models::{ExchangeId, Instrument};
+use rotom_data::{event_models::market_event::{DataKind, MarketEvent}, shared::subscription_models::{ExchangeId, Instrument}};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-use crate::execution::{FeeAmount, Fees};
+use crate::execution::{FeeAmount, Fees, FillEvent};
 
-use super::Balance;
+use super::{error::PortfolioError, Balance};
+
+
+/*----- */
+// Position traits
+/*----- */
+pub trait PositionEnterer {
+    fn enter(engine_id: Uuid, fill: &FillEvent) -> Result<Position, PortfolioError>;
+}
+
+pub trait PositionUpdater {
+   fn update(&mut self, market: &MarketEvent<DataKind>) -> Option<PositionUpdate>;
+}
+
+pub trait PositionExiter {
+   fn exit(&mut self, balance: Balance, fill: &FillEvent) -> Result<PositionExit, PortfolioError>;
+}
 
 /*----- */
 // Position
 /*----- */
 #[derive(Clone, PartialEq, PartialOrd, Debug)]
 pub struct Position {
-    /// Unique identifier for a [`Position`] generated from an engine_id, [`Exchange`] & [`Instrument`].
+    // Unique identifier for a [`Position`] generated from an engine_id, [`Exchange`] & [`Instrument`].
     pub position_id: PositionId,
 
-    /// Metadata detailing trace UUIDs, timestamps & equity associated with entering, updating & exiting.
+    // Metadata detailing trace UUIDs, timestamps & equity associated with entering, updating & exiting.
     pub meta: PositionMeta,
 
-    /// [`Exchange`] associated with this [`Position`].
+    // [`Exchange`] associated with this [`Position`].
     pub exchange: ExchangeId,
 
-    /// [`Instrument`] associated with this [`Position`].
+    // [`Instrument`] associated with this [`Position`].
     pub instrument: Instrument,
 
-    /// Buy or Sell.
-    ///
-    /// Notes:
-    /// - Side::Buy considered synonymous with Long.
-    /// - Side::Sell considered synonymous with Short.
+    // Buy or Sell.
+    // Notes:
+    // - Side::Buy considered synonymous with Long.
+    // - Side::Sell considered synonymous with Short.
     pub side: Side,
 
-    /// +ve or -ve quantity of symbol contracts opened.
+    // +ve or -ve quantity of symbol contracts opened.
     pub quantity: f64,
 
-    /// All fees types incurred from entering a [`Position`], and their associated [`FeeAmount`].
+    // All fees types incurred from entering a [`Position`], and their associated [`FeeAmount`].
     pub enter_fees: Fees,
 
-    /// Total of enter_fees incurred. Sum of every [`FeeAmount`] in [`Fees`] when entering a [`Position`].
+    // Total of enter_fees incurred. Sum of every [`FeeAmount`] in [`Fees`] when entering a [`Position`].
     pub enter_fees_total: FeeAmount,
 
-    /// Enter average price excluding the entry_fees_total.
+    // Enter average price excluding the entry_fees_total.
     pub enter_avg_price_gross: f64,
 
-    /// abs(Quantity) * enter_avg_price_gross.
+    // abs(Quantity) * enter_avg_price_gross.
     pub enter_value_gross: f64,
 
-    /// All fees types incurred from exiting a [`Position`], and their associated [`FeeAmount`].
+    // All fees types incurred from exiting a [`Position`], and their associated [`FeeAmount`].
     pub exit_fees: Fees,
 
-    /// Total of exit_fees incurred. Sum of every [`FeeAmount`] in [`Fees`] when entering a [`Position`].
+    // Total of exit_fees incurred. Sum of every [`FeeAmount`] in [`Fees`] when entering a [`Position`].
     pub exit_fees_total: FeeAmount,
 
-    /// Exit average price excluding the exit_fees_total.
+    // Exit average price excluding the exit_fees_total.
     pub exit_avg_price_gross: f64,
 
-    /// abs(Quantity) * exit_avg_price_gross.
+    // abs(Quantity) * exit_avg_price_gross.
     pub exit_value_gross: f64,
 
-    /// Symbol current close price.
+    // Symbol current close price.
     pub current_symbol_price: f64,
 
-    /// abs(Quantity) * current_symbol_price.
+    // abs(Quantity) * current_symbol_price.
     pub current_value_gross: f64,
 
-    /// Unrealised P&L whilst the [`Position`] is open.
+    // Unrealised P&L whilst the [`Position`] is open.
     pub unrealised_profit_loss: f64,
 
-    /// Realised P&L after the [`Position`] has closed.
+    // Realised P&L after the [`Position`] has closed.
     pub realised_profit_loss: f64,
 }
 
@@ -115,6 +131,35 @@ impl Display for Side {
             }
         )
     }
+}
+
+/*----- */
+// Position Exit
+/*----- */
+pub struct PositionExit {
+    // Unique identifier for a [`Position`], generated from an exchange, symbol, and enter_time.
+    pub position_id: String,
+
+    // [`FillEvent`] timestamp that triggered the exiting of this [`Position`].
+    pub exit_time: DateTime<Utc>,
+
+    // Portfolio [`Balance`] calculated at the point of exiting a [`Position`].
+    pub exit_balance: Balance,
+
+    // All fees types incurred from exiting a [`Position`], and their associated [`FeeAmount`].
+    pub exit_fees: Fees,
+
+    // Total of exit_fees incurred. Sum of every [`FeeAmount`] in [`Fees`] when entering a [`Position`].
+    pub exit_fees_total: FeeAmount,
+
+    // Exit average price excluding the exit_fees_total.
+    pub exit_avg_price_gross: f64,
+
+    // abs(Quantity) * exit_avg_price_gross.
+    pub exit_value_gross: f64,
+
+    // Realised P&L after the [`Position`] has closed.
+    pub realised_profit_loss: f64,
 }
 
 /*----- */

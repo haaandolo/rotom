@@ -12,6 +12,7 @@ use rotom_data::{
     event_models::market_event::{DataKind, MarketEvent},
     shared::subscription_models::{ExchangeId, Instrument},
 };
+use uuid::Uuid;
 
 use crate::{
     data::MarketMeta,
@@ -174,7 +175,7 @@ impl OrderEventBuilder {
 /*----- */
 pub type BalanceId = String;
 
-#[derive(Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Clone, Copy, PartialEq, PartialOrd, Debug)]
 pub struct Balance {
     pub time: DateTime<Utc>,
     pub total: f64,
@@ -200,7 +201,7 @@ impl Balance {
         }
     }
 
-    // pub fn balance_id(engine_id: Uuid) -> BalanceId {
-    //     format!("{}_balance", engine_id)
-    // }
+    pub fn balance_id(engine_id: Uuid) -> BalanceId {
+        format!("{}_balance", engine_id)
+    }
 }

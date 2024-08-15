@@ -1,6 +1,6 @@
 use rotom_data::event_models::market_event::{DataKind, MarketEvent};
 
-use super::{allocator::OrderAllocator, error::PortfolioError, position::{determine_position_id, PositionUpdate}, risk::OrderEvaluator, MarketUpdater};
+use super::{allocator::OrderAllocator, error::PortfolioError, position::{determine_position_id, PositionUpdate}, repository::{BalanceHandler, PositionHandler}, risk::OrderEvaluator, MarketUpdater};
 
 /*----- */
 // Porfolio lego
@@ -40,6 +40,7 @@ impl<Repository, Allocator, RiskManager> MetaPortfolio<Repository, Allocator, Ri
 impl<Repository, Allocator, RiskManager> MarketUpdater
     for MetaPortfolio<Repository, Allocator, RiskManager>
 where
+    Repository: PositionHandler + BalanceHandler,
     Allocator: OrderAllocator,
     RiskManager: OrderEvaluator
 {
@@ -48,6 +49,10 @@ where
             market: &MarketEvent<DataKind>
         ) -> Result<Option<PositionUpdate>, PortfolioError> {
         let position_id = determine_position_id(&market.exchange, &market.instrument);
+
+        if let Some(mut position) = self.repository.get_open_positions(&position_id)? {
+            if let Some(position_update) = position
+        }
 
         Ok(None)
     }
