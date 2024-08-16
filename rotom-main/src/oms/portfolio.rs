@@ -1,10 +1,27 @@
+use std::collections::HashMap;
+
 use chrono::Utc;
 use futures::stream::All;
 use rotom_data::event_models::market_event::{DataKind, MarketEvent};
+use tracing::info;
 use uuid::Uuid;
 
+use crate::{
+    data::MarketMeta,
+    event::Event,
+    execution::FillEvent,
+    strategy::{Decision, Signal, SignalForceExit, SignalStrength},
+};
+
 use super::{
-    allocator::OrderAllocator, error::PortfolioError, position::{determine_position_id, PositionUpdate, PositionUpdater}, repository::{self, error::RepositoryError, BalanceHandler, PositionHandler}, risk::OrderEvaluator, Balance, MarketUpdater
+    allocator::OrderAllocator,
+    error::PortfolioError,
+    position::{
+        determine_position_id, Position, PositionEnterer, PositionExiter, PositionUpdate, PositionUpdater, Side
+    },
+    repository::{self, error::RepositoryError, BalanceHandler, PositionHandler},
+    risk::OrderEvaluator,
+    Balance, FillUpdater, MarketUpdater, OrderEvent, OrderGenerator, OrderType,
 };
 
 /*----- */
@@ -71,6 +88,13 @@ where
     pub fn builder() -> MetaPortfolioBuilder<Repository, Allocator, RiskManager> {
         MetaPortfolioBuilder::new()
     }
+
+    pub fn no_cash_to_enter_new_position(&mut self) -> Result<bool, PortfolioError> {
+        self.repository
+            .get_balance(self.engine_id)
+            .map(|balance| balance.available == 0.0)
+            .map_err(PortfolioError::RepositoryInteraction)
+    }
 }
 
 /*----- */
@@ -111,7 +135,6 @@ where
             engine_id: Some(value),
             ..self
         }
-
     }
 
     pub fn starting_cash(self, value: f64) -> Self {
@@ -177,7 +200,7 @@ where
 }
 
 /*----- */
-// Impl Market Updater for MetaPortfolio
+// Impl MarketUpdater for MetaPortfolio
 /*----- */
 impl<Repository, Allocator, RiskManager> MarketUpdater
     for MetaPortfolio<Repository, Allocator, RiskManager>
@@ -201,5 +224,156 @@ where
         }
 
         Ok(None)
+    }
+}
+
+/*----- */
+// Impl OrderGenerator for MetaPortfolio
+/*----- */
+impl<Repository, Allocator, RiskManager> OrderGenerator
+    for MetaPortfolio<Repository, Allocator, RiskManager>
+where
+    Repository: PositionHandler + BalanceHandler,
+    Allocator: OrderAllocator,
+    RiskManager: OrderEvaluator,
+{
+    fn generate_order(&mut self, signal: &Signal) -> Result<Option<OrderEvent>, PortfolioError> {
+        let position_id =
+            determine_position_id(self.engine_id, &signal.exchange, &signal.instrument);
+        let position = self.repository.get_open_position(&position_id)?;
+
+        if position.is_none() && self.no_cash_to_enter_new_position()? {
+            return Ok(None);
+        }
+
+        let position = position.as_ref();
+        let (signal_decision, signal_strength) =
+            match parse_signal_decision(&position, &signal.signals) {
+                None => return Ok(None),
+                Some(net_signal) => net_signal,
+            };
+
+        let mut order = OrderEvent {
+            time: Utc::now(),
+            exchange: signal.exchange,
+            instrument: signal.instrument.clone(),
+            market_meta: signal.market_meta,
+            decision: *signal_decision,
+            quantity: 0.0,
+            order_type: OrderType::default(),
+        };
+
+        self.allocation_manager
+            .allocate_order(&mut order, position, *signal_strength);
+
+        Ok(self.risk_manager.evaluate_order(order))
+    }
+
+    fn generate_exit_order(
+        &mut self,
+        signal: SignalForceExit,
+    ) -> Result<Option<OrderEvent>, PortfolioError> {
+        let position_id =
+            determine_position_id(self.engine_id, &signal.exchange, &signal.instrument);
+
+        let position = match self.repository.get_open_position(&position_id)? {
+            None => {
+                info!(
+                    position_id = &*position_id,
+                    outcome = "no forced exit OrderEvent generated",
+                    "cannot generate forced exit OrderEvent for a Position that isn't open"
+                );
+                return Ok(None);
+            }
+            Some(position) => position,
+        };
+
+        Ok(Some(OrderEvent {
+            time: Utc::now(),
+            exchange: signal.exchange,
+            instrument: signal.instrument,
+            market_meta: MarketMeta {
+                close: position.current_symbol_price,
+                time: position.meta.update_time,
+            },
+            decision: position.determine_exit_decision(),
+            quantity: 0.0 - position.quantity,
+            order_type: OrderType::Market,
+        }))
+    }
+}
+
+/*----- */
+// Impl FillUpdater for MetaPortfolio
+/*----- */
+impl<Repository, Allocator, RiskManager> FillUpdater
+    for MetaPortfolio<Repository, Allocator, RiskManager>
+where
+    Repository: PositionHandler + BalanceHandler,
+    Allocator: OrderAllocator,
+    RiskManager: OrderEvaluator,
+{
+    fn update_from_fill(&mut self, fill: &FillEvent) -> Result<Vec<Event>, PortfolioError> {
+        let mut generate_events = Vec::with_capacity(2);
+        let mut balance = self.repository.get_balance(self.engine_id)?;
+        balance.time = fill.time;
+
+        let position_id = determine_position_id(self.engine_id, &fill.exchange, &fill.instrument);
+
+        match self.repository.remove_positions(&position_id)? {
+            Some(mut position) => {
+                let position_exit = position.exit(balance, fill)?;
+                generate_events.push(Event::PositionExit(position_exit));
+
+                balance.available += position.enter_value_gross + position.realised_profit_loss + position.enter_fees_total;
+                balance.total += position.realised_profit_loss;
+
+                // TODO: stats
+                self.repository.set_exited_position(self.engine_id, position)?;
+            }
+
+            None => {
+                let position = Position::enter(self.engine_id, fill)?;
+                generate_events.push(Event::PositionNew(position.clone()));
+
+                balance.available += -position.enter_value_gross - position.enter_fees_total;
+                self.repository.set_open_position(position)?;
+            }
+        }
+
+        generate_events.push(Event::Balance(balance));
+        self.repository.set_balance(self.engine_id, balance)?;
+
+        Ok(generate_events)
+    }
+}
+
+/*----- */
+// Parse Signal Decision
+/*----- */
+pub fn parse_signal_decision<'a>(
+    position: &'a Option<&Position>,
+    signals: &'a HashMap<Decision, SignalStrength>,
+) -> Option<(&'a Decision, &'a SignalStrength)> {
+    // Determine the presence of signals in the provided signals HashMap
+    let signal_close_long = signals.get_key_value(&Decision::CloseLong);
+    let signal_long = signals.get_key_value(&Decision::Long);
+    let signal_close_short = signals.get_key_value(&Decision::CloseShort);
+    let signal_short = signals.get_key_value(&Decision::Short);
+
+    // If an existing Position exists, check for net close signals
+    if let Some(position) = position {
+        return match position.side {
+            Side::Buy if signal_close_long.is_some() => signal_close_long,
+            Side::Sell if signal_close_short.is_some() => signal_close_short,
+            _ => None,
+        };
+    }
+
+    // Else check for net open signals
+    match (signal_long, signal_short) {
+        (Some(signal_long), None) => Some(signal_long),
+        (None, Some(signal_short)) => Some(signal_short),
+        _ => None,
     }
 }

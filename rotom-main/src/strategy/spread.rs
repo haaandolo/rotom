@@ -6,6 +6,8 @@ use rotom_data::{
     shared::subscription_models::ExchangeId,
 };
 
+use crate::data::MarketMeta;
+
 use super::{Decision, Signal, SignalGenerator, SignalStrength};
 /*----- */
 // Spread strategy
@@ -61,6 +63,10 @@ impl SignalGenerator for SpreadStategy {
             exchange: market.exchange,
             instrument: market.instrument.clone(),
             signals,
+            market_meta: MarketMeta {
+                close: self.exchange_one_bid,
+                time: Utc::now()
+            }
         })
     }
 }

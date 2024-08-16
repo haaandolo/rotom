@@ -8,6 +8,8 @@ use rotom_data::{
     shared::subscription_models::{ExchangeId, Instrument},
 };
 
+use crate::data::MarketMeta;
+
 /*----- */
 // Signal Generator
 /*----- */
@@ -23,9 +25,10 @@ pub struct Signal {
     pub exchange: ExchangeId,
     pub instrument: Instrument,
     pub signals: HashMap<Decision, SignalStrength>,
+    pub market_meta: MarketMeta
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct SignalStrength(pub f64);
 
 /*----- */
