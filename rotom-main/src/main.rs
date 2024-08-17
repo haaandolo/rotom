@@ -60,8 +60,8 @@ pub async fn main() {
         .engine_id(engine_id)
         .market(markets.clone())
         .command_rx(trader_command_rx)
-        .portfolio(Arc::clone(&portfolio))
         .event_tx(event_tx)
+        .portfolio(Arc::clone(&portfolio))
         .data(live::MarketFeed::new(stream_trades().await))
         .strategy(SpreadStategy::default())
         .execution(SimulatedExecution::new(Config {
@@ -124,5 +124,3 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - impl order generator and fill updater for metaportfolio
-// - Forced exit logic

@@ -4,3 +4,4 @@ pub mod strategy;
 pub mod event;
 pub mod execution;
 pub mod oms;
+pub mod statistic;
