@@ -1,6 +1,8 @@
 use error::RepositoryError;
 use uuid::Uuid;
 
+use crate::data::MarketId;
+
 use super::{
     position::{Position, PositionId},
     Balance,
@@ -53,19 +55,22 @@ pub trait BalanceHandler {
 /*----- */
 // Statistics Handler
 /*----- */
-pub trait StatisticsHandler<Statistic> {
+pub trait StatisticHandler<Statistic> {
     fn set_statistics(
         &mut self,
-        market_id: String, // TODO: change to MarketId
+        market_id: MarketId,
         statistics: Statistic,
     ) -> Result<(), RepositoryError>;
 
     fn get_statistics(
         &mut self,
-        market_id: String, // TODO: change to MarketId
+        market_id: &MarketId,
     ) -> Result<Statistic, RepositoryError>;
 }
 
+/*----- */
+// Exited position
+/*----- */
 pub type ExitedPositionId = String;
 
 pub fn determine_exited_positions_id(engine_id: Uuid) -> ExitedPositionId {

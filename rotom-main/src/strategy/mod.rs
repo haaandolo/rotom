@@ -37,8 +37,9 @@ pub struct SignalStrength(pub f64);
 /*----- */
 // Decision
 /*----- */
-#[derive(Debug, Eq, PartialEq, PartialOrd, Hash, Clone, Copy)]
+#[derive(Debug, Default, Eq, PartialEq, PartialOrd, Hash, Clone, Copy)]
 pub enum Decision {
+    #[default]
     Long,
     CloseLong,
     Short,
@@ -82,7 +83,6 @@ where
         Self::new(market.exchange, market.instrument)
     }
 }
-
 
 impl SignalForceExit {
     pub const FORCED_EXIT_SIGNAL: &'static str = "SignalForcedExit";

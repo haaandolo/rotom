@@ -2,38 +2,53 @@ use std::collections::HashMap;
 
 use uuid::Uuid;
 
-use crate::oms::{
-    position::{Position, PositionId},
-    Balance, BalanceId,
+use crate::{
+    data::MarketId,
+    oms::{
+        position::{Position, PositionId},
+        Balance, BalanceId,
+    },
+    statistic::summary::PositionSummariser,
 };
 
 use super::{
-    determine_exited_positions_id, error::RepositoryError, BalanceHandler, PositionHandler,
+    determine_exited_positions_id, error::RepositoryError, BalanceHandler, PositionHandler, StatisticHandler,
 };
 
 /*----- */
 // InMemoryRepository
 /*----- */
 #[derive(Debug, Default)]
-pub struct InMemoryRepository {
+pub struct InMemoryRepository<Statistic>
+where
+    Statistic: PositionSummariser,
+{
     open_positions: HashMap<PositionId, Position>,
     closed_positions: HashMap<String, Vec<Position>>,
-    current_balance: HashMap<BalanceId, Balance>, // TODO: Statistics
+    current_balance: HashMap<BalanceId, Balance>,
+    statistics: HashMap<MarketId, Statistic>,
 }
 
-impl InMemoryRepository {
+impl<Statistic> InMemoryRepository<Statistic>
+where
+    Statistic: PositionSummariser,
+{
     pub fn new() -> Self {
         Self {
             open_positions: HashMap::new(),
             closed_positions: HashMap::new(),
             current_balance: HashMap::new(),
+            statistics: HashMap::new(),
         }
     }
 }
 /*----- */
 // Impl PositionHandler for InMemoryRepository
 /*----- */
-impl PositionHandler for InMemoryRepository {
+impl<Statistic> PositionHandler for InMemoryRepository<Statistic>
+where
+    Statistic: PositionSummariser,
+{
     fn set_open_position(&mut self, position: Position) -> Result<(), RepositoryError> {
         self.open_positions
             .insert(position.position_id.clone(), position);
@@ -92,7 +107,10 @@ impl PositionHandler for InMemoryRepository {
 /*----- */
 // Impl BalanceHandler for InMemoryRepository
 /*----- */
-impl BalanceHandler for InMemoryRepository {
+impl<Statistic> BalanceHandler for InMemoryRepository<Statistic> 
+where 
+    Statistic: PositionSummariser
+{
     fn set_balance(&mut self, engine_id: Uuid, balance: Balance) -> Result<(), RepositoryError> {
         self.current_balance
             .insert(Balance::balance_id(engine_id), balance);
@@ -107,4 +125,26 @@ impl BalanceHandler for InMemoryRepository {
     }
 }
 
-// TODO: Statistics
+/*----- */
+// Impl StatisticHandler for InMemoryRepository
+/*----- */
+impl<Statistic> StatisticHandler<Statistic> for InMemoryRepository<Statistic> 
+where
+    Statistic: PositionSummariser
+{
+    fn set_statistics(
+        &mut self,
+        market_id: MarketId,
+        statistic: Statistic,
+    ) -> Result<(), RepositoryError> {
+        self.statistics.insert(market_id, statistic);
+        Ok(())
+    }
+
+    fn get_statistics(&mut self, market_id: &MarketId) -> Result<Statistic, RepositoryError> {
+        self.statistics
+            .get(market_id)
+            .copied()
+            .ok_or(RepositoryError::ExpectedDataNotPresentError)
+    }
+}

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, marker::PhantomData};
 
 use chrono::Utc;
 use rotom_data::event_models::market_event::{DataKind, MarketEvent};
@@ -6,9 +6,10 @@ use tracing::info;
 use uuid::Uuid;
 
 use crate::{
-    data::{Market, MarketMeta},
+    data::{Market, MarketId, MarketMeta},
     event::Event,
     execution::FillEvent,
+    statistic::summary::{Initialiser, PositionSummariser},
     strategy::{Decision, Signal, SignalForceExit, SignalStrength},
 };
 
@@ -19,7 +20,7 @@ use super::{
         determine_position_id, Position, PositionEnterer, PositionExiter, PositionUpdate,
         PositionUpdater, Side,
     },
-    repository::{BalanceHandler, PositionHandler},
+    repository::{BalanceHandler, PositionHandler, StatisticHandler},
     risk::OrderEvaluator,
     Balance, FillUpdater, MarketUpdater, OrderEvent, OrderGenerator, OrderType,
 };
@@ -27,11 +28,12 @@ use super::{
 /*----- */
 // Porfolio lego
 /*----- */
-pub struct PortfolioLego<Repository, Allocator, RiskManager>
+pub struct PortfolioLego<Repository, Allocator, RiskManager, Statistic>
 where
-    Repository: PositionHandler + BalanceHandler,
+    Repository: PositionHandler + BalanceHandler + StatisticHandler<Statistic>,
     Allocator: OrderAllocator,
     RiskManager: OrderEvaluator,
+    Statistic: Initialiser + PositionSummariser,
 {
     pub engine_id: Uuid,
     pub markets: Vec<Market>,
@@ -39,40 +41,47 @@ where
     pub allocator: Allocator,
     pub starting_cash: f64,
     pub risk: RiskManager,
+    pub statistic_config: Statistic::Config,
 }
 
 /*----- */
 // Metaportfolio
 /*----- */
-pub struct MetaPortfolio<Repository, Allocator, RiskManager>
+#[derive(Debug)]
+pub struct MetaPortfolio<Repository, Allocator, RiskManager, Statistic>
 where
-    Repository: PositionHandler + BalanceHandler,
+    Repository: PositionHandler + BalanceHandler + StatisticHandler<Statistic>,
     Allocator: OrderAllocator,
     RiskManager: OrderEvaluator,
+    Statistic: Initialiser + PositionSummariser,
 {
     pub engine_id: Uuid,
     pub repository: Repository,
     pub allocation_manager: Allocator,
     pub risk_manager: RiskManager,
+    pub _statistic_marker: PhantomData<Statistic>
 }
 
-impl<Repository, Allocator, RiskManager> MetaPortfolio<Repository, Allocator, RiskManager>
+impl<Repository, Allocator, RiskManager, Statistic>
+    MetaPortfolio<Repository, Allocator, RiskManager, Statistic>
 where
-    Repository: PositionHandler + BalanceHandler,
+    Repository: PositionHandler + BalanceHandler + StatisticHandler<Statistic>,
     Allocator: OrderAllocator,
     RiskManager: OrderEvaluator,
+    Statistic: Initialiser + PositionSummariser,
 {
     pub fn init(
-        lego: PortfolioLego<Repository, Allocator, RiskManager>,
+        lego: PortfolioLego<Repository, Allocator, RiskManager, Statistic>,
     ) -> Result<Self, PortfolioError> {
         let mut porfolio = Self {
             engine_id: lego.engine_id,
             repository: lego.repository,
             allocation_manager: lego.allocator,
             risk_manager: lego.risk,
+            _statistic_marker: PhantomData
         };
 
-        porfolio.bootstrap_repository(lego.starting_cash, &lego.markets)?;
+        porfolio.bootstrap_repository(lego.starting_cash, &lego.markets, lego.statistic_config)?;
 
         Ok(porfolio)
     }
@@ -80,8 +89,11 @@ where
     pub fn bootstrap_repository(
         &mut self,
         starting_cash: f64,
-        _markets: &Vec<Market>,
-    ) -> Result<(), PortfolioError> {
+        markets: &[Market],
+        statistic_config: Statistic::Config,
+    ) -> Result<(), PortfolioError>
+    {
+        // Persist initial Balance (total & available)
         self.repository.set_balance(
             self.engine_id,
             Balance {
@@ -90,10 +102,16 @@ where
                 available: starting_cash,
             },
         )?;
-        Ok(())
+
+        // Persist initial MetaPortfolio Statistics for every Market
+        markets.iter().try_for_each(|market| {
+            self.repository
+                .set_statistics(MarketId::from(market), Statistic::init(statistic_config))
+                .map_err(PortfolioError::RepositoryInteraction)
+        })
     }
 
-    pub fn builder() -> MetaPortfolioBuilder<Repository, Allocator, RiskManager> {
+    pub fn builder() -> MetaPortfolioBuilder<Repository, Allocator, RiskManager, Statistic> {
         MetaPortfolioBuilder::new()
     }
 
@@ -109,11 +127,12 @@ where
 // MetaPortfolio Builder
 /*----- */
 #[derive(Debug, Default)]
-pub struct MetaPortfolioBuilder<Repository, Allocator, RiskManager>
+pub struct MetaPortfolioBuilder<Repository, Allocator, RiskManager, Statistic>
 where
-    Repository: PositionHandler + BalanceHandler,
+    Repository: PositionHandler + BalanceHandler + StatisticHandler<Statistic>,
     Allocator: OrderAllocator,
     RiskManager: OrderEvaluator,
+    Statistic: Initialiser + PositionSummariser
 {
     engine_id: Option<Uuid>,
     markets: Option<Vec<Market>>,
@@ -121,13 +140,16 @@ where
     repository: Option<Repository>,
     allocation_manager: Option<Allocator>,
     risk_manager: Option<RiskManager>,
+    statistic_config: Option<Statistic::Config>,
+    _statistic_marker: Option<PhantomData<Statistic>>
 }
 
-impl<Repository, Allocator, RiskManager> MetaPortfolioBuilder<Repository, Allocator, RiskManager>
+impl<Repository, Allocator, RiskManager, Statistic> MetaPortfolioBuilder<Repository, Allocator, RiskManager, Statistic>
 where
-    Repository: PositionHandler + BalanceHandler,
+    Repository: PositionHandler + BalanceHandler + StatisticHandler<Statistic>,
     Allocator: OrderAllocator,
     RiskManager: OrderEvaluator,
+    Statistic: Initialiser + PositionSummariser
 {
     pub fn new() -> Self {
         Self {
@@ -137,6 +159,8 @@ where
             repository: None,
             allocation_manager: None,
             risk_manager: None,
+            statistic_config: None,
+            _statistic_marker: None
         }
     }
 
@@ -182,9 +206,16 @@ where
         }
     }
 
+    pub fn statistic_config(self, value: Statistic::Config) -> Self {
+        Self {
+            statistic_config: Some(value),
+            ..self
+        }
+    }
+
     pub fn build_init(
         self,
-    ) -> Result<MetaPortfolio<Repository, Allocator, RiskManager>, PortfolioError> {
+    ) -> Result<MetaPortfolio<Repository, Allocator, RiskManager, Statistic>, PortfolioError> {
         let mut portfolio = MetaPortfolio {
             engine_id: self
                 .engine_id
@@ -198,18 +229,18 @@ where
             risk_manager: self
                 .risk_manager
                 .ok_or(PortfolioError::BuilderIncomplete("risk_manager"))?,
+            _statistic_marker: PhantomData
         };
 
         // Persist initial state in the Repository
-        // TODO: stats and market
         portfolio.bootstrap_repository(
             self.starting_cash
                 .ok_or(PortfolioError::BuilderIncomplete("starting_cash"))?,
             &self
                 .markets
                 .ok_or(PortfolioError::BuilderIncomplete("markets"))?,
-            // self.statistic_config
-            //     .ok_or(PortfolioError::BuilderIncomplete("statistic_config"))?,
+            self.statistic_config
+                .ok_or(PortfolioError::BuilderIncomplete("statistic_config"))?,
         )?;
 
         Ok(portfolio)
@@ -219,12 +250,13 @@ where
 /*----- */
 // Impl MarketUpdater for MetaPortfolio
 /*----- */
-impl<Repository, Allocator, RiskManager> MarketUpdater
-    for MetaPortfolio<Repository, Allocator, RiskManager>
+impl<Repository, Allocator, RiskManager, Statistic> MarketUpdater
+    for MetaPortfolio<Repository, Allocator, RiskManager, Statistic>
 where
-    Repository: PositionHandler + BalanceHandler,
+    Repository: PositionHandler + BalanceHandler + StatisticHandler<Statistic>,
     Allocator: OrderAllocator,
     RiskManager: OrderEvaluator,
+    Statistic: Initialiser + PositionSummariser
 {
     fn update_from_market(
         &mut self,
@@ -247,12 +279,13 @@ where
 /*----- */
 // Impl OrderGenerator for MetaPortfolio
 /*----- */
-impl<Repository, Allocator, RiskManager> OrderGenerator
-    for MetaPortfolio<Repository, Allocator, RiskManager>
+impl<Repository, Allocator, RiskManager, Statistic> OrderGenerator
+    for MetaPortfolio<Repository, Allocator, RiskManager, Statistic>
 where
-    Repository: PositionHandler + BalanceHandler,
+    Repository: PositionHandler + BalanceHandler + StatisticHandler<Statistic>,
     Allocator: OrderAllocator,
     RiskManager: OrderEvaluator,
+    Statistic: Initialiser + PositionSummariser
 {
     fn generate_order(&mut self, signal: &Signal) -> Result<Option<OrderEvent>, PortfolioError> {
         let position_id =
@@ -323,12 +356,13 @@ where
 /*----- */
 // Impl FillUpdater for MetaPortfolio
 /*----- */
-impl<Repository, Allocator, RiskManager> FillUpdater
-    for MetaPortfolio<Repository, Allocator, RiskManager>
+impl<Repository, Allocator, RiskManager, Statistic> FillUpdater
+    for MetaPortfolio<Repository, Allocator, RiskManager, Statistic>
 where
-    Repository: PositionHandler + BalanceHandler,
+    Repository: PositionHandler + BalanceHandler + StatisticHandler<Statistic>,
     Allocator: OrderAllocator,
     RiskManager: OrderEvaluator,
+    Statistic: Initialiser + PositionSummariser
 {
     fn update_from_fill(&mut self, fill: &FillEvent) -> Result<Vec<Event>, PortfolioError> {
         let mut generate_events = Vec::with_capacity(2);

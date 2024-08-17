@@ -60,3 +60,16 @@ impl From<(ExchangeId, Instrument)> for Market {
     }
 }
 
+/*----- */
+// Market ID
+/*----- */
+pub type MarketId = String;
+
+impl From<&Market> for MarketId {
+    fn from(market: &Market) -> Self {
+        format!(
+            "{}_{}_{}",
+            market.exchange, market.instrument.base, market.instrument.quote
+        )
+    }
+}

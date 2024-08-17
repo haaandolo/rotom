@@ -6,13 +6,19 @@ use rotom_data::{
     streams::builder::dynamic,
 };
 use rotom_main::{
-    data::{live, Market}, engine::trader::Trader, event::EventTx, execution::{
+    data::{live, Market},
+    engine::trader::Trader,
+    event::EventTx,
+    execution::{
         simulated::{Config, SimulatedExecution},
         Fees,
-    }, oms::{
+    },
+    oms::{
         allocator::DefaultAllocator, portfolio::MetaPortfolio,
         repository::in_memory::InMemoryRepository, risk::DefaultRisk,
-    }, strategy::spread::SpreadStategy
+    },
+    statistic::summary::trading::{Config as StatisticConfig, TradingSummary},
+    strategy::spread::SpreadStategy,
 };
 use std::sync::Arc;
 use tokio::sync::mpsc::{self, UnboundedReceiver};
@@ -46,14 +52,21 @@ pub async fn main() {
             .engine_id(engine_id)
             .markets(markets.clone())
             .starting_cash(10000.0)
-            .repository(InMemoryRepository::new())
+            .repository(InMemoryRepository::<TradingSummary>::new())
             .allocation_manager(DefaultAllocator {
                 default_order_value: 100.0,
             })
             .risk_manager(DefaultRisk {})
+            .statistic_config(StatisticConfig {
+                starting_equity: 10_000.0,
+                trading_days_per_year: 365,
+                risk_free_return: 0.0,
+            })
             .build_init()
             .unwrap(),
     ));
+
+    println!("{:#?}", portfolio);
 
     // Build trader
     let trader = Trader::builder()
@@ -95,7 +108,7 @@ async fn stream_trades() -> UnboundedReceiver<MarketEvent<DataKind>> {
     let (tx, rx) = mpsc::unbounded_channel();
     tokio::spawn(async move {
         while let Some(event) = data.next().await {
-            println!("{:?}", event);
+            // println!("{:?}", event);
             let _ = tx.send(event);
         }
     });
