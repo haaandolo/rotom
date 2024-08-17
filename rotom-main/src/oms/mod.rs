@@ -53,7 +53,7 @@ pub trait FillUpdater {
 /*----- */
 // Order Event
 /*----- */
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct OrderEvent {
     pub time: DateTime<Utc>,
     pub exchange: ExchangeId,
@@ -64,7 +64,7 @@ pub struct OrderEvent {
     pub order_type: OrderType,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum OrderType {
     Market,
     Limit,

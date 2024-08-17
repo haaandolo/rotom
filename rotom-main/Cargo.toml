@@ -24,6 +24,7 @@ thiserror = { version = "1.0.61" }
 # Misc
 chrono = "0.4.38"
 uuid = { version = "1.9.1", features = ["v4", "serde"]}
+parking_lot = { version = "0.12.3" }
 
 # SerDe
 serde_json = { version = "1.0.120" }

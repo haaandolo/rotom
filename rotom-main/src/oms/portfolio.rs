@@ -1,13 +1,12 @@
 use std::collections::HashMap;
 
 use chrono::Utc;
-use futures::stream::All;
 use rotom_data::event_models::market_event::{DataKind, MarketEvent};
 use tracing::info;
 use uuid::Uuid;
 
 use crate::{
-    data::MarketMeta,
+    data::{Market, MarketMeta},
     event::Event,
     execution::FillEvent,
     strategy::{Decision, Signal, SignalForceExit, SignalStrength},
@@ -17,9 +16,10 @@ use super::{
     allocator::OrderAllocator,
     error::PortfolioError,
     position::{
-        determine_position_id, Position, PositionEnterer, PositionExiter, PositionUpdate, PositionUpdater, Side
+        determine_position_id, Position, PositionEnterer, PositionExiter, PositionUpdate,
+        PositionUpdater, Side,
     },
-    repository::{self, error::RepositoryError, BalanceHandler, PositionHandler},
+    repository::{BalanceHandler, PositionHandler},
     risk::OrderEvaluator,
     Balance, FillUpdater, MarketUpdater, OrderEvent, OrderGenerator, OrderType,
 };
@@ -34,8 +34,10 @@ where
     RiskManager: OrderEvaluator,
 {
     pub engine_id: Uuid,
+    pub markets: Vec<Market>,
     pub repository: Repository,
     pub allocator: Allocator,
+    pub starting_cash: f64,
     pub risk: RiskManager,
 }
 
@@ -63,17 +65,23 @@ where
     pub fn init(
         lego: PortfolioLego<Repository, Allocator, RiskManager>,
     ) -> Result<Self, PortfolioError> {
-        let porfolio = Self {
+        let mut porfolio = Self {
             engine_id: lego.engine_id,
             repository: lego.repository,
             allocation_manager: lego.allocator,
             risk_manager: lego.risk,
         };
 
+        porfolio.bootstrap_repository(lego.starting_cash, &lego.markets)?;
+
         Ok(porfolio)
     }
 
-    pub fn bootstrap_repository(&mut self, starting_cash: f64) -> Result<(), PortfolioError> {
+    pub fn bootstrap_repository(
+        &mut self,
+        starting_cash: f64,
+        _markets: &Vec<Market>,
+    ) -> Result<(), PortfolioError> {
         self.repository.set_balance(
             self.engine_id,
             Balance {
@@ -108,6 +116,7 @@ where
     RiskManager: OrderEvaluator,
 {
     engine_id: Option<Uuid>,
+    markets: Option<Vec<Market>>,
     starting_cash: Option<f64>,
     repository: Option<Repository>,
     allocation_manager: Option<Allocator>,
@@ -123,6 +132,7 @@ where
     pub fn new() -> Self {
         Self {
             engine_id: None,
+            markets: None,
             starting_cash: None,
             repository: None,
             allocation_manager: None,
@@ -133,6 +143,13 @@ where
     pub fn engine_id(self, value: Uuid) -> Self {
         Self {
             engine_id: Some(value),
+            ..self
+        }
+    }
+
+    pub fn markets(self, value: Vec<Market>) -> Self {
+        Self {
+            markets: Some(value),
             ..self
         }
     }
@@ -188,9 +205,9 @@ where
         portfolio.bootstrap_repository(
             self.starting_cash
                 .ok_or(PortfolioError::BuilderIncomplete("starting_cash"))?,
-            // &self
-            //     .markets
-            //     .ok_or(PortfolioError::BuilderIncomplete("markets"))?,
+            &self
+                .markets
+                .ok_or(PortfolioError::BuilderIncomplete("markets"))?,
             // self.statistic_config
             //     .ok_or(PortfolioError::BuilderIncomplete("statistic_config"))?,
         )?;
@@ -325,11 +342,14 @@ where
                 let position_exit = position.exit(balance, fill)?;
                 generate_events.push(Event::PositionExit(position_exit));
 
-                balance.available += position.enter_value_gross + position.realised_profit_loss + position.enter_fees_total;
+                balance.available += position.enter_value_gross
+                    + position.realised_profit_loss
+                    + position.enter_fees_total;
                 balance.total += position.realised_profit_loss;
 
                 // TODO: stats
-                self.repository.set_exited_position(self.engine_id, position)?;
+                self.repository
+                    .set_exited_position(self.engine_id, position)?;
             }
 
             None => {

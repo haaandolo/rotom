@@ -18,7 +18,7 @@ pub trait ExecutionClient {
 /*----- */
 // Fill Event
 /*----- */
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct FillEvent {
     pub time: DateTime<Utc>,
     pub exchange: ExchangeId,

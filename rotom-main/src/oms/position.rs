@@ -171,7 +171,7 @@ impl PositionEnterer for Position {
 
         Ok(Position {
             position_id: determine_position_id(engine_id, &fill.exchange, &fill.instrument),
-            exchange: fill.exchange.clone(),
+            exchange: fill.exchange,
             instrument: fill.instrument.clone(),
             meta: metadata,
             side: Position::parse_entry_side(fill)?,
@@ -257,6 +257,7 @@ pub fn determine_position_id(
 /*----- */
 // Position update
 /*----- */
+#[derive(Debug)]
 pub struct PositionUpdate {
     pub position_id: String,
     pub update_time: DateTime<Utc>,
@@ -301,6 +302,7 @@ impl Display for Side {
 /*----- */
 // Position Exit
 /*----- */
+#[derive(Debug)]
 pub struct PositionExit {
     // Unique identifier for a [`Position`], generated from an exchange, symbol, and enter_time.
     pub position_id: String,

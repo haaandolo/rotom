@@ -13,8 +13,14 @@ pub struct Instrument {
 }
 
 impl Instrument {
-    pub fn new(base: String, quote: String) -> Self {
-        Self { base, quote }
+    pub fn new<S>(base: S, quote: S) -> Self
+    where
+        S: Into<String>,
+    {
+        Self {
+            base: base.into(),
+            quote: quote.into(),
+        }
     }
 }
 

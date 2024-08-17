@@ -1,24 +1,20 @@
-use std::sync::Arc;
-
-use futures::{lock::Mutex, StreamExt};
+use futures::StreamExt;
+use parking_lot::Mutex;
 use rotom_data::{
     event_models::market_event::{DataKind, MarketEvent},
-    shared::subscription_models::{ExchangeId, StreamKind},
+    shared::subscription_models::{ExchangeId, Instrument, StreamKind},
     streams::builder::dynamic,
 };
 use rotom_main::{
-    data::live,
-    engine::trader::Trader,
-    execution::{
+    data::{live, Market}, engine::trader::Trader, event::EventTx, execution::{
         simulated::{Config, SimulatedExecution},
         Fees,
-    },
-    oms::{
+    }, oms::{
         allocator::DefaultAllocator, portfolio::MetaPortfolio,
         repository::in_memory::InMemoryRepository, risk::DefaultRisk,
-    },
-    strategy::spread::SpreadStategy,
+    }, strategy::spread::SpreadStategy
 };
+use std::sync::Arc;
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 use uuid::Uuid;
 
@@ -33,10 +29,22 @@ pub async fn main() {
     // Engine id
     let engine_id = Uuid::new_v4();
 
+    // Market
+    let markets = vec![
+        Market::new(ExchangeId::BinanceSpot, Instrument::new("op", "usdt")),
+        Market::new(ExchangeId::PoloniexSpot, Instrument::new("op", "usdt")),
+    ];
+
+    // Channels
+    let (trader_command_tx, trader_command_rx) = mpsc::channel(10);
+    let (event_tx, event_rx) = mpsc::unbounded_channel();
+    let event_tx = EventTx::new(event_tx);
+
     // Portfolio
     let portfolio = Arc::new(Mutex::new(
         MetaPortfolio::builder()
             .engine_id(engine_id)
+            .markets(markets.clone())
             .starting_cash(10000.0)
             .repository(InMemoryRepository::new())
             .allocation_manager(DefaultAllocator {
@@ -47,9 +55,13 @@ pub async fn main() {
             .unwrap(),
     ));
 
-    // Build a trader
+    // Build trader
     let trader = Trader::builder()
+        .engine_id(engine_id)
+        .market(markets.clone())
+        .command_rx(trader_command_rx)
         .portfolio(Arc::clone(&portfolio))
+        .event_tx(event_tx)
         .data(live::MarketFeed::new(stream_trades().await))
         .strategy(SpreadStategy::default())
         .execution(SimulatedExecution::new(Config {
