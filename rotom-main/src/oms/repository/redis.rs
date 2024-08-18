@@ -187,14 +187,14 @@ where
         statistic: Statistic,
     ) -> Result<(), RepositoryError> {
         self.conn
-            .set(market_id, serde_json::to_string(&statistic)?)
+            .set(&market_id.0, serde_json::to_string(&statistic)?)
             .map_err(|_| RepositoryError::WriteError)
     }
 
     fn get_statistics(&mut self, market_id: &MarketId) -> Result<Statistic, RepositoryError> {
         let statistics: String = self
             .conn
-            .get(market_id)
+            .get(&market_id.0)
             .map_err(|_| RepositoryError::ReadError)?;
 
         serde_json::from_str(&statistics).map_err(RepositoryError::JsonSerDeError)

@@ -63,13 +63,23 @@ impl From<(ExchangeId, Instrument)> for Market {
 /*----- */
 // Market ID
 /*----- */
-pub type MarketId = String;
+#[derive(Debug, Eq, Hash, PartialEq)]
+pub struct MarketId(pub String);
+
+impl MarketId {
+    pub fn new(exchange: &ExchangeId, instrument: &Instrument) -> MarketId {
+        MarketId(format!(
+            "{}_{}_{}",
+            exchange, instrument.base, instrument.quote
+        ))
+    }
+}
 
 impl From<&Market> for MarketId {
-    fn from(market: &Market) -> Self {
-        format!(
+    fn from(market: &Market) -> MarketId {
+        MarketId(format!(
             "{}_{}_{}",
             market.exchange, market.instrument.base, market.instrument.quote
-        )
+        ))
     }
 }

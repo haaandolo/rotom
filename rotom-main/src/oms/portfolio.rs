@@ -17,7 +17,8 @@ use super::{
     allocator::OrderAllocator,
     error::PortfolioError,
     position::{
-        determine_position_id, Position, PositionEnterer, PositionExiter, PositionId, PositionUpdate, PositionUpdater, Side
+        determine_position_id, Position, PositionEnterer, PositionExiter, PositionId,
+        PositionUpdate, PositionUpdater, Side,
     },
     repository::{error::RepositoryError, BalanceHandler, PositionHandler, StatisticHandler},
     risk::OrderEvaluator,
@@ -58,7 +59,7 @@ where
     pub repository: Repository,
     pub allocation_manager: Allocator,
     pub risk_manager: RiskManager,
-    pub _statistic_marker: PhantomData<Statistic>
+    pub _statistic_marker: PhantomData<Statistic>,
 }
 
 impl<Repository, Allocator, RiskManager, Statistic>
@@ -77,7 +78,7 @@ where
             repository: lego.repository,
             allocation_manager: lego.allocator,
             risk_manager: lego.risk,
-            _statistic_marker: PhantomData
+            _statistic_marker: PhantomData,
         };
 
         porfolio.bootstrap_repository(lego.starting_cash, &lego.markets, lego.statistic_config)?;
@@ -90,8 +91,7 @@ where
         starting_cash: f64,
         markets: &[Market],
         statistic_config: Statistic::Config,
-    ) -> Result<(), PortfolioError>
-    {
+    ) -> Result<(), PortfolioError> {
         // Persist initial Balance (total & available)
         self.repository.set_balance(
             self.engine_id,
@@ -131,7 +131,7 @@ where
     Repository: PositionHandler + BalanceHandler + StatisticHandler<Statistic>,
     Allocator: OrderAllocator,
     RiskManager: OrderEvaluator,
-    Statistic: Initialiser + PositionSummariser
+    Statistic: Initialiser + PositionSummariser,
 {
     engine_id: Option<Uuid>,
     markets: Option<Vec<Market>>,
@@ -140,15 +140,16 @@ where
     allocation_manager: Option<Allocator>,
     risk_manager: Option<RiskManager>,
     statistic_config: Option<Statistic::Config>,
-    _statistic_marker: Option<PhantomData<Statistic>>
+    _statistic_marker: Option<PhantomData<Statistic>>,
 }
 
-impl<Repository, Allocator, RiskManager, Statistic> MetaPortfolioBuilder<Repository, Allocator, RiskManager, Statistic>
+impl<Repository, Allocator, RiskManager, Statistic>
+    MetaPortfolioBuilder<Repository, Allocator, RiskManager, Statistic>
 where
     Repository: PositionHandler + BalanceHandler + StatisticHandler<Statistic>,
     Allocator: OrderAllocator,
     RiskManager: OrderEvaluator,
-    Statistic: Initialiser + PositionSummariser
+    Statistic: Initialiser + PositionSummariser,
 {
     pub fn new() -> Self {
         Self {
@@ -159,7 +160,7 @@ where
             allocation_manager: None,
             risk_manager: None,
             statistic_config: None,
-            _statistic_marker: None
+            _statistic_marker: None,
         }
     }
 
@@ -228,7 +229,7 @@ where
             risk_manager: self
                 .risk_manager
                 .ok_or(PortfolioError::BuilderIncomplete("risk_manager"))?,
-            _statistic_marker: PhantomData
+            _statistic_marker: PhantomData,
         };
 
         // Persist initial state in the Repository
@@ -255,7 +256,7 @@ where
     Repository: PositionHandler + BalanceHandler + StatisticHandler<Statistic>,
     Allocator: OrderAllocator,
     RiskManager: OrderEvaluator,
-    Statistic: Initialiser + PositionSummariser
+    Statistic: Initialiser + PositionSummariser,
 {
     fn update_from_market(
         &mut self,
@@ -284,7 +285,7 @@ where
     Repository: PositionHandler + BalanceHandler + StatisticHandler<Statistic>,
     Allocator: OrderAllocator,
     RiskManager: OrderEvaluator,
-    Statistic: Initialiser + PositionSummariser
+    Statistic: Initialiser + PositionSummariser,
 {
     fn generate_order(&mut self, signal: &Signal) -> Result<Option<OrderEvent>, PortfolioError> {
         let position_id =
@@ -361,7 +362,7 @@ where
     Repository: PositionHandler + BalanceHandler + StatisticHandler<Statistic>,
     Allocator: OrderAllocator,
     RiskManager: OrderEvaluator,
-    Statistic: Initialiser + PositionSummariser
+    Statistic: Initialiser + PositionSummariser,
 {
     fn update_from_fill(&mut self, fill: &FillEvent) -> Result<Vec<Event>, PortfolioError> {
         let mut generate_events = Vec::with_capacity(2);
@@ -380,7 +381,14 @@ where
                     + position.enter_fees_total;
                 balance.total += position.realised_profit_loss;
 
-                // TODO: stats
+                // Update statistics for exited Position market
+                let market_id = MarketId::new(&fill.exchange, &fill.instrument);
+
+                let mut stats = self.repository.get_statistics(&market_id)?;
+                stats.update(&position);
+
+                // Persist exited Position & Updated Market statistics in Repository
+                self.repository.set_statistics(market_id, stats)?;
                 self.repository
                     .set_exited_position(self.engine_id, position)?;
             }
@@ -471,7 +479,6 @@ where
         self.repository.get_exited_positions(self.engine_id)
     }
 }
-
 
 /*----- */
 // Parse Signal Decision

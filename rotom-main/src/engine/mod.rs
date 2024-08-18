@@ -285,7 +285,7 @@ where
             let market_id = MarketId::from(&market);
 
             match self.portfolio.lock().get_statistics(&market_id) {
-                Ok(statistics) => Some((market_id, statistics)),
+                Ok(statistics) => Some((market_id.0, statistics)),
                 Err(error) => {
                     error!(
                         ?error,
