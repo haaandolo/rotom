@@ -117,6 +117,7 @@ impl OrderBook {
         self.bids = BTreeMap::new();
         self.asks = BTreeMap::new();
     }
+
     /*----- Good to have functions ----- */
     // #[inline]
     // fn process_trade(&mut self, event: Event) {

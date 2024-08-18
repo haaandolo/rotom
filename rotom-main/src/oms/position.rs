@@ -198,7 +198,7 @@ impl PositionEnterer for Position {
 impl PositionUpdater for Position {
     fn update(&mut self, market: &MarketEvent<DataKind>) -> Option<PositionUpdate> {
         let close = match &market.event_data {
-            DataKind::OrderBook(event_book) => event_book.bids[0].price, // TODO: change to volumme_weighted_mid_price
+            DataKind::OrderBook(event_book) => event_book.weighted_midprice()?,
             DataKind::Trade(event_trade) => event_trade.trade.price,
         };
 
@@ -215,7 +215,11 @@ impl PositionUpdater for Position {
 // Position ID
 /*----- */
 impl PositionExiter for Position {
-    fn exit(&mut self, mut balance: Balance, fill: &FillEvent) -> Result<PositionExit, PortfolioError> {
+    fn exit(
+        &mut self,
+        mut balance: Balance,
+        fill: &FillEvent,
+    ) -> Result<PositionExit, PortfolioError> {
         if fill.decision.is_entry() {
             return Err(PortfolioError::CannotExitPositionWithEntryFill);
         }
@@ -336,7 +340,10 @@ impl TryFrom<&mut Position> for PositionExit {
         Ok(Self {
             position_id: exited_position.position_id.clone(),
             exit_time: exited_position.meta.update_time,
-            exit_balance: exited_position.meta.exit_balance.ok_or(PortfolioError::PositionExit)?,
+            exit_balance: exited_position
+                .meta
+                .exit_balance
+                .ok_or(PortfolioError::PositionExit)?,
             exit_fees: exited_position.exit_fees,
             exit_fees_total: exited_position.exit_fees_total,
             exit_avg_price_gross: exited_position.exit_avg_price_gross,

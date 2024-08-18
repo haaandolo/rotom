@@ -26,4 +26,24 @@ impl EventOrderBook {
             asks,
         }
     }
+
+    #[inline]
+    pub fn weighted_midprice(&self) -> Option<f64> {
+        if let (Some(best_bid), Some(best_ask)) = (self.bids.first(), self.asks.first()) {
+            let num = best_bid.size * best_ask.price + best_bid.price * best_ask.size;
+            let den = best_bid.size + best_ask.size;
+            return Some(num / den);
+        }
+
+        None
+    }
+
+    #[inline]
+    pub fn midprice(&self) -> Option<f64> {
+        if let (Some(best_bid), Some(best_ask)) = (self.bids.first(), self.asks.first()) {
+            return Some((best_bid.price + best_ask.price) / 2.0);
+        }
+
+        None
+    }
 }
