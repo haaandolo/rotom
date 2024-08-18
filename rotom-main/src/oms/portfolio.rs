@@ -17,10 +17,9 @@ use super::{
     allocator::OrderAllocator,
     error::PortfolioError,
     position::{
-        determine_position_id, Position, PositionEnterer, PositionExiter, PositionUpdate,
-        PositionUpdater, Side,
+        determine_position_id, Position, PositionEnterer, PositionExiter, PositionId, PositionUpdate, PositionUpdater, Side
     },
-    repository::{BalanceHandler, PositionHandler, StatisticHandler},
+    repository::{error::RepositoryError, BalanceHandler, PositionHandler, StatisticHandler},
     risk::OrderEvaluator,
     Balance, FillUpdater, MarketUpdater, OrderEvent, OrderGenerator, OrderType,
 };
@@ -371,7 +370,7 @@ where
 
         let position_id = determine_position_id(self.engine_id, &fill.exchange, &fill.instrument);
 
-        match self.repository.remove_positions(&position_id)? {
+        match self.repository.remove_position(&position_id)? {
             Some(mut position) => {
                 let position_exit = position.exit(balance, fill)?;
                 generate_events.push(Event::PositionExit(position_exit));
@@ -401,6 +400,78 @@ where
         Ok(generate_events)
     }
 }
+
+/*----- */
+// Impl StatisticHandler for MetaPortfolio
+/*----- */
+impl<Repository, Allocator, RiskManager, Statistic> StatisticHandler<Statistic>
+    for MetaPortfolio<Repository, Allocator, RiskManager, Statistic>
+where
+    Repository: PositionHandler + BalanceHandler + StatisticHandler<Statistic>,
+    Allocator: OrderAllocator,
+    RiskManager: OrderEvaluator,
+    Statistic: Initialiser + PositionSummariser,
+{
+    fn set_statistics(
+        &mut self,
+        market_id: MarketId,
+        statistic: Statistic,
+    ) -> Result<(), RepositoryError> {
+        self.repository.set_statistics(market_id, statistic)
+    }
+
+    fn get_statistics(&mut self, market_id: &MarketId) -> Result<Statistic, RepositoryError> {
+        self.repository.get_statistics(market_id)
+    }
+}
+
+/*----- */
+// Impl PositionHandler for MetaPortfolio
+/*----- */
+impl<Repository, Allocator, RiskManager, Statistic> PositionHandler
+    for MetaPortfolio<Repository, Allocator, RiskManager, Statistic>
+where
+    Repository: PositionHandler + BalanceHandler + StatisticHandler<Statistic>,
+    Allocator: OrderAllocator,
+    RiskManager: OrderEvaluator,
+    Statistic: Initialiser + PositionSummariser,
+{
+    fn set_open_position(&mut self, position: Position) -> Result<(), RepositoryError> {
+        self.repository.set_open_position(position)
+    }
+
+    fn get_open_position(
+        &mut self,
+        position_id: &PositionId,
+    ) -> Result<Option<Position>, RepositoryError> {
+        self.repository.get_open_position(position_id)
+    }
+
+    fn get_open_positions<'a, Markets: Iterator<Item = &'a Market>>(
+        &mut self,
+        _: Uuid,
+        markets: Markets,
+    ) -> Result<Vec<Position>, RepositoryError> {
+        self.repository.get_open_positions(self.engine_id, markets)
+    }
+
+    fn remove_position(
+        &mut self,
+        position_id: &PositionId,
+    ) -> Result<Option<Position>, RepositoryError> {
+        self.repository.remove_position(position_id)
+    }
+
+    fn set_exited_position(&mut self, _: Uuid, position: Position) -> Result<(), RepositoryError> {
+        self.repository
+            .set_exited_position(self.engine_id, position)
+    }
+
+    fn get_exited_positions(&mut self, _: Uuid) -> Result<Vec<Position>, RepositoryError> {
+        self.repository.get_exited_positions(self.engine_id)
+    }
+}
+
 
 /*----- */
 // Parse Signal Decision

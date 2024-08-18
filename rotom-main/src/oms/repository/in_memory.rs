@@ -3,16 +3,17 @@ use std::collections::HashMap;
 use uuid::Uuid;
 
 use crate::{
-    data::MarketId,
+    data::{Market, MarketId},
     oms::{
-        position::{Position, PositionId},
+        position::{determine_position_id, Position, PositionId},
         Balance, BalanceId,
     },
     statistic::summary::PositionSummariser,
 };
 
 use super::{
-    determine_exited_positions_id, error::RepositoryError, BalanceHandler, PositionHandler, StatisticHandler,
+    determine_exited_positions_id, error::RepositoryError, BalanceHandler, PositionHandler,
+    StatisticHandler,
 };
 
 /*----- */
@@ -62,12 +63,25 @@ where
         Ok(self.open_positions.get(position_id).cloned())
     }
 
-    // TODO: look at barter
-    fn get_open_positions(&mut self, engine_id: Uuid) -> Result<Option<Position>, RepositoryError> {
-        Ok(None)
+    fn get_open_positions<'a, Markets: Iterator<Item = &'a Market>>(
+        &mut self,
+        engine_id: Uuid,
+        markets: Markets,
+    ) -> Result<Vec<Position>, RepositoryError> {
+        Ok(markets
+            .filter_map(|market| {
+                self.open_positions
+                    .get(&determine_position_id(
+                        engine_id,
+                        &market.exchange,
+                        &market.instrument,
+                    ))
+                    .cloned()
+            })
+            .collect())
     }
 
-    fn remove_positions(
+    fn remove_position(
         &mut self,
         position_id: &PositionId,
     ) -> Result<Option<Position>, RepositoryError> {
@@ -92,7 +106,7 @@ where
         Ok(())
     }
 
-    fn get_exited_position(
+    fn get_exited_positions(
         &mut self,
         engine_id: uuid::Uuid,
     ) -> Result<Vec<Position>, RepositoryError> {
@@ -107,9 +121,9 @@ where
 /*----- */
 // Impl BalanceHandler for InMemoryRepository
 /*----- */
-impl<Statistic> BalanceHandler for InMemoryRepository<Statistic> 
-where 
-    Statistic: PositionSummariser
+impl<Statistic> BalanceHandler for InMemoryRepository<Statistic>
+where
+    Statistic: PositionSummariser,
 {
     fn set_balance(&mut self, engine_id: Uuid, balance: Balance) -> Result<(), RepositoryError> {
         self.current_balance
@@ -128,9 +142,9 @@ where
 /*----- */
 // Impl StatisticHandler for InMemoryRepository
 /*----- */
-impl<Statistic> StatisticHandler<Statistic> for InMemoryRepository<Statistic> 
+impl<Statistic> StatisticHandler<Statistic> for InMemoryRepository<Statistic>
 where
-    Statistic: PositionSummariser
+    Statistic: PositionSummariser,
 {
     fn set_statistics(
         &mut self,

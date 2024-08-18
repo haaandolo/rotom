@@ -7,7 +7,7 @@ use rotom_data::{
 };
 use rotom_main::{
     data::{live, Market},
-    engine::trader::Trader,
+    engine::{trader::Trader, Engine},
     event::EventTx,
     execution::{
         simulated::{Config, SimulatedExecution},
@@ -20,9 +20,12 @@ use rotom_main::{
     statistic::summary::trading::{Config as StatisticConfig, TradingSummary},
     strategy::spread::SpreadStategy,
 };
-use std::sync::Arc;
+use rotom_main::{event::Event, statistic::summary::Initialiser};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 use uuid::Uuid;
+
+const ENGINE_RUN_TIMEOUT: Duration = Duration::from_secs(5000);
 
 /*----- */
 // Main
@@ -42,7 +45,13 @@ pub async fn main() {
     ];
 
     // Channels
+    // Create channel to distribute Commands to the Engine & it's Traders (eg/ Command::Terminate)
+    let (_command_tx, command_rx) = mpsc::channel(20);
+
+    // Create channel for each Trader so the Engine can distribute Commands to it
     let (trader_command_tx, trader_command_rx) = mpsc::channel(10);
+
+    // Create Event channel to listen to all Engine Events in real-time
     let (event_tx, event_rx) = mpsc::unbounded_channel();
     let event_tx = EventTx::new(event_tx);
 
@@ -66,9 +75,8 @@ pub async fn main() {
             .unwrap(),
     ));
 
-    println!("{:#?}", portfolio);
-
-    // Build trader
+    // Build traders
+    let mut traders = Vec::new();
     let trader = Trader::builder()
         .engine_id(engine_id)
         .market(markets.clone())
@@ -86,8 +94,32 @@ pub async fn main() {
         }))
         .build()
         .unwrap();
+    traders.push(trader);
 
-    trader.run()
+    // Build engine
+    let trader_command_txs = markets
+        .into_iter()
+        .map(|market| (market, trader_command_tx.clone()))
+        .collect::<HashMap<_, _>>();
+
+    let engine = Engine::builder()
+        .engine_id(engine_id)
+        .command_rx(command_rx)
+        .portfolio(portfolio)
+        .traders(traders)
+        .trader_command_txs(trader_command_txs)
+        .statistics_summary(TradingSummary::init(StatisticConfig {
+            starting_equity: 1000.0,
+            trading_days_per_year: 365,
+            risk_free_return: 0.0,
+        }))
+        .build()
+        .expect("failed to build engine");
+
+    // Run Engine trading & listen to Events it produces
+    tokio::spawn(listen_to_engine_events(event_rx));
+
+    let _ = tokio::time::timeout(ENGINE_RUN_TIMEOUT, engine.run()).await;
 }
 
 /*----- */
@@ -114,6 +146,56 @@ async fn stream_trades() -> UnboundedReceiver<MarketEvent<DataKind>> {
     });
 
     rx
+}
+
+/*----- */
+// Event listener
+/*----- */
+// Listen to Events that occur in the Engine. These can be used for updating event-sourcing,
+// updating dashboard, etc etc.
+async fn listen_to_engine_events(mut event_rx: mpsc::UnboundedReceiver<Event>) {
+    while let Some(event) = event_rx.recv().await {
+        match event {
+            Event::Market(market) => {
+                // Market Event occurred in Engine
+                println!("{market:?}");
+            }
+            Event::Signal(signal) => {
+                // Signal Event occurred in Engine
+                println!("{signal:?}");
+            }
+            Event::SignalForceExit(_) => {
+                // SignalForceExit Event occurred in Engine
+            }
+            Event::OrderNew(new_order) => {
+                // OrderNew Event occurred in Engine
+                println!("{new_order:?}");
+            }
+            Event::OrderUpdate => {
+                // OrderUpdate Event occurred in Engine
+            }
+            Event::Fill(fill_event) => {
+                // Fill Event occurred in Engine
+                println!("{fill_event:?}");
+            }
+            Event::PositionNew(new_position) => {
+                // PositionNew Event occurred in Engine
+                println!("{new_position:?}");
+            }
+            Event::PositionUpdate(updated_position) => {
+                // PositionUpdate Event occurred in Engine
+                println!("{updated_position:?}");
+            }
+            Event::PositionExit(exited_position) => {
+                // PositionExit Event occurred in Engine
+                println!("{exited_position:?}");
+            }
+            Event::Balance(balance_update) => {
+                // Balance update Event occurred in Engine
+                println!("{balance_update:?}");
+            }
+        }
+    }
 }
 
 /*----- */

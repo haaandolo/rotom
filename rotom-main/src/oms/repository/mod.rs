@@ -1,7 +1,7 @@
 use error::RepositoryError;
 use uuid::Uuid;
 
-use crate::data::MarketId;
+use crate::data::{Market, MarketId};
 
 use super::{
     position::{Position, PositionId},
@@ -23,13 +23,13 @@ pub trait PositionHandler {
         position_id: &PositionId,
     ) -> Result<Option<Position>, RepositoryError>;
 
-    // TODO: look at barter
-    fn get_open_positions(
+    fn get_open_positions<'a, Markets: Iterator<Item = &'a Market>>(
         &mut self,
         engine_id: Uuid,
-    ) -> Result<Option<Position>, RepositoryError>;
+        markets: Markets,
+    ) -> Result<Vec<Position>, RepositoryError>;
 
-    fn remove_positions(
+    fn remove_position(
         &mut self,
         position_id: &PositionId,
     ) -> Result<Option<Position>, RepositoryError>;
@@ -40,7 +40,7 @@ pub trait PositionHandler {
         position: Position,
     ) -> Result<(), RepositoryError>;
 
-    fn get_exited_position(&mut self, engine_id: Uuid) -> Result<Vec<Position>, RepositoryError>;
+    fn get_exited_positions(&mut self, engine_id: Uuid) -> Result<Vec<Position>, RepositoryError>;
 }
 
 /*----- */

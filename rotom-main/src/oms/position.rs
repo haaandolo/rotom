@@ -33,7 +33,7 @@ pub trait PositionExiter {
 /*----- */
 // Position
 /*----- */
-#[derive(Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Clone, PartialEq, PartialOrd, Debug, Serialize, Deserialize)]
 pub struct Position {
     // Unique identifier for a [`Position`] generated from an engine_id, [`Exchange`] & [`Instrument`].
     pub position_id: PositionId,
@@ -349,7 +349,7 @@ impl TryFrom<&mut Position> for PositionExit {
 /*----- */
 // Position Meta
 /*----- */
-#[derive(Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Clone, PartialEq, PartialOrd, Debug, Serialize, Deserialize)]
 pub struct PositionMeta {
     // [`FillEvent`] timestamp that triggered the entering of this [`Position`].
     pub enter_time: DateTime<Utc>,

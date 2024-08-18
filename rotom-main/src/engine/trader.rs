@@ -18,9 +18,9 @@ use uuid::Uuid;
 /*----- */
 // Trader Lego
 /*----- */
+#[derive(Debug)]
 pub struct TraderLego<Data, Strategy, Execution, Portfolio>
 where
-    EventTx: MessageTransmitter<Event>,
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
     Execution: ExecutionClient,
@@ -39,23 +39,23 @@ where
 /*----- */
 // Trader
 /*----- */
+#[derive(Debug)]
 pub struct Trader<Data, Strategy, Execution, Portfolio>
 where
-    EventTx: MessageTransmitter<Event>,
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
     Execution: ExecutionClient,
     Portfolio: MarketUpdater + OrderGenerator + FillUpdater,
 {
-    pub engine_id: Uuid,
-    pub command_rx: mpsc::Receiver<Command>,
-    pub event_tx: EventTx,
-    pub markets: Vec<Market>,
-    pub data: Data,
-    pub stategy: Strategy,
-    pub execution: Execution,
-    pub event_queue: VecDeque<Event>,
-    pub portfolio: Arc<Mutex<Portfolio>>,
+    engine_id: Uuid,
+    command_rx: mpsc::Receiver<Command>,
+    event_tx: EventTx,
+    markets: Vec<Market>,
+    data: Data,
+    stategy: Strategy,
+    execution: Execution,
+    event_queue: VecDeque<Event>,
+    portfolio: Arc<Mutex<Portfolio>>,
 }
 
 impl<Data, Strategy, Execution, Portfolio> Trader<Data, Strategy, Execution, Portfolio>
@@ -218,7 +218,6 @@ where
 #[derive(Debug, Default)]
 pub struct TraderBuilder<Data, Strategy, Execution, Portfolio>
 where
-    EventTx: MessageTransmitter<Event>,
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
     Execution: ExecutionClient,
@@ -234,9 +233,9 @@ where
     pub portfolio: Option<Arc<Mutex<Portfolio>>>,
 }
 
-impl<Data, Strategy, Execution, Portfolio> TraderBuilder<Data, Strategy, Execution, Portfolio>
+impl<Data, Strategy, Execution, Portfolio>
+    TraderBuilder<Data, Strategy, Execution, Portfolio>
 where
-    EventTx: MessageTransmitter<Event>,
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
     Execution: ExecutionClient,

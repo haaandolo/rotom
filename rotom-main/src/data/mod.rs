@@ -36,7 +36,7 @@ impl Default for MarketMeta {
 /*----- */
 // Markets
 /*----- */
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, Hash, PartialEq)]
 pub struct Market {
     pub exchange: ExchangeId,
     pub instrument: Instrument,

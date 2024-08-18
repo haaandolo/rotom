@@ -105,7 +105,7 @@ where
 /*----- */
 // Exchange IDs
 /*----- */
-#[derive(Debug, PartialEq, Hash, Eq, Clone, Copy, Ord, PartialOrd, Deserialize)]
+#[derive(Debug, PartialEq, Hash, Eq, Clone, Copy, Ord, PartialOrd, Deserialize, Serialize)]
 pub enum ExchangeId {
     BinanceSpot,
     PoloniexSpot,
