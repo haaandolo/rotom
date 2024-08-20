@@ -105,8 +105,8 @@ impl OrderBook {
 
     #[inline]
     pub fn book_snapshot(&self) -> EventOrderBook {
-        let bids = self.bids.values().rev().take(10).cloned().collect();
-        let asks = self.asks.values().take(10).cloned().collect();
+        let bids = self.bids.values().rev().take(20).cloned().collect();
+        let asks = self.asks.values().take(20).cloned().collect();
         EventOrderBook::new(self.last_update_time, bids, asks)
     }
 

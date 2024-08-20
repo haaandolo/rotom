@@ -92,6 +92,40 @@ impl From<(BinanceTrade, Instrument)> for MarketEvent<EventTrade> {
 }
 
 /*----- */
+// Aggregated Trades
+/*----- */
+#[derive(PartialEq, PartialOrd, Debug, Deserialize, Default)]
+pub struct BinanceAggTrade {
+    #[serde(alias = "s")]
+    pub symbol: String,
+    #[serde(alias = "T", deserialize_with = "de_u64_epoch_ms_as_datetime_utc")]
+    pub timestamp: DateTime<Utc>,
+    #[serde(alias = "p", deserialize_with = "de_str")]
+    pub price: f64,
+    #[serde(alias = "q", deserialize_with = "de_str")]
+    pub amount: f64,
+    #[serde(alias = "m")]
+    pub side: bool,
+}
+
+impl Identifier<String> for BinanceAggTrade {
+    fn id(&self) -> String {
+        self.symbol.clone()
+    }
+}
+
+impl From<(BinanceAggTrade, Instrument)> for MarketEvent<EventTrade> {
+    fn from((event, instrument): (BinanceAggTrade, Instrument)) -> Self {
+        Self {
+            exchange_time: event.timestamp,
+            received_time: Utc::now(),
+            exchange: ExchangeId::BinanceSpot,
+            instrument,
+            event_data: EventTrade::new(Level::new(event.price, event.amount), event.side),
+        }
+    }
+}
+/*----- */
 // Subscription response
 /*----- */
 #[derive(Debug, Deserialize, PartialEq)]

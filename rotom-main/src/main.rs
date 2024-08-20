@@ -35,6 +35,17 @@ pub async fn main() {
     // Initialise logging
     init_logging();
 
+    // // Testing
+    // let res = reqwest::get("https://api.binance.us/api/v3/depth?symbol=LTCBTC")
+    //     .await
+    //     .unwrap()
+    //     .text()
+    //     .await
+    //     .unwrap();
+
+    // println!("{:#?}", res);
+
+
     // Engine id
     let engine_id = Uuid::new_v4();
 
@@ -96,7 +107,7 @@ pub async fn main() {
         .unwrap();
     traders.push(trader);
 
-    // Build engine
+    // Build engine TODO: (check the commands are doing what it is supposed to)
     let trader_command_txs = markets
         .into_iter()
         .map(|market| (market, trader_command_tx.clone()))
@@ -127,10 +138,10 @@ pub async fn main() {
 /*----- */
 async fn stream_trades() -> UnboundedReceiver<MarketEvent<DataKind>> {
     let streams = dynamic::DynamicStreams::init([vec![
-        (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::L2),
-        (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::L2),
-        (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::Trades),
-        (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::Trades),
+        // (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::L2),
+        // (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::L2),
+        (ExchangeId::BinanceSpot, "btc", "usdt", StreamKind::AggTrades),
+        // (ExchangeId::PoloniexSpot, "icp", "usdt", StreamKind::Trades),
     ]])
     .await
     .unwrap();
@@ -140,7 +151,7 @@ async fn stream_trades() -> UnboundedReceiver<MarketEvent<DataKind>> {
     let (tx, rx) = mpsc::unbounded_channel();
     tokio::spawn(async move {
         while let Some(event) = data.next().await {
-            // println!("{:?}", event);
+            println!("{:?}", event);
             let _ = tx.send(event);
         }
     });
@@ -158,41 +169,41 @@ async fn listen_to_engine_events(mut event_rx: mpsc::UnboundedReceiver<Event>) {
         match event {
             Event::Market(market) => {
                 // Market Event occurred in Engine
-                println!("{market:?}");
+                // println!("{market:?}");
             }
             Event::Signal(signal) => {
                 // Signal Event occurred in Engine
-                println!("{signal:?}");
+                // println!("{signal:?}");
             }
             Event::SignalForceExit(_) => {
                 // SignalForceExit Event occurred in Engine
             }
             Event::OrderNew(new_order) => {
                 // OrderNew Event occurred in Engine
-                println!("{new_order:?}");
+                // println!("{new_order:?}");
             }
             Event::OrderUpdate => {
                 // OrderUpdate Event occurred in Engine
             }
             Event::Fill(fill_event) => {
                 // Fill Event occurred in Engine
-                println!("{fill_event:?}");
+                // println!("{fill_event:?}");
             }
             Event::PositionNew(new_position) => {
                 // PositionNew Event occurred in Engine
-                println!("{new_position:?}");
+                // println!("{new_position:?}");
             }
             Event::PositionUpdate(updated_position) => {
                 // PositionUpdate Event occurred in Engine
-                println!("{updated_position:?}");
+                // println!("{updated_position:?}");
             }
             Event::PositionExit(exited_position) => {
                 // PositionExit Event occurred in Engine
-                println!("{exited_position:?}");
+                // println!("{exited_position:?}");
             }
             Event::Balance(balance_update) => {
                 // Balance update Event occurred in Engine
-                println!("{balance_update:?}");
+                // println!("{balance_update:?}");
             }
         }
     }

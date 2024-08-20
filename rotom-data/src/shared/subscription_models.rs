@@ -134,6 +134,7 @@ pub enum StreamKind {
     Trades,
     #[default]
     L2,
+    AggTrades,
 }
 
 impl StreamKind {
@@ -141,6 +142,7 @@ impl StreamKind {
         match self {
             StreamKind::Trades => "trade",
             StreamKind::L2 => "l2",
+            StreamKind::AggTrades => "agg_trade",
         }
     }
 }

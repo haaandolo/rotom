@@ -4,6 +4,10 @@ use crate::assets::level::Level;
 
 use super::SubKind;
 
+/*----- */
+// Trades
+/*----- */
+
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize, Default)]
 pub struct Trades;
 
@@ -21,4 +25,14 @@ impl EventTrade {
     pub fn new(trade: Level, is_buy: bool) -> Self {
         Self { trade, is_buy }
     }
+}
+
+/*----- */
+// Aggregated trades
+/*----- */
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize, Default)]
+pub struct AggTrades;
+
+impl SubKind for AggTrades {
+    type Event = EventTrade;
 }

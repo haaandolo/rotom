@@ -6,12 +6,12 @@ pub mod model;
 use channel::BinanceChannel;
 use l2::BinanceSpotBookUpdater;
 use market::BinanceMarket;
-use model::{BinanceSpotBookUpdate, BinanceSubscriptionResponse, BinanceTrade};
+use model::{BinanceAggTrade, BinanceSpotBookUpdate, BinanceSubscriptionResponse, BinanceTrade};
 use serde_json::json;
 
 use super::{Connector, StreamSelector};
 use crate::{
-    event_models::{event_book::OrderBookL2, event_trade::Trades}, protocols::ws::WsMessage, shared::subscription_models::{ExchangeId, ExchangeSubscription}, transformer::{book::MultiBookTransformer, stateless_transformer::StatelessTransformer}
+    event_models::{event_book::OrderBookL2, event_trade::{AggTrades, Trades}}, protocols::ws::WsMessage, shared::subscription_models::{ExchangeId, ExchangeSubscription}, transformer::{book::MultiBookTransformer, stateless_transformer::StatelessTransformer}
 };
 
 const BINANCE_SPOT_WS_URL: &str = "wss://stream.binance.com:9443/ws";
@@ -39,7 +39,7 @@ impl Connector for BinanceSpot {
     ) -> Option<WsMessage> {
         let binance_subs = subscriptions
             .iter()
-            .map(|s| format!("{}{}", s.market.as_ref(), s.channel.as_ref()).to_lowercase())
+            .map(|s| format!("{}{}", s.market.as_ref().to_lowercase(), s.channel.as_ref()))
             .collect::<Vec<_>>();
 
         let binance_request = json!({
@@ -74,3 +74,9 @@ impl StreamSelector<BinanceSpot, Trades> for BinanceSpot {
     type Stream = BinanceTrade;
     type StreamTransformer = StatelessTransformer<BinanceSpot, Self::Stream, Trades>;
 }
+
+impl StreamSelector<BinanceSpot, AggTrades> for BinanceSpot {
+    type Stream = BinanceAggTrade;
+    type StreamTransformer = StatelessTransformer<BinanceSpot, Self::Stream, AggTrades>;
+}
+

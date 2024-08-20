@@ -5,18 +5,20 @@ use futures::{
 use itertools::Itertools;
 use std::{collections::HashMap, fmt::Debug};
 use tokio_stream::wrappers::UnboundedReceiverStream;
+use tracing::error;
 use vecmap::VecMap;
 
 use super::single::ExchangeChannel;
 use crate::{
     error::SocketError,
     event_models::{
-        market_event::MarketEvent,
         event_book::{EventOrderBook, OrderBookL2},
-        event_trade::{EventTrade, Trades},
+        event_trade::{AggTrades, EventTrade, Trades},
+        market_event::MarketEvent,
     },
     exchange::{binance::BinanceSpot, poloniex::PoloniexSpot},
-    shared::subscription_models::{ExchangeId, StreamKind, Subscription}, streams::consumer::consume,
+    shared::subscription_models::{ExchangeId, StreamKind, Subscription},
+    streams::consumer::consume,
 };
 
 /*----- */
@@ -78,6 +80,16 @@ impl DynamicStreams {
                             channels.trades.entry(exchange).or_default().tx.clone(),
                         ));
                     }
+                    (ExchangeId::BinanceSpot, StreamKind::AggTrades) => {
+                        tokio::spawn(consume::<BinanceSpot, AggTrades>(
+                            subs.into_iter()
+                                .map(|sub| {
+                                    Subscription::new(BinanceSpot, sub.instrument, AggTrades)
+                                })
+                                .collect(),
+                            channels.trades.entry(exchange).or_default().tx.clone(),
+                        ));
+                    }
                     /*----- */
                     // Poloniex Spot
                     /*----- */
@@ -98,6 +110,10 @@ impl DynamicStreams {
                                 .collect(),
                             channels.trades.entry(exchange).or_default().tx.clone(),
                         ));
+                    }
+                    // Poloniex's does not separate regular and aggregated trades
+                    (ExchangeId::PoloniexSpot, StreamKind::AggTrades) => {
+                        error!(message = "Poloniex spot does not have a aggregated trades stream")
                     }
                 };
             }
