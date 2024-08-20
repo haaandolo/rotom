@@ -2,9 +2,7 @@ use std::collections::HashMap;
 
 use chrono::Utc;
 use rotom_data::{
-    assets::level::Level,
-    event_models::market_event::{DataKind, MarketEvent},
-    shared::subscription_models::ExchangeId,
+    event_models::market_event::{DataKind, MarketEvent}, exchange, shared::subscription_models::ExchangeId
 };
 
 use crate::data::MarketMeta;
@@ -15,8 +13,21 @@ use super::{Decision, Signal, SignalGenerator, SignalStrength};
 /*----- */
 #[derive(Debug, Default)]
 pub struct SpreadStategy {
+    // Mid price
     pub exchange_one_mid_price: Option<f64>,
     pub exchange_two_mid_price: Option<f64>,
+    // Offsets
+    pub exchange_one_bps_offsets: Vec<f64>, // TODO: rm vec
+    pub exchange_two_bps_offsets: Vec<f64>, // TODO: rm vec
+    // BB
+    pub exchange_one_bb: f64,
+    pub exchange_two_bb: f64,
+    // BA
+    pub exchange_one_ba: f64,
+    pub exchange_two_ba: f64,
+    // Spread
+    pub exchange_one_spread: f64,
+    pub exchange_two_spread: f64,
 }
 
 // impl default for spreadstategy {
@@ -34,29 +45,57 @@ impl SignalGenerator for SpreadStategy {
                 ExchangeId::BinanceSpot => {
                     self.exchange_one_mid_price = book_data.midprice();
 
+                    if self.exchange_one_bb != book_data.bids[0].price {
+                        self.exchange_one_bb = book_data.bids[0].price;
+                    }
+
+                    if self.exchange_one_ba != book_data.asks[0].price {
+                        self.exchange_one_ba = book_data.asks[0].price;
+                    }
+
                 }
                 ExchangeId::PoloniexSpot => {
                     self.exchange_two_mid_price = book_data.midprice();
+
+                    if self.exchange_two_bb != book_data.bids[0].price {
+                        self.exchange_two_bb = book_data.bids[0].price;
+                    }
+
+                    if self.exchange_two_ba != book_data.asks[0].price {
+                        self.exchange_two_ba = book_data.asks[0].price;
+                    }
                 }
             },
             // Process trade data
             DataKind::Trade(event_trade) => match market.exchange {
                 ExchangeId::BinanceSpot => {
-                    // println!("{:?}", event_trade);
                     if let Some(mid_price) = self.exchange_one_mid_price {
                         let bps_offset = (event_trade.trade.price - mid_price) / mid_price;
-                        println!("Bin: {:#?}", bps_offset);
+                        self.exchange_one_bps_offsets.push(bps_offset);
                     }
                 }
                 ExchangeId::PoloniexSpot => {
-                    // println!("{:?}", event_trade);
                     if let Some(mid_price) = self.exchange_two_mid_price {
                         let bps_offset = (event_trade.trade.price - mid_price) / mid_price;
-                        println!("Polo: {:#?}", bps_offset);
+                        self.exchange_two_bps_offsets.push(bps_offset);
                     }
                 }
 
             }
+        }
+
+        // Exchange one spread
+        let exchange_one_spread = self.exchange_one_ba / self.exchange_two_bb;
+        if self.exchange_one_spread != exchange_one_spread {
+            self.exchange_one_spread = exchange_one_spread;
+            println!("Bin spread: {}", exchange_one_spread)
+        }
+
+        // Exchange two spread
+        let exchange_two_spread = self.exchange_two_ba / self.exchange_one_bb;
+        if self.exchange_two_spread != exchange_two_spread {
+            self.exchange_two_spread = exchange_two_spread;
+            println!("Polo spread: {}", exchange_two_spread)
         }
 
         let signals = SpreadStategy::generate_signal_map(89.1);

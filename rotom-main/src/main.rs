@@ -138,10 +138,10 @@ pub async fn main() {
 /*----- */
 async fn stream_trades() -> UnboundedReceiver<MarketEvent<DataKind>> {
     let streams = dynamic::DynamicStreams::init([vec![
-        // (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::L2),
-        // (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::L2),
-        (ExchangeId::BinanceSpot, "btc", "usdt", StreamKind::AggTrades),
-        // (ExchangeId::PoloniexSpot, "icp", "usdt", StreamKind::Trades),
+        (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::L2),
+        (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::L2),
+        (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::AggTrades),
+        (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::Trades),
     ]])
     .await
     .unwrap();
@@ -151,7 +151,7 @@ async fn stream_trades() -> UnboundedReceiver<MarketEvent<DataKind>> {
     let (tx, rx) = mpsc::unbounded_channel();
     tokio::spawn(async move {
         while let Some(event) = data.next().await {
-            println!("{:?}", event);
+            // println!("{:?}", event);
             let _ = tx.send(event);
         }
     });
@@ -230,3 +230,4 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
+// - change level size to quantity (name change)
