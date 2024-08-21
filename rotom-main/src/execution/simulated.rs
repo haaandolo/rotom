@@ -45,7 +45,7 @@ impl SimulatedExecution {
 impl ExecutionClient for SimulatedExecution {
     fn generate_fill(&self, order: &OrderEvent) -> Result<FillEvent, ExecutionError> {
         let fill_value_gross = SimulatedExecution::calculate_fill_value_gross(order);
-
+    
         Ok(FillEvent {
             time: Utc::now(),
             exchange: order.exchange,
