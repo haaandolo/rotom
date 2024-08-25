@@ -138,10 +138,10 @@ pub async fn main() {
 /*----- */
 async fn stream_trades() -> UnboundedReceiver<MarketEvent<DataKind>> {
     let streams = dynamic::DynamicStreams::init([vec![
-        (ExchangeId::BinanceSpot, "icp", "usdt", StreamKind::L2),
-        (ExchangeId::PoloniexSpot, "icp", "usdt", StreamKind::L2),
-        (ExchangeId::BinanceSpot, "icp", "usdt", StreamKind::AggTrades),
-        (ExchangeId::PoloniexSpot, "icp", "usdt", StreamKind::Trades),
+        (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::L2),
+        (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::L2),
+        (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::AggTrades),
+        (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::Trades),
     ]])
     .await
     .unwrap();

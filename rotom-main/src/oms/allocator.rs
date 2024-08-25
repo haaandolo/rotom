@@ -28,9 +28,13 @@ impl OrderAllocator for DefaultAllocator {
         position: Option<&Position>,
         signal_strength: SignalStrength,
     ) {
-        // Calculate exact order_size, then round it to a more appropriate decimal place
+        // Calculate exact order_size
         let default_order_size = self.default_order_value / order.market_meta.close;
+        println!("default order 1: {}", default_order_size);
+
+        // Then round it to a more appropriate decimal place
         let default_order_size = (default_order_size * 10000.0).floor() / 10000.0;
+        println!("default order 2: {}", default_order_size);
 
         match order.decision {
             // Entry

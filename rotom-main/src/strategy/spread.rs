@@ -1,6 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 
-use chrono::Utc;
+use chrono::{DateTime, Duration, Utc};
 use rotom_data::{
     assets::level::Level,
     event_models::market_event::{DataKind, MarketEvent},
@@ -15,30 +15,8 @@ use crate::data::MarketMeta;
 /*----- */
 #[derive(Debug)]
 pub struct SpreadStategy {
-    pub exchange_one: SpreadStategyExchange,
-    pub exchange_two: SpreadStategyExchange,
-}
-
-impl SpreadStategy {
-    pub fn new() -> Self {
-        Self {
-            exchange_one: SpreadStategyExchange::new(0.0021971),
-            exchange_two: SpreadStategyExchange::new(0.0021914),
-        }
-    }
-
-    pub fn generate_signal_map(
-        current_spread: f64,
-        current_fee: f64,
-    ) -> HashMap<Decision, SignalStrength> {
-        let mut signals = HashMap::with_capacity(4);
-
-        if current_spread - 1.0 > current_fee {
-            signals.insert(Decision::Long, SignalStrength(1.0));
-        }
-
-        signals
-    }
+    pub liquid_exchange: SpreadStategyExchange,
+    pub illiquid_exchange: SpreadStategyExchange,
 }
 
 /*----- */
@@ -49,9 +27,9 @@ pub struct SpreadStategyExchange {
     pub best_bid: Level,
     pub best_ask: Level,
     pub mid_price: Option<f64>,
-    pub bps_offset_buy: SpreadDeque,
-    pub bps_offset_sell: SpreadDeque,
-    pub historical_spreads: SpreadDeque,
+    pub bps_offset_buy: VecDequeTime,
+    pub bps_offset_sell: VecDequeTime,
+    pub historical_spreads: VecDequeTime,
     pub current_spread: f64,
     pub fees: SpreadStrategyFees,
 }
@@ -62,9 +40,9 @@ impl SpreadStategyExchange {
             best_bid: Level::new(0.0, 0.0),
             best_ask: Level::new(0.0, 0.0),
             mid_price: None,
-            bps_offset_buy: SpreadDeque::new(5000),
-            bps_offset_sell: SpreadDeque::new(5000),
-            historical_spreads: SpreadDeque::new(5000),
+            bps_offset_buy: VecDequeTime::new(3),
+            bps_offset_sell: VecDequeTime::new(3),
+            historical_spreads: VecDequeTime::new(3),
             current_spread: 0.0,
             fees: SpreadStrategyFees {
                 market_risk: 0.0005,
@@ -81,6 +59,33 @@ pub struct SpreadDeque {
     pub capacity: usize,
 }
 
+#[derive(Debug, Default)]
+pub struct VecDequeTime {
+    pub data: VecDeque<f64>,
+    pub tail_date: DateTime<Utc>,
+    pub time_period: i64,
+}
+
+impl VecDequeTime {
+    pub fn new(time_period: i64) -> Self {
+        Self {
+            data: VecDeque::new(),
+            tail_date: Utc::now(),
+            time_period,
+        }
+    }
+
+    pub fn push(&mut self, current_date: DateTime<Utc>, value: f64) {
+        if current_date < self.tail_date + Duration::hours(self.time_period) {
+            self.data.push_front(value)
+        } else {
+            self.data.pop_back();
+            self.data.push_front(value);
+            self.tail_date = current_date;
+        }
+    }
+}
+
 impl SpreadDeque {
     pub fn new(capacity: usize) -> Self {
         Self {
@@ -90,7 +95,7 @@ impl SpreadDeque {
     }
 
     pub fn push(&mut self, value: f64) {
-        if self.capacity < self.data.len() {
+        if self.data.len() < self.capacity {
             self.data.push_front(value)
         } else {
             self.data.pop_back();
@@ -118,113 +123,197 @@ impl WithdrawalFee {
 /*----- */
 // Impl SignalGenerator for SpreadStategy
 /*----- */
-impl SignalGenerator for SpreadStategy {
-    fn generate_signal(&mut self, market_event: &MarketEvent<DataKind>) -> Option<Signal> {
-        let old_exchange_one_bid = self.exchange_one.best_bid.price;
-        let old_exchange_one_ask = self.exchange_one.best_ask.price;
-        let old_exchange_two_bid = self.exchange_two.best_bid.price;
-        let old_exchange_two_ask = self.exchange_two.best_ask.price;
+impl SpreadStategy {
+    pub fn new() -> Self {
+        Self {
+            liquid_exchange: SpreadStategyExchange::new(0.0021971),
+            illiquid_exchange: SpreadStategyExchange::new(0.0021914),
+        }
+    }
 
+    pub fn generate_signal_map(
+        current_spread: f64,
+        current_fee: f64,
+    ) -> HashMap<Decision, SignalStrength> {
+        let mut signals = HashMap::with_capacity(4);
+
+        // if current_spread - 1.0 > current_fee {
+        if current_spread - 1.0 > 0.0 {
+            signals.insert(Decision::Long, SignalStrength(1.0));
+        }
+
+        signals
+    }
+
+    pub fn update_state(&mut self, market_event: &MarketEvent<DataKind>) {
         match &market_event.event_data {
             // Process book data
             DataKind::OrderBook(book_data) => match market_event.exchange {
                 ExchangeId::BinanceSpot => {
                     // Update midprice
-                    self.exchange_one.mid_price = book_data.midprice();
+                    let mid_price = book_data.midprice();
+                    if self.liquid_exchange.mid_price != mid_price {
+                        self.liquid_exchange.mid_price = mid_price
+                    }
 
                     // Update best bid
-                    if self.exchange_one.best_bid != book_data.bids[0] {
-                        self.exchange_one.best_bid = book_data.bids[0];
+                    if self.liquid_exchange.best_bid != book_data.bids[0] {
+                        self.liquid_exchange.best_bid = book_data.bids[0];
+                        // Since best bid changed update spread
+                        if self.liquid_exchange.best_ask.price != 0.0 {
+                            self.liquid_exchange.current_spread =
+                                self.illiquid_exchange.best_bid.price
+                                    / self.liquid_exchange.best_ask.price
+                                    - 1.0;
+                            self.liquid_exchange.historical_spreads.push(
+                                market_event.exchange_time,
+                                self.liquid_exchange.current_spread,
+                            );
+
+                            // println!(
+                            //     "bin spread: {} || bin ask: {} || polo bid: {}",
+                            //     self.liquid_exchange.current_spread,
+                            //     self.liquid_exchange.best_ask.price,
+                            //     self.illiquid_exchange.best_bid.price
+                            // )
+                        }
                     }
 
                     // Update best ask
-                    if self.exchange_one.best_ask != book_data.asks[0] {
-                        self.exchange_one.best_ask = book_data.asks[0];
-                    }
+                    if self.liquid_exchange.best_ask != book_data.asks[0] {
+                        self.liquid_exchange.best_ask = book_data.asks[0];
+                        // Since best ask changed update spread
+                        if self.liquid_exchange.best_ask.price != 0.0 {
+                            self.liquid_exchange.current_spread =
+                                self.illiquid_exchange.best_bid.price
+                                    / self.liquid_exchange.best_ask.price
+                                    - 1.0;
+                            self.liquid_exchange.historical_spreads.push(
+                                market_event.exchange_time,
+                                self.liquid_exchange.current_spread,
+                            );
 
-                    // Calc spread
-                    let exchange_one_spread =
-                        self.exchange_one.best_ask.price / self.exchange_two.best_bid.price;
-
-                    // Update historical spread
-                    if self.exchange_one.current_spread != exchange_one_spread {
-                        self.exchange_one.current_spread = exchange_one_spread;
-
-                        self.exchange_one
-                            .historical_spreads
-                            .push(exchange_one_spread);
-                        // println!("Bin spread: {}", exchange_one_spread)
+                            // println!(
+                            //     "bin spread: {} || bin ask: {:?} || polo bid: {:?}",
+                            //     self.liquid_exchange.current_spread,
+                            //     self.liquid_exchange.best_ask,
+                            //     self.illiquid_exchange.best_bid
+                            // )
+                        }
                     }
                 }
                 ExchangeId::PoloniexSpot => {
                     // Update mid price
-                    self.exchange_two.mid_price = book_data.midprice();
+                    let mid_price = book_data.midprice();
+                    if self.illiquid_exchange.mid_price != mid_price {
+                        self.illiquid_exchange.mid_price = mid_price
+                    }
 
                     // Update best bid
-                    if self.exchange_two.best_bid != book_data.bids[0] {
-                        self.exchange_two.best_bid = book_data.bids[0];
+                    if self.illiquid_exchange.best_bid != book_data.bids[0] {
+                        self.illiquid_exchange.best_bid = book_data.bids[0];
+                        // Since best bid changed update spread
+                        if self.illiquid_exchange.best_ask.price != 0.0 {
+                            self.illiquid_exchange.current_spread =
+                                self.liquid_exchange.best_bid.price
+                                    / self.illiquid_exchange.best_ask.price
+                                    - 1.0;
+                            self.illiquid_exchange.historical_spreads.push(
+                                market_event.exchange_time,
+                                self.illiquid_exchange.current_spread,
+                            );
+                            // println!(
+                            //     "polo spread: {} || polo ask: {:?} || bin bid: {:?}",
+                            //     self.illiquid_exchange.current_spread,
+                            //     self.illiquid_exchange.best_ask,
+                            //     self.liquid_exchange.best_bid
+                            // );
+                        }
                     }
 
                     // Update best ask
-                    if self.exchange_two.best_ask != book_data.asks[0] {
-                        self.exchange_two.best_ask = book_data.asks[0];
-                    }
-
-                    // Calc spread
-                    let exchange_two_spread =
-                        self.exchange_two.best_ask.price / self.exchange_one.best_bid.price;
-
-                    // Update historical spread
-                    if self.exchange_two.current_spread != exchange_two_spread {
-                        self.exchange_two.current_spread = exchange_two_spread;
-                        self.exchange_two
-                            .historical_spreads
-                            .push(exchange_two_spread);
-                        // println!("Polo spread: {}", exchange_two_spread)
+                    if self.illiquid_exchange.best_ask != book_data.asks[0] {
+                        self.illiquid_exchange.best_ask = book_data.asks[0];
+                        // Since best ask changed update spread
+                        if self.illiquid_exchange.best_ask.price != 0.0 {
+                            self.illiquid_exchange.current_spread =
+                                self.liquid_exchange.best_bid.price
+                                    / self.illiquid_exchange.best_ask.price
+                                    - 1.0;
+                            self.illiquid_exchange.historical_spreads.push(
+                                market_event.exchange_time,
+                                self.illiquid_exchange.current_spread,
+                            );
+                            // println!(
+                            //     "polo spread: {} || polo ask: {:?} || bin bid: {:?}",
+                            //     self.illiquid_exchange.current_spread,
+                            //     self.illiquid_exchange.best_ask,
+                            //     self.liquid_exchange.best_bid
+                            // );
+                        }
                     }
                 }
             },
             // Process trade data
             DataKind::Trade(event_trade) => match market_event.exchange {
                 ExchangeId::BinanceSpot => {
-                    if let Some(mid_price) = self.exchange_one.mid_price {
+                    if let Some(mid_price) = self.liquid_exchange.mid_price {
                         // Calculate bps offset
                         let bps_offset = (event_trade.trade.price - mid_price) / mid_price;
 
                         // Update historical bps offset
                         match event_trade.is_buy {
                             true => {
-                                self.exchange_one.bps_offset_buy.push(bps_offset);
+                                self.liquid_exchange
+                                    .bps_offset_buy
+                                    .push(market_event.exchange_time, bps_offset);
                             }
                             false => {
-                                self.exchange_one.bps_offset_sell.push(bps_offset);
+                                self.liquid_exchange
+                                    .bps_offset_sell
+                                    .push(market_event.exchange_time, bps_offset);
                             }
                         }
                     }
                 }
                 ExchangeId::PoloniexSpot => {
                     // Calcuate bps offset
-                    if let Some(mid_price) = self.exchange_two.mid_price {
+                    if let Some(mid_price) = self.illiquid_exchange.mid_price {
                         let bps_offset = (event_trade.trade.price - mid_price) / mid_price;
 
                         // Update historical bps offset
                         match event_trade.is_buy {
                             true => {
-                                self.exchange_two.bps_offset_buy.push(bps_offset);
+                                self.illiquid_exchange
+                                    .bps_offset_buy
+                                    .push(market_event.exchange_time, bps_offset);
                             }
                             false => {
-                                self.exchange_two.bps_offset_sell.push(bps_offset);
+                                self.illiquid_exchange
+                                    .bps_offset_sell
+                                    .push(market_event.exchange_time, bps_offset);
                             }
                         }
                     }
                 }
             },
         }
+    }
+}
 
-        let new_exchange_one_bid = self.exchange_one.best_bid.price;
-        let new_exchange_one_ask = self.exchange_one.best_ask.price;
-        let new_exchange_two_bid = self.exchange_two.best_bid.price;
-        let new_exchange_two_ask = self.exchange_two.best_ask.price;
+impl SignalGenerator for SpreadStategy {
+    fn generate_signal(&mut self, market_event: &MarketEvent<DataKind>) -> Option<Signal> {
+        let old_exchange_one_bid = self.liquid_exchange.best_bid.price;
+        let old_exchange_one_ask = self.liquid_exchange.best_ask.price;
+        let old_exchange_two_bid = self.illiquid_exchange.best_bid.price;
+        let old_exchange_two_ask = self.illiquid_exchange.best_ask.price;
+
+        self.update_state(market_event);
+
+        let new_exchange_one_bid = self.liquid_exchange.best_bid.price;
+        let new_exchange_one_ask = self.liquid_exchange.best_ask.price;
+        let new_exchange_two_bid = self.illiquid_exchange.best_bid.price;
+        let new_exchange_two_ask = self.illiquid_exchange.best_ask.price;
 
         // Generate signal for if exchange one. Note the exchange spreads are
         // calculated by finding the difference between exchange one's ask and
@@ -232,65 +321,67 @@ impl SignalGenerator for SpreadStategy {
         if old_exchange_one_ask != new_exchange_one_ask
             || old_exchange_two_bid != new_exchange_two_bid
         {
-            let fee_hurdle = self.exchange_one.fees.covergence_risk
-                + self.exchange_one.fees.market_risk
+            let fee_hurdle = self.liquid_exchange.fees.covergence_risk
+                + self.liquid_exchange.fees.market_risk
                 + self
-                    .exchange_one
+                    .liquid_exchange
                     .fees
                     .withdrawl_fees
-                    .convert_bps(self.exchange_one.best_ask.price);
+                    .convert_bps(self.liquid_exchange.best_ask.price);
 
             let signals =
-                SpreadStategy::generate_signal_map(self.exchange_one.current_spread, fee_hurdle);
+                SpreadStategy::generate_signal_map(self.liquid_exchange.current_spread, fee_hurdle);
 
-            // println!("bin signal: {:?}", signals);
+            println!("bin signal: {:?}", signals);
 
             if signals.is_empty() {
                 return None;
             }
 
-            return Some(Signal {
+            Some(Signal {
                 time: Utc::now(),
                 exchange: market_event.exchange,
                 instrument: market_event.instrument.clone(),
                 signals,
                 market_meta: MarketMeta {
-                    close: self.exchange_one.best_ask.price,
+                    close: self.liquid_exchange.best_ask.price,
                     time: Utc::now(),
                 },
-            });
+            })
         }
         // Generate exchange two signal
         else if old_exchange_two_ask != new_exchange_two_ask
             || old_exchange_one_bid != new_exchange_one_bid
         {
-            let fee_hurdle = self.exchange_two.fees.covergence_risk
-                + self.exchange_two.fees.market_risk
+            let fee_hurdle = self.illiquid_exchange.fees.covergence_risk
+                + self.illiquid_exchange.fees.market_risk
                 + self
-                    .exchange_two
+                    .illiquid_exchange
                     .fees
                     .withdrawl_fees
-                    .convert_bps(self.exchange_two.best_ask.price);
+                    .convert_bps(self.illiquid_exchange.best_ask.price);
 
-            let signals =
-                SpreadStategy::generate_signal_map(self.exchange_two.current_spread, fee_hurdle);
+            let signals = SpreadStategy::generate_signal_map(
+                self.illiquid_exchange.current_spread,
+                fee_hurdle,
+            );
 
-            // println!("polo signal: {:?}", signals);
+            println!("polo signal: {:?}", signals);
 
             if signals.is_empty() {
                 return None;
             }
 
-            return Some(Signal {
+            Some(Signal {
                 time: Utc::now(),
                 exchange: market_event.exchange,
                 instrument: market_event.instrument.clone(),
                 signals,
                 market_meta: MarketMeta {
-                    close: self.exchange_two.best_ask.price,
+                    close: self.illiquid_exchange.best_ask.price,
                     time: Utc::now(),
                 },
-            });
+            })
         }
         // Dont generate signal if prices have not changed
         else {

@@ -5,6 +5,7 @@ pub mod event;
 pub mod execution;
 pub mod oms;
 pub mod statistic;
+pub mod trader;
 
 pub mod test_util {
     use crate::{

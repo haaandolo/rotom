@@ -1,25 +1,27 @@
 use std::{collections::VecDeque, sync::Arc};
 
-use super::error::EngineError;
-use crate::{
-    data::{Feed, Market, MarketGenerator},
-    engine::Command,
-    event::{Event, EventTx, MessageTransmitter},
-    execution::ExecutionClient,
-    oms::{FillUpdater, MarketUpdater, OrderGenerator},
-    strategy::{SignalForceExit, SignalGenerator},
-};
 use parking_lot::Mutex;
 use rotom_data::event_models::market_event::{DataKind, MarketEvent};
 use tokio::sync::mpsc;
 use tracing::{debug, warn};
 use uuid::Uuid;
 
+use crate::{
+    data::{Feed, Market, MarketGenerator},
+    engine::{error::EngineError, Command},
+    event::{Event, EventTx, MessageTransmitter},
+    execution::ExecutionClient,
+    oms::{FillUpdater, MarketUpdater, OrderGenerator},
+    strategy::{SignalForceExit, SignalGenerator},
+};
+
+use super::TraderRun;
+
 /*----- */
-// Trader Lego
+// Single Market Trader Lego
 /*----- */
 #[derive(Debug)]
-pub struct TraderLego<Data, Strategy, Execution, Portfolio>
+pub struct SingleMarketTraderLego<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
@@ -29,7 +31,7 @@ where
     pub engine_id: Uuid,
     pub command_rx: mpsc::Receiver<Command>,
     pub event_tx: EventTx,
-    pub markets: Vec<Market>,
+    pub markets: Market,
     pub data: Data,
     pub stategy: Strategy,
     pub execution: Execution,
@@ -37,10 +39,10 @@ where
 }
 
 /*----- */
-// Trader
+// Single Market Trader
 /*----- */
 #[derive(Debug)]
-pub struct Trader<Data, Strategy, Execution, Portfolio>
+pub struct SingleMarketTrader<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
@@ -50,7 +52,7 @@ where
     engine_id: Uuid,
     command_rx: mpsc::Receiver<Command>,
     event_tx: EventTx,
-    markets: Vec<Market>,
+    markets: Market,
     data: Data,
     stategy: Strategy,
     execution: Execution,
@@ -58,14 +60,14 @@ where
     portfolio: Arc<Mutex<Portfolio>>,
 }
 
-impl<Data, Strategy, Execution, Portfolio> Trader<Data, Strategy, Execution, Portfolio>
+impl<Data, Strategy, Execution, Portfolio> SingleMarketTrader<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
     Execution: ExecutionClient,
     Portfolio: MarketUpdater + OrderGenerator + FillUpdater,
 {
-    pub fn new(lego: TraderLego<Data, Strategy, Execution, Portfolio>) -> Self {
+    pub fn new(lego: SingleMarketTraderLego<Data, Strategy, Execution, Portfolio>) -> Self {
         Self {
             engine_id: lego.engine_id,
             command_rx: lego.command_rx,
@@ -79,10 +81,22 @@ where
         }
     }
 
-    pub fn builder() -> TraderBuilder<Data, Strategy, Execution, Portfolio> {
-        TraderBuilder::new()
+    pub fn builder() -> SingleMarketTraderBuilder<Data, Strategy, Execution, Portfolio> {
+        SingleMarketTraderBuilder::new()
     }
+}
 
+/*----- */
+// Impl Trader trait for Single Market Trader
+/*----- */
+impl<Data, Strategy, Execution, Portfolio> TraderRun
+    for SingleMarketTrader<Data, Strategy, Execution, Portfolio>
+where
+    Data: MarketGenerator<MarketEvent<DataKind>>,
+    Strategy: SignalGenerator,
+    Execution: ExecutionClient,
+    Portfolio: MarketUpdater + OrderGenerator + FillUpdater,
+{
     fn receive_remote_command(&mut self) -> Option<Command> {
         match self.command_rx.try_recv() {
             Ok(command) => {
@@ -109,7 +123,7 @@ where
         }
     }
 
-    pub fn run(mut self) {
+    fn run(mut self) {
         'trading: loop {
             // Check for mew remote Commands
             while let Some(command) = self.receive_remote_command() {
@@ -213,10 +227,10 @@ where
 }
 
 /*----- */
-// Trader builder
+// Single Market Trader builder
 /*----- */
 #[derive(Debug, Default)]
-pub struct TraderBuilder<Data, Strategy, Execution, Portfolio>
+pub struct SingleMarketTraderBuilder<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
@@ -226,14 +240,15 @@ where
     pub engine_id: Option<Uuid>,
     pub command_rx: Option<mpsc::Receiver<Command>>,
     pub event_tx: Option<EventTx>,
-    pub markets: Option<Vec<Market>>,
+    pub markets: Option<Market>,
     pub data: Option<Data>,
     pub strategy: Option<Strategy>,
     pub execution: Option<Execution>,
     pub portfolio: Option<Arc<Mutex<Portfolio>>>,
 }
 
-impl<Data, Strategy, Execution, Portfolio> TraderBuilder<Data, Strategy, Execution, Portfolio>
+impl<Data, Strategy, Execution, Portfolio>
+    SingleMarketTraderBuilder<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
@@ -274,7 +289,7 @@ where
         }
     }
 
-    pub fn market(self, value: Vec<Market>) -> Self {
+    pub fn market(self, value: Market) -> Self {
         Self {
             markets: Some(value),
             ..self
@@ -309,8 +324,10 @@ where
         }
     }
 
-    pub fn build(self) -> Result<Trader<Data, Strategy, Execution, Portfolio>, EngineError> {
-        Ok(Trader {
+    pub fn build(
+        self,
+    ) -> Result<SingleMarketTrader<Data, Strategy, Execution, Portfolio>, EngineError> {
+        Ok(SingleMarketTrader {
             engine_id: self
                 .engine_id
                 .ok_or(EngineError::BuilderIncomplete("engine_id"))?,
