@@ -222,12 +222,12 @@ impl SpreadStategy {
                                 market_event.exchange_time,
                                 self.illiquid_exchange.current_spread,
                             );
-                            // println!(
-                            //     "polo spread: {} || polo ask: {:?} || bin bid: {:?}",
-                            //     self.illiquid_exchange.current_spread,
-                            //     self.illiquid_exchange.best_ask,
-                            //     self.liquid_exchange.best_bid
-                            // );
+                            println!(
+                                "polo spread: {} || polo ask: {:?} || bin bid: {:?}",
+                                self.illiquid_exchange.current_spread,
+                                self.illiquid_exchange.best_ask,
+                                self.liquid_exchange.best_bid
+                            );
                         }
                     }
 
@@ -244,12 +244,12 @@ impl SpreadStategy {
                                 market_event.exchange_time,
                                 self.illiquid_exchange.current_spread,
                             );
-                            // println!(
-                            //     "polo spread: {} || polo ask: {:?} || bin bid: {:?}",
-                            //     self.illiquid_exchange.current_spread,
-                            //     self.illiquid_exchange.best_ask,
-                            //     self.liquid_exchange.best_bid
-                            // );
+                            println!(
+                                "polo spread: {} || polo ask: {:?} || bin bid: {:?}",
+                                self.illiquid_exchange.current_spread,
+                                self.illiquid_exchange.best_ask,
+                                self.liquid_exchange.best_bid
+                            );
                         }
                     }
                 }

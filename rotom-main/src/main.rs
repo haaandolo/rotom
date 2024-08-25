@@ -7,7 +7,7 @@ use rotom_data::{
 };
 use rotom_main::{
     data::{live, Market},
-    engine::{trader::Trader, Engine},
+    engine::Engine,
     event::EventTx,
     execution::{
         simulated::{Config, SimulatedExecution},
@@ -19,6 +19,7 @@ use rotom_main::{
     },
     statistic::summary::trading::{Config as StatisticConfig, TradingSummary},
     strategy::spread::SpreadStategy,
+    trader::{arb_trader::ArbTrader, single_trader::SingleMarketTrader},
 };
 use rotom_main::{event::Event, statistic::summary::Initialiser};
 use std::{collections::HashMap, sync::Arc, time::Duration};
@@ -44,7 +45,6 @@ pub async fn main() {
     //     .unwrap();
 
     // println!("{:#?}", res);
-
 
     // Engine id
     let engine_id = Uuid::new_v4();
@@ -87,8 +87,26 @@ pub async fn main() {
     ));
 
     // Build traders
-    let mut traders = Vec::new();
-    let trader = Trader::builder()
+    // let single_market_trader = SingleMarketTrader::builder()
+    //     .engine_id(engine_id)
+    //     .market(markets[0].clone())
+    //     .command_rx(trader_command_rx)
+    //     .event_tx(event_tx.clone())
+    //     .portfolio(Arc::clone(&portfolio))
+    //     .data(live::MarketFeed::new(stream_trades().await))
+    //     .strategy(SpreadStategy::new())
+    //     .execution(SimulatedExecution::new(Config {
+    //         simulated_fees_pct: Fees {
+    //             exchange: 0.01,
+    //             slippage: 0.05,
+    //             network: 0.0,
+    //         },
+    //     }))
+    //     .build()
+    //     .unwrap();
+    // let single_traders = vec![single_market_trader];
+
+    let arb_trader = ArbTrader::builder()
         .engine_id(engine_id)
         .market(markets.clone())
         .command_rx(trader_command_rx)
@@ -105,7 +123,7 @@ pub async fn main() {
         }))
         .build()
         .unwrap();
-    traders.push(trader);
+    let arb_traders = vec![arb_trader];
 
     // Build engine TODO: (check the commands are doing what it is supposed to)
     let trader_command_txs = markets
@@ -117,7 +135,7 @@ pub async fn main() {
         .engine_id(engine_id)
         .command_rx(command_rx)
         .portfolio(portfolio)
-        .traders(traders)
+        .traders(arb_traders)
         .trader_command_txs(trader_command_txs)
         .statistics_summary(TradingSummary::init(StatisticConfig {
             starting_equity: 1000.0,
@@ -231,3 +249,4 @@ fn init_logging() {
 // Todo
 /*----- */
 // - change level size to quantity (name change)
+// - engine trader to take different types of traders
