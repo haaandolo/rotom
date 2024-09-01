@@ -7,27 +7,27 @@ edition = "2021"
 
 [dependencies]
 # Async
-tokio = { version = "1", features = ["sync", "macros", "rt-multi-thread"] }
-tokio-tungstenite = { version = "0.23.1", features = ["native-tls"]}
-futures-util = { version = "0.3.28", default-features = false, features = ["sink", "std"] }
-futures = "0.3.3"
-tokio-stream = { version = "0.1.9", features = ["sync"] }
-pin-project = "1.1.5"
-async-trait = "0.1.57"
+tokio = { workspace = true, features = ["sync", "macros", "rt-multi-thread"] }
+tokio-tungstenite = { workspace = true, features = ["native-tls"]}
+futures-util = { workspace = true, default-features = false, features = ["sink", "std"] }
+futures = { workspace = true}
+tokio-stream = { workspace = true, features = ["sync"] }
+pin-project = { workspace = true}
+async-trait = { workspace = true}
 
 # Protocol
-reqwest = {version="0.12.4", features = ["json"]}
+reqwest = { workspace = true, features = ["json"]}
 
 # SerDe
-serde_json = { version = "1.0.120" }
-serde = { version = "1.0.197", features = ["derive"] }
+serde_json = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
 
 # Logging
-tracing = "0.1.40"
-tracing-subscriber = { version = "0.3.16", features = ["env-filter", "json"] }
+tracing = { workspace = true}
+tracing-subscriber = { workspace = true, features = ["env-filter", "json"] }
 
 # Misc
-thiserror = { version = "1.0.61" }
-chrono = { version = "0.4.38", features = ["serde"]}
-vecmap-rs = "0.2.1"
-itertools = "0.13.0"
+thiserror = { workspace = true}
+chrono = { workspace = true, features = ["serde"]}
+vecmap-rs = { workspace = true}
+itertools = { workspace = true}

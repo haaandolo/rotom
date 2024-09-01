@@ -1,3 +1,50 @@
 [workspace]
-members = [ "rotom-main", "rotom-data" , "rotom-strategy", "rotom-oms"]
 resolver = "2"
+members = [ 
+    "rotom-main",
+    "rotom-data",
+    "rotom-strategy",
+    "rotom-oms"
+]
+
+[workspace.dependencies]
+
+# Async
+tokio = { version = "1", features = ["sync", "macros", "rt-multi-thread"] }
+futures-util = { version = "0.3.28", default-features = false, features = ["sink", "std"] }
+tokio-stream = { version = "0.1.9", features = ["sync"] }
+pin-project = "1.1.5"
+async-trait = "0.1.57"
+futures = "0.3.3"
+
+# Protocol
+reqwest = {version="0.12.4", features = ["json"]}
+tokio-tungstenite = { version = "0.23.1", features = ["native-tls"]}
+
+# Logging
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.16", features = ["env-filter", "json"] }
+
+# Error
+thiserror = { version = "1.0.61" }
+
+# Misc
+chrono = { version = "0.4.38", features = ["serde"]}
+uuid = { version = "1.9.1", features = ["v4", "serde"]}
+parking_lot = { version = "0.12.3" }
+prettytable-rs = "0.10.0"
+vecmap-rs = "0.2.1"
+itertools = "0.13.0"
+
+# SerDe
+serde_json = { version = "1.0.120" }
+serde = { version = "1.0.197", features = ["derive"] }
+
+# Persistence
+redis = "0.25.4"
+
+# Crytographic Signatures
+hmac = { version = "0.12.1" }
+sha2 = { version = "0.10.6" }
+hex = { version = "0.4.3" }
+base64 = { version = "0.22.0" }

@@ -6,30 +6,28 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-# Internal dependencies
+# Internal
 rotom-data = { path = "../rotom-data" }
 rotom-strategy = { path = "../rotom-strategy" }
 rotom-oms = { path = "../rotom-oms"}
 
-### EXTERNAL DEPENDENCIES
 # Async
-tokio = { version = "1", features = ["sync", "macros", "rt-multi-thread"] }
-futures = "0.3.3"
-# reqwest = {version="0.12.4", features = ["json"]}
+tokio = { workspace = true, features = ["sync", "macros", "rt-multi-thread"] }
+futures = { workspace = true }
 
 # Logging
-tracing = "0.1.40"
-tracing-subscriber = { version = "0.3.16", features = ["env-filter", "json"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter", "json"] }
 
 # Error
-thiserror = { version = "1.0.61" }
+thiserror = { workspace= true }
 
 # Misc
-chrono = { version = "0.4.38", features = ["serde"]}
-uuid = { version = "1.9.1", features = ["v4", "serde"]}
-parking_lot = { version = "0.12.3" }
-prettytable-rs = "0.10.0"
+chrono = { workspace = true, features = ["serde"]}
+uuid = { workspace = true, features = ["v4", "serde"]}
+parking_lot = { workspace = true }
+prettytable-rs = { workspace = true }
 
 # SerDe
-serde_json = { version = "1.0.120" }
-serde = { version = "1.0.197", features = ["derive"] }
+serde_json = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
