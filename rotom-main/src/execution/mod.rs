@@ -10,7 +10,7 @@ use rotom_data::{
 use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
 
-use crate::oms::OrderEvent;
+use crate::portfolio::OrderEvent;
 
 /*----- */
 // Execution Client

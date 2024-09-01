@@ -11,7 +11,7 @@ use tracing::{error, info, warn};
 use uuid::Uuid;
 
 use crate::{
-    oms::{
+    portfolio::{
         position::Position,
         repository::{PositionHandler, StatisticHandler},
         FillUpdater, MarketUpdater, OrderGenerator,

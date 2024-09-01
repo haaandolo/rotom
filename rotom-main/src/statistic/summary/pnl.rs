@@ -1,5 +1,5 @@
 use crate::{
-    oms::position::{Position, Side},
+    portfolio::position::{Position, Side},
     statistic::{
         de_duration_from_secs, se_duration_as_secs,
         summary::{data::DataSummary, Initialiser, PositionSummariser, TableBuilder},
@@ -201,7 +201,7 @@ impl ProfitLossSummary {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{oms::Balance, test_util::position};
+    use crate::{portfolio::Balance, test_util::position};
     use chrono::{Duration, Utc};
 
     #[test]

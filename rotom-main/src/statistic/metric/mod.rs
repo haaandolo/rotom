@@ -2,7 +2,7 @@ pub mod drawdown;
 pub mod ratio;
 
 use crate::{
-    oms::{position::Position, Balance},
+    portfolio::{position::Position, Balance},
     statistic::summary::PositionSummariser,
 };
 use chrono::{DateTime, Utc};

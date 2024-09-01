@@ -12,7 +12,7 @@ use rotom_main::{
         simulated::{Config, SimulatedExecution},
         Fees,
     },
-    oms::{
+    portfolio::{
         allocator::DefaultAllocator, portfolio::MetaPortfolio,
         repository::in_memory::InMemoryRepository, risk::DefaultRisk,
     },

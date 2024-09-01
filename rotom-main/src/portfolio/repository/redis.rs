@@ -9,7 +9,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    oms::{
+    portfolio::{
         error::PortfolioError, position::{determine_position_id, Position, PositionId}, Balance
     },
     statistic::summary::PositionSummariser,

@@ -11,7 +11,7 @@ use crate::{
     engine::{error::EngineError, Command},
     event::{Event, EventTx, MessageTransmitter},
     execution::ExecutionClient,
-    oms::{FillUpdater, MarketUpdater, OrderGenerator},
+    portfolio::{FillUpdater, MarketUpdater, OrderGenerator},
 };
 
 use super::TraderRun;

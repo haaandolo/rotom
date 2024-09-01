@@ -3,7 +3,7 @@ pub mod drawdown;
 pub mod pnl;
 pub mod trading;
 
-use crate::oms::position::Position;
+use crate::portfolio::position::Position;
 use prettytable::{Cell, Row, Table};
 
 pub trait Initialiser {

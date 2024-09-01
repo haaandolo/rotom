@@ -4,7 +4,7 @@ use rotom_data::{Market, MarketId};
 use uuid::Uuid;
 
 use crate::{
-    oms::{
+    portfolio::{
         position::{determine_position_id, Position, PositionId},
         Balance, BalanceId,
     },
