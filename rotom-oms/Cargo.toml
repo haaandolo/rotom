@@ -6,3 +6,30 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+rotom-data = { path = "../rotom-data" }
+rotom-strategy = { path = "../rotom-strategy" }
+
+
+# Async
+tokio = { version = "1", features = ["sync", "macros", "rt-multi-thread"] }
+futures = "0.3.3"
+# reqwest = {version="0.12.4", features = ["json"]}
+
+# Logging
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.16", features = ["env-filter", "json"] }
+
+# Error
+thiserror = { version = "1.0.61" }
+
+# Misc
+chrono = { version = "0.4.38", features = ["serde"]}
+prettytable-rs = "0.10.0"
+uuid = { version = "1.9.1", features = ["v4", "serde"]}
+
+# SerDe
+serde_json = { version = "1.0.120" }
+serde = { version = "1.0.197", features = ["derive"] }
+
+# Persistence
+redis = "0.25.4"

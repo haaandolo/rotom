@@ -201,7 +201,7 @@ impl ProfitLossSummary {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{portfolio::Balance, test_util::position};
+    use crate::{portfolio::Balance, statistic::test_util::position};
     use chrono::{Duration, Utc};
 
     #[test]

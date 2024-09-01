@@ -1,18 +1,21 @@
 use std::{collections::VecDeque, sync::Arc};
 
 use parking_lot::Mutex;
-use rotom_data::{event_models::market_event::{DataKind, MarketEvent}, Feed, Market, MarketGenerator};
+use rotom_data::{
+    event_models::market_event::{DataKind, MarketEvent},
+    Feed, Market, MarketGenerator,
+};
+use rotom_oms::{
+    event::{Event, EventTx, MessageTransmitter},
+    execution::ExecutionClient,
+    portfolio::{FillUpdater, MarketUpdater, OrderGenerator},
+};
 use rotom_strategy::{SignalForceExit, SignalGenerator};
 use tokio::sync::mpsc;
 use tracing::{debug, warn};
 use uuid::Uuid;
 
-use crate::{
-    engine::{error::EngineError, Command},
-    event::{Event, EventTx, MessageTransmitter},
-    execution::ExecutionClient,
-    portfolio::{FillUpdater, MarketUpdater, OrderGenerator},
-};
+use crate::engine::{error::EngineError, Command};
 
 use super::TraderRun;
 
@@ -246,8 +249,7 @@ where
     pub portfolio: Option<Arc<Mutex<Portfolio>>>,
 }
 
-impl<Data, Strategy, Execution, Portfolio>
-    ArbTraderBuilder<Data, Strategy, Execution, Portfolio>
+impl<Data, Strategy, Execution, Portfolio> ArbTraderBuilder<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
@@ -323,9 +325,7 @@ where
         }
     }
 
-    pub fn build(
-        self,
-    ) -> Result<ArbTrader<Data, Strategy, Execution, Portfolio>, EngineError> {
+    pub fn build(self) -> Result<ArbTrader<Data, Strategy, Execution, Portfolio>, EngineError> {
         Ok(ArbTrader {
             engine_id: self
                 .engine_id

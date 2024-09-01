@@ -1,6 +1,5 @@
 use thiserror::Error;
-
-use crate::portfolio::repository::error::RepositoryError;
+use rotom_oms::portfolio::repository::error::RepositoryError;
 
 #[derive(Error, Debug)]
 pub enum EngineError {

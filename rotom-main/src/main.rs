@@ -3,11 +3,15 @@ use parking_lot::Mutex;
 use rotom_data::{
     event_models::market_event::{DataKind, MarketEvent},
     shared::subscription_models::{ExchangeId, Instrument, StreamKind},
-    streams::builder::dynamic, Market, MarketFeed,
+    streams::builder::dynamic,
+    Market, MarketFeed,
 };
 use rotom_main::{
     engine::Engine,
-    event::EventTx,
+    trader::{arb_trader::ArbTrader, single_trader::SingleMarketTrader},
+};
+use rotom_oms::{
+    event::{Event, EventTx},
     execution::{
         simulated::{Config, SimulatedExecution},
         Fees,
@@ -16,10 +20,8 @@ use rotom_main::{
         allocator::DefaultAllocator, portfolio::MetaPortfolio,
         repository::in_memory::InMemoryRepository, risk::DefaultRisk,
     },
-    statistic::summary::trading::{Config as StatisticConfig, TradingSummary},
-    trader::{arb_trader::ArbTrader, single_trader::SingleMarketTrader},
+    statistic::summary::{trading::{Config as StatisticConfig, TradingSummary}, Initialiser},
 };
-use rotom_main::{event::Event, statistic::summary::Initialiser};
 use rotom_strategy::spread::SpreadStategy;
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::mpsc::{self, UnboundedReceiver};

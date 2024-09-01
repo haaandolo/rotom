@@ -1164,6 +1164,21 @@ dependencies = [
 [[package]]
 name = "rotom-oms"
 version = "0.1.0"
+dependencies = [
+ "chrono",
+ "futures",
+ "prettytable-rs",
+ "redis",
+ "rotom-data",
+ "rotom-strategy",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
 
 [[package]]
 name = "rotom-strategy"
@@ -1181,8 +1196,8 @@ dependencies = [
  "futures",
  "parking_lot",
  "prettytable-rs",
- "redis",
  "rotom-data",
+ "rotom-oms",
  "rotom-strategy",
  "serde",
  "serde_json",

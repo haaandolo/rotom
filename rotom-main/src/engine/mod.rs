@@ -1,24 +1,17 @@
 pub mod error;
 
-use std::{collections::HashMap, sync::Arc, thread};
 use error::EngineError;
 use parking_lot::Mutex;
 use prettytable::Table;
 use rotom_data::{Market, MarketId};
+use rotom_oms::{portfolio::{position::Position, repository::{PositionHandler, StatisticHandler}, FillUpdater, MarketUpdater, OrderGenerator}, statistic::summary::{self, PositionSummariser, TableBuilder}};
 use serde::Serialize;
+use std::{collections::HashMap, sync::Arc, thread};
 use tokio::sync::{mpsc, oneshot};
 use tracing::{error, info, warn};
 use uuid::Uuid;
 
-use crate::{
-    portfolio::{
-        position::Position,
-        repository::{PositionHandler, StatisticHandler},
-        FillUpdater, MarketUpdater, OrderGenerator,
-    },
-    statistic::summary::{PositionSummariser, TableBuilder},
-    trader::TraderRun,
-};
+use crate::trader::TraderRun;
 
 /*----- */
 // Commands that can be sent trader
@@ -301,7 +294,7 @@ where
             });
 
         // Combine Total & Per-Market Statistics Into Table
-        crate::statistic::summary::combine(
+        summary::combine(
             stats_per_market.chain([("Total".to_owned(), self.statistics_summary)]),
         )
     }

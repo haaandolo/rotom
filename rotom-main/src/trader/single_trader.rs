@@ -1,18 +1,17 @@
 use std::{collections::VecDeque, sync::Arc};
 
 use parking_lot::Mutex;
-use rotom_data::{event_models::market_event::{DataKind, MarketEvent}, Feed, Market, MarketGenerator};
+use rotom_data::{
+    event_models::market_event::{DataKind, MarketEvent},
+    Feed, Market, MarketGenerator,
+};
+use rotom_oms::{event::{Event, EventTx, MessageTransmitter}, execution::ExecutionClient, portfolio::{FillUpdater, MarketUpdater, OrderGenerator}};
 use rotom_strategy::{SignalForceExit, SignalGenerator};
 use tokio::sync::mpsc;
 use tracing::{debug, warn};
 use uuid::Uuid;
 
-use crate::{
-    engine::{error::EngineError, Command},
-    event::{Event, EventTx, MessageTransmitter},
-    execution::ExecutionClient,
-    portfolio::{FillUpdater, MarketUpdater, OrderGenerator},
-};
+use crate::engine::{error::EngineError, Command};
 
 use super::TraderRun;
 

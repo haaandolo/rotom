@@ -52,8 +52,9 @@ impl PositionSummariser for EquityPoint {
 
 #[cfg(test)]
 mod tests {
+    use crate::statistic::test_util::position;
+
     use super::*;
-    use crate::test_util::position;
     use chrono::Duration;
     use std::ops::Add;
 

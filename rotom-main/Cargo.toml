@@ -9,6 +9,7 @@ edition = "2021"
 # Internal dependencies
 rotom-data = { path = "../rotom-data" }
 rotom-strategy = { path = "../rotom-strategy" }
+rotom-oms = { path = "../rotom-oms"}
 
 ### EXTERNAL DEPENDENCIES
 # Async
@@ -32,8 +33,3 @@ prettytable-rs = "0.10.0"
 # SerDe
 serde_json = { version = "1.0.120" }
 serde = { version = "1.0.197", features = ["derive"] }
-
-# Persistence
-redis = "0.25.4"
-
-# Strategy
