@@ -1,13 +1,12 @@
 use std::{collections::VecDeque, sync::Arc};
 
 use parking_lot::Mutex;
-use rotom_data::event_models::market_event::{DataKind, MarketEvent};
+use rotom_data::{event_models::market_event::{DataKind, MarketEvent}, Feed, Market, MarketGenerator};
 use tokio::sync::mpsc;
 use tracing::{debug, warn};
 use uuid::Uuid;
 
 use crate::{
-    data::{Feed, Market, MarketGenerator},
     engine::{error::EngineError, Command},
     event::{Event, EventTx, MessageTransmitter},
     execution::ExecutionClient,

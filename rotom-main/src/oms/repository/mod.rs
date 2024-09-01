@@ -1,7 +1,6 @@
 use error::RepositoryError;
+use rotom_data::{Market, MarketId};
 use uuid::Uuid;
-
-use crate::data::{Market, MarketId};
 
 use super::{
     position::{Position, PositionId},

@@ -1,12 +1,11 @@
 use std::{collections::HashMap, marker::PhantomData};
 
 use chrono::Utc;
-use rotom_data::event_models::market_event::{DataKind, MarketEvent};
+use rotom_data::{event_models::market_event::{DataKind, MarketEvent}, Market, MarketId, MarketMeta};
 use tracing::info;
 use uuid::Uuid;
 
 use crate::{
-    data::{Market, MarketId, MarketMeta},
     event::Event,
     execution::FillEvent,
     statistic::summary::{Initialiser, PositionSummariser},

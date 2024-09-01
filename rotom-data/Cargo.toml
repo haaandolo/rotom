@@ -7,8 +7,8 @@ edition = "2021"
 
 [dependencies]
 # Async
-tokio = { version = "1", features = ["full"] }
-tokio-tungstenite = { version = "*", features = ["native-tls"]}
+tokio = { version = "1", features = ["sync", "macros", "rt-multi-thread"] }
+tokio-tungstenite = { version = "0.23.1", features = ["native-tls"]}
 futures-util = { version = "0.3.28", default-features = false, features = ["sink", "std"] }
 futures = "0.3.3"
 tokio-stream = { version = "0.1.9", features = ["sync"] }

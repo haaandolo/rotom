@@ -10,13 +10,12 @@ use error::PortfolioError;
 use position::PositionUpdate;
 use rotom_data::{
     event_models::market_event::{DataKind, MarketEvent},
-    shared::subscription_models::{ExchangeId, Instrument},
+    shared::subscription_models::{ExchangeId, Instrument}, MarketMeta,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    data::MarketMeta,
     event::Event,
     execution::FillEvent,
     strategy::{Decision, Signal, SignalForceExit},

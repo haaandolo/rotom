@@ -3,10 +3,9 @@ use parking_lot::Mutex;
 use rotom_data::{
     event_models::market_event::{DataKind, MarketEvent},
     shared::subscription_models::{ExchangeId, Instrument, StreamKind},
-    streams::builder::dynamic,
+    streams::builder::dynamic, Market, MarketFeed,
 };
 use rotom_main::{
-    data::{live, Market},
     engine::Engine,
     event::EventTx,
     execution::{
@@ -112,7 +111,7 @@ pub async fn main() {
         .command_rx(trader_command_rx)
         .event_tx(event_tx)
         .portfolio(Arc::clone(&portfolio))
-        .data(live::MarketFeed::new(stream_trades().await))
+        .data(MarketFeed::new(stream_trades().await))
         .strategy(SpreadStategy::new())
         .execution(SimulatedExecution::new(Config {
             simulated_fees_pct: Fees {
@@ -156,9 +155,9 @@ pub async fn main() {
 /*----- */
 async fn stream_trades() -> UnboundedReceiver<MarketEvent<DataKind>> {
     let streams = dynamic::DynamicStreams::init([vec![
-        (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::L2),
-        (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::L2),
-        (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::AggTrades),
+        // (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::L2),
+        // (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::L2),
+        // (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::AggTrades),
         (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::Trades),
     ]])
     .await

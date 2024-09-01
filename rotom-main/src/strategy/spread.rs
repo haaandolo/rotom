@@ -4,11 +4,10 @@ use chrono::{DateTime, Duration, Utc};
 use rotom_data::{
     assets::level::Level,
     event_models::market_event::{DataKind, MarketEvent},
-    shared::subscription_models::ExchangeId,
+    shared::subscription_models::ExchangeId, MarketMeta,
 };
 
 use super::{Decision, Signal, SignalGenerator, SignalStrength};
-use crate::data::MarketMeta;
 
 /*----- */
 // Spread strategy

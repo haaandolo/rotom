@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
+use rotom_data::{Market, MarketId};
 use uuid::Uuid;
 
 use crate::{
-    data::{Market, MarketId},
     oms::{
         position::{determine_position_id, Position, PositionId},
         Balance, BalanceId,

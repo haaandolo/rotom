@@ -4,11 +4,11 @@ use std::{
 };
 
 use redis::{Connection, ErrorKind, Commands};
+use rotom_data::{Market, MarketId};
 use serde::{de::DeserializeOwned, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    data::{Market, MarketId},
     oms::{
         error::PortfolioError, position::{determine_position_id, Position, PositionId}, Balance
     },

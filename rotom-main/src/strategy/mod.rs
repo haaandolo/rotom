@@ -1,16 +1,11 @@
 pub mod spread;
 
-use crate::data::Market;
-
 use std::collections::HashMap;
-
 use chrono::{DateTime, Utc};
 use rotom_data::{
-    event_models::market_event::{DataKind, MarketEvent},
-    shared::subscription_models::{ExchangeId, Instrument},
+    event_models::market_event::{DataKind, MarketEvent}, shared::subscription_models::{ExchangeId, Instrument}, Market, MarketMeta
 };
 
-use crate::data::MarketMeta;
 
 /*----- */
 // Signal Generator

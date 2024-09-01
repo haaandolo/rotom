@@ -4,13 +4,13 @@ use std::{collections::HashMap, sync::Arc, thread};
 use error::EngineError;
 use parking_lot::Mutex;
 use prettytable::Table;
+use rotom_data::{Market, MarketId};
 use serde::Serialize;
 use tokio::sync::{mpsc, oneshot};
 use tracing::{error, info, warn};
 use uuid::Uuid;
 
 use crate::{
-    data::{Market, MarketId},
     oms::{
         position::Position,
         repository::{PositionHandler, StatisticHandler},
