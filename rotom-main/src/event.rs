@@ -4,9 +4,9 @@ use crate::{
         position::{Position, PositionExit, PositionUpdate},
         Balance, OrderEvent,
     },
-    strategy::{Signal, SignalForceExit},
 };
 use rotom_data::event_models::market_event::{DataKind, MarketEvent};
+use rotom_strategy::{Signal, SignalForceExit};
 use tokio::sync::mpsc;
 use tracing::warn;
 

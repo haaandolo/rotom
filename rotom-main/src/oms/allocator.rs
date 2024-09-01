@@ -1,7 +1,6 @@
 use serde::Deserialize;
 
-use crate::strategy::{Decision, SignalStrength};
-
+use rotom_strategy::{Decision, SignalStrength};
 use super::{position::Position, OrderEvent};
 
 /*----- */

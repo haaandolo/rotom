@@ -3,10 +3,14 @@ pub mod simulated;
 
 use chrono::{DateTime, Utc};
 use error::ExecutionError;
-use rotom_data::{shared::subscription_models::{ExchangeId, Instrument}, MarketMeta};
+use rotom_data::{
+    shared::subscription_models::{ExchangeId, Instrument},
+    MarketMeta,
+};
+use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
 
-use crate::{oms::OrderEvent, strategy::Decision};
+use crate::oms::OrderEvent;
 
 /*----- */
 // Execution Client

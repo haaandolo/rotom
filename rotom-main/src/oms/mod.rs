@@ -12,13 +12,13 @@ use rotom_data::{
     event_models::market_event::{DataKind, MarketEvent},
     shared::subscription_models::{ExchangeId, Instrument}, MarketMeta,
 };
+use rotom_strategy::{Decision, Signal, SignalForceExit};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
     event::Event,
     execution::FillEvent,
-    strategy::{Decision, Signal, SignalForceExit},
 };
 
 /*----- */

@@ -1162,6 +1162,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "rotom-strategy"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "rotom-data",
+]
+
+[[package]]
 name = "rotom_main"
 version = "0.1.0"
 dependencies = [
@@ -1171,6 +1179,7 @@ dependencies = [
  "prettytable-rs",
  "redis",
  "rotom-data",
+ "rotom-strategy",
  "serde",
  "serde_json",
  "thiserror",

@@ -1,5 +1,4 @@
 pub mod engine;
-pub mod strategy;
 pub mod event;
 pub mod execution;
 pub mod oms;
@@ -10,10 +9,10 @@ pub mod test_util {
     use crate::{
         execution::{Fees, FillEvent},
         oms::{position::{Position, Side}, OrderEvent, OrderType},
-        strategy::{Decision, Signal},
     };
     use chrono::Utc;
     use rotom_data::{assets::level::Level, event_models::{event_trade::EventTrade, market_event::{DataKind, MarketEvent}}, shared::subscription_models::{ExchangeId, Instrument}, MarketMeta};
+    use rotom_strategy::{Decision, Signal};
 
     // Build a [`MarketEvent`] of [`DataKind::PublicTrade`](DataKind) with the provided [`Side`].
     pub fn market_event_trade() -> MarketEvent<DataKind> {

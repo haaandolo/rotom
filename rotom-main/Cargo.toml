@@ -6,8 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-### INTERNAL DEPENDENCIES
-rotom-data ={ path = "../rotom-data" }
+# Internal dependencies
+rotom-data = { path = "../rotom-data" }
+rotom-strategy = { path = "../rotom-strategy" }
 
 ### EXTERNAL DEPENDENCIES
 # Async

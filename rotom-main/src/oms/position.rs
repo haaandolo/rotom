@@ -5,13 +5,11 @@ use rotom_data::{
     event_models::market_event::{DataKind, MarketEvent},
     shared::subscription_models::{ExchangeId, Instrument},
 };
+use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{
-    execution::{FeeAmount, Fees, FillEvent},
-    strategy::Decision,
-};
+use crate::execution::{FeeAmount, Fees, FillEvent};
 
 use super::{error::PortfolioError, Balance};
 

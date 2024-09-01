@@ -17,10 +17,10 @@ use rotom_main::{
         repository::in_memory::InMemoryRepository, risk::DefaultRisk,
     },
     statistic::summary::trading::{Config as StatisticConfig, TradingSummary},
-    strategy::spread::SpreadStategy,
     trader::{arb_trader::ArbTrader, single_trader::SingleMarketTrader},
 };
 use rotom_main::{event::Event, statistic::summary::Initialiser};
+use rotom_strategy::spread::SpreadStategy;
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 use uuid::Uuid;
