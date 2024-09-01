@@ -221,12 +221,12 @@ impl SpreadStategy {
                                 market_event.exchange_time,
                                 self.illiquid_exchange.current_spread,
                             );
-                            println!(
-                                "polo spread: {} || polo ask: {:?} || bin bid: {:?}",
-                                self.illiquid_exchange.current_spread,
-                                self.illiquid_exchange.best_ask,
-                                self.liquid_exchange.best_bid
-                            );
+                            // println!(
+                            //     "polo spread: {} || polo ask: {:?} || bin bid: {:?}",
+                            //     self.illiquid_exchange.current_spread,
+                            //     self.illiquid_exchange.best_ask,
+                            //     self.liquid_exchange.best_bid
+                            // );
                         }
                     }
 
@@ -243,12 +243,12 @@ impl SpreadStategy {
                                 market_event.exchange_time,
                                 self.illiquid_exchange.current_spread,
                             );
-                            println!(
-                                "polo spread: {} || polo ask: {:?} || bin bid: {:?}",
-                                self.illiquid_exchange.current_spread,
-                                self.illiquid_exchange.best_ask,
-                                self.liquid_exchange.best_bid
-                            );
+                            // println!(
+                            //     "polo spread: {} || polo ask: {:?} || bin bid: {:?}",
+                            //     self.illiquid_exchange.current_spread,
+                            //     self.illiquid_exchange.best_ask,
+                            //     self.liquid_exchange.best_bid
+                            // );
                         }
                     }
                 }
@@ -331,7 +331,7 @@ impl SignalGenerator for SpreadStategy {
             let signals =
                 SpreadStategy::generate_signal_map(self.liquid_exchange.current_spread, fee_hurdle);
 
-            println!("bin signal: {:?}", signals);
+            // println!("bin signal: {:?}", signals);
 
             if signals.is_empty() {
                 return None;
@@ -365,7 +365,7 @@ impl SignalGenerator for SpreadStategy {
                 fee_hurdle,
             );
 
-            println!("polo signal: {:?}", signals);
+            // println!("polo signal: {:?}", signals);
 
             if signals.is_empty() {
                 return None;
