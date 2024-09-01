@@ -1,5 +1,5 @@
 [package]
-name = "rotom_main"
+name = "rotom-main"
 version = "0.1.0"
 edition = "2021"
 

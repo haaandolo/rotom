@@ -8,7 +8,6 @@ members = [
 ]
 
 [workspace.dependencies]
-
 # Async
 tokio = { version = "1", features = ["sync", "macros", "rt-multi-thread"] }
 futures-util = { version = "0.3.28", default-features = false, features = ["sink", "std"] }
