@@ -1,14 +1,23 @@
 pub mod error;
+pub mod model;
+pub mod exchange_interface;
 pub mod simulated;
 
+use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use error::ExecutionError;
+use model::{
+    balance::SymbolBalance,
+    order::{Cancelled, Open, Order, RequestCancel, RequestOpen},
+};
 use rotom_data::{
+    event_models::event_trade::EventTrade,
     shared::subscription_models::{ExchangeId, Instrument},
     MarketMeta,
 };
 use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
+use tokio::sync::oneshot;
 
 use crate::portfolio::OrderEvent;
 
@@ -17,6 +26,64 @@ use crate::portfolio::OrderEvent;
 /*----- */
 pub trait ExecutionClient {
     fn generate_fill(&self, order: &OrderEvent) -> Result<FillEvent, ExecutionError>;
+}
+
+#[async_trait]
+pub trait ExecutionClient2 {
+    const CLIENT: ExecutionId;
+
+    /// **Note:**
+    /// Usually entails spawning an asynchronous WebSocket event loop to consume [`AccountEvent`]s
+    /// from the exchange, as well as returning the HTTP client `Self`.
+    async fn init() -> Self;
+
+    // /// Fetch account [`Order<Open>`]s.
+    // async fn fetch_orders_open(&self) -> Result<Vec<Order<Open>>, ExecutionError>;
+
+    // /// Fetch account [`SymbolBalance`]s.
+    // async fn fetch_balances(&self) -> Result<Vec<SymbolBalance>, ExecutionError>;
+
+    // /// Open orders.
+    // async fn open_orders(
+    //     &self,
+    //     open_requests: Vec<Order<RequestOpen>>,
+    // ) -> Vec<Result<Order<Open>, ExecutionError>>;
+
+    // /// Cancel [`Order<Open>`]s.
+    // async fn cancel_orders(
+    //     &self,
+    //     cancel_requests: Vec<Order<RequestCancel>>,
+    // ) -> Vec<Result<Order<Cancelled>, ExecutionError>>;
+
+    // /// Cancel all account [`Order<Open>`]s.
+    // async fn cancel_orders_all(&self) -> Result<Vec<Order<Cancelled>>, ExecutionError>;
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]
+#[serde(rename = "execution", rename_all = "snake_case")]
+pub enum ExecutionId {
+    Poloniex,
+    Binance,
+}
+
+#[derive(Debug)]
+pub enum SimulatedEvent {
+    FetchOrdersOpen(oneshot::Sender<Result<Vec<Order<Open>>, ExecutionError>>),
+    FetchBalances(oneshot::Sender<Result<Vec<SymbolBalance>, ExecutionError>>),
+    OpenOrders(
+        (
+            Vec<Order<RequestOpen>>,
+            oneshot::Sender<Vec<Result<Order<Open>, ExecutionError>>>,
+        ),
+    ),
+    CancelOrders(
+        (
+            Vec<Order<RequestCancel>>,
+            oneshot::Sender<Vec<Result<Order<Cancelled>, ExecutionError>>>,
+        ),
+    ),
+    CancelOrdersAll(oneshot::Sender<Result<Vec<Order<Cancelled>>, ExecutionError>>),
+    MarketTrade((Instrument, EventTrade)),
 }
 
 /*----- */

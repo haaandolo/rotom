@@ -10,8 +10,8 @@ use futures::{
 use poll_next::ExchangeStream;
 use serde_json::Value;
 use tokio::{net::TcpStream, time::sleep, time::Duration};
-use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
-use tracing::info;
+use tokio_tungstenite::{connect_async, tungstenite::client::IntoClientRequest, MaybeTlsStream, WebSocketStream};
+use tracing::{debug, info};
 
 use crate::{
     error::SocketError,
@@ -57,13 +57,10 @@ impl WebSocketClient {
 
         // Make stream connection
         let mut tasks = Vec::new();
-        let ws = connect_async(Exchange::url())
-            .await
-            .map(|(ws, _)| ws)
-            .map_err(SocketError::WebSocketError);
+        let ws = connect(Exchange::url()).await?;
 
         // Split WS and make into read and write
-        let (mut ws_write, ws_read) = ws?.split();
+        let (mut ws_write, ws_read) = ws.split();
 
         // Handle subscription
         if let Some(subcription) = Exchange::requests(&exchange_subs) {
@@ -105,6 +102,17 @@ pub async fn schedule_pings_to_exchange(mut ws_write: WsWrite, ping_interval: Pi
             .send(WsMessage::Text(ping_interval.message.to_string()))
             .await;
     }
+}
+
+pub async fn connect<R>(request: R) -> Result<WebSocket, SocketError>
+where
+    R: IntoClientRequest + Unpin + Debug,
+{
+    debug!(?request, "attempting to establish WebSocket connection");
+    connect_async(request)
+        .await
+        .map(|(websocket, _)| websocket)
+        .map_err(SocketError::WebSocketError)
 }
 
 /*----- */

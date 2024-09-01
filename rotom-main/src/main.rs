@@ -13,6 +13,7 @@ use rotom_main::{
 use rotom_oms::{
     event::{Event, EventTx},
     execution::{
+        exchange_interface::{binance::binance_testnet, poloniex::poloniex_testing},
         simulated::{Config, SimulatedExecution},
         Fees,
     },
@@ -20,7 +21,10 @@ use rotom_oms::{
         allocator::DefaultAllocator, portfolio::MetaPortfolio,
         repository::in_memory::InMemoryRepository, risk::DefaultRisk,
     },
-    statistic::summary::{trading::{Config as StatisticConfig, TradingSummary}, Initialiser},
+    statistic::summary::{
+        trading::{Config as StatisticConfig, TradingSummary},
+        Initialiser,
+    },
 };
 use rotom_strategy::spread::SpreadStategy;
 use std::{collections::HashMap, sync::Arc, time::Duration};
@@ -37,6 +41,15 @@ pub async fn main() {
     // Initialise logging
     init_logging();
 
+    /*----- */
+    // Testing
+    /*----- */
+    // let _ = binance_testnet().await;
+    let _ = poloniex_testing().await;
+
+    /*----- */
+    // Trader builder
+    /*----- */
     // // Testing
     // let res = reqwest::get("https://api.binance.us/api/v3/depth?symbol=LTCBTC")
     //     .await

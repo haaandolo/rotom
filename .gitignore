@@ -1,4 +1,5 @@
 /target
+.cargo
 
 # General macOS files
 .DS_Store
