@@ -1,6 +1,6 @@
 pub mod error;
 pub mod model;
-pub mod exchange_interface;
+pub mod exchange_client;
 pub mod simulated;
 
 use async_trait::async_trait;

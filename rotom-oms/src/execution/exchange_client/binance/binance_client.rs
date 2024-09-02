@@ -1,19 +1,23 @@
-use std::collections::BTreeMap;
-use std::env;
-use std::error::Error;
-
+use chrono::Utc;
 use futures::SinkExt;
 use futures::StreamExt;
 use hmac::Hmac;
 use hmac::Mac;
 use rotom_data::protocols::ws::connect;
 use rotom_data::protocols::ws::WsMessage;
+use rotom_data::shared::subscription_models::Instrument;
 use rotom_data::shared::utils::current_timestamp_utc;
+use serde::Deserialize;
+use serde::Serialize;
 use serde_json::json;
 use sha2::Sha256;
+use std::collections::BTreeMap;
+use std::env;
+use std::error::Error;
 
-use super::ConnectorPrivate;
-use super::HmacSha256;
+use crate::execution::exchange_client::HmacSha256;
+use crate::execution::exchange_client::PrivateConnector;
+use crate::portfolio::OrderEvent;
 
 /*----- */
 // Binance API authentication params
@@ -29,24 +33,32 @@ impl BinanceAuthParams {
 /*----- */
 // Binance Private WebSocket
 /*----- */
-pub struct BinancePrivateWs;
+pub struct BinanceClient;
 
-impl ConnectorPrivate for BinancePrivateWs {
+impl PrivateConnector for BinanceClient {
     type ApiAuthParams = BinanceAuthParams;
+    type ExchangeSymbol = BinanceSymbol;
 
     fn url() -> &'static str {
         BinanceAuthParams::PRIVATE_ENDPOINT
     }
-
-    // fn generate_param_str(order: &OrderEvent) -> String {
-
-    // }
 
     fn generate_signature(request_str: String) -> String {
         let mut mac = HmacSha256::new_from_slice(BinanceAuthParams::SECRET.as_bytes())
             .expect("Could not generate HMAC for Binance");
         mac.update(request_str.as_bytes());
         hex::encode(mac.finalize().into_bytes())
+    }
+}
+
+/*----- */
+// Binance symbol
+/*----- */
+pub struct BinanceSymbol(pub String);
+
+impl From<&Instrument> for BinanceSymbol {
+    fn from(instrument: &Instrument) -> BinanceSymbol {
+        BinanceSymbol(format!("{}{}", instrument.base, instrument.quote).to_uppercase())
     }
 }
 

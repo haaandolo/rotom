@@ -10,16 +10,14 @@ use error::PortfolioError;
 use position::PositionUpdate;
 use rotom_data::{
     event_models::market_event::{DataKind, MarketEvent},
-    shared::subscription_models::{ExchangeId, Instrument}, MarketMeta,
+    shared::subscription_models::{ExchangeId, Instrument},
+    MarketMeta,
 };
 use rotom_strategy::{Decision, Signal, SignalForceExit};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{
-    event::Event,
-    execution::FillEvent,
-};
+use crate::{event::Event, execution::FillEvent};
 
 /*----- */
 // Market Updater
@@ -70,10 +68,19 @@ pub enum OrderType {
     Limit,
 }
 
+impl AsRef<str> for OrderType {
+    fn as_ref(&self) -> &str {
+        match self {
+            OrderType::Limit => "Limit",
+            OrderType::Market => "Market",
+        }
+    }
+}
+
 impl Default for OrderType {
-   fn default() -> Self {
-       Self::Market
-   } 
+    fn default() -> Self {
+        Self::Market
+    }
 }
 
 /*----- */
@@ -167,7 +174,6 @@ impl OrderEventBuilder {
                 .ok_or(PortfolioError::BuilderIncomplete("order_type"))?,
         })
     }
-
 }
 
 /*----- */
@@ -179,7 +185,7 @@ pub type BalanceId = String;
 pub struct Balance {
     pub time: DateTime<Utc>,
     pub total: f64,
-    pub available: f64
+    pub available: f64,
 }
 
 impl Default for Balance {

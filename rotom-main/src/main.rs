@@ -13,7 +13,7 @@ use rotom_main::{
 use rotom_oms::{
     event::{Event, EventTx},
     execution::{
-        exchange_interface::{binance::binance_testnet, poloniex::poloniex_testing},
+        exchange_client::{binance::binance_client::binance_testnet, poloniex::poloniex_testing},
         simulated::{Config, SimulatedExecution},
         Fees,
     },
@@ -44,8 +44,8 @@ pub async fn main() {
     /*----- */
     // Testing
     /*----- */
-    // let _ = binance_testnet().await;
-    let _ = poloniex_testing().await;
+    let _ = binance_testnet().await;
+    // let _ = poloniex_testing().await;
 
     /*----- */
     // Trader builder
