@@ -262,5 +262,5 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
+// - impl from trait for param str for diff structs
 // - change level size to quantity (name change)
-// - engine trader to take different types of traders
