@@ -16,8 +16,14 @@ use std::env;
 use std::error::Error;
 
 use crate::execution::exchange_client::HmacSha256;
+use crate::execution::exchange_client::ParamString;
 use crate::execution::exchange_client::PrivateConnector;
 use crate::portfolio::OrderEvent;
+
+use super::binance_model::BinanceNewOrder;
+use super::binance_model::BinanceNewOrderParams;
+use super::binance_model::BinanceSide;
+use super::binance_model::BinanceTimeInForce;
 
 /*----- */
 // Binance API authentication params
@@ -51,6 +57,13 @@ impl PrivateConnector for BinanceClient {
     }
 }
 
+fn generate_signature(request_str: String) -> String {
+    let mut mac = HmacSha256::new_from_slice(BinanceAuthParams::SECRET.as_bytes())
+        .expect("Could not generate HMAC for Binance");
+    mac.update(request_str.as_bytes());
+    hex::encode(mac.finalize().into_bytes())
+}
+
 /*----- */
 // Binance symbol
 /*----- */
@@ -66,46 +79,32 @@ impl From<&Instrument> for BinanceSymbol {
 // DEL
 /*----- */
 pub async fn binance_testnet() -> Result<(), Box<dyn Error>> {
-    let private_endpoint = "wss://ws-api.binance.com:443/ws-api/v3";
-    let ws = connect(private_endpoint).await?;
+    let api_key = BinanceAuthParams::KEY;
 
+    let ws = connect(BinanceAuthParams::PRIVATE_ENDPOINT).await?;
     let (mut ws_write, mut ws_read) = ws.split();
 
-    let timestamp = format!("{}", current_timestamp_utc());
-    let api_key = env::var("BINANCE_API_KEY").expect("Could not get Binance Spot API key");
-    let api_secret = env::var("BINANCE_API_SECRET").expect("Could not get Binance Spot secret");
-
-    let mut params = BTreeMap::new();
-    params.insert("apiKey", api_key.as_str());
-    params.insert("symbol", "BTCUSDT");
-    params.insert("side", "BUY");
-    params.insert("type", "LIMIT");
-    params.insert("price", "50000.0");
-    params.insert("quantity", "0.0001");
-    params.insert("timeInForce", "GTC");
-    params.insert("timestamp", timestamp.as_str());
-
-    let payload = params
-        .iter()
-        .map(|(k, v)| format!("{}={}", k, v))
-        .collect::<Vec<String>>()
-        .join("&");
-
-    let signature = {
-        type HmacSha256 = Hmac<Sha256>;
-        let mut mac = HmacSha256::new_from_slice(api_secret.as_bytes())
-            .expect("HMAC can take key of any size");
-        mac.update(payload.as_bytes());
-        hex::encode(mac.finalize().into_bytes())
+    let mut new_order = BinanceNewOrderParams {
+        symbol: "BTCUSDT".to_string(),
+        side: BinanceSide::BUY,
+        r#type: "LIMIT".to_string(),
+        timeInForce: BinanceTimeInForce::GTC,
+        price: 50000.0,
+        quantity: 0.0001,
+        apiKey: api_key.to_string(),
+        signature: None,
+        timestamp: current_timestamp_utc(),
     };
 
-    params.insert("signature", signature.as_str());
+    let query = ParamString::from(&new_order);
+    let signature = generate_signature(query.0);
+    new_order.signature = Some(signature);
 
     let res = json!(
         {
             "id": "e2a85d9f-07a5-4f94-8d5f-789dc3deb097",
             "method": "order.test",
-            "params": params
+            "params": new_order
           }
     );
 
@@ -117,3 +116,63 @@ pub async fn binance_testnet() -> Result<(), Box<dyn Error>> {
 
     Ok(())
 }
+
+// pub async fn binance_testnet() -> Result<(), Box<dyn Error>> {
+//     let private_endpoint = "wss://ws-api.binance.com:443/ws-api/v3";
+//     let ws = connect(private_endpoint).await?;
+
+//     let (mut ws_write, mut ws_read) = ws.split();
+
+//     let timestamp = format!("{}", current_timestamp_utc());
+//     let api_key = env::var("BINANCE_API_KEY").expect("Could not get Binance Spot API key");
+//     let api_secret = env::var("BINANCE_API_SECRET").expect("Could not get Binance Spot secret");
+
+//     let mut params = BTreeMap::new();
+//     params.insert("apiKey", api_key.as_str());
+//     params.insert("symbol", "BTCUSDT");
+//     params.insert("side", "BUY");
+//     params.insert("type", "LIMIT");
+//     params.insert("price", "50000.0");
+//     params.insert("quantity", "0.0001");
+//     params.insert("timeInForce", "GTC");
+//     params.insert("timestamp", timestamp.as_str());
+
+//     let payload = params
+//         .iter()
+//         .map(|(k, v)| format!("{}={}", k, v))
+//         .collect::<Vec<String>>()
+//         .join("&");
+
+//     println!("{}", payload);
+
+//     let signature = {
+//         type HmacSha256 = Hmac<Sha256>;
+//         let mut mac = HmacSha256::new_from_slice(api_secret.as_bytes())
+//             .expect("HMAC can take key of any size");
+//         mac.update(payload.as_bytes());
+//         hex::encode(mac.finalize().into_bytes())
+//     };
+
+//     params.insert("signature", signature.as_str());
+
+
+
+//     let res = json!(
+//         {
+//             "id": "e2a85d9f-07a5-4f94-8d5f-789dc3deb097",
+//             "method": "order.test",
+//             "params": params
+//           }
+//     );
+
+//     let _ = ws_write.send(WsMessage::Text(res.to_string())).await;
+
+//     while let Some(msg) = ws_read.next().await {
+//         println!("testing: {:?}", msg);
+//     }
+
+//     Ok(())
+// }
+
+// apiKey=RoRsfRcLHqT8gUJL3gJefvgQL4mLKYDwzgopBJNorVf5TEprrbXOa4ejyS75lKUZ&price=50000.0&quantity=0.0001&side=BUY&symbol=BTCUSDT&timeInForce=GTC&timestamp=1725444376178&type=LIMIT 
+// apiKey=RoRsfRcLHqT8gUJL3gJefvgQL4mLKYDwzgopBJNorVf5TEprrbXOa4ejyS75lKUZ&price=50000.0&quantity=0.0001&side=BUY&symbol=BTCUSDT&timeInForce=GTC&timestamp=1725444518756&type=LIMIT

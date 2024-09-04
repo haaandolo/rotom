@@ -4,6 +4,46 @@ use serde::{Deserialize, Serialize};
 use crate::execution::exchange_client::{HmacSha256, ParamString, SignatureGenerator};
 
 /*----- */
+// Binance order enums
+/*----- */
+/*
+GTC: good till cancelled, an order will be on the book unless the order is cancelled
+IOC: immediate or cancel, an order will try to fill the order as much as it can before the order expires
+FOK: fill or kill, an order will expire if the full order cannot be filled upon execution
+*/
+#[derive(Debug, Deserialize, Serialize)]
+pub enum BinanceTimeInForce {
+    GTC,
+    IOC,
+    FOK,
+}
+
+impl AsRef<str> for BinanceTimeInForce {
+    fn as_ref(&self) -> &str {
+        match self {
+            BinanceTimeInForce::GTC => "GTC",
+            BinanceTimeInForce::IOC => "IOC",
+            BinanceTimeInForce::FOK => "FOK",
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub enum BinanceSide {
+    BUY,
+    SELL,
+}
+
+impl AsRef<str> for BinanceSide {
+    fn as_ref(&self) -> &str {
+        match self {
+            BinanceSide::BUY => "BUY",
+            BinanceSide::SELL => "SELL",
+        }
+    }
+}
+
+/*----- */
 // Binance API authentication params
 /*----- */
 pub struct BinanceAuthParams;
@@ -28,12 +68,19 @@ pub enum BinanceOrders {
 impl SignatureGenerator for BinanceOrders {
     type ApiAuthParams = BinanceAuthParams;
 
-    fn generate_signature(request_str: String) -> ParamString {
+    fn generate_signature(request_str: String) -> String {
         let mut mac = HmacSha256::new_from_slice(BinanceAuthParams::SECRET.as_bytes())
             .expect("Could not generate HMAC for Binance");
         mac.update(request_str.as_bytes());
-        ParamString(hex::encode(mac.finalize().into_bytes()))
+        hex::encode(mac.finalize().into_bytes())
     }
+}
+
+pub fn generate_signature(request_str: String) -> String {
+    let mut mac = HmacSha256::new_from_slice(BinanceAuthParams::SECRET.as_bytes())
+        .expect("Could not generate HMAC for Binance");
+    mac.update(request_str.as_bytes());
+    hex::encode(mac.finalize().into_bytes())
 }
 
 /*----- */
@@ -41,22 +88,38 @@ impl SignatureGenerator for BinanceOrders {
 /*----- */
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BinanceNewOrder {
-    id: String,
-    method: String,
-    params: BinanceNewOrderParams,
+    pub id: String,
+    pub method: String,
+    pub params: BinanceNewOrderParams,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BinanceNewOrderParams {
-    symbol: String,
-    side: String,
-    r#type: String,
-    timeInForce: String,
-    price: f64,
-    quantity: f64,
-    apiKey: String,
-    signature: String,
-    timestamp: u64,
+    pub symbol: String,
+    pub side: BinanceSide,
+    pub r#type: String,
+    pub timeInForce: BinanceTimeInForce,
+    pub price: f64,
+    pub quantity: f64,
+    pub apiKey: String,
+    pub signature: Option<String>,
+    pub timestamp: u64,
+}
+
+impl From<&BinanceNewOrderParams> for ParamString {
+    fn from(params: &BinanceNewOrderParams) -> ParamString {
+        ParamString(format!(
+            "apiKey={}&price={:?}&quantity={:?}&side={}&symbol={}&timeInForce={}&timestamp={}&type={}",
+            params.apiKey,
+            params.price,
+            params.quantity,
+            params.side.as_ref(),
+            params.symbol,
+            params.timeInForce.as_ref(),
+            params.timestamp,
+            params.r#type,
+        ))
+    }
 }
 
 /*----- */

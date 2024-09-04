@@ -36,5 +36,5 @@ pub struct ParamString(pub String);
 pub trait SignatureGenerator {
     type ApiAuthParams;
 
-    fn generate_signature(param_str: String) -> ParamString;
+    fn generate_signature(param_str: String) -> String;
 }
