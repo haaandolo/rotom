@@ -88,10 +88,10 @@ pub async fn binance_testnet() -> Result<(), Box<dyn Error>> {
         symbol: "BTCUSDT".to_string(),
         side: BinanceSide::BUY,
         r#type: "LIMIT".to_string(),
-        timeInForce: BinanceTimeInForce::GTC,
+        time_in_force: BinanceTimeInForce::GTC,
         price: 50000.0,
         quantity: 0.0001,
-        apiKey: api_key.to_string(),
+        api_key: api_key.to_string(),
         signature: None,
         timestamp: current_timestamp_utc(),
     };

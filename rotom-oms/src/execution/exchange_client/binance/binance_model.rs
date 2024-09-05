@@ -98,10 +98,12 @@ pub struct BinanceNewOrderParams {
     pub symbol: String,
     pub side: BinanceSide,
     pub r#type: String,
-    pub timeInForce: BinanceTimeInForce,
+    #[serde(rename(serialize = "timeInForce"))]
+    pub time_in_force: BinanceTimeInForce,
     pub price: f64,
     pub quantity: f64,
-    pub apiKey: String,
+    #[serde(rename(serialize = "apiKey"))]
+    pub api_key: String,
     pub signature: Option<String>,
     pub timestamp: u64,
 }
@@ -110,12 +112,12 @@ impl From<&BinanceNewOrderParams> for ParamString {
     fn from(params: &BinanceNewOrderParams) -> ParamString {
         ParamString(format!(
             "apiKey={}&price={:?}&quantity={:?}&side={}&symbol={}&timeInForce={}&timestamp={}&type={}",
-            params.apiKey,
+            params.api_key,
             params.price,
             params.quantity,
             params.side.as_ref(),
             params.symbol,
-            params.timeInForce.as_ref(),
+            params.time_in_force.as_ref(),
             params.timestamp,
             params.r#type,
         ))
@@ -135,8 +137,10 @@ pub struct BinanceCancelOrder {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BinanceCancelOrderParams {
     symbol: String,
-    origClientOrderId: String,
-    apiKey: String,
+    #[serde(rename(serialize = "origClientOrderId"))]
+    orig_client_order_id: String,
+    #[serde(rename(serialize = "apiKey"))]
+    api_key: String,
     signature: String,
     timestamp: u64,
 }
@@ -154,14 +158,18 @@ pub struct BinanceCancelReplace {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BinanceCancelReplaceParams {
     symbol: String,
-    cancelReplaceMode: String,
-    cancelOrigClientOrderId: String,
+    #[serde(rename(serialize = "cancelReplaceMode"))]
+    cancel_replace_mode: String,
+    #[serde(rename(serialize = "cancelOrigClientOrderId"))]
+    cancel_orig_client_order_id: String,
     side: String,
     r#type: String,
-    timeInForce: String,
+    #[serde(rename(serialize = "timeInForce"))]
+    time_in_force: String,
     price: f64,
     quantity: f64,
-    apiKey: String,
+    #[serde(rename(serialize = "apiKey"))]
+    api_key: String,
     signature: String,
     timestamp: u64,
 }
@@ -179,7 +187,8 @@ pub struct BinanceCancelAll {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BinanceCancelAllParams {
     symbol: String,
-    apiKey: String,
+    #[serde(rename(serialize = "apiKey"))]
+    api_key: String,
     signature: String,
     timestamp: u64,
 }
