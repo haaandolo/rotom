@@ -79,7 +79,7 @@ impl AsRef<str> for OrderType {
 
 impl Default for OrderType {
     fn default() -> Self {
-        Self::Market
+        Self::Limit
     }
 }
 

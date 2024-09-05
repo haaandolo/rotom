@@ -1,7 +1,13 @@
 use hmac::Mac;
+use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-use crate::execution::exchange_client::{HmacSha256, ParamString, SignatureGenerator};
+use crate::execution::exchange_client::binance::binance_client::BinanceSymbol;
+use crate::{
+    execution::exchange_client::{HmacSha256, ParamString, SignatureGenerator},
+    portfolio::OrderEvent,
+};
 
 /*----- */
 // Binance order enums
@@ -54,6 +60,13 @@ impl BinanceAuthParams {
     pub const PRIVATE_ENDPOINT: &'static str = "wss://ws-api.binance.com:443/ws-api/v3";
 }
 
+pub fn generate_signature(request_str: String) -> String {
+    let mut mac = HmacSha256::new_from_slice(BinanceAuthParams::SECRET.as_bytes())
+        .expect("Could not generate HMAC for Binance");
+    mac.update(request_str.as_bytes());
+    hex::encode(mac.finalize().into_bytes())
+}
+
 /*----- */
 // Binance order types
 /*----- */
@@ -65,30 +78,12 @@ pub enum BinanceOrders {
     CancelAll(BinanceCancelAll),
 }
 
-impl SignatureGenerator for BinanceOrders {
-    type ApiAuthParams = BinanceAuthParams;
-
-    fn generate_signature(request_str: String) -> String {
-        let mut mac = HmacSha256::new_from_slice(BinanceAuthParams::SECRET.as_bytes())
-            .expect("Could not generate HMAC for Binance");
-        mac.update(request_str.as_bytes());
-        hex::encode(mac.finalize().into_bytes())
-    }
-}
-
-pub fn generate_signature(request_str: String) -> String {
-    let mut mac = HmacSha256::new_from_slice(BinanceAuthParams::SECRET.as_bytes())
-        .expect("Could not generate HMAC for Binance");
-    mac.update(request_str.as_bytes());
-    hex::encode(mac.finalize().into_bytes())
-}
-
 /*----- */
 // Binance new order
 /*----- */
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BinanceNewOrder {
-    pub id: String,
+    pub id: Uuid,
     pub method: String,
     pub params: BinanceNewOrderParams,
 }
@@ -105,22 +100,59 @@ pub struct BinanceNewOrderParams {
     #[serde(rename(serialize = "apiKey"))]
     pub api_key: String,
     pub signature: Option<String>,
-    pub timestamp: u64,
+    pub timestamp: i64,
 }
 
-impl From<&BinanceNewOrderParams> for ParamString {
-    fn from(params: &BinanceNewOrderParams) -> ParamString {
+impl From<&BinanceNewOrder> for ParamString {
+    fn from(new_order: &BinanceNewOrder) -> ParamString {
         ParamString(format!(
             "apiKey={}&price={:?}&quantity={:?}&side={}&symbol={}&timeInForce={}&timestamp={}&type={}",
-            params.api_key,
-            params.price,
-            params.quantity,
-            params.side.as_ref(),
-            params.symbol,
-            params.time_in_force.as_ref(),
-            params.timestamp,
-            params.r#type,
+            new_order.params.api_key,
+            new_order.params.price,
+            new_order.params.quantity,
+            new_order.params.side.as_ref(),
+            new_order.params.symbol,
+            new_order.params.time_in_force.as_ref(),
+            new_order.params.timestamp,
+            new_order.params.r#type,
         ))
+    }
+}
+
+impl From<Decision> for BinanceSide {
+    fn from(decision: Decision) -> Self {
+        match decision {
+            Decision::Long => BinanceSide::BUY,
+            Decision::CloseLong => BinanceSide::SELL,
+            Decision::Short => BinanceSide::SELL,
+            Decision::CloseShort => BinanceSide::BUY,
+        }
+    }
+}
+
+impl From<&OrderEvent> for BinanceNewOrderParams {
+    fn from(order_event: &OrderEvent) -> Self {
+        Self {
+            symbol: BinanceSymbol::from(&order_event.instrument).0,
+            side: BinanceSide::from(order_event.decision),
+            r#type: order_event.order_type.as_ref().to_uppercase(),
+            time_in_force: BinanceTimeInForce::GTC, // TODO: make dynamic
+            price: order_event.market_meta.close,
+            quantity: order_event.quantity,
+            api_key: String::from(BinanceAuthParams::KEY),
+            signature: None,
+            timestamp: order_event.time.timestamp_millis(),
+        }
+    }
+}
+
+impl From<OrderEvent> for BinanceNewOrder {
+    fn from(order_event: OrderEvent) -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            method: String::from("order.test"), // TODO: make this dynamic
+            params: BinanceNewOrderParams::from(&order_event),
+        }
     }
 }
 

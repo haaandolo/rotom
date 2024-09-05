@@ -40,7 +40,7 @@ pub struct MarketMeta {
 impl Default for MarketMeta {
     fn default() -> Self {
         Self {
-            close: 100.0,
+            close: 50000.0,
             time: Utc::now(),
         }
     }

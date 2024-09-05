@@ -78,37 +78,22 @@ impl From<&Instrument> for BinanceSymbol {
 /*----- */
 // DEL
 /*----- */
-pub async fn binance_testnet() -> Result<(), Box<dyn Error>> {
-    let api_key = BinanceAuthParams::KEY;
-
+pub async fn binance_generate_order(order_event: OrderEvent) -> Result<(), Box<dyn Error>> {
     let ws = connect(BinanceAuthParams::PRIVATE_ENDPOINT).await?;
     let (mut ws_write, mut ws_read) = ws.split();
 
-    let mut new_order = BinanceNewOrderParams {
-        symbol: "BTCUSDT".to_string(),
-        side: BinanceSide::BUY,
-        r#type: "LIMIT".to_string(),
-        time_in_force: BinanceTimeInForce::GTC,
-        price: 50000.0,
-        quantity: 0.0001,
-        api_key: api_key.to_string(),
-        signature: None,
-        timestamp: current_timestamp_utc(),
-    };
-
-    let query = ParamString::from(&new_order);
+    let mut binance_order = BinanceNewOrder::from(order_event);
+    let query = ParamString::from(&binance_order);
     let signature = generate_signature(query.0);
-    new_order.signature = Some(signature);
+    binance_order.params.signature = Some(signature);
 
-    let res = json!(
-        {
-            "id": "e2a85d9f-07a5-4f94-8d5f-789dc3deb097",
-            "method": "order.test",
-            "params": new_order
-          }
-    );
+    let test = serde_json::to_string(&binance_order)?;
 
-    let _ = ws_write.send(WsMessage::Text(res.to_string())).await;
+    println!("{:?}", test);
+
+    let _ = ws_write
+        .send(WsMessage::Text(serde_json::to_string(&binance_order)?))
+        .await;
 
     while let Some(msg) = ws_read.next().await {
         println!("testing: {:?}", msg);
@@ -155,8 +140,6 @@ pub async fn binance_testnet() -> Result<(), Box<dyn Error>> {
 
 //     params.insert("signature", signature.as_str());
 
-
-
 //     let res = json!(
 //         {
 //             "id": "e2a85d9f-07a5-4f94-8d5f-789dc3deb097",
@@ -174,5 +157,5 @@ pub async fn binance_testnet() -> Result<(), Box<dyn Error>> {
 //     Ok(())
 // }
 
-// apiKey=RoRsfRcLHqT8gUJL3gJefvgQL4mLKYDwzgopBJNorVf5TEprrbXOa4ejyS75lKUZ&price=50000.0&quantity=0.0001&side=BUY&symbol=BTCUSDT&timeInForce=GTC&timestamp=1725444376178&type=LIMIT 
+// apiKey=RoRsfRcLHqT8gUJL3gJefvgQL4mLKYDwzgopBJNorVf5TEprrbXOa4ejyS75lKUZ&price=50000.0&quantity=0.0001&side=BUY&symbol=BTCUSDT&timeInForce=GTC&timestamp=1725444376178&type=LIMIT
 // apiKey=RoRsfRcLHqT8gUJL3gJefvgQL4mLKYDwzgopBJNorVf5TEprrbXOa4ejyS75lKUZ&price=50000.0&quantity=0.0001&side=BUY&symbol=BTCUSDT&timeInForce=GTC&timestamp=1725444518756&type=LIMIT

@@ -13,7 +13,9 @@ use rotom_main::{
 use rotom_oms::{
     event::{Event, EventTx},
     execution::{
-        exchange_client::{binance::binance_client::binance_testnet, poloniex::poloniex_testing},
+        exchange_client::{
+            binance::binance_client::binance_generate_order, poloniex::poloniex_testing,
+        },
         simulated::{Config, SimulatedExecution},
         Fees,
     },
@@ -21,9 +23,12 @@ use rotom_oms::{
         allocator::DefaultAllocator, portfolio::MetaPortfolio,
         repository::in_memory::InMemoryRepository, risk::DefaultRisk,
     },
-    statistic::summary::{
-        trading::{Config as StatisticConfig, TradingSummary},
-        Initialiser,
+    statistic::{
+        summary::{
+            trading::{Config as StatisticConfig, TradingSummary},
+            Initialiser,
+        },
+        test_util,
     },
 };
 use rotom_strategy::spread::SpreadStategy;
@@ -44,7 +49,8 @@ pub async fn main() {
     /*----- */
     // Testing
     /*----- */
-    let _ = binance_testnet().await;
+    let order_event = test_util::order_event();
+    let _ = binance_generate_order(order_event).await;
     // let _ = poloniex_testing().await;
 
     /*----- */
