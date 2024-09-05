@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::execution::exchange_client::binance::binance_client::BinanceSymbol;
+use crate::execution::exchange_client::MethodGenerator;
+use crate::portfolio::OrderType;
 use crate::{
     execution::exchange_client::{HmacSha256, ParamString, SignatureGenerator},
     portfolio::OrderEvent,
@@ -72,21 +74,158 @@ pub fn generate_signature(request_str: String) -> String {
 /*----- */
 #[derive(Debug, Deserialize, Serialize)]
 pub enum BinanceOrders {
-    NewOrder(BinanceNewOrder),
-    CancelOrder(BinanceCancelOrder),
-    CancelReplace(BinanceCancelReplace),
-    CancelAll(BinanceCancelAll),
+    Limit(BinanceLimit),
+    Market(BinanceMarket),
 }
 
 /*----- */
 // Binance new order
 /*----- */
 #[derive(Debug, Deserialize, Serialize)]
-pub struct BinanceNewOrder {
+pub struct BinanceNewOrder<OrderKind> {
     pub id: Uuid,
-    pub method: String,
-    pub params: BinanceNewOrderParams,
+    pub method: &'static str,
+    pub params: OrderKind,
 }
+
+impl<OrderKind> From<OrderEvent> for BinanceNewOrder<OrderKind> {
+    fn from(order_event: OrderEvent) -> Self {
+        return match &order_event.order_type {
+            OrderType::Market => {
+                let params = BinanceMarket::from(&order_event);
+                Self {
+                    id: Uuid::new_v4(),
+                    method: params.get_method(),
+                    params,
+                }
+            }
+            OrderType::Limit => BinanceOrders::Limit(BinanceLimit::from(&order_event)),
+        };
+
+        // Self {
+        //     id: Uuid::new_v4(),
+        //     method: ,
+        //     params:
+        // }
+    }
+}
+
+/*----- */
+// Binance Mandatory fields
+/*----- */
+#[derive(Debug, Deserialize, Serialize)]
+pub struct BinanceMandatory {
+    pub symbol: String,
+    pub side: BinanceSide,
+    pub r#type: String,
+    pub api_key: String,
+    pub signature: Option<String>,
+    pub timestamp: i64,
+}
+
+/*----- */
+// Binance limit
+/*----- */
+#[derive(Debug, Deserialize, Serialize)]
+pub struct BinanceLimit {
+    pub symbol: String,
+    pub side: BinanceSide,
+    pub r#type: String,
+    pub api_key: String,
+    pub signature: Option<String>,
+    pub timestamp: i64,
+    #[serde(rename(serialize = "timeInForce"))]
+    pub time_in_force: BinanceTimeInForce,
+    pub price: f64,
+    pub quantity: f64,
+}
+
+impl MethodGenerator for BinanceLimit {
+    fn get_method(self) -> &'static str {
+        "order.place"
+    }
+}
+
+impl From<&OrderEvent> for BinanceLimit {
+    fn from(order_event: &OrderEvent) -> Self {
+        Self {
+            symbol: BinanceSymbol::from(&order_event.instrument).0,
+            side: BinanceSide::from(order_event.decision),
+            r#type: order_event.order_type.as_ref().to_uppercase(),
+            time_in_force: BinanceTimeInForce::GTC, // TODO: make dynamic
+            price: order_event.market_meta.close,
+            quantity: order_event.quantity,
+            api_key: String::from(BinanceAuthParams::KEY),
+            signature: None,
+            timestamp: order_event.time.timestamp_millis(),
+        }
+    }
+}
+
+// impl From<&BinanceLimit> for ParamString {
+//     fn from(new_order: &BinanceLimit) -> ParamString {
+//         ParamString(format!(
+//             "apiKey={}&price={:?}&quantity={:?}&side={}&symbol={}&timeInForce={}&timestamp={}&type={}",
+//             new_order.params.api_key,
+//             new_order.params.price,
+//             new_order.params.quantity,
+//             new_order.params.side.as_ref(),
+//             new_order.params.symbol,
+//             new_order.params.time_in_force.as_ref(),
+//             new_order.params.timestamp,
+//             new_order.params.r#type,
+//         ))
+//     }
+// }
+
+/*----- */
+// Binance market
+/*----- */
+#[derive(Debug, Deserialize, Serialize)]
+pub struct BinanceMarket {
+    pub symbol: String,
+    pub side: BinanceSide,
+    pub r#type: String,
+    pub api_key: String,
+    pub signature: Option<String>,
+    pub timestamp: i64,
+    pub quantity: f64,
+}
+
+impl MethodGenerator for BinanceMarket {
+    fn get_method(self) -> &'static str {
+        "order.place"
+    }
+}
+
+impl From<&OrderEvent> for BinanceMarket {
+    fn from(order_event: &OrderEvent) -> Self {
+        Self {
+            symbol: BinanceSymbol::from(&order_event.instrument).0,
+            side: BinanceSide::from(order_event.decision),
+            r#type: order_event.order_type.as_ref().to_uppercase(),
+            quantity: order_event.quantity,
+            api_key: String::from(BinanceAuthParams::KEY),
+            signature: None,
+            timestamp: order_event.time.timestamp_millis(),
+        }
+    }
+}
+// impl From<&BinanceMarket> for ParamString {
+//     fn from(new_order: &BinanceMarket) -> ParamString {
+//         ParamString(format!(
+//             "apiKey={}&quantity={:?}&side={}&symbol={}&timestamp={}&type={}",
+//             new_order.params.api_key,
+//             new_order.params.quantity,
+//             new_order.params.side.as_ref(),
+//             new_order.params.symbol,
+//             new_order.params.timestamp,
+//             new_order.params.r#type,
+//         ))
+//     }
+// }
+
+//
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BinanceNewOrderParams {
@@ -103,21 +242,21 @@ pub struct BinanceNewOrderParams {
     pub timestamp: i64,
 }
 
-impl From<&BinanceNewOrder> for ParamString {
-    fn from(new_order: &BinanceNewOrder) -> ParamString {
-        ParamString(format!(
-            "apiKey={}&price={:?}&quantity={:?}&side={}&symbol={}&timeInForce={}&timestamp={}&type={}",
-            new_order.params.api_key,
-            new_order.params.price,
-            new_order.params.quantity,
-            new_order.params.side.as_ref(),
-            new_order.params.symbol,
-            new_order.params.time_in_force.as_ref(),
-            new_order.params.timestamp,
-            new_order.params.r#type,
-        ))
-    }
-}
+// impl From<&BinanceNewOrder> for ParamString {
+//     fn from(new_order: &BinanceNewOrder) -> ParamString {
+//         ParamString(format!(
+//             "apiKey={}&price={:?}&quantity={:?}&side={}&symbol={}&timeInForce={}&timestamp={}&type={}",
+//             new_order.params.api_key,
+//             new_order.params.price,
+//             new_order.params.quantity,
+//             new_order.params.side.as_ref(),
+//             new_order.params.symbol,
+//             new_order.params.time_in_force.as_ref(),
+//             new_order.params.timestamp,
+//             new_order.params.r#type,
+//         ))
+//     }
+// }
 
 impl From<Decision> for BinanceSide {
     fn from(decision: Decision) -> Self {
@@ -146,15 +285,15 @@ impl From<&OrderEvent> for BinanceNewOrderParams {
     }
 }
 
-impl From<OrderEvent> for BinanceNewOrder {
-    fn from(order_event: OrderEvent) -> Self {
-        Self {
-            id: Uuid::new_v4(),
-            method: String::from("order.test"), // TODO: make this dynamic
-            params: BinanceNewOrderParams::from(&order_event),
-        }
-    }
-}
+// impl From<OrderEvent> for BinanceNewOrder {
+//     fn from(order_event: OrderEvent) -> Self {
+//         Self {
+//             id: Uuid::new_v4(),
+//             method: String::from("order.test"), // TODO: make this dynamic
+//             params: BinanceNewOrderParams::from(&order_event),
+//         }
+//     }
+// }
 
 /*----- */
 // Binance cancel order

@@ -38,3 +38,10 @@ pub trait SignatureGenerator {
 
     fn generate_signature(param_str: String) -> String;
 }
+
+/*----- */
+// Method
+/*----- */
+pub trait MethodGenerator {
+    fn get_method(self) -> &'static str;
+}
