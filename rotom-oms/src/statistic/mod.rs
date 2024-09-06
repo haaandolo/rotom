@@ -36,7 +36,7 @@ pub mod test_util {
     use rotom_data::{assets::level::Level, event_models::{event_trade::EventTrade, market_event::{DataKind, MarketEvent}}, shared::subscription_models::{ExchangeId, Instrument}, MarketMeta};
     use rotom_strategy::{Decision, Signal};
 
-    // Build a [`MarketEvent`] of [`DataKind::PublicTrade`](DataKind) with the provided [`Side`].
+    // Build a [`MarketEvent`] of [`DataKind::PublicTrade`](DataKind), with the provided [`Side`].
     pub fn market_event_trade() -> MarketEvent<DataKind> {
         MarketEvent {
             exchange_time: Utc::now(),
