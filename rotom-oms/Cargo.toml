@@ -26,14 +26,15 @@ thiserror = { workspace = true }
 chrono = { workspace = true, features = ["serde"]}
 prettytable-rs = { workspace = true }
 uuid = { workspace = true, features = ["v4", "serde"]}
+url = { workspace = true }
 
 # SerDe
 serde_json = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
+serde_urlencoded = { workspace = true }
 
 # Persistence
 redis = { workspace = true }
-
 
 # Crytographic Signatures
 hmac = { workspace = true }

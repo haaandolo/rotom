@@ -14,14 +14,14 @@ use rotom_oms::{
     event::{Event, EventTx},
     execution::{
         exchange_client::{
-            binance::binance_client::binance_generate_order, poloniex::poloniex_testing,
+            binance::executor::BinanceExecution, poloniex::poloniex_testing,
         },
         simulated::{Config, SimulatedExecution},
-        Fees,
+        ExecutionClient2, Fees,
     },
     portfolio::{
         allocator::DefaultAllocator, portfolio::MetaPortfolio,
-        repository::in_memory::InMemoryRepository, risk::DefaultRisk,
+        repository::in_memory::InMemoryRepository, risk::DefaultRisk, OrderType,
     },
     statistic::{
         summary::{
@@ -49,8 +49,19 @@ pub async fn main() {
     /*----- */
     // Testing
     /*----- */
-    let order_event = test_util::order_event();
-    let _ = binance_generate_order(order_event).await;
+    // Order types
+    let order_limit = test_util::order_event();
+    let mut order_market = test_util::order_event();
+    order_market.order_type = OrderType::Market;
+
+    // Test Binance Execution
+    let mut binance_exe = BinanceExecution::init().await.unwrap();
+    binance_exe.open_orders(order_limit).await;
+
+    while let Some(msg) = binance_exe.ws_read.next().await {
+        println!("{:?}", msg)
+    }
+
     // let _ = poloniex_testing().await;
 
     /*----- */

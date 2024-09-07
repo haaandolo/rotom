@@ -19,6 +19,7 @@ futures = "0.3.3"
 # Protocol
 reqwest = {version="0.12.4", features = ["json"]}
 tokio-tungstenite = { version = "0.23.1", features = ["native-tls"]}
+url = { version = "2.3.1 " }
 
 # Logging
 tracing = "0.1.40"
@@ -38,6 +39,7 @@ itertools = "0.13.0"
 # SerDe
 serde_json = { version = "1.0.120" }
 serde = { version = "1.0.197", features = ["derive"] }
+serde_urlencoded = { version = "0.7.1" }
 
 # Persistence
 redis = "0.25.4"

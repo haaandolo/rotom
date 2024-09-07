@@ -1,6 +1,6 @@
 pub mod error;
-pub mod model;
 pub mod exchange_client;
+pub mod model;
 pub mod simulated;
 
 use async_trait::async_trait;
@@ -11,6 +11,7 @@ use model::{
     order::{Cancelled, Open, Order, RequestCancel, RequestOpen},
 };
 use rotom_data::{
+    error::SocketError,
     event_models::event_trade::EventTrade,
     shared::subscription_models::{ExchangeId, Instrument},
     MarketMeta,
@@ -35,19 +36,18 @@ pub trait ExecutionClient2 {
     /// **Note:**
     /// Usually entails spawning an asynchronous WebSocket event loop to consume [`AccountEvent`]s
     /// from the exchange, as well as returning the HTTP client `Self`.
-    async fn init() -> Self;
+    async fn init() -> Result<Self, SocketError>
+    where
+        Self: Sized;
+
+    /// Open orders
+    async fn open_orders(&self, open_requests: OrderEvent);
 
     // /// Fetch account [`Order<Open>`]s.
     // async fn fetch_orders_open(&self) -> Result<Vec<Order<Open>>, ExecutionError>;
 
     // /// Fetch account [`SymbolBalance`]s.
     // async fn fetch_balances(&self) -> Result<Vec<SymbolBalance>, ExecutionError>;
-
-    // /// Open orders.
-    // async fn open_orders(
-    //     &self,
-    //     open_requests: Vec<Order<RequestOpen>>,
-    // ) -> Vec<Result<Order<Open>, ExecutionError>>;
 
     // /// Cancel [`Order<Open>`]s.
     // async fn cancel_orders(

@@ -10,38 +10,32 @@ use crate::portfolio::OrderEvent;
 /*----- */
 // Convenient types
 /*----- */
-type HmacSha256 = Hmac<Sha256>;
-
-/*----- */
-// SignatureGenerator
-/*----- */
-pub trait PrivateConnector {
-    type ApiAuthParams;
-    type ExchangeSymbol;
-
-    fn url() -> &'static str;
-
-    fn generate_signature(param_str: String) -> String;
-}
-
-/*----- */
-// Param string
-/*----- */
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ParamString(pub String);
 
-/*----- */
-// Signature Generator
-/*----- */
-pub trait SignatureGenerator {
-    type ApiAuthParams;
+type HmacSha256 = Hmac<Sha256>;
 
-    fn generate_signature(param_str: String) -> String;
+/*----- */
+// Authenticator
+/*----- */
+pub trait Authenticator {
+    type AuthParams;
+
+    fn generate_signature(param_str: ParamString) -> String;
 }
 
 /*----- */
-// Method
+// Trait to convert OrderEvent to Exchange Specific
 /*----- */
-pub trait MethodGenerator {
-    fn get_method(self) -> &'static str;
+pub trait OrderEventConverter {
+    type OrderKind;
+    type ExchangeAuthParams;
+
+    fn get_request_method() -> &'static str;
+
+    fn convert_order_event(order_event: &OrderEvent) -> Self::OrderKind;
+
+    fn get_query_param(&self) -> ParamString
+    where
+        Self: Serialize;
 }

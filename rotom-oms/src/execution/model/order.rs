@@ -1,8 +1,10 @@
-use std::{cmp::Ordering, fmt::{Display, Formatter}};
+use std::{
+    cmp::Ordering,
+    fmt::{Display, Formatter},
+};
 
 use rotom_data::shared::subscription_models::{ExchangeId, Instrument};
 use serde::{Deserialize, Serialize};
-
 
 use crate::portfolio::position::Side;
 
@@ -169,7 +171,7 @@ where
 impl From<&Order<RequestOpen>> for Order<InFlight> {
     fn from(request: &Order<RequestOpen>) -> Self {
         Self {
-            exchange: request.exchange.clone(),
+            exchange: request.exchange,
             instrument: request.instrument.clone(),
             cid: request.cid,
             side: request.side,
@@ -181,7 +183,7 @@ impl From<&Order<RequestOpen>> for Order<InFlight> {
 impl From<(OrderId, Order<RequestOpen>)> for Order<Open> {
     fn from((id, request): (OrderId, Order<RequestOpen>)) -> Self {
         Self {
-            exchange: request.exchange.clone(),
+            exchange: request.exchange,
             instrument: request.instrument.clone(),
             cid: request.cid,
             side: request.side,
@@ -198,7 +200,7 @@ impl From<(OrderId, Order<RequestOpen>)> for Order<Open> {
 impl From<Order<Open>> for Order<Cancelled> {
     fn from(order: Order<Open>) -> Self {
         Self {
-            exchange: order.exchange.clone(),
+            exchange: order.exchange,
             instrument: order.instrument.clone(),
             cid: order.cid,
             side: order.side,
