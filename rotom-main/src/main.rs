@@ -14,7 +14,7 @@ use rotom_oms::{
     event::{Event, EventTx},
     execution::{
         exchange_client::{
-            binance::executor::BinanceExecution, poloniex::poloniex_testing,
+            binance::binance_client::BinanceExecution, poloniex::poloniex_testing,
         },
         simulated::{Config, SimulatedExecution},
         ExecutionClient2, Fees,
