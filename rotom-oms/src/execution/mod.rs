@@ -43,17 +43,21 @@ pub trait ExecutionClient2 {
     /// Open orders
     async fn open_orders(&self, open_requests: OrderEvent);
 
-    // /// Fetch account [`Order<Open>`]s.
-    // async fn fetch_orders_open(&self) -> Result<Vec<Order<Open>>, ExecutionError>;
-
-    // /// Fetch account [`SymbolBalance`]s.
-    // async fn fetch_balances(&self) -> Result<Vec<SymbolBalance>, ExecutionError>;
+    // Run and receive responses
+    async fn receive_reponses(self);
 
     // /// Cancel [`Order<Open>`]s.
     // async fn cancel_orders(
     //     &self,
     //     cancel_requests: Vec<Order<RequestCancel>>,
     // ) -> Vec<Result<Order<Cancelled>, ExecutionError>>;
+
+    // /// Fetch account [`Order<Open>`]s.
+    // async fn fetch_orders_open(&self) -> Result<Vec<Order<Open>>, ExecutionError>;
+
+    // /// Fetch account [`SymbolBalance`]s.
+    // async fn fetch_balances(&self) -> Result<Vec<SymbolBalance>, ExecutionError>;
+
 
     // /// Cancel all account [`Order<Open>`]s.
     // async fn cancel_orders_all(&self) -> Result<Vec<Order<Cancelled>>, ExecutionError>;

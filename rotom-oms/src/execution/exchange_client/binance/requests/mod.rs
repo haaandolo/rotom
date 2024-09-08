@@ -1,4 +1,5 @@
 pub mod new_order;
+pub mod responses;
 
 use rotom_data::shared::subscription_models::Instrument;
 use rotom_strategy::Decision;
@@ -12,7 +13,7 @@ GTC: good till cancelled, an order will be on the book unless the order is cance
 IOC: immediate or cancel, an order will try to fill the order as much as it can before the order expires
 FOK: fill or kill, an order will expire if the full order cannot be filled upon execution
 */
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum BinanceTimeInForce {
     GTC,
     IOC,
@@ -29,7 +30,7 @@ impl AsRef<str> for BinanceTimeInForce {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Serialize)]
 pub enum BinanceSide {
     BUY,
     SELL,

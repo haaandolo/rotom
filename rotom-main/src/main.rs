@@ -1,10 +1,12 @@
+use chrono::Utc;
 use futures::StreamExt;
 use parking_lot::Mutex;
 use rotom_data::{
     event_models::market_event::{DataKind, MarketEvent},
+    protocols::ws::ws_parser::{StreamParser, WebSocketParser},
     shared::subscription_models::{ExchangeId, Instrument, StreamKind},
     streams::builder::dynamic,
-    Market, MarketFeed,
+    Market, MarketFeed, MarketMeta,
 };
 use rotom_main::{
     engine::Engine,
@@ -14,24 +16,22 @@ use rotom_oms::{
     event::{Event, EventTx},
     execution::{
         exchange_client::{
-            binance::binance_client::BinanceExecution, poloniex::poloniex_testing,
+            binance::{binance_client::BinanceExecution, requests::responses::BinanceResponses},
+            poloniex::poloniex_testing,
         },
         simulated::{Config, SimulatedExecution},
         ExecutionClient2, Fees,
     },
     portfolio::{
         allocator::DefaultAllocator, portfolio::MetaPortfolio,
-        repository::in_memory::InMemoryRepository, risk::DefaultRisk, OrderType,
+        repository::in_memory::InMemoryRepository, risk::DefaultRisk, OrderEvent, OrderType,
     },
-    statistic::{
-        summary::{
-            trading::{Config as StatisticConfig, TradingSummary},
-            Initialiser,
-        },
-        test_util,
+    statistic::summary::{
+        trading::{Config as StatisticConfig, TradingSummary},
+        Initialiser,
     },
 };
-use rotom_strategy::spread::SpreadStategy;
+use rotom_strategy::{spread::SpreadStategy, Decision};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 use uuid::Uuid;
@@ -49,18 +49,24 @@ pub async fn main() {
     /*----- */
     // Testing
     /*----- */
-    // Order types
-    let order_limit = test_util::order_event();
-    let mut order_market = test_util::order_event();
-    order_market.order_type = OrderType::Market;
+    // Order
+    let order = OrderEvent {
+        time: Utc::now(),
+        exchange: ExchangeId::BinanceSpot,
+        instrument: Instrument::new("op", "usdt"),
+        market_meta: MarketMeta {
+            time: Utc::now(),
+            close: 1.361,
+        },
+        decision: Decision::Short,
+        quantity: 5.0,
+        order_type: OrderType::Market,
+    };
 
     // Test Binance Execution
-    let mut binance_exe = BinanceExecution::init().await.unwrap();
-    binance_exe.open_orders(order_limit).await;
-
-    while let Some(msg) = binance_exe.ws_read.next().await {
-        println!("{:?}", msg)
-    }
+    let binance_exe = BinanceExecution::init().await.unwrap();
+    binance_exe.open_orders(order).await;
+    binance_exe.receive_reponses().await;
 
     // let _ = poloniex_testing().await;
 
@@ -279,5 +285,5 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - impl from trait for param str for diff structs
+// - finish binanceREsponses enum for ws deserialisartion
 // - change level size to quantity (name change)

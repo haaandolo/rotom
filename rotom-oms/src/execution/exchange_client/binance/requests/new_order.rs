@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_urlencoded;
 use uuid::Uuid;
 
@@ -12,7 +12,7 @@ use super::{BinanceSide, BinanceSymbol, BinanceTimeInForce};
 /*----- */
 // Binance New Order
 /*----- */
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Serialize)]
 pub struct BinanceNewOrder {
     id: Uuid,
     method: &'static str,
@@ -21,7 +21,7 @@ pub struct BinanceNewOrder {
 
 // Mandatory field: symbol, side, type, apiKey, signature, timestamp
 // IMPORTANT!!! Field name HAVE to be alphabetical
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Serialize)]
 pub struct BinanceNewOrderParams {
     #[serde(rename(serialize = "apiKey"))]
     pub api_key: &'static str,
@@ -100,7 +100,7 @@ impl OrderEventConverter for BinanceNewOrder {
     type ExchangeAuthParams = BinanceAuthParams;
 
     fn get_request_method() -> &'static str {
-        "order.test" // TODO: change back to "order.place"
+        "order.place" // TODO: change back to "order.place"
     }
 
     fn convert_order_event(order_event: &OrderEvent) -> BinanceNewOrderParams {
@@ -150,14 +150,14 @@ impl BinanceNewOrder {
 /*----- */
 // Binance cancel order
 /*----- */
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Serialize)]
 pub struct BinanceCancelOrder {
     id: String,
     method: String,
     params: BinanceCancelOrderParams,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Serialize)]
 pub struct BinanceCancelOrderParams {
     symbol: String,
     #[serde(rename(serialize = "origClientOrderId"))]
@@ -171,14 +171,14 @@ pub struct BinanceCancelOrderParams {
 /*----- */
 // Binance cancel and replace
 /*----- */
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Serialize)]
 pub struct BinanceCancelReplace {
     id: String,
     method: String,
     params: BinanceCancelReplaceParams,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Serialize)]
 pub struct BinanceCancelReplaceParams {
     symbol: String,
     #[serde(rename(serialize = "cancelReplaceMode"))]
@@ -200,14 +200,14 @@ pub struct BinanceCancelReplaceParams {
 /*----- */
 // Binance current open orders
 /*----- */
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Serialize)]
 pub struct BinanceCancelAll {
     id: String,
     method: String,
     params: BinanceCancelAllParams,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Serialize)]
 pub struct BinanceCancelAllParams {
     symbol: String,
     #[serde(rename(serialize = "apiKey"))]

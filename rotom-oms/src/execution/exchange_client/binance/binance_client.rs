@@ -4,6 +4,8 @@ use futures::StreamExt;
 use hmac::Mac;
 use rotom_data::error::SocketError;
 use rotom_data::protocols::ws::connect;
+use rotom_data::protocols::ws::ws_parser::StreamParser;
+use rotom_data::protocols::ws::ws_parser::WebSocketParser;
 use rotom_data::protocols::ws::JoinHandle;
 use rotom_data::protocols::ws::WsMessage;
 use rotom_data::protocols::ws::WsRead;
@@ -20,6 +22,7 @@ use crate::execution::ExecutionId;
 use crate::portfolio::OrderEvent;
 
 use super::auth::BinanceAuthParams;
+use super::requests::responses::BinanceResponses;
 
 const BINANCE_PRIVATE_ENDPOINT: &str = "wss://ws-api.binance.com:443/ws-api/v3";
 
@@ -62,6 +65,13 @@ impl ExecutionClient2 for BinanceExecution {
         let _ = self.request_tx.send(WsMessage::Text(
             serde_json::to_string(&binance_order).unwrap(), // TODO: rm unwrap()
         ));
+    }
+
+    async fn receive_reponses(mut self) {
+        while let Some(msg) = self.ws_read.next().await {
+            let response = WebSocketParser::parse::<BinanceResponses>(msg);
+            println!("{:#?}", response);
+        }
     }
 }
 
