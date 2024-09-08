@@ -40,8 +40,11 @@ pub trait ExecutionClient2 {
     where
         Self: Sized;
 
-    /// Open orders
-    async fn open_orders(&self, open_requests: OrderEvent);
+    // Open orders
+    async fn open_order(&self, open_requests: OrderEvent);
+
+    // Open orders
+    async fn cancel_order(&self, open_requests: String);
 
     // Run and receive responses
     async fn receive_reponses(self);

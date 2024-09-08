@@ -1,5 +1,8 @@
+use serde::{
+    de::{SeqAccess, Visitor},
+    Deserialize, Deserializer,
+};
 use std::{fmt, marker::PhantomData};
-use serde::{de::{SeqAccess, Visitor}, Deserialize, Deserializer};
 
 // Deserialize a `String` as the desired type.
 pub fn de_str<'de, D, T>(deserializer: D) -> Result<T, D::Error>
@@ -121,3 +124,19 @@ where
     deserializer.deserialize_seq(NonEmptyVecVisitor(PhantomData))
 }
 
+// Deserialise a optional str. For example value to deserialise is "69.69". This
+// de will return Some(69.69) if exists. If value to derserialise is "1000", it
+// will return Some(1000) if exists. None the value you are de has to be a string.
+// But the optional value you want to de can be anything
+pub fn de_str_optional<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+    T: std::str::FromStr,
+    T::Err: std::fmt::Display,
+{
+    let s: Option<&str> = Option::deserialize(deserializer)?;
+    match s {
+        Some(s) => s.parse::<T>().map(Some).map_err(serde::de::Error::custom),
+        None => Ok(None),
+    }
+}

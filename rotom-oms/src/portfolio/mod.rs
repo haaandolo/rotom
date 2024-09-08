@@ -62,7 +62,7 @@ pub struct OrderEvent {
     pub order_type: OrderType,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
 pub enum OrderType {
     Market,
     Limit,

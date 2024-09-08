@@ -1,3 +1,4 @@
+pub mod cancel_order;
 pub mod new_order;
 pub mod responses;
 
@@ -30,7 +31,7 @@ impl AsRef<str> for BinanceTimeInForce {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum BinanceSide {
     BUY,
     SELL,

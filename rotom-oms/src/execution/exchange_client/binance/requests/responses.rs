@@ -1,16 +1,17 @@
 use rotom_data::shared::de::de_str;
 use serde::Deserialize;
 
-use super::BinanceTimeInForce;
+use super::{BinanceSide, BinanceTimeInForce};
 
 /*----- */
 // Main Deserialisation Enum for Binance Responses
 /*----- */
 #[derive(Debug, Deserialize)]
-#[serde(untagged)]
+#[serde(untagged, rename_all = "snake_case")]
 pub enum BinanceResponses {
     NewOrderResult(BinanceNewOrderResponseResult),
     NewOrderFull(BinanceNewOrderResponseFull),
+    CancelOrder(BinanceCancelOrderResponse),
 }
 
 /*----- */
@@ -149,6 +150,58 @@ pub struct BinanceNewOrderResponseFullData {
 }
 
 /*----- */
+// Cancel order
+/*----- */
+#[derive(Debug, Deserialize)]
+pub struct BinanceCancelOrderResponse {
+    pub id: String,
+    pub status: u32,
+    pub result: BinanceCancelOrderResponseData,
+    #[serde(alias = "rateLimits")]
+    pub rate_limits: Vec<RateLimit>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct BinanceCancelOrderResponseData {
+    pub symbol: String,
+    #[serde(alias = "origClientOrderId")]
+    pub orig_client_order_id: String,
+    #[serde(alias = "orderId")]
+    pub order_id: u64,
+    #[serde(alias = "orderListId")]
+    pub order_list_id: i64,
+    #[serde(alias = "clientOrderId")]
+    pub client_order_id: String,
+    #[serde(alias = "transactTime")]
+    pub transact_time: u64,
+    #[serde(deserialize_with = "de_str")]
+    pub price: f64,
+    #[serde(deserialize_with = "de_str", alias = "origQty")]
+    pub orig_qty: f64,
+    #[serde(deserialize_with = "de_str", alias = "executedQty")]
+    pub executed_qty: f64,
+    #[serde(deserialize_with = "de_str", alias = "cummulativeQuoteQty")]
+    pub cummulative_quote_qty: f64,
+    pub status: BinanceOrderStatus,
+    #[serde(alias = "timeInForce")]
+    pub time_in_force: BinanceTimeInForce,
+    pub r#type: String, // Change to binance type
+    pub side: BinanceSide,
+    #[serde(alias = "stopPrice")]
+    pub stop_price: Option<String>, // TODO: deserialise into a f64
+    #[serde(alias = "trailingDelta")]
+    pub trailing_delta: Option<u64>,
+    #[serde(alias = "icebergQty")]
+    pub iceberg_qty: Option<String>, // TODO: deserialise into a f64
+    #[serde(alias = "strategyId")]
+    pub strategy_id: Option<u64>,
+    #[serde(alias = "strategyType")]
+    pub strategy_type: Option<u64>,
+    #[serde(alias = "selfTradePreventionMode")]
+    pub self_trade_prevention_mode: String,
+}
+
+/*----- */
 // Tests
 /*----- */
 #[cfg(test)]
@@ -156,7 +209,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_binance_response_result() {
+    fn test_binance_new_order_response_result() {
         let response = r#"{
             "id": "9c7af916-4126-45ef-b31e-9292ed446842",
             "status": 200,
@@ -223,7 +276,7 @@ mod test {
     }
 
     #[test]
-    fn test_binance_reponse_full() {
+    fn test_binance_new_order_response_full() {
         let response = r#"{
             "id": "56374a46-3061-486b-a311-99ee972eb648",
             "status": 200,
@@ -294,4 +347,64 @@ mod test {
 
         assert!(_result)
     }
+
+    #[test]
+    fn test_binance_cancel() {
+        let response = r#"{
+            "id": "5633b6a2-90a9-4192-83e7-925c90b6a2fd",
+            "status": 200,
+            "result": {
+                "symbol": "BTCUSDT",
+                "origClientOrderId": "4d96324ff9d44481926157",
+                "orderId": 12569099453,
+                "orderListId": -1,
+                "clientOrderId": "91fe37ce9e69c90d6358c0",
+                "transactTime": 1684804350068,
+                "price": "23416.10000000",
+                "origQty": "0.00847000",
+                "executedQty": "0.00001000",
+                "cummulativeQuoteQty": "0.23416100",
+                "status": "CANCELED",
+                "timeInForce": "GTC",
+                "type": "LIMIT",
+                "side": "SELL",
+                "trailingDelta": 0,           
+                "icebergQty": "0.00000000",
+                "stopPrice": "90.90",
+                "strategyId": 37463720,    
+                "strategyType": 1000000,     
+                "selfTradePreventionMode": "NONE"
+            },
+            "rateLimits": [
+                {
+                "rateLimitType": "REQUEST_WEIGHT",
+                "interval": "MINUTE",
+                "intervalNum": 1,
+                "limit": 6000,
+                "count": 1
+                }
+            ]
+        }"#;
+
+        let response_de = serde_json::from_str::<BinanceResponses>(response);
+        let mut _result = false;
+
+        match response_de {
+            Ok(_) => _result = true,
+            Err(_) => _result = false,
+        }
+
+        assert!(_result)
+    }
 }
+
+/*
+Some(
+    Err(
+        Deserialise {
+            error: Error("data did not match any variant of untagged enum BinanceResponses", line: 0, column: 0),
+            payload: "{\"id\":\"6d4fde03-91d7-4943-83bc-9b0ebe7c85cc\",\"status\":400,\"error\":{\"code\":-1021,\"msg\":\"Timestamp for this request is outside of the recvWindow.\"},\"rateLimits\":[{\"rateLimitType\":\"REQUEST_WEIGHT\",\"interval\":\"MINUTE\",\"intervalNum\":1,\"limit\":6000,\"count\":3}]}",
+        },
+    ),
+)
+*/

@@ -38,6 +38,59 @@ use uuid::Uuid;
 
 const ENGINE_RUN_TIMEOUT: Duration = Duration::from_secs(5000);
 
+/*
+Some(
+    Ok(
+        NewOrderResult(
+            BinanceNewOrderResponseResult {
+                id: "fe0d5e1b-df4d-42d1-aa3b-33676e403938",
+                status: 200,
+                result: BinanceNewOrderResponseResultData {
+                    symbol: "OPUSDT",
+                    order_id: 1581077079,
+                    order_list_id: -1,
+                    client_order_id: "O5eBTHcWHo2vFtrmB9rE7k", <-- THIS
+                    transact_time: 1725768574940,
+                    price: 1.436,
+                    orig_qty: 5.0,
+                    executed_qty: 0.0,
+                    cummulative_quote_qty: 0.0,
+                    status: New,
+                    time_in_force: GTC,
+                    type: "LIMIT",
+                    side: "BUY",
+                    working_time: 1725768574940,
+                    fills: [],
+                    self_trade_prevention_mode: "EXPIRE_MAKER",
+                },
+                rate_limits: [
+                    RateLimit {
+                        rate_limit_type: "ORDERS",
+                        interval: "SECOND",
+                        interval_num: 10,
+                        limit: 100,
+                        count: 1,
+                    },
+                    RateLimit {
+                        rate_limit_type: "ORDERS",
+                        interval: "DAY",
+                        interval_num: 1,
+                        limit: 200000,
+                        count: 2,
+                    },
+                    RateLimit {
+                        rate_limit_type: "REQUEST_WEIGHT",
+                        interval: "MINUTE",
+                        interval_num: 1,
+                        limit: 6000,
+                        count: 3,
+                    },
+                ],
+            },
+        ),
+    ),
+)
+*/
 /*----- */
 // Main
 /*----- */
@@ -56,16 +109,17 @@ pub async fn main() {
         instrument: Instrument::new("op", "usdt"),
         market_meta: MarketMeta {
             time: Utc::now(),
-            close: 1.361,
+            close: 1.420,
         },
-        decision: Decision::Short,
+        decision: Decision::Long,
         quantity: 5.0,
-        order_type: OrderType::Market,
+        order_type: OrderType::Limit,
     };
 
     // Test Binance Execution
     let binance_exe = BinanceExecution::init().await.unwrap();
-    binance_exe.open_orders(order).await;
+    // binance_exe.open_order(order).await;
+    binance_exe.cancel_order("Sjeu48ghh5XQarETLq3ARh".to_string()).await;
     binance_exe.receive_reponses().await;
 
     // let _ = poloniex_testing().await;
@@ -285,5 +339,6 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - finish binanceREsponses enum for ws deserialisartion
+// - error deserialisation
 // - change level size to quantity (name change)
+// - change r#type to enum instead of string

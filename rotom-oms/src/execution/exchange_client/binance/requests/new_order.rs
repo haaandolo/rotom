@@ -148,27 +148,6 @@ impl BinanceNewOrder {
 }
 
 /*----- */
-// Binance cancel order
-/*----- */
-#[derive(Debug, Serialize)]
-pub struct BinanceCancelOrder {
-    id: String,
-    method: String,
-    params: BinanceCancelOrderParams,
-}
-
-#[derive(Debug, Serialize)]
-pub struct BinanceCancelOrderParams {
-    symbol: String,
-    #[serde(rename(serialize = "origClientOrderId"))]
-    orig_client_order_id: String,
-    #[serde(rename(serialize = "apiKey"))]
-    api_key: String,
-    signature: String,
-    timestamp: u64,
-}
-
-/*----- */
 // Binance cancel and replace
 /*----- */
 #[derive(Debug, Serialize)]
@@ -220,69 +199,3 @@ pub struct BinanceCancelAllParams {
 // Binance cancel open orders
 /*----- */
 /**/
-
-/*----- */
-// Examples
-/*----- */
-/*
-Example: new order
-{
-    "id": "56374a46-3061-486b-a311-99ee972eb648",
-    "method": "order.place",
-    "params": {
-      "symbol": "BTCUSDT",
-      "side": "SELL",
-      "type": "LIMIT",
-      "timeInForce": "GTC",
-      "price": "23416.10000000",
-      "quantity": "0.00847000",
-      "apiKey": "vmPUZE6mv9SD5VNHk4HlWFsOr6aKE2zvsw0MuIgwCIPy6utIco14y7Ju91duEh8A",
-      "signature": "15af09e41c36f3cc61378c2fbe2c33719a03dd5eba8d0f9206fbda44de717c88",
-      "timestamp": 1660801715431
-    }
-}
-
-Example: cancel order
-{
-    "id": "5633b6a2-90a9-4192-83e7-925c90b6a2fd",
-    "method": "order.cancel",
-    "params": {
-      "symbol": "BTCUSDT",
-      "origClientOrderId": "4d96324ff9d44481926157",
-      "apiKey": "vmPUZE6mv9SD5VNHk4HlWFsOr6aKE2zvsw0MuIgwCIPy6utIco14y7Ju91duEh8A",
-      "signature": "33d5b721f278ae17a52f004a82a6f68a70c68e7dd6776ed0be77a455ab855282",
-      "timestamp": 1660801715830
-    }
-}
-
-Example: cancel or replace
-{
-    "id": "99de1036-b5e2-4e0f-9b5c-13d751c93a1a",
-    "method": "order.cancelReplace",
-    "params": {
-      "symbol": "BTCUSDT",
-      "cancelReplaceMode": "ALLOW_FAILURE",
-      "cancelOrigClientOrderId": "4d96324ff9d44481926157",
-      "side": "SELL",
-      "type": "LIMIT",
-      "timeInForce": "GTC",
-      "price": "23416.10000000",
-      "quantity": "0.00847000",
-      "apiKey": "vmPUZE6mv9SD5VNHk4HlWFsOr6aKE2zvsw0MuIgwCIPy6utIco14y7Ju91duEh8A",
-      "signature": "7028fdc187868754d25e42c37ccfa5ba2bab1d180ad55d4c3a7e2de643943dc5",
-      "timestamp": 1660813156900
-    }
-}
-
-Example: cancel all orders for a given symbol
-{
-    "id": "778f938f-9041-4b88-9914-efbf64eeacc8",
-    "method": "openOrders.cancelAll"
-    "params": {
-      "symbol": "BTCUSDT",
-      "apiKey": "vmPUZE6mv9SD5VNHk4HlWFsOr6aKE2zvsw0MuIgwCIPy6utIco14y7Ju91duEh8A",
-      "signature": "773f01b6e3c2c9e0c1d217bc043ce383c1ddd6f0e25f8d6070f2b66a6ceaf3a5",
-      "timestamp": 1660805557200
-    }
-}
-*/

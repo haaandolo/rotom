@@ -22,6 +22,7 @@ use crate::execution::ExecutionId;
 use crate::portfolio::OrderEvent;
 
 use super::auth::BinanceAuthParams;
+use super::requests::cancel_order::BinanceCancelOrder;
 use super::requests::responses::BinanceResponses;
 
 const BINANCE_PRIVATE_ENDPOINT: &str = "wss://ws-api.binance.com:443/ws-api/v3";
@@ -38,6 +39,7 @@ impl ExecutionClient2 for BinanceExecution {
     const CLIENT: ExecutionId = ExecutionId::Binance;
 
     async fn init() -> Result<Self, SocketError> {
+        // Initalise ws
         let ws = connect(BINANCE_PRIVATE_ENDPOINT).await?;
         let (mut ws_write, ws_read) = ws.split();
         let mut tasks = Vec::new();
@@ -58,12 +60,21 @@ impl ExecutionClient2 for BinanceExecution {
         })
     }
 
-    async fn open_orders(&self, open_requests: OrderEvent) {
+    async fn open_order(&self, open_requests: OrderEvent) {
         let mut binance_order = BinanceNewOrder::new(&open_requests);
         let signature = Self::generate_signature(binance_order.get_query_param());
         binance_order.params.signature = Some(signature);
         let _ = self.request_tx.send(WsMessage::Text(
             serde_json::to_string(&binance_order).unwrap(), // TODO: rm unwrap()
+        ));
+    }
+
+    async fn cancel_order(&self, orig_client_order_id: String) {
+        let mut binance_cancel_order = BinanceCancelOrder::new(orig_client_order_id);
+        let signature = Self::generate_signature(binance_cancel_order.get_query_param());
+        binance_cancel_order.params.signature = Some(signature);
+        let _ = self.request_tx.send(WsMessage::Text(
+            serde_json::to_string(&binance_cancel_order).unwrap(), // TODO: rm unwrap()
         ));
     }
 
