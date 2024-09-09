@@ -1,4 +1,5 @@
 pub mod cancel_order;
+pub mod error_response;
 pub mod new_order;
 pub mod responses;
 

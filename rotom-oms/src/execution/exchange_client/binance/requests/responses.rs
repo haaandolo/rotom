@@ -12,6 +12,7 @@ pub enum BinanceResponses {
     NewOrderResult(BinanceNewOrderResponseResult),
     NewOrderFull(BinanceNewOrderResponseFull),
     CancelOrder(BinanceCancelOrderResponse),
+    Error(BinanceErrorResponse),
 }
 
 /*----- */
@@ -199,6 +200,24 @@ pub struct BinanceCancelOrderResponseData {
     pub strategy_type: Option<u64>,
     #[serde(alias = "selfTradePreventionMode")]
     pub self_trade_prevention_mode: String,
+}
+
+/*----- */
+// Error Response
+/*----- */
+#[derive(Debug, Deserialize)]
+pub struct BinanceErrorResponse {
+    pub id: String,
+    pub status: u16,
+    pub error: BinanaceErrorResponseData,
+    #[serde(alias = "rateLimits")]
+    pub rate_limits: Vec<RateLimit>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct BinanaceErrorResponseData {
+    pub code: i16,
+    pub msg: String,
 }
 
 /*----- */
@@ -396,15 +415,32 @@ mod test {
 
         assert!(_result)
     }
-}
 
-/*
-Some(
-    Err(
-        Deserialise {
-            error: Error("data did not match any variant of untagged enum BinanceResponses", line: 0, column: 0),
-            payload: "{\"id\":\"6d4fde03-91d7-4943-83bc-9b0ebe7c85cc\",\"status\":400,\"error\":{\"code\":-1021,\"msg\":\"Timestamp for this request is outside of the recvWindow.\"},\"rateLimits\":[{\"rateLimitType\":\"REQUEST_WEIGHT\",\"interval\":\"MINUTE\",\"intervalNum\":1,\"limit\":6000,\"count\":3}]}",
-        },
-    ),
-)
-*/
+    #[test]
+    fn test_error() {
+        let response = r#"{
+            "id": "6d4fde03-91d7-4943-83bc-9b0ebe7c85cc",
+            "status": 400,
+            "error": {
+                "code": -1021,
+                "msg": "Timestamp for this request is outside of the recvWindow."
+            },
+            "rateLimits": [{
+                "rateLimitType": "REQUEST_WEIGHT",
+                "interval": "MINUTE",
+                "intervalNum": 1,
+                "limit": 6000,
+                "count": 3}
+            ]}"#;
+
+        let response_de = serde_json::from_str::<BinanceResponses>(response);
+        let mut _result = false;
+
+        match response_de {
+            Ok(_) => _result = true,
+            Err(_) => _result = false,
+        }
+
+        assert!(_result)
+    }
+}

@@ -119,7 +119,7 @@ pub async fn main() {
     // Test Binance Execution
     let binance_exe = BinanceExecution::init().await.unwrap();
     // binance_exe.open_order(order).await;
-    binance_exe.cancel_order("Sjeu48ghh5XQarETLq3ARh".to_string()).await;
+    binance_exe.cancel_order("RCRGTqNC0cCb9zv64aUxtS".to_string()).await;
     binance_exe.receive_reponses().await;
 
     // let _ = poloniex_testing().await;
@@ -339,6 +339,5 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - error deserialisation
 // - change level size to quantity (name change)
 // - change r#type to enum instead of string
