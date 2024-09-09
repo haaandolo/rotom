@@ -103,7 +103,7 @@ pub async fn main() {
     // Testing
     /*----- */
     // Order
-    let order = OrderEvent {
+    let mut order = OrderEvent {
         time: Utc::now(),
         exchange: ExchangeId::BinanceSpot,
         instrument: Instrument::new("op", "usdt"),
@@ -118,8 +118,11 @@ pub async fn main() {
 
     // Test Binance Execution
     let binance_exe = BinanceExecution::init().await.unwrap();
+    // binance_exe.open_order(order.clone()).await;
+    // order.market_meta.close = 1.421;
     // binance_exe.open_order(order).await;
-    binance_exe.cancel_order("RCRGTqNC0cCb9zv64aUxtS".to_string()).await;
+    // binance_exe.cancel_order("RCRGTqNC0cCb9zv64aUxtS".to_string()).await;
+    binance_exe.cancel_order_all("OPUSDT".to_string()).await;
     binance_exe.receive_reponses().await;
 
     // let _ = poloniex_testing().await;

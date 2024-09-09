@@ -22,6 +22,7 @@ use crate::execution::ExecutionId;
 use crate::portfolio::OrderEvent;
 
 use super::auth::BinanceAuthParams;
+use super::requests::cancel_order::BinanceCancelAllOrder;
 use super::requests::cancel_order::BinanceCancelOrder;
 use super::requests::responses::BinanceResponses;
 
@@ -60,6 +61,7 @@ impl ExecutionClient2 for BinanceExecution {
         })
     }
 
+    // Opens order for a single asset
     async fn open_order(&self, open_requests: OrderEvent) {
         let mut binance_order = BinanceNewOrder::new(&open_requests);
         let signature = Self::generate_signature(binance_order.get_query_param());
@@ -69,6 +71,7 @@ impl ExecutionClient2 for BinanceExecution {
         ));
     }
 
+    // Cancels order for a single asset
     async fn cancel_order(&self, orig_client_order_id: String) {
         let mut binance_cancel_order = BinanceCancelOrder::new(orig_client_order_id);
         let signature = Self::generate_signature(binance_cancel_order.get_query_param());
@@ -77,6 +80,17 @@ impl ExecutionClient2 for BinanceExecution {
             serde_json::to_string(&binance_cancel_order).unwrap(), // TODO: rm unwrap()
         ));
     }
+
+    async fn cancel_order_all(&self, symbol: String) {
+        let mut binance_cancel_all_order = BinanceCancelAllOrder::new(symbol);
+        let signature = Self::generate_signature(binance_cancel_all_order.get_query_param());
+        binance_cancel_all_order.params.signature = Some(signature);
+        let _ = self.request_tx.send(WsMessage::Text(
+            serde_json::to_string(&binance_cancel_all_order).unwrap(), // TODO: rm unwrap()
+        ));
+    }
+
+    // async fn cancel_order_all()
 
     async fn receive_reponses(mut self) {
         while let Some(msg) = self.ws_read.next().await {

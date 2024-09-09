@@ -12,6 +12,7 @@ pub enum BinanceResponses {
     NewOrderResult(BinanceNewOrderResponseResult),
     NewOrderFull(BinanceNewOrderResponseFull),
     CancelOrder(BinanceCancelOrderResponse),
+    CancelAll(BinanceCancelAllResponse),
     Error(BinanceErrorResponse),
 }
 
@@ -219,6 +220,19 @@ pub struct BinanaceErrorResponseData {
     pub code: i16,
     pub msg: String,
 }
+
+/*----- */
+// Cancel All Reponse
+/*----- */
+#[derive(Debug, Deserialize)]
+pub struct BinanceCancelAllResponse {
+    pub id: String,
+    pub status: u16,
+    pub result: Vec<BinanceCancelOrderResponseData>,
+    #[serde(alias = "rateLimits")]
+    pub rate_limits: Vec<RateLimit>,
+}
+
 
 /*----- */
 // Tests
@@ -432,6 +446,64 @@ mod test {
                 "limit": 6000,
                 "count": 3}
             ]}"#;
+
+        let response_de = serde_json::from_str::<BinanceResponses>(response);
+        let mut _result = false;
+
+        match response_de {
+            Ok(_) => _result = true,
+            Err(_) => _result = false,
+        }
+
+        assert!(_result)
+    }
+
+    #[test]
+    fn test_cancel_all_for_given_asset() {
+        let response = r#"{
+            "id":"b12ad38f-2cf5-40af-8ae0-ca73d1afcf2b",
+            "status":200,
+            "result":[
+            {
+                "symbol":"OPUSDT",
+                "origClientOrderId":"RVbVthc4cyg7SXYYHwWf1v",
+                "orderId":1582815838,
+                "orderListId":-1,
+                "clientOrderId":"8zemhBBepjo2VJ7xkuoQ19",
+                "transactTime":1725875088129,
+                "price":"1.42000000",
+                "origQty":"5.00000000",
+                "executedQty":"0.00000000",
+                "cummulativeQuoteQty":"0.00000000",
+                "status":"CANCELED",
+                "timeInForce":"GTC",
+                "type":"LIMIT",
+                "side":"BUY",
+                "selfTradePreventionMode":"EXPIRE_MAKER"
+            },
+            {
+                "symbol":"OPUSDT",
+                "origClientOrderId":"D2j54uyyAC5iXpTJBQI3VG",
+                "orderId":1582815840,
+                "orderListId":-1,
+                "clientOrderId":"8zemhBBepjo2VJ7xkuoQ19",
+                "transactTime":1725875088129,
+                "price":"1.42100000",
+                "origQty":"5.00000000",
+                "executedQty":"0.00000000",
+                "cummulativeQuoteQty":"0.00000000",
+                "status":"CANCELED",
+                "timeInForce":"GTC",
+                "type":"LIMIT",
+                "side":"BUY",
+                "selfTradePreventionMode":"EXPIRE_MAKER"
+            }],
+            "rateLimits":[{
+                "rateLimitType":"REQUEST_WEIGHT",
+                "interval":"MINUTE",
+                "intervalNum":1,
+                "limit":6000,"count":3}]
+        }"#;
 
         let response_de = serde_json::from_str::<BinanceResponses>(response);
         let mut _result = false;
