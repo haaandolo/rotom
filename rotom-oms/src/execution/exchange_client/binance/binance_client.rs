@@ -1,4 +1,7 @@
+use std::collections::HashMap;
+
 use async_trait::async_trait;
+use chrono::Utc;
 use futures::SinkExt;
 use futures::StreamExt;
 use hmac::Mac;
@@ -9,8 +12,10 @@ use rotom_data::protocols::ws::ws_parser::WebSocketParser;
 use rotom_data::protocols::ws::JoinHandle;
 use rotom_data::protocols::ws::WsMessage;
 use rotom_data::protocols::ws::WsRead;
+use serde_json::json;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
+use tracing_subscriber::fmt::format;
 
 use crate::execution::exchange_client::binance::requests::new_order::BinanceNewOrder;
 use crate::execution::exchange_client::Authenticator;
@@ -81,6 +86,7 @@ impl ExecutionClient2 for BinanceExecution {
         ));
     }
 
+    // Cancel all orders for a given asset
     async fn cancel_order_all(&self, symbol: String) {
         let mut binance_cancel_all_order = BinanceCancelAllOrder::new(symbol);
         let signature = Self::generate_signature(binance_cancel_all_order.get_query_param());
@@ -90,7 +96,45 @@ impl ExecutionClient2 for BinanceExecution {
         ));
     }
 
-    // async fn cancel_order_all()
+    async fn wallet_transfer(&self, wallet_address: String) {
+        let wallet_endpoint = "https://api.binance.com/sapi/v1/capital/withdraw/apply?";
+        // let timestamp: i64 = 1726301914294;
+        let timestamp = Utc::now().timestamp_millis();
+        let client = reqwest::Client::new();
+        let mut params2 = HashMap::new();
+
+        params2.insert("coin", "OP".to_string());
+        params2.insert(
+                "address",
+                "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string(),
+        );
+        params2.insert("amount", "1.01".to_string());
+        params2.insert("timestamp", timestamp.clone().to_string());
+
+        let payload = params2
+            .iter()
+            .map(|(k, v)| format!("{}={}", k, v))
+            .collect::<Vec<String>>()
+            .join("&");
+        let signature = Self::generate_signature(ParamString(payload));
+        params2.insert("signature", signature.clone());
+
+        let payload2 = params2
+            .iter()
+            .map(|(k, v)| format!("{}={}", k, v))
+            .collect::<Vec<String>>()
+            .join("&");
+
+        let urlll = format!("{}{}", wallet_endpoint, payload2);
+
+        let res = client
+            .post(urlll)
+            .header("X-MBX-APIKEY", BinanceAuthParams::KEY)
+            .send()
+            .await;
+
+        println!("----- WALLET TRANSFER: {:#?}", res);
+    }
 
     async fn receive_reponses(mut self) {
         while let Some(msg) = self.ws_read.next().await {
@@ -110,3 +154,14 @@ impl Authenticator for BinanceExecution {
         hex::encode(mac.finalize().into_bytes())
     }
 }
+
+// Bin conn: first
+// coin=OP&address=0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f&amount=10.51&timestamp=1726299139895&signature=72a854ad4e5c16d583abbe4eec232ebc57feaa6b2804812aebe548d5a226729e
+// coin=OP&address=0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f&amount=10.01&timestamp=1726301515511&signature=86739f2ffd16f9157997b7a1bb54fc53c029c9b7a943e1509fec534a9f069c05
+
+// Bin conn: second
+// coin=OP&address=0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f&amount=10.01&timestamp=1726301914294&signature=720e46a12fba7869b5f7f5e5e48921eb9e31906081dfdd908e56b8269c461a50
+// coin=OP&address=0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f&amount=10.01&timestamp=1726301914294&signature=720e46a12fba7869b5f7f5e5e48921eb9e31906081dfdd908e56b8269c461a50
+
+// https://api.binance.com/sapi/v1/capital/withdraw/apply?coin=OP&address=0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f&amount=10.01&timestamp=1726301914294&signature=720e46a12fba7869b5f7f5e5e48921eb9e31906081dfdd908e56b8269c461a50
+// https://api.binance.com/sapi/v1/capital/withdraw/apply?coin=OP&address=0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f&amount=10.01&timestamp=1726301914294&signature=720e46a12fba7869b5f7f5e5e48921eb9e31906081dfdd908e56b8269c461a50

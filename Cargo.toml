@@ -17,7 +17,7 @@ async-trait = "0.1.57"
 futures = "0.3.3"
 
 # Protocol
-reqwest = {version="0.12.4", features = ["json"]}
+reqwest = { version="0.12.4" }
 tokio-tungstenite = { version = "0.23.1", features = ["native-tls"]}
 url = { version = "2.3.1 " }
 

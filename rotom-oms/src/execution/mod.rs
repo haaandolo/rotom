@@ -52,6 +52,9 @@ pub trait ExecutionClient2 {
     // Run and receive responses
     async fn receive_reponses(self);
 
+    // Transfer to another wallet
+    async fn wallet_transfer(&self, wallet_address: String);
+
     // /// Cancel [`Order<Open>`]s.
     // async fn cancel_orders(
     //     &self,

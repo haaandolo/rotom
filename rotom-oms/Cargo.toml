@@ -15,6 +15,10 @@ tokio = { workspace = true, features = ["sync", "macros", "rt-multi-thread"] }
 futures = { workspace = true }
 async-trait = { workspace = true }
 
+# Protocols 
+reqwest = { workspace = true }
+url = { workspace = true }
+
 # Logging
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["env-filter", "json"] }
@@ -26,7 +30,6 @@ thiserror = { workspace = true }
 chrono = { workspace = true, features = ["serde"]}
 prettytable-rs = { workspace = true }
 uuid = { workspace = true, features = ["v4", "serde"]}
-url = { workspace = true }
 
 # SerDe
 serde_json = { workspace = true }

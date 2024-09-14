@@ -113,16 +113,17 @@ pub async fn main() {
         },
         decision: Decision::Long,
         quantity: 5.0,
-        order_type: OrderType::Limit,
+        order_type: OrderType::Market,
     };
 
     // Test Binance Execution
     let binance_exe = BinanceExecution::init().await.unwrap();
+    binance_exe.wallet_transfer("temp".to_string()).await;
     // binance_exe.open_order(order.clone()).await;
     // order.market_meta.close = 1.421;
     // binance_exe.open_order(order).await;
     // binance_exe.cancel_order("RCRGTqNC0cCb9zv64aUxtS".to_string()).await;
-    binance_exe.cancel_order_all("OPUSDT".to_string()).await;
+    // binance_exe.cancel_order_all("OPUSDT".to_string()).await;
     binance_exe.receive_reponses().await;
 
     // let _ = poloniex_testing().await;
@@ -342,5 +343,8 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
+// - sort out how to transfer coins to other wallets - download binance sdk and figure it out line by line
+// - start poloniex client
+// - impl other user related data methods for execution client
 // - change level size to quantity (name change)
 // - change r#type to enum instead of string

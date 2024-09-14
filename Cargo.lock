@@ -1209,6 +1209,7 @@ dependencies = [
  "hmac",
  "prettytable-rs",
  "redis",
+ "reqwest",
  "rotom-data",
  "rotom-strategy",
  "serde",
