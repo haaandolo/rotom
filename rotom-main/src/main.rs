@@ -118,7 +118,7 @@ pub async fn main() {
 
     // Test Binance Execution
     let binance_exe = BinanceExecution::init().await.unwrap();
-    binance_exe.wallet_transfer("temp".to_string()).await;
+    binance_exe.wallet_transfer("OP".to_string(), "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string()).await;
     // binance_exe.open_order(order.clone()).await;
     // order.market_meta.close = 1.421;
     // binance_exe.open_order(order).await;

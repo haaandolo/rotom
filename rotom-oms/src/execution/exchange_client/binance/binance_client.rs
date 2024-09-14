@@ -18,6 +18,7 @@ use tokio::sync::mpsc::UnboundedSender;
 use tracing_subscriber::fmt::format;
 
 use crate::execution::exchange_client::binance::requests::new_order::BinanceNewOrder;
+use crate::execution::exchange_client::binance::requests::wallet_transfer::BinanceWalletTransfer;
 use crate::execution::exchange_client::Authenticator;
 use crate::execution::exchange_client::HmacSha256;
 use crate::execution::exchange_client::OrderEventConverter;
@@ -96,39 +97,22 @@ impl ExecutionClient2 for BinanceExecution {
         ));
     }
 
-    async fn wallet_transfer(&self, wallet_address: String) {
+    // Wallet transfers
+    async fn wallet_transfer(&self, coin: String, wallet_address: String) {
         let wallet_endpoint = "https://api.binance.com/sapi/v1/capital/withdraw/apply?";
-        // let timestamp: i64 = 1726301914294;
-        let timestamp = Utc::now().timestamp_millis();
         let client = reqwest::Client::new();
-        let mut params2 = HashMap::new();
 
-        params2.insert("coin", "OP".to_string());
-        params2.insert(
-                "address",
-                "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string(),
-        );
-        params2.insert("amount", "1.01".to_string());
-        params2.insert("timestamp", timestamp.clone().to_string());
-
-        let payload = params2
-            .iter()
-            .map(|(k, v)| format!("{}={}", k, v))
-            .collect::<Vec<String>>()
-            .join("&");
-        let signature = Self::generate_signature(ParamString(payload));
-        params2.insert("signature", signature.clone());
-
-        let payload2 = params2
-            .iter()
-            .map(|(k, v)| format!("{}={}", k, v))
-            .collect::<Vec<String>>()
-            .join("&");
-
-        let urlll = format!("{}{}", wallet_endpoint, payload2);
+        let wallet_transfer_request = BinanceWalletTransfer::builder()
+            .coin(coin)
+            .amount(1.01)
+            .address(wallet_address)
+            .sign()
+            .build()
+            .unwrap() // TODO
+            .query_param();
 
         let res = client
-            .post(urlll)
+            .post(format!("{}{}", wallet_endpoint, wallet_transfer_request))
             .header("X-MBX-APIKEY", BinanceAuthParams::KEY)
             .send()
             .await;

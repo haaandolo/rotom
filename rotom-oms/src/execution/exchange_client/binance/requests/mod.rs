@@ -1,6 +1,8 @@
 pub mod cancel_order;
+pub mod error;
 pub mod new_order;
 pub mod responses;
+pub mod wallet_transfer;
 
 use rotom_data::shared::subscription_models::Instrument;
 use rotom_strategy::Decision;
