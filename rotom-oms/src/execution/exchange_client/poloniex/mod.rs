@@ -1,3 +1,8 @@
+pub mod auth;
+pub mod poloniex_client;
+pub mod requests;
+pub mod responses;
+
 use std::{env, error::Error};
 
 use base64::Engine;
