@@ -1,6 +1,6 @@
 use rotom_data::{
     event_models::event_book::OrderBookL2,
-    exchange::{binance::public::BinanceSpot, poloniex::public::PoloniexSpot},
+    exchange::{binance::BinanceSpot, poloniex::public::PoloniexSpot},
     shared::subscription_models::ExchangeId,
     streams::builder::Streams,
 };
