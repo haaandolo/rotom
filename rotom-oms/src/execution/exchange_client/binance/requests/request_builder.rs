@@ -22,35 +22,19 @@ pub struct BinanceOrder<RequestParams> {
 pub struct BinanceRequest;
 
 impl BinanceRequest {
-    pub fn new_order(
-        order_event: &OrderEvent,
-    ) -> Result<BinanceOrder<BinanceNewOrderParams>, RequestBuildError> {
-        BinanceRequestBuilder::new()
-            .method("order.place")
-            .params(BinanceNewOrderParams::new(order_event))
-            .build()
+    pub fn new_order(order_event: &OrderEvent) -> Result<BinanceNewOrderParams, RequestBuildError> {
+        Ok(BinanceNewOrderParams::new(order_event))
     }
 
     pub fn cancel_order(
         orig_client_order_id: String,
         symbol: String,
-    ) -> Result<BinanceOrder<BinanceCancelOrderParams>, RequestBuildError> {
-        BinanceRequestBuilder::new()
-            .method("order.cancel")
-            .params(BinanceCancelOrderParams::cancel_order(
-                orig_client_order_id,
-                symbol,
-            )?)
-            .build()
+    ) -> Result<BinanceCancelOrderParams, RequestBuildError> {
+        BinanceCancelOrderParams::cancel_order(orig_client_order_id, symbol)
     }
 
-    pub fn cancel_order_all(
-        symbol: String,
-    ) -> Result<BinanceOrder<BinanceCancelOrderParams>, RequestBuildError> {
-        BinanceRequestBuilder::new()
-            .method("openOrders.cancelAll")
-            .params(BinanceCancelOrderParams::cancel_order_all(symbol)?)
-            .build()
+    pub fn cancel_order_all(symbol: String) -> Result<BinanceCancelOrderParams, RequestBuildError> {
+        BinanceCancelOrderParams::cancel_order_all(symbol)
     }
 
     pub fn wallet_transfer(

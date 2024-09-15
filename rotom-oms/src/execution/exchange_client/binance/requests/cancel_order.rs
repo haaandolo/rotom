@@ -2,8 +2,7 @@ use chrono::Utc;
 use serde::Serialize;
 
 use crate::execution::{
-    error::RequestBuildError,
-    exchange_client::binance::auth::{generate_signature, BinanceAuthParams},
+    error::RequestBuildError, exchange_client::binance::auth::generate_signature,
 };
 
 /*----- */
@@ -11,8 +10,6 @@ use crate::execution::{
 /*----- */
 #[derive(Debug, Serialize)]
 pub struct BinanceCancelOrderParams {
-    #[serde(rename(serialize = "apiKey"))]
-    pub api_key: &'static str,
     #[serde(rename(serialize = "origClientOrderId"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub orig_client_order_id: Option<String>,
@@ -39,6 +36,10 @@ impl BinanceCancelOrderParams {
             .sign()
             .build()
     }
+
+    pub fn query_param(&self) -> String {
+        serde_urlencoded::to_string(self).unwrap()
+    }
 }
 
 /*----- */
@@ -46,8 +47,6 @@ impl BinanceCancelOrderParams {
 /*----- */
 #[derive(Debug, Serialize)]
 pub struct BinanceCancelOrderParamsBuilder {
-    #[serde(rename(serialize = "apiKey"))]
-    pub api_key: &'static str,
     #[serde(rename(serialize = "origClientOrderId"))]
     pub orig_client_order_id: Option<String>,
     pub signature: Option<String>,
@@ -64,7 +63,6 @@ impl Default for BinanceCancelOrderParamsBuilder {
 impl BinanceCancelOrderParamsBuilder {
     pub fn new() -> Self {
         Self {
-            api_key: BinanceAuthParams::KEY,
             orig_client_order_id: None,
             signature: None,
             symbol: None,
@@ -96,7 +94,6 @@ impl BinanceCancelOrderParamsBuilder {
 
     pub fn build(self) -> Result<BinanceCancelOrderParams, RequestBuildError> {
         Ok(BinanceCancelOrderParams {
-            api_key: self.api_key,
             orig_client_order_id: self.orig_client_order_id,
             symbol: self.symbol.ok_or(RequestBuildError::BuilderError {
                 exchange: "Binance",

@@ -3,7 +3,7 @@ use serde::Serialize;
 use serde_urlencoded;
 
 use crate::execution::error::RequestBuildError;
-use crate::execution::exchange_client::binance::auth::{generate_signature, BinanceAuthParams};
+use crate::execution::exchange_client::binance::auth::generate_signature;
 use crate::portfolio::OrderEvent;
 use crate::portfolio::OrderType;
 
@@ -13,11 +13,8 @@ use super::{BinanceSide, BinanceSymbol, BinanceTimeInForce};
 // Binance New Order Params
 /*----- */
 // Mandatory field: symbol, side, type, apiKey, signature, timestamp
-// IMPORTANT!!! Field name HAVE to be alphabetical
 #[derive(Debug, Serialize)]
 pub struct BinanceNewOrderParams {
-    #[serde(rename(serialize = "apiKey"))]
-    pub api_key: &'static str,
     #[serde(rename(serialize = "icebergQty"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub iceberg_qty: Option<u64>,
@@ -92,6 +89,10 @@ impl BinanceNewOrderParams {
             .build()
             .unwrap() // TODO
     }
+
+    pub fn query_param(&self) -> String {
+        serde_urlencoded::to_string(self).unwrap()
+    }
 }
 
 /*----- */
@@ -99,8 +100,6 @@ impl BinanceNewOrderParams {
 /*----- */
 #[derive(Debug, Serialize)]
 pub struct BinanceNewOrderParamsBuilder {
-    #[serde(rename(serialize = "apiKey"))]
-    pub api_key: &'static str,
     #[serde(rename(serialize = "icebergQty"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub iceberg_qty: Option<u64>,
@@ -147,7 +146,6 @@ pub struct BinanceNewOrderParamsBuilder {
 impl Default for BinanceNewOrderParamsBuilder {
     fn default() -> Self {
         Self {
-            api_key: BinanceAuthParams::KEY, // mandatory
             iceberg_qty: None,
             new_client_order_id: None,
             new_order_resp_type: None, // TODO: change to enum
@@ -293,7 +291,6 @@ impl BinanceNewOrderParamsBuilder {
 
     pub fn build(self) -> Result<BinanceNewOrderParams, RequestBuildError> {
         Ok(BinanceNewOrderParams {
-            api_key: self.api_key,
             iceberg_qty: self.iceberg_qty,
             new_client_order_id: self.new_client_order_id,
             new_order_resp_type: self.new_order_resp_type,

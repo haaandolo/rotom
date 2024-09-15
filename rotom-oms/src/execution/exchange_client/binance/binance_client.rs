@@ -8,6 +8,7 @@ use rotom_data::protocols::ws::ws_parser::WebSocketParser;
 use rotom_data::protocols::ws::JoinHandle;
 use rotom_data::protocols::ws::WsMessage;
 use rotom_data::protocols::ws::WsRead;
+use serde_json::Value;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 
@@ -56,34 +57,74 @@ impl ExecutionClient2 for BinanceExecution {
         })
     }
 
+    // // Opens order for a single asset
+    // async fn open_order(&self, open_requests: OrderEvent) {
+    //     let _ = self.request_tx.send(WsMessage::Text(
+    //         serde_json::to_string(
+    //             &BinanceRequest::new_order(&open_requests).unwrap(), // TODO
+    //         )
+    //         .unwrap(), // TODO
+    //     ));
+    // }
+
     // Opens order for a single asset
     async fn open_order(&self, open_requests: OrderEvent) {
-        let _ = self.request_tx.send(WsMessage::Text(
-            serde_json::to_string(
-                &BinanceRequest::new_order(&open_requests).unwrap(), // TODO
-            )
-            .unwrap(), // TODO
-        ));
+        let new_order_endpoint = "https://api.binance.com/api/v3/order?";
+        let new_order_query = BinanceRequest::new_order(&open_requests)
+            .unwrap()
+            .query_param(); // TODO
+
+        let res = self
+            .http_client
+            .post(format!("{}{}", new_order_endpoint, new_order_query))
+            .header("X-MBX-APIKEY", BinanceAuthParams::KEY)
+            .send()
+            .await
+            .unwrap()
+            .json::<Value>()
+            .await;
+
+        println!("----- open order: {:#?}", res);
     }
 
     // Cancels order for a single asset
     async fn cancel_order(&self, orig_client_order_id: String, symbol: String) {
-        let _ = self.request_tx.send(WsMessage::Text(
-            serde_json::to_string(
-                &BinanceRequest::cancel_order(orig_client_order_id, symbol).unwrap(), // TODO
-            )
-            .unwrap(), // TODO
-        ));
+        let cancel_endpoint = "https://api.binance.com/api/v3/order?";
+        let cancel_request = BinanceRequest::cancel_order(orig_client_order_id, symbol)
+            .unwrap()
+            .query_param(); // TODO
+
+        let res = self
+            .http_client
+            .delete(format!("{}{}", cancel_endpoint, cancel_request))
+            .header("X-MBX-APIKEY", BinanceAuthParams::KEY)
+            .send()
+            .await
+            .unwrap()
+            .json::<Value>()
+            .await;
+
+        println!("----- cancel order: {:#?}", res);
     }
 
     // Cancel all orders for a given asset
     async fn cancel_order_all(&self, symbol: String) {
-        let _ = self.request_tx.send(WsMessage::Text(
-            serde_json::to_string(
-                &BinanceRequest::cancel_order_all(symbol).unwrap(), // TODO
-            )
-            .unwrap(), // TODO
-        ));
+        let cancel_endpoint = "https://api.binance.com/api/v3/openOrders?";
+        let cancel_request = BinanceRequest::cancel_order_all(symbol)
+            .unwrap()
+            .query_param(); // TODO
+
+        let res = self
+            .http_client
+            .delete(format!("{}{}", cancel_endpoint, cancel_request))
+            .header("X-MBX-APIKEY", BinanceAuthParams::KEY)
+            .send()
+            .await
+            .unwrap()
+            .json::<Value>()
+            .await;
+
+        println!("----- cancel order: {:#?}", res);
     }
 
     // Wallet transfers
@@ -98,9 +139,12 @@ impl ExecutionClient2 for BinanceExecution {
             .post(format!("{}{}", wallet_endpoint, wallet_transfer_request))
             .header("X-MBX-APIKEY", BinanceAuthParams::KEY)
             .send()
+            .await
+            .unwrap()
+            .json::<Value>()
             .await;
 
-        println!("----- WALLET TRANSFER: {:#?}", res);
+        println!("----- wallet transfer: {:#?}", res);
     }
 
     async fn receive_reponses(mut self) {

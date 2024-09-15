@@ -21,6 +21,7 @@ reqwest = { workspace = true, features = ["json"]}
 # SerDe
 serde_json = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
+serde_urlencoded = { workspace = true }
 
 # Logging
 tracing = { workspace = true}
