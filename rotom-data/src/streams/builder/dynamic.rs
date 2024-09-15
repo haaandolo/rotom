@@ -16,7 +16,7 @@ use crate::{
         event_trade::{AggTrades, EventTrade, Trades},
         market_event::MarketEvent,
     },
-    exchange::{binance::BinanceSpot, poloniex::public::PoloniexSpot},
+    exchange::{binance::BinanceSpot, poloniex::PoloniexSpot},
     shared::subscription_models::{ExchangeId, StreamKind, Subscription},
     streams::consumer::consume,
 };
