@@ -63,8 +63,8 @@ pub async fn main() {
     };
 
     // Test Binance Execution
-    let binance_exe = BinanceExecution::init().await.unwrap();
-    binance_exe.wallet_transfer("OP".to_string(), "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string()).await;
+    // let binance_exe = BinanceExecution::init().await.unwrap();
+    // binance_exe.wallet_transfer("OP".to_string(), "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string()).await;
     // binance_exe.open_order(order.clone()).await;
     // order.market_meta.close = 1.421;
     // binance_exe.open_order(order).await;
@@ -72,7 +72,7 @@ pub async fn main() {
     //     .cancel_order("AvdimV3DV0P9kKlGYBSEsV".to_string(), "OPUSDT".to_string())
     //     .await;
     // binance_exe.cancel_order_all("OPUSDT".to_string()).await;
-    binance_exe.receive_reponses().await;
+    // binance_exe.receive_reponses().await;
 
     // let _ = poloniex_testing().await;
 

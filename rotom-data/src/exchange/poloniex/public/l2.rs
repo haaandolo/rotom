@@ -2,12 +2,11 @@ use async_trait::async_trait;
 use chrono::Utc;
 use std::mem;
 
-use super::model::{PoloniexSpotBookData, PoloniexSpotBookUpdate};
+use super::model::{PoloniexSpotBookData, PoloniexSpotBookUpdate, PoloniexSpotTickerInfo};
 use crate::{
     assets::orderbook::OrderBook,
     error::SocketError,
     event_models::event_book::EventOrderBook,
-    exchange::poloniex::model::PoloniexSpotTickerInfo,
     shared::{subscription_models::Instrument, utils::decimal_places_to_number},
     transformer::book::{InstrumentOrderBook, OrderBookUpdater},
 };
