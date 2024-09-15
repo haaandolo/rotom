@@ -1,12 +1,11 @@
 use async_trait::async_trait;
 use chrono::Utc;
 
+use super::model::{BinanceSpotTickerInfo, Filter};
 use super::model::{BinanceSpotBookUpdate, BinanceSpotSnapshot};
 use crate::assets::orderbook::OrderBook;
 use crate::error::SocketError;
 use crate::event_models::event_book::EventOrderBook;
-use crate::exchange::binance::model::BinanceSpotTickerInfo;
-use crate::exchange::binance::model::Filter;
 use crate::shared::subscription_models::ExchangeId;
 use crate::shared::subscription_models::Instrument;
 use crate::transformer::book::{InstrumentOrderBook, OrderBookUpdater};
