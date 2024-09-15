@@ -1,6 +1,7 @@
 pub mod cancel_order;
 pub mod new_order;
 pub mod request_builder;
+pub mod user_data;
 pub mod wallet_transfer;
 
 use rotom_data::shared::subscription_models::Instrument;
@@ -65,4 +66,21 @@ impl From<&Instrument> for BinanceSymbol {
     fn from(instrument: &Instrument) -> BinanceSymbol {
         BinanceSymbol(format!("{}{}", instrument.base, instrument.quote).to_uppercase())
     }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all(deserialize = "SCREAMING_SNAKE_CASE"))]
+pub enum BinanceOrderStatus {
+    New,
+    Canceled,
+    Replaced,
+    Rejected,
+    Trade,
+    Expired,
+    TradePrevention,
+    PendingNew,
+    PartiallyFilled,
+    Filled,
+    PendingCancel,
+    ExpiredInMatch,
 }

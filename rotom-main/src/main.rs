@@ -63,16 +63,16 @@ pub async fn main() {
     };
 
     // Test Binance Execution
-    // let binance_exe = BinanceExecution::init().await.unwrap();
+    let binance_exe = BinanceExecution::init().await.unwrap();
     // binance_exe.wallet_transfer("OP".to_string(), "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string()).await;
     // binance_exe.open_order(order.clone()).await;
     // order.market_meta.close = 1.421;
     // binance_exe.open_order(order).await;
-    // binance_exe
-    //     .cancel_order("55jzlOl32PK9xMnGebhMwO".to_string(), "OPUSDT".to_string())
-    //     .await;
+    binance_exe
+        .cancel_order("vDxU1T4TnOFLNvMRkjofsM".to_string(), "OPUSDT".to_string())
+        .await;
     // binance_exe.cancel_order_all("OPUSDT".to_string()).await;
-    // binance_exe.receive_reponses().await;
+    binance_exe.receive_reponses().await;
 
     // let _ = poloniex_testing().await;
 
@@ -291,7 +291,8 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - sort out how to transfer coins to other wallets - download binance sdk and figure it out line by line
+// - http client
+// - response structs for Binance
 // - start poloniex client
 // - impl other user related data methods for execution client
 // - change level size to quantity (name change)

@@ -1,18 +1,14 @@
 use async_trait::async_trait;
-use futures::SinkExt;
 use futures::StreamExt;
 use rotom_data::error::SocketError;
 use rotom_data::protocols::ws::connect;
 use rotom_data::protocols::ws::ws_parser::StreamParser;
 use rotom_data::protocols::ws::ws_parser::WebSocketParser;
 use rotom_data::protocols::ws::JoinHandle;
-use rotom_data::protocols::ws::WsMessage;
 use rotom_data::protocols::ws::WsRead;
 use serde_json::Value;
-use tokio::sync::mpsc;
-use tokio::sync::mpsc::UnboundedSender;
 
-use crate::execution::exchange_client::binance::responses::BinanceResponses;
+use crate::execution::exchange_client::binance::requests::user_data::BinanceUserData;
 use crate::execution::ExecutionClient2;
 use crate::execution::ExecutionId;
 use crate::portfolio::OrderEvent;
@@ -24,9 +20,8 @@ const BINANCE_PRIVATE_ENDPOINT: &str = "wss://ws-api.binance.com:443/ws-api/v3";
 
 #[derive(Debug)]
 pub struct BinanceExecution {
-    pub ws_read: WsRead,
+    pub user_ws: WsRead,
     pub http_client: reqwest::Client,
-    pub request_tx: UnboundedSender<WsMessage>,
     pub tasks: Vec<JoinHandle>,
 }
 
@@ -35,37 +30,35 @@ impl ExecutionClient2 for BinanceExecution {
     const CLIENT: ExecutionId = ExecutionId::Binance;
 
     async fn init() -> Result<Self, SocketError> {
-        // Initalise ws
-        let ws = connect(BINANCE_PRIVATE_ENDPOINT).await?;
-        let (mut ws_write, ws_read) = ws.split();
         let mut tasks = Vec::new();
+        let http_client = reqwest::Client::new();
 
-        // Spawn ws_write into the ether
-        let (send_tx, mut read_rx) = mpsc::unbounded_channel();
-        let write_handler = tokio::spawn(async move {
-            while let Some(msg) = read_rx.recv().await {
-                let _ = ws_write.send(msg).await;
-            }
-        });
-        tasks.push(write_handler);
+        // listening key
+        let listening_key_endpoint = "https://api.binance.com/api/v3/userDataStream";
+        let listening_key_res = http_client
+            .clone()
+            .post(listening_key_endpoint)
+            .header("X-MBX-APIKEY", BinanceAuthParams::KEY)
+            .send()
+            .await
+            .unwrap()
+            .json::<Value>()
+            .await
+            .unwrap();
+
+        // Spin up listening ws
+        let listening_ws = "wss://stream.binance.com:9443/ws/";
+        let listening_key = listening_key_res["listenKey"].as_str().unwrap();
+        let listening_url = format!("{}{}", listening_ws, listening_key);
+        let ws = connect(listening_url).await?;
+        let (_, user_ws) = ws.split();
 
         Ok(BinanceExecution {
-            ws_read,
-            http_client: reqwest::Client::new(),
-            request_tx: send_tx,
+            user_ws,
+            http_client,
             tasks,
         })
     }
-
-    // // Opens order for a single asset
-    // async fn open_order(&self, open_requests: OrderEvent) {
-    //     let _ = self.request_tx.send(WsMessage::Text(
-    //         serde_json::to_string(
-    //             &BinanceRequest::new_order(&open_requests).unwrap(), // TODO
-    //         )
-    //         .unwrap(), // TODO
-    //     ));
-    // }
 
     // Opens order for a single asset
     async fn open_order(&self, open_requests: OrderEvent) {
@@ -148,9 +141,9 @@ impl ExecutionClient2 for BinanceExecution {
     }
 
     async fn receive_reponses(mut self) {
-        while let Some(msg) = self.ws_read.next().await {
-            let response = WebSocketParser::parse::<BinanceResponses>(msg);
-            println!("{:#?}", response);
+        while let Some(msg) = self.user_ws.next().await {
+            let msg_de = WebSocketParser::parse::<BinanceUserData>(msg);
+            println!("{:#?}", msg_de);
         }
     }
 }
