@@ -1,6 +1,5 @@
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use serde_urlencoded::ser::Error;
 
 use crate::execution::{
     error::RequestBuildError, exchange_client::binance::auth::generate_signature,

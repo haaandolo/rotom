@@ -6,19 +6,13 @@ pub mod simulated;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use error::ExecutionError;
-use model::{
-    balance::SymbolBalance,
-    order::{Cancelled, Open, Order, RequestCancel, RequestOpen},
-};
 use rotom_data::{
     error::SocketError,
-    event_models::event_trade::EventTrade,
     shared::subscription_models::{ExchangeId, Instrument},
     MarketMeta,
 };
 use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
-use tokio::sync::oneshot;
 
 use crate::portfolio::OrderEvent;
 
@@ -44,7 +38,7 @@ pub trait ExecutionClient2 {
     async fn open_order(&self, open_requests: OrderEvent);
 
     // Cancel order for a single asset
-    async fn cancel_order(&self, order_id: String);
+    async fn cancel_order(&self, order_id: String, symbol: String);
 
     // Cancel all orders for a single asset
     async fn cancel_order_all(&self, symbol: String);
@@ -67,7 +61,6 @@ pub trait ExecutionClient2 {
     // /// Fetch account [`SymbolBalance`]s.
     // async fn fetch_balances(&self) -> Result<Vec<SymbolBalance>, ExecutionError>;
 
-
     // /// Cancel all account [`Order<Open>`]s.
     // async fn cancel_orders_all(&self) -> Result<Vec<Order<Cancelled>>, ExecutionError>;
 }
@@ -77,26 +70,6 @@ pub trait ExecutionClient2 {
 pub enum ExecutionId {
     Poloniex,
     Binance,
-}
-
-#[derive(Debug)]
-pub enum SimulatedEvent {
-    FetchOrdersOpen(oneshot::Sender<Result<Vec<Order<Open>>, ExecutionError>>),
-    FetchBalances(oneshot::Sender<Result<Vec<SymbolBalance>, ExecutionError>>),
-    OpenOrders(
-        (
-            Vec<Order<RequestOpen>>,
-            oneshot::Sender<Vec<Result<Order<Open>, ExecutionError>>>,
-        ),
-    ),
-    CancelOrders(
-        (
-            Vec<Order<RequestCancel>>,
-            oneshot::Sender<Vec<Result<Order<Cancelled>, ExecutionError>>>,
-        ),
-    ),
-    CancelOrdersAll(oneshot::Sender<Result<Vec<Order<Cancelled>>, ExecutionError>>),
-    MarketTrade((Instrument, EventTrade)),
 }
 
 /*----- */

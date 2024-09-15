@@ -3,34 +3,67 @@ use uuid::Uuid;
 
 use crate::{execution::error::RequestBuildError, portfolio::OrderEvent};
 
-use super::new_order::BinanceNewOrderParams;
+use super::{
+    cancel_order::BinanceCancelOrderParams, new_order::BinanceNewOrderParams,
+    wallet_transfer::BinanceWalletTransfer,
+};
 
 /*----- */
 // Binance Requests
 /*----- */
 #[derive(Debug, Serialize, Default)]
-pub struct BinanceRequest<RequestParams> {
+pub struct BinanceOrder<RequestParams> {
     id: Uuid,
     method: &'static str,
     pub params: RequestParams,
 }
 
-impl<RequestParams> BinanceRequest<RequestParams> {
+#[derive(Debug, Serialize, Default)]
+pub struct BinanceRequest;
+
+impl BinanceRequest {
     pub fn new_order(
         order_event: &OrderEvent,
-    ) -> Result<BinanceRequest<BinanceNewOrderParams>, RequestBuildError> {
+    ) -> Result<BinanceOrder<BinanceNewOrderParams>, RequestBuildError> {
         BinanceRequestBuilder::new()
             .method("order.place")
             .params(BinanceNewOrderParams::new(order_event))
             .build()
     }
 
-    pub fn cancel_order() -> Self {
-        unimplemented!()
+    pub fn cancel_order(
+        orig_client_order_id: String,
+        symbol: String,
+    ) -> Result<BinanceOrder<BinanceCancelOrderParams>, RequestBuildError> {
+        BinanceRequestBuilder::new()
+            .method("order.cancel")
+            .params(BinanceCancelOrderParams::cancel_order(
+                orig_client_order_id,
+                symbol,
+            )?)
+            .build()
     }
 
-    pub fn cancel_order_all() -> Self {
-        unimplemented!()
+    pub fn cancel_order_all(
+        symbol: String,
+    ) -> Result<BinanceOrder<BinanceCancelOrderParams>, RequestBuildError> {
+        BinanceRequestBuilder::new()
+            .method("openOrders.cancelAll")
+            .params(BinanceCancelOrderParams::cancel_order_all(symbol)?)
+            .build()
+    }
+
+    pub fn wallet_transfer(
+        coin: String,
+        wallet_address: String,
+    ) -> Result<String, RequestBuildError> {
+        Ok(BinanceWalletTransfer::builder()
+            .coin(coin)
+            .amount(1.01)
+            .address(wallet_address)
+            .sign()
+            .build()?
+            .query_param())
     }
 }
 
@@ -42,6 +75,12 @@ pub struct BinanceRequestBuilder<RequestParams> {
     id: Uuid,
     method: Option<&'static str>,
     pub params: Option<RequestParams>,
+}
+
+impl<RequestParams> Default for BinanceRequestBuilder<RequestParams> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<RequestParams> BinanceRequestBuilder<RequestParams> {
@@ -67,8 +106,8 @@ impl<RequestParams> BinanceRequestBuilder<RequestParams> {
         }
     }
 
-    pub fn build(self) -> Result<BinanceRequest<RequestParams>, RequestBuildError> {
-        Ok(BinanceRequest {
+    pub fn build(self) -> Result<BinanceOrder<RequestParams>, RequestBuildError> {
+        Ok(BinanceOrder {
             id: self.id,
             method: self.method.ok_or(RequestBuildError::BuilderError {
                 exchange: "Binance",

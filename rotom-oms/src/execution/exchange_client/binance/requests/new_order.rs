@@ -4,8 +4,8 @@ use serde_urlencoded;
 
 use crate::execution::error::RequestBuildError;
 use crate::execution::exchange_client::binance::auth::{generate_signature, BinanceAuthParams};
+use crate::portfolio::OrderEvent;
 use crate::portfolio::OrderType;
-use crate::{portfolio::OrderEvent};
 
 use super::{BinanceSide, BinanceSymbol, BinanceTimeInForce};
 
@@ -65,7 +65,7 @@ impl BinanceNewOrderParams {
     pub fn new(order_event: &OrderEvent) -> Self {
         match &order_event.order_type {
             OrderType::Limit => Self::limit_order(order_event),
-            OrderType::Market => Self::market_order(order_event)
+            OrderType::Market => Self::market_order(order_event),
         }
     }
 
@@ -84,13 +84,13 @@ impl BinanceNewOrderParams {
 
     fn market_order(order_event: &OrderEvent) -> Self {
         BinanceNewOrderParamsBuilder::default()
-                .quantity(order_event.quantity)
-                .side(BinanceSide::from(order_event.decision))
-                .symbol(BinanceSymbol::from(&order_event.instrument).0)
-                .r#type(order_event.order_type.as_ref().to_uppercase())
-                .sign()
-                .build()
-                .unwrap() // TODO
+            .quantity(order_event.quantity)
+            .side(BinanceSide::from(order_event.decision))
+            .symbol(BinanceSymbol::from(&order_event.instrument).0)
+            .r#type(order_event.order_type.as_ref().to_uppercase())
+            .sign()
+            .build()
+            .unwrap() // TODO
     }
 }
 
@@ -154,9 +154,9 @@ impl Default for BinanceNewOrderParamsBuilder {
             price: None,
             quantity: None,
             quote_order_qty: None,
-            recv_window: None, // value cannot be > 60_000
+            recv_window: None,                // value cannot be > 60_000
             self_trade_prevention_mode: None, // TODO: change to enum
-            side: None, // mandatory
+            side: None,                       // mandatory
             signature: None,
             stop_price: None,
             strategy_id: None,
@@ -164,7 +164,7 @@ impl Default for BinanceNewOrderParamsBuilder {
             symbol: None, // mandatory
             time_in_force: None,
             timestamp: Utc::now().timestamp_millis(), // mandatory
-            r#type: None, // Mandatory
+            r#type: None,                             // Mandatory
             trailing_delta: None,
         }
     }

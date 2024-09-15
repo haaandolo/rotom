@@ -15,10 +15,7 @@ use rotom_main::{
 use rotom_oms::{
     event::{Event, EventTx},
     execution::{
-        exchange_client::{
-            binance::{binance_client::BinanceExecution, requests::responses::BinanceResponses},
-            poloniex::poloniex_testing,
-        },
+        exchange_client::{binance::binance_client::BinanceExecution, poloniex::poloniex_testing},
         simulated::{Config, SimulatedExecution},
         ExecutionClient2, Fees,
     },
@@ -38,59 +35,8 @@ use uuid::Uuid;
 
 const ENGINE_RUN_TIMEOUT: Duration = Duration::from_secs(5000);
 
-/*
-Some(
-    Ok(
-        NewOrderResult(
-            BinanceNewOrderResponseResult {
-                id: "fe0d5e1b-df4d-42d1-aa3b-33676e403938",
-                status: 200,
-                result: BinanceNewOrderResponseResultData {
-                    symbol: "OPUSDT",
-                    order_id: 1581077079,
-                    order_list_id: -1,
-                    client_order_id: "O5eBTHcWHo2vFtrmB9rE7k", <-- THIS
-                    transact_time: 1725768574940,
-                    price: 1.436,
-                    orig_qty: 5.0,
-                    executed_qty: 0.0,
-                    cummulative_quote_qty: 0.0,
-                    status: New,
-                    time_in_force: GTC,
-                    type: "LIMIT",
-                    side: "BUY",
-                    working_time: 1725768574940,
-                    fills: [],
-                    self_trade_prevention_mode: "EXPIRE_MAKER",
-                },
-                rate_limits: [
-                    RateLimit {
-                        rate_limit_type: "ORDERS",
-                        interval: "SECOND",
-                        interval_num: 10,
-                        limit: 100,
-                        count: 1,
-                    },
-                    RateLimit {
-                        rate_limit_type: "ORDERS",
-                        interval: "DAY",
-                        interval_num: 1,
-                        limit: 200000,
-                        count: 2,
-                    },
-                    RateLimit {
-                        rate_limit_type: "REQUEST_WEIGHT",
-                        interval: "MINUTE",
-                        interval_num: 1,
-                        limit: 6000,
-                        count: 3,
-                    },
-                ],
-            },
-        ),
-    ),
-)
-*/
+// client_order_id: "O5eBTHcWHo2vFtrmB9rE7k", <-- THIS for cancel an order
+
 /*----- */
 // Main
 /*----- */
@@ -118,11 +64,13 @@ pub async fn main() {
 
     // Test Binance Execution
     let binance_exe = BinanceExecution::init().await.unwrap();
-    // binance_exe.wallet_transfer("OP".to_string(), "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string()).await;
+    binance_exe.wallet_transfer("OP".to_string(), "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string()).await;
     // binance_exe.open_order(order.clone()).await;
     // order.market_meta.close = 1.421;
-    binance_exe.open_order(order).await;
-    // binance_exe.cancel_order("RCRGTqNC0cCb9zv64aUxtS".to_string()).await;
+    // binance_exe.open_order(order).await;
+    // binance_exe
+    //     .cancel_order("AvdimV3DV0P9kKlGYBSEsV".to_string(), "OPUSDT".to_string())
+    //     .await;
     // binance_exe.cancel_order_all("OPUSDT".to_string()).await;
     binance_exe.receive_reponses().await;
 

@@ -1,7 +1,7 @@
 use rotom_data::shared::de::de_str;
 use serde::Deserialize;
 
-use super::{BinanceSide, BinanceTimeInForce};
+use super::requests::{BinanceSide, BinanceTimeInForce};
 
 /*----- */
 // Main Deserialisation Enum for Binance Responses

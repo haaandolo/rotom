@@ -1,84 +1,109 @@
 use chrono::Utc;
 use serde::Serialize;
-use uuid::Uuid;
 
-use crate::execution::exchange_client::{binance::auth::BinanceAuthParams, ParamString};
+use crate::execution::{
+    error::RequestBuildError,
+    exchange_client::binance::auth::{generate_signature, BinanceAuthParams},
+};
 
 /*----- */
-// Binance Cancel Order - for single order
+// Binance Cancel Order
 /*----- */
-#[derive(Debug, Serialize)]
-pub struct BinanceCancelOrder {
-    id: Uuid,
-    method: &'static str,
-    pub params: BinanceCancelOrderParams,
-}
-
 #[derive(Debug, Serialize)]
 pub struct BinanceCancelOrderParams {
     #[serde(rename(serialize = "apiKey"))]
     pub api_key: &'static str,
     #[serde(rename(serialize = "origClientOrderId"))]
-    pub orig_client_order_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub orig_client_order_id: Option<String>,
     pub signature: Option<String>,
     pub symbol: String,
     pub timestamp: i64,
 }
 
-impl BinanceCancelOrder {
-    pub fn new(orig_client_order_id: String) -> Self {
-        Self {
-            id: Uuid::new_v4(),
-            method: "order.cancel",
-            params: BinanceCancelOrderParams {
-                api_key: BinanceAuthParams::KEY,
-                orig_client_order_id,
-                signature: None,
-                symbol: "OPUSDT".to_string(), // TODO
-                timestamp: Utc::now().timestamp_millis(),
-            },
-        }
+impl BinanceCancelOrderParams {
+    pub fn cancel_order(
+        orig_client_order_id: String,
+        symbol: String,
+    ) -> Result<Self, RequestBuildError> {
+        BinanceCancelOrderParamsBuilder::new()
+            .orig_client_order_id(orig_client_order_id)
+            .symbol(symbol)
+            .sign()
+            .build()
     }
 
-    pub fn get_query_param(&self) -> ParamString {
-        ParamString(serde_urlencoded::to_string(&self.params).unwrap_or_default())
+    pub fn cancel_order_all(symbol: String) -> Result<Self, RequestBuildError> {
+        BinanceCancelOrderParamsBuilder::new()
+            .symbol(symbol)
+            .sign()
+            .build()
     }
 }
 
 /*----- */
-// Binance Cancel Order All - cancel all order for given asset
+// Binance Cancel Order Builder
 /*----- */
 #[derive(Debug, Serialize)]
-pub struct BinanceCancelAllOrder {
-    id: Uuid,
-    method: &'static str,
-    pub params: BinanceCancelAllOrderParams,
-}
-
-#[derive(Debug, Serialize)]
-pub struct BinanceCancelAllOrderParams {
+pub struct BinanceCancelOrderParamsBuilder {
     #[serde(rename(serialize = "apiKey"))]
     pub api_key: &'static str,
+    #[serde(rename(serialize = "origClientOrderId"))]
+    pub orig_client_order_id: Option<String>,
     pub signature: Option<String>,
-    pub symbol: String,
+    pub symbol: Option<String>,
     pub timestamp: i64,
 }
 
-impl BinanceCancelAllOrder {
-    pub fn new(symbol: String) -> Self {
+impl Default for BinanceCancelOrderParamsBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl BinanceCancelOrderParamsBuilder {
+    pub fn new() -> Self {
         Self {
-            id: Uuid::new_v4(),
-            method: "openOrders.cancelAll",
-            params: BinanceCancelAllOrderParams {
-                api_key: BinanceAuthParams::KEY,
-                signature: None,
-                symbol,
-                timestamp: Utc::now().timestamp_millis(),
-            },
+            api_key: BinanceAuthParams::KEY,
+            orig_client_order_id: None,
+            signature: None,
+            symbol: None,
+            timestamp: Utc::now().timestamp_millis(),
         }
     }
 
-    pub fn get_query_param(&self) -> ParamString {
-        ParamString(serde_urlencoded::to_string(&self.params).unwrap_or_default())
+    pub fn orig_client_order_id(self, orig_client_order_id: String) -> Self {
+        Self {
+            orig_client_order_id: Some(orig_client_order_id),
+            ..self
+        }
+    }
+
+    pub fn symbol(self, symbol: String) -> Self {
+        Self {
+            symbol: Some(symbol),
+            ..self
+        }
+    }
+
+    pub fn sign(self) -> Self {
+        let signature = generate_signature(serde_urlencoded::to_string(&self).unwrap()); // TODO
+        Self {
+            signature: Some(signature),
+            ..self
+        }
+    }
+
+    pub fn build(self) -> Result<BinanceCancelOrderParams, RequestBuildError> {
+        Ok(BinanceCancelOrderParams {
+            api_key: self.api_key,
+            orig_client_order_id: self.orig_client_order_id,
+            symbol: self.symbol.ok_or(RequestBuildError::BuilderError {
+                exchange: "Binance",
+                request: "cancel order: symbol",
+            })?,
+            signature: self.signature,
+            timestamp: self.timestamp,
+        })
     }
 }
