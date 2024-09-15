@@ -1,3 +1,4 @@
+use reqwest::Error;
 use thiserror::Error;
 
 use super::{protocols::ws::WsError, shared::subscription_models::ExchangeId};
@@ -40,9 +41,6 @@ pub enum SocketError {
     #[error("error subscribing to resources over the socket: {0}")]
     Subscribe(String),
 
-    #[error("HTTP error: {0}")]
-    Http(reqwest::Error),
-
     #[error("Init method failed for ticker some tickers")]
     Init,
 
@@ -63,6 +61,25 @@ pub enum SocketError {
 
     #[error("WebSocket disconnected: {error}")]
     WebSocketDisconnected { error: WsError },
+
+    #[error("HTTP error: {0}")]
+    Http(reqwest::Error),
+
+    #[error("HTTP request timed out")]
+    HttpTimeout(reqwest::Error),
+
+    /// REST http response error
+    #[error("HTTP response (status={0}) error: {1}")]
+    HttpResponse(reqwest::StatusCode, String),
+}
+
+impl From<reqwest::Error> for SocketError {
+    fn from(error: Error) -> Self {
+        match error {
+            error if error.is_timeout() => SocketError::HttpTimeout(error),
+            error => SocketError::Http(error),
+        }
+    }
 }
 
 impl SocketError {

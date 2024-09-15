@@ -2,6 +2,7 @@ pub mod assets;
 pub mod error;
 pub mod event_models;
 pub mod exchange;
+pub mod metric;
 pub mod protocols;
 pub mod shared;
 pub mod streams;
