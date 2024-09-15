@@ -17,7 +17,6 @@ use tokio::sync::mpsc;
 use tokio::sync::mpsc::UnboundedSender;
 use tracing_subscriber::fmt::format;
 
-use crate::execution::exchange_client::binance::requests::new_order::BinanceNewOrder;
 use crate::execution::exchange_client::binance::requests::wallet_transfer::BinanceWalletTransfer;
 use crate::execution::exchange_client::Authenticator;
 use crate::execution::exchange_client::HmacSha256;
@@ -30,6 +29,8 @@ use crate::portfolio::OrderEvent;
 use super::auth::BinanceAuthParams;
 use super::requests::cancel_order::BinanceCancelAllOrder;
 use super::requests::cancel_order::BinanceCancelOrder;
+use super::requests::new_order::BinanceNewOrderParams;
+use super::requests::request_builder::BinanceRequest;
 use super::requests::responses::BinanceResponses;
 
 const BINANCE_PRIVATE_ENDPOINT: &str = "wss://ws-api.binance.com:443/ws-api/v3";
@@ -69,11 +70,11 @@ impl ExecutionClient2 for BinanceExecution {
 
     // Opens order for a single asset
     async fn open_order(&self, open_requests: OrderEvent) {
-        let mut binance_order = BinanceNewOrder::new(&open_requests);
-        let signature = Self::generate_signature(binance_order.get_query_param());
-        binance_order.params.signature = Some(signature);
         let _ = self.request_tx.send(WsMessage::Text(
-            serde_json::to_string(&binance_order).unwrap(), // TODO: rm unwrap()
+            serde_json::to_string(
+                &BinanceRequest::<BinanceNewOrderParams>::new_order(&open_requests).unwrap(), // TODO
+            )
+            .unwrap(), // TODO
         ));
     }
 

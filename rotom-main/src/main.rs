@@ -113,15 +113,15 @@ pub async fn main() {
         },
         decision: Decision::Long,
         quantity: 5.0,
-        order_type: OrderType::Market,
+        order_type: OrderType::Limit,
     };
 
     // Test Binance Execution
     let binance_exe = BinanceExecution::init().await.unwrap();
-    binance_exe.wallet_transfer("OP".to_string(), "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string()).await;
+    // binance_exe.wallet_transfer("OP".to_string(), "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string()).await;
     // binance_exe.open_order(order.clone()).await;
     // order.market_meta.close = 1.421;
-    // binance_exe.open_order(order).await;
+    binance_exe.open_order(order).await;
     // binance_exe.cancel_order("RCRGTqNC0cCb9zv64aUxtS".to_string()).await;
     // binance_exe.cancel_order_all("OPUSDT".to_string()).await;
     binance_exe.receive_reponses().await;
