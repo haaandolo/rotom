@@ -5,7 +5,7 @@ use rotom_data::protocols::http::rest_request::RestRequest;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::execution::{error::RequestBuildError, exchange::binance::auth::generate_signature};
+use crate::exchange::{binance::auth::generate_signature, errors::RequestBuildError};
 
 /*----- */
 // Binance Wallet Transfer

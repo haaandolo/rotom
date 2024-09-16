@@ -14,10 +14,10 @@ use rotom_main::{
 };
 use rotom_oms::{
     event::{Event, EventTx},
+    exchange::{binance::binance_client::BinanceExecution, ExecutionClient2},
     execution::{
-        exchange::{binance::binance_client::BinanceExecution, poloniex::poloniex_testing},
         simulated::{Config, SimulatedExecution},
-        ExecutionClient2, Fees,
+        Fees,
     },
     portfolio::{
         allocator::DefaultAllocator, portfolio::MetaPortfolio,
@@ -70,12 +70,12 @@ pub async fn main() {
     //         "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string(),
     //     )
     //     .await;
-    binance_exe.open_order(order.clone()).await;
+    // binance_exe.open_order(order.clone()).await;
     // order.market_meta.close = 1.421;
     // binance_exe.open_order(order).await;
-    // binance_exe
-    //     .cancel_order("OsYdf0Sy3giWZWvRuPcmF2".to_string(), "OPUSDT".to_string())
-    //     .await;
+    binance_exe
+        .cancel_order("CsY2NW2C9vPxuXCBLSsAUy".to_string(), "OPUSDT".to_string())
+        .await;
     // binance_exe.cancel_order_all("OPUSDT".to_string()).await;
     binance_exe.receive_reponses().await;
 

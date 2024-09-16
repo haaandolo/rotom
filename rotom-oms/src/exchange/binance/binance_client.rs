@@ -7,18 +7,16 @@ use rotom_data::protocols::ws::connect;
 use rotom_data::protocols::ws::ws_parser::StreamParser;
 use rotom_data::protocols::ws::ws_parser::WebSocketParser;
 use rotom_data::protocols::ws::WsRead;
-use serde_json::Value;
 
-use crate::execution::exchange::binance::requests::cancel_order::BinanceCancelAllOrderParams;
-use crate::execution::exchange::binance::requests::cancel_order::BinanceCancelOrderParams;
-use crate::execution::exchange::binance::requests::new_order::BinanceNewOrderParams;
-use crate::execution::exchange::binance::requests::user_data::BinanceUserData;
-use crate::execution::exchange::binance::requests::wallet_transfer::BinanceWalletTransfer;
-use crate::execution::ExecutionClient2;
-use crate::execution::ExecutionId;
+use crate::exchange::binance::requests::cancel_order::BinanceCancelAllOrderParams;
+use crate::exchange::binance::requests::cancel_order::BinanceCancelOrderParams;
+use crate::exchange::binance::requests::new_order::BinanceNewOrderParams;
+use crate::exchange::binance::requests::user_data::BinanceUserData;
+use crate::exchange::binance::requests::wallet_transfer::BinanceWalletTransfer;
+use crate::exchange::ExecutionClient2;
+use crate::exchange::ExecutionId;
 use crate::portfolio::OrderEvent;
 
-use super::auth::BinanceAuthParams;
 use super::auth::BinanceAuthenticator;
 use super::requests::listening_key::BinanceListeningKey;
 

@@ -1,7 +1,6 @@
+use crate::exchange::HmacSha256;
 use hmac::Mac;
 use rotom_data::{error::SocketError, protocols::http::auth::Authenticator};
-
-use crate::execution::exchange::HmacSha256;
 
 /*----- */
 // Binance API Authentication

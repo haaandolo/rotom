@@ -1,13 +1,10 @@
 pub mod error;
-pub mod exchange;
 pub mod model;
 pub mod simulated;
 
-use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use error::ExecutionError;
 use rotom_data::{
-    error::SocketError,
     shared::subscription_models::{ExchangeId, Instrument},
     MarketMeta,
 };
@@ -21,55 +18,6 @@ use crate::portfolio::OrderEvent;
 /*----- */
 pub trait ExecutionClient {
     fn generate_fill(&self, order: &OrderEvent) -> Result<FillEvent, ExecutionError>;
-}
-
-#[async_trait]
-pub trait ExecutionClient2 {
-    const CLIENT: ExecutionId;
-
-    /// **Note:**
-    /// Usually entails spawning an asynchronous WebSocket event loop to consume [`AccountEvent`]s
-    /// from the exchange, as well as returning the HTTP client `Self`.
-    async fn init() -> Result<Self, SocketError>
-    where
-        Self: Sized;
-
-    // Open order for single asset
-    async fn open_order(&self, open_requests: OrderEvent);
-
-    // Cancel order for a single asset
-    async fn cancel_order(&self, order_id: String, symbol: String);
-
-    // Cancel all orders for a single asset
-    async fn cancel_order_all(&self, symbol: String);
-
-    // Run and receive responses
-    async fn receive_reponses(self);
-
-    // Transfer to another wallet
-    async fn wallet_transfer(&self, coin: String, wallet_address: String);
-
-    // /// Cancel [`Order<Open>`]s.
-    // async fn cancel_orders(
-    //     &self,
-    //     cancel_requests: Vec<Order<RequestCancel>>,
-    // ) -> Vec<Result<Order<Cancelled>, ExecutionError>>;
-
-    // /// Fetch account [`Order<Open>`]s.
-    // async fn fetch_orders_open(&self) -> Result<Vec<Order<Open>>, ExecutionError>;
-
-    // /// Fetch account [`SymbolBalance`]s.
-    // async fn fetch_balances(&self) -> Result<Vec<SymbolBalance>, ExecutionError>;
-
-    // /// Cancel all account [`Order<Open>`]s.
-    // async fn cancel_orders_all(&self) -> Result<Vec<Order<Cancelled>>, ExecutionError>;
-}
-
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]
-#[serde(rename = "execution", rename_all = "snake_case")]
-pub enum ExecutionId {
-    Poloniex,
-    Binance,
 }
 
 /*----- */

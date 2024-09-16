@@ -5,8 +5,8 @@ use serde::Serialize;
 use serde_urlencoded;
 use std::borrow::Cow;
 
-use crate::execution::error::RequestBuildError;
-use crate::execution::exchange::binance::auth::generate_signature;
+use crate::exchange::binance::auth::generate_signature;
+use crate::exchange::errors::RequestBuildError;
 use crate::portfolio::OrderEvent;
 use crate::portfolio::OrderType;
 use rotom_data::shared::de::de_str;
