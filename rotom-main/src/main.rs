@@ -70,14 +70,14 @@ pub async fn main() {
     //         "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string(),
     //     )
     //     .await;
-    // binance_exe.open_order(order.clone()).await;
+    binance_exe.open_order(order.clone()).await;
     // order.market_meta.close = 1.421;
     // binance_exe.open_order(order).await;
     // binance_exe
     //     .cancel_order("OsYdf0Sy3giWZWvRuPcmF2".to_string(), "OPUSDT".to_string())
     //     .await;
     // binance_exe.cancel_order_all("OPUSDT".to_string()).await;
-    // binance_exe.receive_reponses().await;
+    binance_exe.receive_reponses().await;
 
     // let _ = poloniex_testing().await;
 

@@ -20,12 +20,14 @@ use crate::portfolio::OrderEvent;
 
 use super::auth::BinanceAuthParams;
 use super::auth::BinanceAuthenticator;
+use super::requests::listening_key::BinanceListeningKey;
 
 /*----- */
 // Convinent types
 /*----- */
 type BinanceRestClient = RestClient<StandardHttpParser, BinanceAuthenticator>;
 const BINANCE_BASE_URL: &str = "https://api.binance.com";
+const BINANCE_USER_DATA_WS: &str = "wss://stream.binance.com:9443/ws/";
 
 #[derive(Debug)]
 pub struct BinanceExecution {
@@ -38,28 +40,13 @@ impl ExecutionClient2 for BinanceExecution {
     const CLIENT: ExecutionId = ExecutionId::Binance;
 
     async fn init() -> Result<Self, SocketError> {
-        let http_client = RestClient::new(
-            BINANCE_BASE_URL,
-            StandardHttpParser,
-            BinanceAuthenticator,
-        );
-
-        // listening key
-        let listening_key_endpoint = "https://api.binance.com/api/v3/userDataStream";
-        let listening_key_res = reqwest::Client::new()
-            .post(listening_key_endpoint)
-            .header("X-MBX-APIKEY", BinanceAuthParams::KEY)
-            .send()
-            .await
-            .unwrap()
-            .json::<Value>()
-            .await
-            .unwrap();
+        // Initialise rest client
+        let http_client =
+            RestClient::new(BINANCE_BASE_URL, StandardHttpParser, BinanceAuthenticator);
 
         // Spin up listening ws
-        let listening_ws = "wss://stream.binance.com:9443/ws/";
-        let listening_key = listening_key_res["listenKey"].as_str().unwrap();
-        let listening_url = format!("{}{}", listening_ws, listening_key);
+        let (response, _) = http_client.execute(BinanceListeningKey).await.unwrap();
+        let listening_url = format!("{}{}", BINANCE_USER_DATA_WS, response.listen_key);
         let ws = connect(listening_url).await?;
         let (_, user_data_ws) = ws.split();
 
