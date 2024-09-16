@@ -1,10 +1,9 @@
 pub mod cancel_order;
 pub mod new_order;
-pub mod request_builder;
-pub mod shared_models;
 pub mod user_data;
 pub mod wallet_transfer;
 
+use rotom_data::shared::de::de_str;
 use rotom_data::shared::subscription_models::Instrument;
 use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
@@ -84,4 +83,61 @@ pub enum BinanceOrderStatus {
     Filled,
     PendingCancel,
     ExpiredInMatch,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RateLimit {
+    #[serde(alias = "rateLimitType")]
+    pub rate_limit_type: String,
+    pub interval: String,
+    #[serde(alias = "intervalNum")]
+    pub interval_num: u32,
+    pub limit: u32,
+    pub count: u32,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct BinanceFill {
+    #[serde(deserialize_with = "de_str")]
+    pub price: f64,
+    #[serde(deserialize_with = "de_str")]
+    pub qty: f64,
+    #[serde(deserialize_with = "de_str")]
+    pub commission: f64,
+    #[serde(alias = "commissionAsset")]
+    pub commission_asset: String,
+    #[serde(alias = "tradeId")]
+    pub trade_id: u64,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct BinanaceErrorResponse {
+    pub code: i16,
+    pub msg: String,
+}
+
+/*----- */
+// Tests
+/*----- */
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_error() {
+        let response = r#"{
+            "code": -1021,
+            "msg": "Timestamp for this request is outside of the recvWindow."
+        }"#;
+
+        let response_de = serde_json::from_str::<BinanaceErrorResponse>(response);
+        let mut _result = false;
+
+        match response_de {
+            Ok(_) => _result = true,
+            Err(_) => _result = false,
+        }
+
+        assert!(_result)
+    }
 }

@@ -1,9 +1,9 @@
-use std::borrow::Cow;
 use chrono::Utc;
 use rotom_data::protocols::http::rest_request::RestRequest;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_urlencoded;
+use std::borrow::Cow;
 
 use crate::execution::error::RequestBuildError;
 use crate::execution::exchange::binance::auth::generate_signature;
@@ -11,7 +11,7 @@ use crate::portfolio::OrderEvent;
 use crate::portfolio::OrderType;
 use rotom_data::shared::de::de_str;
 
-use super::shared_models::BinanceFill;
+use super::BinanceFill;
 use super::BinanceOrderStatus;
 use super::{BinanceSide, BinanceSymbol, BinanceTimeInForce};
 
@@ -496,3 +496,96 @@ pub struct BinanceNewOrderResponseAck {
 // // Binance cancel open orders
 // /*----- */
 // /**/
+/*----- */
+// Tests
+/*----- */
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_binance_new_order_response_result() {
+        let response = r#"{
+            "symbol": "OPUSDT",
+            "orderId": 1579758355,
+            "orderListId": -1,
+            "clientOrderId": "JFPdJKG8EfAGLAsTJoYNwQ",
+            "transactTime": 1725690996037,
+            "price": "0.00000000",
+            "origQty": "4.00000000",
+            "executedQty": "4.00000000",
+            "cummulativeQuoteQty": "5.51600000",
+            "status": "FILLED",
+            "timeInForce": "GTC",
+            "type": "MARKET",
+            "side": "BUY",
+            "workingTime": 1725690996037,
+            "fills": [
+                {
+                    "price": "1.37900000",
+                    "qty": "4.00000000",
+                    "commission": "0.00400000",
+                    "commissionAsset": "OP",
+                    "tradeId": 89241090
+                }
+            ],
+            "selfTradePreventionMode": "EXPIRE_MAKER"
+        }"#;
+
+        let response_de = serde_json::from_str::<BinancNewOrderResponses>(response);
+        let mut _result = false;
+
+        match response_de {
+            Ok(_) => _result = true,
+            Err(_) => _result = false,
+        }
+
+        assert!(_result)
+    }
+
+    #[test]
+    fn test_binance_new_order_response_full() {
+        let response = r#"{
+            "symbol": "BTCUSDT",
+            "orderId": 12569099453,
+            "orderListId": -1,
+            "clientOrderId": "4d96324ff9d44481926157ec08158a40",
+            "transactTime": 1660801715793,
+            "price": "23416.10000000",
+            "origQty": "0.00847000",
+            "executedQty": "0.00847000",
+            "cummulativeQuoteQty": "198.33521500",
+            "status": "FILLED",
+            "timeInForce": "GTC",
+            "type": "LIMIT",
+            "side": "SELL",
+            "workingTime": 1660801715793,
+            "fills": [
+            {
+                "price": "23416.10000000",
+                "qty": "0.00635000",
+                "commission": "0.000000",
+                "commissionAsset": "BNB",
+                "tradeId": 1650422481
+            },
+            {
+                "price": "23416.50000000",
+                "qty": "0.00212000",
+                "commission": "0.000000",
+                "commissionAsset": "BNB",
+                "tradeId": 1650422482
+            }
+            ]
+        }"#;
+
+        let response_de = serde_json::from_str::<BinancNewOrderResponses>(response);
+        let mut _result = false;
+
+        match response_de {
+            Ok(_) => _result = true,
+            Err(_) => _result = false,
+        }
+
+        assert!(_result)
+    }
+}
