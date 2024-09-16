@@ -1,5 +1,5 @@
 pub mod error;
-pub mod exchange_client;
+pub mod exchange;
 pub mod model;
 pub mod simulated;
 

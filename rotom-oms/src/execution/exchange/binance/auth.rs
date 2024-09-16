@@ -1,6 +1,6 @@
 use hmac::Mac;
 
-use crate::execution::exchange_client::HmacSha256;
+use crate::execution::exchange::HmacSha256;
 
 /*----- */
 // Binance API Authentication

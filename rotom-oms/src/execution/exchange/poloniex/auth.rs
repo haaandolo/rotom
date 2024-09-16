@@ -1,7 +1,7 @@
 use base64::Engine;
 use hmac::Mac;
 
-use crate::execution::exchange_client::HmacSha256;
+use crate::execution::exchange::HmacSha256;
 
 /*----- */
 // Poloniex API Authentication

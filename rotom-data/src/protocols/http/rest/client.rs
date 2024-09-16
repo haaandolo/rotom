@@ -75,7 +75,7 @@ where
 
         // Add optional query parameters
         if let Some(query_params) = request.query_params() {
-            builder = builder.query(query_params);
+            builder = builder.query(&query_params);
         }
 
         // Add optional Body
@@ -84,6 +84,7 @@ where
         }
 
         // Use RequestBuilder (public or private strategy) to build reqwest::Request
+        println!("{:#?}", builder);
         self.strategy.build(request, builder)
     }
 

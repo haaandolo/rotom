@@ -2,7 +2,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
 use crate::execution::{
-    error::RequestBuildError, exchange_client::binance::auth::generate_signature,
+    error::RequestBuildError, exchange::binance::auth::generate_signature,
 };
 
 /*----- */

@@ -68,9 +68,11 @@ pub enum SocketError {
     #[error("HTTP request timed out")]
     HttpTimeout(reqwest::Error),
 
-    /// REST http response error
     #[error("HTTP response (status={0}) error: {1}")]
     HttpResponse(reqwest::StatusCode, String),
+
+    #[error("request authorisation invalid: {0}")]
+    Unauthorised(String),
 }
 
 impl From<reqwest::Error> for SocketError {

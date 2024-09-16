@@ -4,6 +4,10 @@ use reqwest::StatusCode;
 use serde::de::DeserializeOwned;
 use tracing::error;
 
+//
+pub mod client;
+//
+
 /// Defines an abstract [`RestRequest`] that can be executed by a fully
 /// configurable [`RestClient`](rest::client::RestClient).
 pub mod rest;
@@ -84,4 +88,25 @@ pub trait HttpParser {
     /// If [`parse`](Self::parse) fails to deserialise the `Ok(Response)`, this function parses
     /// to parse the API [`Self::ApiError`] associated with the response.
     fn parse_api_error(&self, status: StatusCode, error: Self::ApiError) -> Self::OutputError;
+}
+
+#[derive(Debug)]
+pub struct RestParser;
+
+impl HttpParser for RestParser {
+    type ApiError = serde_json::Value;
+    type OutputError = SocketError;
+
+    fn parse_api_error(&self, status: StatusCode, api_error: Self::ApiError) -> Self::OutputError {
+        // For simplicity, use serde_json::Value as Error and extract raw String for parsing
+        let error = api_error.to_string();
+
+        // Parse Ftx error message to determine custom ExecutionError variant
+        match error.as_str() {
+            message if message.contains("Invalid login credentials") => {
+                SocketError::Unauthorised(error)
+            }
+            _ => SocketError::HttpResponse(status, error),
+        }
+    }
 }

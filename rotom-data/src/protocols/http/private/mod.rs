@@ -113,7 +113,7 @@ where
         let bytes_to_encode = mac.finalize().into_bytes();
 
         // Encode signature from Mac bytes
-        let signature = self.encoder.encode(bytes_to_encode);
+        let signature: String = self.encoder.encode(bytes_to_encode);
 
         Sig::build_signed_request(config, builder, signature)
     }

@@ -1,6 +1,8 @@
 use async_trait::async_trait;
 use futures::StreamExt;
 use rotom_data::error::SocketError;
+use rotom_data::protocols::http::client::RestClient2;
+use rotom_data::protocols::http::RestParser;
 use rotom_data::protocols::ws::connect;
 use rotom_data::protocols::ws::ws_parser::StreamParser;
 use rotom_data::protocols::ws::ws_parser::WebSocketParser;
@@ -8,7 +10,7 @@ use rotom_data::protocols::ws::JoinHandle;
 use rotom_data::protocols::ws::WsRead;
 use serde_json::Value;
 
-use crate::execution::exchange_client::binance::requests::user_data::BinanceUserData;
+use crate::execution::exchange::binance::requests::user_data::BinanceUserData;
 use crate::execution::ExecutionClient2;
 use crate::execution::ExecutionId;
 use crate::portfolio::OrderEvent;
@@ -22,6 +24,7 @@ const BINANCE_PRIVATE_ENDPOINT: &str = "wss://ws-api.binance.com:443/ws-api/v3";
 pub struct BinanceExecution {
     pub user_ws: WsRead,
     pub http_client: reqwest::Client,
+    pub test_client: RestClient2<RestParser>,
     pub tasks: Vec<JoinHandle>,
 }
 
@@ -32,6 +35,7 @@ impl ExecutionClient2 for BinanceExecution {
     async fn init() -> Result<Self, SocketError> {
         let mut tasks = Vec::new();
         let http_client = reqwest::Client::new();
+        let test_client = RestClient2::new("https://api.binance.com", RestParser);
 
         // listening key
         let listening_key_endpoint = "https://api.binance.com/api/v3/userDataStream";
@@ -55,6 +59,7 @@ impl ExecutionClient2 for BinanceExecution {
 
         Ok(BinanceExecution {
             user_ws,
+            test_client,
             http_client,
             tasks,
         })
@@ -62,21 +67,8 @@ impl ExecutionClient2 for BinanceExecution {
 
     // Opens order for a single asset
     async fn open_order(&self, open_requests: OrderEvent) {
-        let new_order_endpoint = "https://api.binance.com/api/v3/order?";
-        let new_order_query = BinanceRequest::new_order(&open_requests)
-            .unwrap()
-            .query_param(); // TODO
-
-        let res = self
-            .http_client
-            .post(format!("{}{}", new_order_endpoint, new_order_query))
-            .header("X-MBX-APIKEY", BinanceAuthParams::KEY)
-            .send()
-            .await
-            .unwrap()
-            .json::<Value>()
-            .await;
-
+        let new_order_query = BinanceRequest::new_order(&open_requests).unwrap();
+        let res = self.test_client.execute(new_order_query).await.unwrap();
         println!("----- open order: {:#?}", res);
     }
 

@@ -1,9 +1,13 @@
+use std::borrow::Cow;
+
 use chrono::Utc;
+use rotom_data::protocols::http::rest::RestRequest;
 use serde::Serialize;
+use serde_json::Value;
 use serde_urlencoded;
 
 use crate::execution::error::RequestBuildError;
-use crate::execution::exchange_client::binance::auth::generate_signature;
+use crate::execution::exchange::binance::auth::generate_signature;
 use crate::portfolio::OrderEvent;
 use crate::portfolio::OrderType;
 
@@ -92,6 +96,25 @@ impl BinanceNewOrderParams {
 
     pub fn query_param(&self) -> String {
         serde_urlencoded::to_string(self).unwrap()
+    }
+}
+
+impl RestRequest for BinanceNewOrderParams {
+    type Response = Value; // Todo
+    type QueryParams = Self;
+    type Body = ();
+
+    fn path(&self) -> Cow<'static, str> {
+        Cow::Borrowed("/api/v3/order")
+    }
+
+    fn method() -> reqwest::Method {
+        reqwest::Method::POST
+    }
+
+    fn query_params(&self) -> Option<&Self> {
+        Some(self)
+        // Some(serde_urlencoded::to_string(self).unwrap())
     }
 }
 
