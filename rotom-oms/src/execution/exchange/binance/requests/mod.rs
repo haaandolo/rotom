@@ -1,6 +1,7 @@
 pub mod cancel_order;
 pub mod new_order;
 pub mod request_builder;
+pub mod shared_models;
 pub mod user_data;
 pub mod wallet_transfer;
 

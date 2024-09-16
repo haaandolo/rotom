@@ -1,9 +1,11 @@
-use chrono::Utc;
-use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 
-use crate::execution::{
-    error::RequestBuildError, exchange::binance::auth::generate_signature,
-};
+use chrono::Utc;
+use rotom_data::protocols::http::rest_request::RestRequest;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
+use crate::execution::{error::RequestBuildError, exchange::binance::auth::generate_signature};
 
 /*----- */
 // Binance Wallet Transfer
@@ -18,12 +20,38 @@ pub struct BinanceWalletTransfer {
 }
 
 impl BinanceWalletTransfer {
+    pub fn new(coin: String, wallet_address: String) -> Result<Self, RequestBuildError> {
+        Self::builder()
+            .coin(coin)
+            .amount(1.01)
+            .address(wallet_address)
+            .sign()
+            .build()
+    }
+
     pub fn builder() -> BinanceWalletTransferBuilder {
         BinanceWalletTransferBuilder::new()
     }
+}
 
-    pub fn query_param(&self) -> String {
-        serde_urlencoded::to_string(self).unwrap()
+/*----- */
+// Impl RestRequest for Binance Wallet Transfer
+/*----- */
+impl RestRequest for BinanceWalletTransfer {
+    type Response = Value;
+    type QueryParams = Self;
+    type Body = ();
+
+    fn path(&self) -> Cow<'static, str> {
+        Cow::Borrowed("/sapi/v1/capital/withdraw/apply")
+    }
+
+    fn method() -> reqwest::Method {
+        reqwest::Method::POST
+    }
+
+    fn query_params(&self) -> Option<&Self> {
+        Some(self)
     }
 }
 

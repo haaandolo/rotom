@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::{execution::error::RequestBuildError, portfolio::OrderEvent};
 
 use super::{
-    cancel_order::BinanceCancelOrderParams, new_order::BinanceNewOrderParams,
+    cancel_order::{BinanceCancelAllOrderParams, BinanceCancelOrderParams}, new_order::BinanceNewOrderParams,
     wallet_transfer::BinanceWalletTransfer,
 };
 
@@ -30,24 +30,11 @@ impl BinanceRequest {
         orig_client_order_id: String,
         symbol: String,
     ) -> Result<BinanceCancelOrderParams, RequestBuildError> {
-        BinanceCancelOrderParams::cancel_order(orig_client_order_id, symbol)
+        BinanceCancelOrderParams::new(orig_client_order_id, symbol)
     }
 
-    pub fn cancel_order_all(symbol: String) -> Result<BinanceCancelOrderParams, RequestBuildError> {
-        BinanceCancelOrderParams::cancel_order_all(symbol)
-    }
-
-    pub fn wallet_transfer(
-        coin: String,
-        wallet_address: String,
-    ) -> Result<String, RequestBuildError> {
-        Ok(BinanceWalletTransfer::builder()
-            .coin(coin)
-            .amount(1.01)
-            .address(wallet_address)
-            .sign()
-            .build()?
-            .query_param())
+    pub fn cancel_order_all(symbol: String) -> Result<BinanceCancelAllOrderParams, RequestBuildError> {
+        BinanceCancelAllOrderParams::new(symbol)
     }
 }
 

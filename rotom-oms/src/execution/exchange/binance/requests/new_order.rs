@@ -1,16 +1,18 @@
 use std::borrow::Cow;
-
 use chrono::Utc;
-use rotom_data::protocols::http::rest::RestRequest;
+use rotom_data::protocols::http::rest_request::RestRequest;
+use serde::Deserialize;
 use serde::Serialize;
-use serde_json::Value;
 use serde_urlencoded;
 
 use crate::execution::error::RequestBuildError;
 use crate::execution::exchange::binance::auth::generate_signature;
 use crate::portfolio::OrderEvent;
 use crate::portfolio::OrderType;
+use rotom_data::shared::de::de_str;
 
+use super::shared_models::BinanceFill;
+use super::BinanceOrderStatus;
 use super::{BinanceSide, BinanceSymbol, BinanceTimeInForce};
 
 /*----- */
@@ -99,8 +101,11 @@ impl BinanceNewOrderParams {
     }
 }
 
+/*----- */
+// Impl RestRequest for Binance New Order
+/*----- */
 impl RestRequest for BinanceNewOrderParams {
-    type Response = Value; // Todo
+    type Response = BinancNewOrderResponses;
     type QueryParams = Self;
     type Body = ();
 
@@ -114,7 +119,6 @@ impl RestRequest for BinanceNewOrderParams {
 
     fn query_params(&self) -> Option<&Self> {
         Some(self)
-        // Some(serde_urlencoded::to_string(self).unwrap())
     }
 }
 
@@ -346,6 +350,98 @@ impl BinanceNewOrderParamsBuilder {
             trailing_delta: self.trailing_delta,
         })
     }
+}
+
+/*----- */
+// Binance New Order Response
+/*----- */
+// Expected response after submitting new order trade for Limit & Market order types
+// https://developers.binance.com/docs/binance-spot-api-docs/web-socket-api#place-new-order-trade
+#[derive(Debug, Deserialize)]
+#[serde(untagged, rename_all = "snake_case")]
+pub enum BinancNewOrderResponses {
+    Full(BinanceNewOrderResponseFull),
+    Result(BinanceNewOrderResponseResult),
+    Ack(BinanceNewOrderResponseAck),
+}
+
+#[derive(Debug, Deserialize)]
+pub struct BinanceNewOrderResponseResult {
+    pub symbol: String,
+    #[serde(alias = "orderId")]
+    pub order_id: u64,
+    #[serde(alias = "orderListId")]
+    pub order_list_id: i64,
+    #[serde(alias = "clientOrderId")]
+    pub client_order_id: String,
+    #[serde(alias = "transactTime")]
+    pub transact_time: u64,
+    #[serde(deserialize_with = "de_str")]
+    pub price: f64,
+    #[serde(deserialize_with = "de_str")]
+    #[serde(alias = "origQty")]
+    pub orig_qty: f64,
+    #[serde(deserialize_with = "de_str")]
+    #[serde(alias = "executedQty")]
+    pub executed_qty: f64,
+    #[serde(deserialize_with = "de_str")]
+    #[serde(alias = "cummulativeQuoteQty")]
+    pub cummulative_quote_qty: f64,
+    pub status: BinanceOrderStatus,
+    #[serde(alias = "timeInForce")]
+    pub time_in_force: BinanceTimeInForce,
+    pub r#type: String,
+    pub side: String,
+    #[serde(alias = "workingTime")]
+    pub working_time: u64,
+    pub fills: Vec<BinanceFill>,
+    #[serde(alias = "selfTradePreventionMode")]
+    pub self_trade_prevention_mode: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct BinanceNewOrderResponseFull {
+    pub symbol: String,
+    #[serde(alias = "orderId")]
+    pub order_id: u64,
+    #[serde(alias = "orderListId")]
+    pub order_list_id: i64,
+    #[serde(alias = "clientOrderId")]
+    pub client_order_id: String,
+    #[serde(alias = "transactTime")]
+    pub transact_time: u64,
+    #[serde(deserialize_with = "de_str")]
+    pub price: f64,
+    #[serde(deserialize_with = "de_str")]
+    #[serde(alias = "origQty")]
+    pub orig_qty: f64,
+    #[serde(deserialize_with = "de_str")]
+    #[serde(alias = "executedQty")]
+    pub executed_qty: f64,
+    #[serde(deserialize_with = "de_str")]
+    #[serde(alias = "cummulativeQuoteQty")]
+    pub cummulative_quote_qty: f64,
+    pub status: BinanceOrderStatus,
+    #[serde(alias = "timeInForce")]
+    pub time_in_force: BinanceTimeInForce,
+    pub r#type: String,
+    pub side: String,
+    #[serde(alias = "workingTime")]
+    pub working_time: u64,
+    pub fills: Vec<BinanceFill>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct BinanceNewOrderResponseAck {
+    pub symbol: String,
+    #[serde(alias = "orderId")]
+    pub order_id: u64,
+    #[serde(alias = "orderListId")]
+    pub order_list_id: i64,
+    #[serde(alias = "clientOrderId")]
+    pub client_order_id: String,
+    #[serde(alias = "transactTime")]
+    pub transact_time: u64,
 }
 
 // /*----- */

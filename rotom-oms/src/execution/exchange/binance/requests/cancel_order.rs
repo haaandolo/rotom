@@ -1,13 +1,17 @@
 use chrono::Utc;
-use serde::Serialize;
+use rotom_data::protocols::http::rest_request::RestRequest;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use std::borrow::Cow;
 
-use crate::execution::{
-    error::RequestBuildError, exchange::binance::auth::generate_signature,
-};
+use super::{BinanceOrderStatus, BinanceSide, BinanceTimeInForce};
+use crate::execution::{error::RequestBuildError, exchange::binance::auth::generate_signature};
+use rotom_data::shared::de::de_str;
 
 /*----- */
-// Binance Cancel Order
+// Binance Cancel Order - Single
 /*----- */
+// Cancel order for a given client_order_id
 #[derive(Debug, Serialize)]
 pub struct BinanceCancelOrderParams {
     #[serde(rename(serialize = "origClientOrderId"))]
@@ -19,26 +23,90 @@ pub struct BinanceCancelOrderParams {
 }
 
 impl BinanceCancelOrderParams {
-    pub fn cancel_order(
-        orig_client_order_id: String,
-        symbol: String,
-    ) -> Result<Self, RequestBuildError> {
+    pub fn new(orig_client_order_id: String, symbol: String) -> Result<Self, RequestBuildError> {
         BinanceCancelOrderParamsBuilder::new()
             .orig_client_order_id(orig_client_order_id)
             .symbol(symbol)
             .sign()
             .build()
     }
+}
 
-    pub fn cancel_order_all(symbol: String) -> Result<Self, RequestBuildError> {
-        BinanceCancelOrderParamsBuilder::new()
-            .symbol(symbol)
-            .sign()
-            .build()
+/*----- */
+// Impl RestRequest for Binance Cancel Order
+/*----- */
+impl RestRequest for BinanceCancelOrderParams {
+    type Response = BinanceCancelOrderResponse;
+    type QueryParams = Self;
+    type Body = ();
+
+    fn path(&self) -> Cow<'static, str> {
+        Cow::Borrowed("/api/v3/order")
     }
 
-    pub fn query_param(&self) -> String {
-        serde_urlencoded::to_string(self).unwrap()
+    fn method() -> reqwest::Method {
+        reqwest::Method::DELETE
+    }
+
+    fn query_params(&self) -> Option<&Self> {
+        Some(self)
+    }
+}
+
+/*----- */
+// Binance Cancel Order - All
+/*----- */
+// Cancel order for a given symbol, i.e., cancels all open order for
+// OPUSDT. We use the same builder to build the single and cancel all
+// request as only one field is different. We need two separate struct
+// as the path is different in when impl RestRequest. Hence, the from
+// trait is implemented to convert one to the other.
+#[derive(Debug, Serialize)]
+pub struct BinanceCancelAllOrderParams {
+    pub signature: Option<String>,
+    pub symbol: String,
+    pub timestamp: i64,
+}
+
+impl From<BinanceCancelOrderParams> for BinanceCancelAllOrderParams {
+    fn from(cancel_order: BinanceCancelOrderParams) -> Self {
+        Self {
+            signature: cancel_order.signature,
+            symbol: cancel_order.symbol,
+            timestamp: cancel_order.timestamp,
+        }
+    }
+}
+
+impl BinanceCancelAllOrderParams {
+    pub fn new(symbol: String) -> Result<Self, RequestBuildError> {
+        Ok(BinanceCancelAllOrderParams::from(
+            BinanceCancelOrderParamsBuilder::new()
+                .symbol(symbol)
+                .sign()
+                .build()?,
+        ))
+    }
+}
+
+/*----- */
+// Impl RestRequest for Binance Cancel Order
+/*----- */
+impl RestRequest for BinanceCancelAllOrderParams {
+    type Response = Vec<BinanceCancelOrderResponse>;
+    type QueryParams = Self;
+    type Body = ();
+
+    fn path(&self) -> Cow<'static, str> {
+        Cow::Borrowed("/api/v3/openOrders")
+    }
+
+    fn method() -> reqwest::Method {
+        reqwest::Method::DELETE
+    }
+
+    fn query_params(&self) -> Option<&Self> {
+        Some(self)
     }
 }
 
@@ -103,4 +171,47 @@ impl BinanceCancelOrderParamsBuilder {
             timestamp: self.timestamp,
         })
     }
+}
+
+/*----- */
+// Cancel Order Responses
+/*----- */
+#[derive(Debug, Deserialize)]
+pub struct BinanceCancelOrderResponse {
+    pub symbol: String,
+    #[serde(alias = "origClientOrderId")]
+    pub orig_client_order_id: String,
+    #[serde(alias = "orderId")]
+    pub order_id: u64,
+    #[serde(alias = "orderListId")]
+    pub order_list_id: i64,
+    #[serde(alias = "clientOrderId")]
+    pub client_order_id: String,
+    #[serde(alias = "transactTime")]
+    pub transact_time: u64,
+    #[serde(deserialize_with = "de_str")]
+    pub price: f64,
+    #[serde(deserialize_with = "de_str", alias = "origQty")]
+    pub orig_qty: f64,
+    #[serde(deserialize_with = "de_str", alias = "executedQty")]
+    pub executed_qty: f64,
+    #[serde(deserialize_with = "de_str", alias = "cummulativeQuoteQty")]
+    pub cummulative_quote_qty: f64,
+    pub status: BinanceOrderStatus,
+    #[serde(alias = "timeInForce")]
+    pub time_in_force: BinanceTimeInForce,
+    pub r#type: String, // Change to binance type
+    pub side: BinanceSide,
+    #[serde(alias = "stopPrice")]
+    pub stop_price: Option<String>, // TODO: deserialise into a f64
+    #[serde(alias = "trailingDelta")]
+    pub trailing_delta: Option<u64>,
+    #[serde(alias = "icebergQty")]
+    pub iceberg_qty: Option<String>, // TODO: deserialise into a f64
+    #[serde(alias = "strategyId")]
+    pub strategy_id: Option<u64>,
+    #[serde(alias = "strategyType")]
+    pub strategy_type: Option<u64>,
+    #[serde(alias = "selfTradePreventionMode")]
+    pub self_trade_prevention_mode: String,
 }

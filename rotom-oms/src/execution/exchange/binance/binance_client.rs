@@ -1,16 +1,16 @@
 use async_trait::async_trait;
 use futures::StreamExt;
 use rotom_data::error::SocketError;
-use rotom_data::protocols::http::client::RestClient2;
-use rotom_data::protocols::http::RestParser;
+use rotom_data::protocols::http::client::RestClient;
+use rotom_data::protocols::http::http_parser::StandardHttpParser;
 use rotom_data::protocols::ws::connect;
 use rotom_data::protocols::ws::ws_parser::StreamParser;
 use rotom_data::protocols::ws::ws_parser::WebSocketParser;
-use rotom_data::protocols::ws::JoinHandle;
 use rotom_data::protocols::ws::WsRead;
 use serde_json::Value;
 
 use crate::execution::exchange::binance::requests::user_data::BinanceUserData;
+use crate::execution::exchange::binance::requests::wallet_transfer::BinanceWalletTransfer;
 use crate::execution::ExecutionClient2;
 use crate::execution::ExecutionId;
 use crate::portfolio::OrderEvent;
@@ -18,14 +18,13 @@ use crate::portfolio::OrderEvent;
 use super::auth::BinanceAuthParams;
 use super::requests::request_builder::BinanceRequest;
 
-const BINANCE_PRIVATE_ENDPOINT: &str = "wss://ws-api.binance.com:443/ws-api/v3";
+// const BINANCE_PRIVATE_ENDPOINT: &str = "wss://ws-api.binance.com:443/ws-api/v3";
 
 #[derive(Debug)]
 pub struct BinanceExecution {
     pub user_ws: WsRead,
     pub http_client: reqwest::Client,
-    pub test_client: RestClient2<RestParser>,
-    pub tasks: Vec<JoinHandle>,
+    pub test_client: RestClient<StandardHttpParser>,
 }
 
 #[async_trait]
@@ -33,9 +32,8 @@ impl ExecutionClient2 for BinanceExecution {
     const CLIENT: ExecutionId = ExecutionId::Binance;
 
     async fn init() -> Result<Self, SocketError> {
-        let mut tasks = Vec::new();
         let http_client = reqwest::Client::new();
-        let test_client = RestClient2::new("https://api.binance.com", RestParser);
+        let test_client = RestClient::new("https://api.binance.com", StandardHttpParser);
 
         // listening key
         let listening_key_endpoint = "https://api.binance.com/api/v3/userDataStream";
@@ -61,7 +59,6 @@ impl ExecutionClient2 for BinanceExecution {
             user_ws,
             test_client,
             http_client,
-            tasks,
         })
     }
 
@@ -74,61 +71,22 @@ impl ExecutionClient2 for BinanceExecution {
 
     // Cancels order for a single asset
     async fn cancel_order(&self, orig_client_order_id: String, symbol: String) {
-        let cancel_endpoint = "https://api.binance.com/api/v3/order?";
-        let cancel_request = BinanceRequest::cancel_order(orig_client_order_id, symbol)
-            .unwrap()
-            .query_param(); // TODO
-
-        let res = self
-            .http_client
-            .delete(format!("{}{}", cancel_endpoint, cancel_request))
-            .header("X-MBX-APIKEY", BinanceAuthParams::KEY)
-            .send()
-            .await
-            .unwrap()
-            .json::<Value>()
-            .await;
-
+        let cancel_request = BinanceRequest::cancel_order(orig_client_order_id, symbol).unwrap();
+        let res = self.test_client.execute(cancel_request).await.unwrap();
         println!("----- cancel order: {:#?}", res);
     }
 
     // Cancel all orders for a given asset
     async fn cancel_order_all(&self, symbol: String) {
-        let cancel_endpoint = "https://api.binance.com/api/v3/openOrders?";
-        let cancel_request = BinanceRequest::cancel_order_all(symbol)
-            .unwrap()
-            .query_param(); // TODO
-
-        let res = self
-            .http_client
-            .delete(format!("{}{}", cancel_endpoint, cancel_request))
-            .header("X-MBX-APIKEY", BinanceAuthParams::KEY)
-            .send()
-            .await
-            .unwrap()
-            .json::<Value>()
-            .await;
-
-        println!("----- cancel order: {:#?}", res);
+        let cancel_request = BinanceRequest::cancel_order_all(symbol).unwrap();
+        let res = self.test_client.execute(cancel_request).await.unwrap();
+        println!("----- cancel order all: {:#?}", res);
     }
 
     // Wallet transfers
     async fn wallet_transfer(&self, coin: String, wallet_address: String) {
-        let wallet_endpoint = "https://api.binance.com/sapi/v1/capital/withdraw/apply?";
-
-        let wallet_transfer_request =
-            BinanceRequest::wallet_transfer(coin, wallet_address).unwrap(); // TODO
-
-        let res = self
-            .http_client
-            .post(format!("{}{}", wallet_endpoint, wallet_transfer_request))
-            .header("X-MBX-APIKEY", BinanceAuthParams::KEY)
-            .send()
-            .await
-            .unwrap()
-            .json::<Value>()
-            .await;
-
+        let transfer_request = BinanceWalletTransfer::new(coin, wallet_address).unwrap();
+        let res = self.test_client.execute(transfer_request).await.unwrap();
         println!("----- wallet transfer: {:#?}", res);
     }
 

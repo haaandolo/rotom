@@ -6,16 +6,17 @@ use crate::{
     metric::{Field, Metric, Tag},
 };
 
-use super::{rest::RestRequest, HttpParser};
+use super::{http_parser::HttpParser, rest_request::RestRequest};
+
 
 #[derive(Debug)]
-pub struct RestClient2<Parser> {
+pub struct RestClient<Parser> {
     pub http_client: reqwest::Client,
     pub base_url: &'static str,
     pub parser: Parser,
 }
 
-impl<Parser> RestClient2<Parser> {
+impl<Parser> RestClient<Parser> {
     pub fn new(base_url: &'static str, parser: Parser) -> Self {
         Self {
             http_client: reqwest::Client::new(),
@@ -57,7 +58,7 @@ impl<Parser> RestClient2<Parser> {
 
         // Add optional Body
         if let Some(body) = request.body() {
-            builder = builder.json(body);
+            builder = builder.json(&body);
         }
 
         Ok(builder.build()?)
