@@ -1,7 +1,6 @@
 use chrono::Utc;
 use rotom_data::protocols::http::rest_request::RestRequest;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::borrow::Cow;
 
 use super::{BinanceOrderStatus, BinanceSide, BinanceTimeInForce};

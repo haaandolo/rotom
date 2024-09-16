@@ -6,22 +6,26 @@ use crate::{
     metric::{Field, Metric, Tag},
 };
 
-use super::{http_parser::HttpParser, rest_request::RestRequest};
-
+use super::{auth::Authenticator, http_parser::HttpParser, rest_request::RestRequest};
 
 #[derive(Debug)]
-pub struct RestClient<Parser> {
+pub struct RestClient<Parser, Auth> {
     pub http_client: reqwest::Client,
     pub base_url: &'static str,
     pub parser: Parser,
+    pub auth: Auth,
 }
 
-impl<Parser> RestClient<Parser> {
-    pub fn new(base_url: &'static str, parser: Parser) -> Self {
+impl<Parser, Auth> RestClient<Parser, Auth>
+where
+    Auth: Authenticator,
+{
+    pub fn new(base_url: &'static str, parser: Parser, auth: Auth) -> Self {
         Self {
             http_client: reqwest::Client::new(),
             base_url,
             parser,
+            auth,
         }
     }
 
@@ -48,8 +52,7 @@ impl<Parser> RestClient<Parser> {
         let mut builder = self
             .http_client
             .request(Request::method(), url)
-            .timeout(Request::timeout())
-            .header("X-MBX-APIKEY", env!("BINANCE_API_KEY"));
+            .timeout(Request::timeout());
 
         // Add optional query params
         if let Some(query_params) = request.query_params() {
@@ -61,7 +64,8 @@ impl<Parser> RestClient<Parser> {
             builder = builder.json(&body);
         }
 
-        Ok(builder.build()?)
+        Auth::build_signed_request(builder)
+        // Ok(builder.build()?)
     }
 
     pub async fn measured_execution<Request>(

@@ -19,13 +19,18 @@ use crate::execution::ExecutionId;
 use crate::portfolio::OrderEvent;
 
 use super::auth::BinanceAuthParams;
+use super::auth::BinanceAuthenticator;
 
-// const BINANCE_PRIVATE_ENDPOINT: &str = "wss://ws-api.binance.com:443/ws-api/v3";
+/*----- */
+// Convinent types
+/*----- */
+type BinanceRestClient = RestClient<StandardHttpParser, BinanceAuthenticator>;
+const BINANCE_BASE_URL: &str = "https://api.binance.com";
 
 #[derive(Debug)]
 pub struct BinanceExecution {
     pub user_data_ws: WsRead,
-    pub http_client: RestClient<StandardHttpParser>,
+    pub http_client: BinanceRestClient,
 }
 
 #[async_trait]
@@ -33,7 +38,11 @@ impl ExecutionClient2 for BinanceExecution {
     const CLIENT: ExecutionId = ExecutionId::Binance;
 
     async fn init() -> Result<Self, SocketError> {
-        let http_client = RestClient::new("https://api.binance.com", StandardHttpParser);
+        let http_client = RestClient::new(
+            BINANCE_BASE_URL,
+            StandardHttpParser,
+            BinanceAuthenticator,
+        );
 
         // listening key
         let listening_key_endpoint = "https://api.binance.com/api/v3/userDataStream";

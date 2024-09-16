@@ -24,6 +24,7 @@ pub fn generate_signature(request_str: String) -> String {
 /*----- */
 // Impl Authenticator for Binance
 /*----- */
+#[derive(Debug)]
 pub struct BinanceAuthenticator;
 
 impl Authenticator for BinanceAuthenticator {
