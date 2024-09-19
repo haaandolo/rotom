@@ -1,11 +1,9 @@
-use std::borrow::Cow;
-
 use chrono::Utc;
 use rotom_data::protocols::http::rest_request::RestRequest;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use std::borrow::Cow;
 
-use crate::exchange::{binance::auth::generate_signature, errors::RequestBuildError};
+use crate::exchange::{binance::auth::BinanceAuthParams, errors::RequestBuildError};
 
 /*----- */
 // Binance Wallet Transfer
@@ -38,7 +36,7 @@ impl BinanceWalletTransfer {
 // Impl RestRequest for Binance Wallet Transfer
 /*----- */
 impl RestRequest for BinanceWalletTransfer {
-    type Response = Value;
+    type Response = BinanceWalletTransferResponse;
     type QueryParams = Self;
     type Body = ();
 
@@ -100,7 +98,8 @@ impl BinanceWalletTransferBuilder {
     }
 
     pub fn sign(self) -> Self {
-        let signature = generate_signature(serde_urlencoded::to_string(&self).unwrap()); // TODO
+        let signature =
+            BinanceAuthParams::generate_signature(serde_urlencoded::to_string(&self).unwrap()); // TODO
         Self {
             signature: Some(signature),
             ..self
@@ -128,4 +127,12 @@ impl BinanceWalletTransferBuilder {
             })?,
         })
     }
+}
+
+/*----- */
+// Wallet Transfer Reponse
+/*----- */
+#[derive(Debug, Deserialize, Serialize)]
+pub struct BinanceWalletTransferResponse {
+    id: String,
 }

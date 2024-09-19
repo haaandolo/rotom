@@ -21,6 +21,11 @@ type HmacSha256 = Hmac<Sha256>;
 #[async_trait]
 pub trait ExecutionClient2 {
     const CLIENT: ExecutionId;
+    type CancelResponse;
+    type CancelAllResponse;
+    type NewOrderResponse;
+    type WalletTransferResponse;
+    type Testing;
 
     /// **Note:**
     /// Usually entails spawning an asynchronous WebSocket event loop to consume [`AccountEvent`]s
@@ -30,19 +35,33 @@ pub trait ExecutionClient2 {
         Self: Sized;
 
     // Open order for single asset
-    async fn open_order(&self, open_requests: OrderEvent);
+    async fn open_order(
+        &self,
+        open_requests: OrderEvent,
+    ) -> Result<Self::NewOrderResponse, SocketError>;
 
     // Cancel order for a single asset
-    async fn cancel_order(&self, order_id: String, symbol: String);
+    async fn cancel_order(
+        &self,
+        order_id: String,
+        symbol: String,
+    ) -> Result<Self::CancelResponse, SocketError>;
 
     // Cancel all orders for a single asset
-    async fn cancel_order_all(&self, symbol: String);
+    async fn cancel_order_all(
+        &self,
+        symbol: String,
+    ) -> Result<Self::CancelAllResponse, SocketError>;
 
     // Run and receive responses
-    async fn receive_reponses(self);
+    async fn receive_responses(self);
 
     // Transfer to another wallet
-    async fn wallet_transfer(&self, coin: String, wallet_address: String);
+    async fn wallet_transfer(
+        &self,
+        coin: String,
+        wallet_address: String,
+    ) -> Result<Self::WalletTransferResponse, SocketError>;
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]

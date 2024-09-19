@@ -77,7 +77,7 @@ pub async fn main() {
         .cancel_order("CsY2NW2C9vPxuXCBLSsAUy".to_string(), "OPUSDT".to_string())
         .await;
     // binance_exe.cancel_order_all("OPUSDT".to_string()).await;
-    binance_exe.receive_reponses().await;
+    binance_exe.receive_responses().await;
 
     // let _ = poloniex_testing().await;
 

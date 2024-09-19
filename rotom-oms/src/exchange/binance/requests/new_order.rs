@@ -5,7 +5,7 @@ use serde::Serialize;
 use serde_urlencoded;
 use std::borrow::Cow;
 
-use crate::exchange::binance::auth::generate_signature;
+use crate::exchange::binance::auth::BinanceAuthParams;
 use crate::exchange::errors::RequestBuildError;
 use crate::portfolio::OrderEvent;
 use crate::portfolio::OrderType;
@@ -20,7 +20,7 @@ use super::{BinanceSide, BinanceSymbol, BinanceTimeInForce};
 /*----- */
 // Mandatory field: symbol, side, type, apiKey, signature, timestamp
 #[derive(Debug, Serialize)]
-pub struct BinanceNewOrderParams {
+pub struct BinanceNewOrder {
     #[serde(rename(serialize = "icebergQty"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub iceberg_qty: Option<u64>,
@@ -64,7 +64,7 @@ pub struct BinanceNewOrderParams {
     pub trailing_delta: Option<u64>,
 }
 
-impl BinanceNewOrderParams {
+impl BinanceNewOrder {
     pub fn new(order_event: &OrderEvent) -> Self {
         match &order_event.order_type {
             OrderType::Limit => Self::limit_order(order_event),
@@ -95,17 +95,13 @@ impl BinanceNewOrderParams {
             .build()
             .unwrap() // TODO
     }
-
-    pub fn query_param(&self) -> String {
-        serde_urlencoded::to_string(self).unwrap()
-    }
 }
 
 /*----- */
 // Impl RestRequest for Binance New Order
 /*----- */
-impl RestRequest for BinanceNewOrderParams {
-    type Response = BinancNewOrderResponses;
+impl RestRequest for BinanceNewOrder {
+    type Response = BinanceNewOrderResponses;
     type QueryParams = Self;
     type Body = ();
 
@@ -260,7 +256,9 @@ impl BinanceNewOrderParamsBuilder {
     }
 
     pub fn sign(self) -> Self {
-        let signature = generate_signature(serde_urlencoded::to_string(&self).unwrap()); // TODO
+        let signature =
+            BinanceAuthParams::generate_signature(serde_urlencoded::to_string(&self).unwrap()); // TODO
+
         Self {
             signature: Some(signature),
             ..self
@@ -316,8 +314,8 @@ impl BinanceNewOrderParamsBuilder {
         }
     }
 
-    pub fn build(self) -> Result<BinanceNewOrderParams, RequestBuildError> {
-        Ok(BinanceNewOrderParams {
+    pub fn build(self) -> Result<BinanceNewOrder, RequestBuildError> {
+        Ok(BinanceNewOrder {
             iceberg_qty: self.iceberg_qty,
             new_client_order_id: self.new_client_order_id,
             new_order_resp_type: self.new_order_resp_type,
@@ -359,7 +357,7 @@ impl BinanceNewOrderParamsBuilder {
 // https://developers.binance.com/docs/binance-spot-api-docs/web-socket-api#place-new-order-trade
 #[derive(Debug, Deserialize)]
 #[serde(untagged, rename_all = "snake_case")]
-pub enum BinancNewOrderResponses {
+pub enum BinanceNewOrderResponses {
     Full(BinanceNewOrderResponseFull),
     Result(BinanceNewOrderResponseResult),
     Ack(BinanceNewOrderResponseAck),
@@ -532,7 +530,7 @@ mod test {
             "selfTradePreventionMode": "EXPIRE_MAKER"
         }"#;
 
-        let response_de = serde_json::from_str::<BinancNewOrderResponses>(response);
+        let response_de = serde_json::from_str::<BinanceNewOrderResponses>(response);
         let mut _result = false;
 
         match response_de {
@@ -578,7 +576,7 @@ mod test {
             ]
         }"#;
 
-        let response_de = serde_json::from_str::<BinancNewOrderResponses>(response);
+        let response_de = serde_json::from_str::<BinanceNewOrderResponses>(response);
         let mut _result = false;
 
         match response_de {

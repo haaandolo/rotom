@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use super::{BinanceOrderStatus, BinanceSide, BinanceTimeInForce};
-use crate::exchange::{binance::auth::generate_signature, errors::RequestBuildError};
+use crate::exchange::{binance::auth::BinanceAuthParams, errors::RequestBuildError};
 use rotom_data::shared::de::de_str;
 
 /*----- */
@@ -12,7 +12,7 @@ use rotom_data::shared::de::de_str;
 /*----- */
 // Cancel order for a given client_order_id
 #[derive(Debug, Serialize)]
-pub struct BinanceCancelOrderParams {
+pub struct BinanceCancelOrder {
     #[serde(rename(serialize = "origClientOrderId"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub orig_client_order_id: Option<String>,
@@ -21,7 +21,7 @@ pub struct BinanceCancelOrderParams {
     pub timestamp: i64,
 }
 
-impl BinanceCancelOrderParams {
+impl BinanceCancelOrder {
     pub fn new(orig_client_order_id: String, symbol: String) -> Result<Self, RequestBuildError> {
         BinanceCancelOrderParamsBuilder::new()
             .orig_client_order_id(orig_client_order_id)
@@ -34,7 +34,7 @@ impl BinanceCancelOrderParams {
 /*----- */
 // Impl RestRequest for Binance Cancel Order
 /*----- */
-impl RestRequest for BinanceCancelOrderParams {
+impl RestRequest for BinanceCancelOrder {
     type Response = BinanceCancelOrderResponse;
     type QueryParams = Self;
     type Body = ();
@@ -61,14 +61,14 @@ impl RestRequest for BinanceCancelOrderParams {
 // as the path is different in when impl RestRequest. Hence, the from
 // trait is implemented to convert one to the other.
 #[derive(Debug, Serialize)]
-pub struct BinanceCancelAllOrderParams {
+pub struct BinanceCancelAllOrder {
     pub signature: Option<String>,
     pub symbol: String,
     pub timestamp: i64,
 }
 
-impl From<BinanceCancelOrderParams> for BinanceCancelAllOrderParams {
-    fn from(cancel_order: BinanceCancelOrderParams) -> Self {
+impl From<BinanceCancelOrder> for BinanceCancelAllOrder {
+    fn from(cancel_order: BinanceCancelOrder) -> Self {
         Self {
             signature: cancel_order.signature,
             symbol: cancel_order.symbol,
@@ -77,9 +77,9 @@ impl From<BinanceCancelOrderParams> for BinanceCancelAllOrderParams {
     }
 }
 
-impl BinanceCancelAllOrderParams {
+impl BinanceCancelAllOrder {
     pub fn new(symbol: String) -> Result<Self, RequestBuildError> {
-        Ok(BinanceCancelAllOrderParams::from(
+        Ok(BinanceCancelAllOrder::from(
             BinanceCancelOrderParamsBuilder::new()
                 .symbol(symbol)
                 .sign()
@@ -91,7 +91,7 @@ impl BinanceCancelAllOrderParams {
 /*----- */
 // Impl RestRequest for Binance Cancel Order
 /*----- */
-impl RestRequest for BinanceCancelAllOrderParams {
+impl RestRequest for BinanceCancelAllOrder {
     type Response = Vec<BinanceCancelOrderResponse>;
     type QueryParams = Self;
     type Body = ();
@@ -152,15 +152,16 @@ impl BinanceCancelOrderParamsBuilder {
     }
 
     pub fn sign(self) -> Self {
-        let signature = generate_signature(serde_urlencoded::to_string(&self).unwrap()); // TODO
+        let signature =
+            BinanceAuthParams::generate_signature(serde_urlencoded::to_string(&self).unwrap()); // TODO
         Self {
             signature: Some(signature),
             ..self
         }
     }
 
-    pub fn build(self) -> Result<BinanceCancelOrderParams, RequestBuildError> {
-        Ok(BinanceCancelOrderParams {
+    pub fn build(self) -> Result<BinanceCancelOrder, RequestBuildError> {
+        Ok(BinanceCancelOrder {
             orig_client_order_id: self.orig_client_order_id,
             symbol: self.symbol.ok_or(RequestBuildError::BuilderError {
                 exchange: "Binance",

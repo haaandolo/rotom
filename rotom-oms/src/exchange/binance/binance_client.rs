@@ -8,9 +8,9 @@ use rotom_data::protocols::ws::ws_parser::StreamParser;
 use rotom_data::protocols::ws::ws_parser::WebSocketParser;
 use rotom_data::protocols::ws::WsRead;
 
-use crate::exchange::binance::requests::cancel_order::BinanceCancelAllOrderParams;
-use crate::exchange::binance::requests::cancel_order::BinanceCancelOrderParams;
-use crate::exchange::binance::requests::new_order::BinanceNewOrderParams;
+use crate::exchange::binance::requests::cancel_order::BinanceCancelAllOrder;
+use crate::exchange::binance::requests::cancel_order::BinanceCancelOrder;
+use crate::exchange::binance::requests::new_order::BinanceNewOrder;
 use crate::exchange::binance::requests::user_data::BinanceUserData;
 use crate::exchange::binance::requests::wallet_transfer::BinanceWalletTransfer;
 use crate::exchange::ExecutionClient2;
@@ -18,7 +18,10 @@ use crate::exchange::ExecutionId;
 use crate::portfolio::OrderEvent;
 
 use super::auth::BinanceAuthenticator;
+use super::requests::cancel_order::BinanceCancelOrderResponse;
 use super::requests::listening_key::BinanceListeningKey;
+use super::requests::new_order::BinanceNewOrderResponses;
+use super::requests::wallet_transfer::BinanceWalletTransferResponse;
 
 /*----- */
 // Convinent types
@@ -36,6 +39,11 @@ pub struct BinanceExecution {
 #[async_trait]
 impl ExecutionClient2 for BinanceExecution {
     const CLIENT: ExecutionId = ExecutionId::Binance;
+    type CancelResponse = BinanceCancelOrderResponse;
+    type CancelAllResponse = Vec<BinanceCancelOrderResponse>;
+    type NewOrderResponse = BinanceNewOrderResponses;
+    type WalletTransferResponse = BinanceWalletTransferResponse;
+    type Testing = ();
 
     async fn init() -> Result<Self, SocketError> {
         // Initialise rest client
@@ -55,50 +63,56 @@ impl ExecutionClient2 for BinanceExecution {
     }
 
     // Opens order for a single asset
-    async fn open_order(&self, open_requests: OrderEvent) {
-        let res = self
+    async fn open_order(
+        &self,
+        open_requests: OrderEvent,
+    ) -> Result<Self::NewOrderResponse, SocketError> {
+        let response = self
             .http_client
-            .execute(BinanceNewOrderParams::new(&open_requests))
-            .await
-            .unwrap();
-
-        println!("----- open order: {:#?}", res);
+            .execute(BinanceNewOrder::new(&open_requests))
+            .await?;
+        Ok(response.0)
     }
 
     // Cancels order for a single asset
-    async fn cancel_order(&self, orig_client_order_id: String, symbol: String) {
-        let res = self
+    async fn cancel_order(
+        &self,
+        orig_client_order_id: String,
+        symbol: String,
+    ) -> Result<Self::CancelResponse, SocketError> {
+        let response = self
             .http_client
-            .execute(BinanceCancelOrderParams::new(orig_client_order_id, symbol).unwrap())
-            .await
-            .unwrap();
-
-        println!("----- cancel order: {:#?}", res);
+            .execute(BinanceCancelOrder::new(orig_client_order_id, symbol).unwrap())
+            .await?;
+        Ok(response.0)
     }
 
     // Cancel all orders for a given asset
-    async fn cancel_order_all(&self, symbol: String) {
-        let res = self
+    async fn cancel_order_all(
+        &self,
+        symbol: String,
+    ) -> Result<Self::CancelAllResponse, SocketError> {
+        let response = self
             .http_client
-            .execute(BinanceCancelAllOrderParams::new(symbol).unwrap())
-            .await
-            .unwrap();
-
-        println!("----- cancel order all: {:#?}", res);
+            .execute(BinanceCancelAllOrder::new(symbol).unwrap())
+            .await?;
+        Ok(response.0)
     }
 
     // Wallet transfers
-    async fn wallet_transfer(&self, coin: String, wallet_address: String) {
-        let res = self
+    async fn wallet_transfer(
+        &self,
+        coin: String,
+        wallet_address: String,
+    ) -> Result<Self::WalletTransferResponse, SocketError> {
+        let response = self
             .http_client
             .execute(BinanceWalletTransfer::new(coin, wallet_address).unwrap())
-            .await
-            .unwrap();
-
-        println!("----- wallet transfer: {:#?}", res);
+            .await?;
+        Ok(response.0)
     }
 
-    async fn receive_reponses(mut self) {
+    async fn receive_responses(mut self) {
         while let Some(msg) = self.user_data_ws.next().await {
             let msg_de = WebSocketParser::parse::<BinanceUserData>(msg);
             println!("{:#?}", msg_de);
