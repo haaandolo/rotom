@@ -2,16 +2,16 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialOrd, PartialEq, Serialize)]
 pub struct Metric {
-    /// Metric name.
+    // Metric name.
     pub name: &'static str,
 
-    /// Milliseconds since the Unix epoch.
+    // Milliseconds since the Unix epoch.
     pub time: u64,
 
-    /// Key-Value pairs to categorise the Metric.
+    // Key-Value pairs to categorise the Metric.
     pub tags: Vec<Tag>,
 
-    /// Observed measurements.
+    // Observed measurements.
     pub fields: Vec<Field>,
 }
 

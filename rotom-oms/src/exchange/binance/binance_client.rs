@@ -43,7 +43,6 @@ impl ExecutionClient2 for BinanceExecution {
     type CancelAllResponse = Vec<BinanceCancelOrderResponse>;
     type NewOrderResponse = BinanceNewOrderResponses;
     type WalletTransferResponse = BinanceWalletTransferResponse;
-    type Testing = ();
 
     async fn init() -> Result<Self, SocketError> {
         // Initialise rest client

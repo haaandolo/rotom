@@ -25,7 +25,6 @@ pub trait ExecutionClient2 {
     type CancelAllResponse;
     type NewOrderResponse;
     type WalletTransferResponse;
-    type Testing;
 
     /// **Note:**
     /// Usually entails spawning an asynchronous WebSocket event loop to consume [`AccountEvent`]s

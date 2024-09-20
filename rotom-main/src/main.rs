@@ -296,7 +296,6 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - response structs for Binance
 // - start poloniex client
 // - impl other user related data methods for execution client
 // - change level size to quantity (name change)

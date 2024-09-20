@@ -65,7 +65,6 @@ where
         }
 
         Auth::build_signed_request(builder)
-        // Ok(builder.build()?)
     }
 
     pub async fn measured_execution<Request>(
