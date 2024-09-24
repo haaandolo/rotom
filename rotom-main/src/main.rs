@@ -14,7 +14,11 @@ use rotom_main::{
 };
 use rotom_oms::{
     event::{Event, EventTx},
-    exchange::{binance::binance_client::BinanceExecution, ExecutionClient2},
+    exchange::{
+        binance::binance_client::BinanceExecution,
+        poloniex::{poloniex_client::PoloniexExecution, poloniex_testing, poloniex_testing2},
+        ExecutionClient2,
+    },
     execution::{
         simulated::{Config, SimulatedExecution},
         Fees,
@@ -51,19 +55,19 @@ pub async fn main() {
     // Order
     let mut order = OrderEvent {
         time: Utc::now(),
-        exchange: ExchangeId::BinanceSpot,
+        exchange: ExchangeId::PoloniexSpot,
         instrument: Instrument::new("op", "usdt"),
         market_meta: MarketMeta {
             time: Utc::now(),
             close: 1.420,
         },
-        decision: Decision::Long,
-        quantity: 5.0,
-        order_type: OrderType::Limit,
+        decision: Decision::Short,
+        quantity: 0.9,
+        order_type: OrderType::Market,
     };
 
     // Test Binance Execution
-    let binance_exe = BinanceExecution::init().await.unwrap();
+    // let binance_exe = BinanceExecution::init().await.unwrap();
     // binance_exe
     //     .wallet_transfer(
     //         "OP".to_string(),
@@ -73,13 +77,21 @@ pub async fn main() {
     // binance_exe.open_order(order.clone()).await;
     // order.market_meta.close = 1.421;
     // binance_exe.open_order(order).await;
-    binance_exe
-        .cancel_order("CsY2NW2C9vPxuXCBLSsAUy".to_string(), "OPUSDT".to_string())
-        .await;
+    // binance_exe
+    //     .cancel_order("CsY2NW2C9vPxuXCBLSsAUy".to_string(), "OPUSDT".to_string())
+    //     .await;
     // binance_exe.cancel_order_all("OPUSDT".to_string()).await;
-    binance_exe.receive_responses().await;
+    // binance_exe.receive_responses().await;
 
-    // let _ = poloniex_testing().await;
+    // Test Poloniex Execution
+    let polo_exe = PoloniexExecution::init().await.unwrap();
+    let open_order = polo_exe.open_order(order).await;
+    println!("---> {:#?}", open_order);
+
+    // 9/fESRKvMlTYFZsujme3+m2Db3knmn9bfAhQdiaCxmI=
+    // 9/fESRKvMlTYFZsujme3+m2Db3knmn9bfAhQdiaCxmI=
+
+    // let _ = poloniex_testing2().await;
 
     /*----- */
     // Trader builder
@@ -296,7 +308,9 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
+// - impl authorising request for poloniex and binance, move body into sign request builder as some need json and others need body
 // - start poloniex client
+// - error for http client for each exchange
 // - impl other user related data methods for execution client
 // - change level size to quantity (name change)
 // - change r#type to enum instead of string

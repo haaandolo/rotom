@@ -1,5 +1,8 @@
+use std::fmt::Debug;
+
 use bytes::Bytes;
 use chrono::Utc;
+use serde::Serialize;
 
 use crate::{
     error::SocketError,
@@ -60,11 +63,12 @@ where
         }
 
         // Add optional Body
-        if let Some(body) = request.body() {
-            builder = builder.json(&body);
-        }
+//        if let Some(body) = request.body() {
+//            builder = builder.body(body);
+//            // builder = builder.json(body);
+//        }
 
-        Auth::build_signed_request(builder)
+        Auth::build_signed_request(builder, request)
     }
 
     pub async fn measured_execution<Request>(
@@ -96,6 +100,7 @@ where
 
         let status_code = response.status();
         let payload = response.bytes().await?;
+
         Ok((status_code, payload, latency))
     }
 }
