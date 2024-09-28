@@ -5,7 +5,10 @@ use hmac::Mac;
 use reqwest::Request;
 use rotom_data::{
     error::SocketError,
-    protocols::http::{request_builder::ExchangeRequestBuilder, rest_request::RestRequest},
+    protocols::http::{
+        request_builder::{Authenticator, ExchangeRequestBuilder},
+        rest_request::RestRequest,
+    },
 };
 
 use crate::exchange::HmacSha256;
@@ -15,15 +18,15 @@ use crate::exchange::HmacSha256;
 /*----- */
 pub struct PoloniexAuthParams;
 
-impl PoloniexAuthParams {
-    pub const SECRET: &'static str = env!("POLONIEX_API_SECRET");
-    pub const KEY: &'static str = env!("POLONIEX_API_KEY");
+impl Authenticator for PoloniexAuthParams {
+    const SECRET: &'static str = env!("POLONIEX_API_SECRET");
+    const KEY: &'static str = env!("POLONIEX_API_KEY");
 
     #[inline]
-    pub fn generate_signature(request_str: String) -> String {
+    fn generate_signature(request_str: impl Into<String>) -> String {
         let mut mac = HmacSha256::new_from_slice(PoloniexAuthParams::SECRET.as_bytes())
             .expect("HMAC can take key of any size");
-        mac.update(request_str.as_bytes());
+        mac.update(request_str.into().as_bytes());
         base64::engine::general_purpose::STANDARD.encode(mac.finalize().into_bytes())
     }
 }
@@ -78,14 +81,6 @@ impl ExchangeRequestBuilder for PoloniexRequestBuilder {
     type AuthParams = PoloniexAuthParams;
 
     #[inline]
-    fn generate_signature(request_str: impl Into<String>) -> String {
-        let mut mac = HmacSha256::new_from_slice(PoloniexAuthParams::SECRET.as_bytes())
-            .expect("HMAC can take key of any size");
-        mac.update(request_str.into().as_bytes());
-        base64::engine::general_purpose::STANDARD.encode(mac.finalize().into_bytes())
-    }
-
-    #[inline]
     fn build_signed_request<Request>(
         builder: reqwest::RequestBuilder,
         request: Request,
@@ -96,7 +91,7 @@ impl ExchangeRequestBuilder for PoloniexRequestBuilder {
         let request_config = PoloniexConfig::new(&request);
         let request_body = request_config.generate_body()?;
         let request_query = request_config.generate_query(request_body.as_str());
-        let signature = Self::generate_signature(request_query);
+        let signature = PoloniexAuthParams::generate_signature(request_query);
 
         let builder = builder
             .header("Content-Type", "application/json")

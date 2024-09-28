@@ -51,21 +51,10 @@ where
         Request: RestRequest,
     {
         let url = format!("{}{}", self.base_url, request.path());
-        let mut builder = self
+        let builder = self
             .http_client
             .request(Request::method(), url)
             .timeout(Request::timeout());
-
-        // Add optional query params
-        if let Some(query_params) = request.query_params() {
-            builder = builder.query(query_params);
-        }
-
-        // Add optional Body
-        //        if let Some(body) = request.body() {
-        //            builder = builder.body(body);
-        //            // builder = builder.json(body);
-        //        }
 
         RequestBuilder::build_signed_request(builder, request)
     }

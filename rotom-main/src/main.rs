@@ -61,35 +61,31 @@ pub async fn main() {
             time: Utc::now(),
             close: 1.420,
         },
-        decision: Decision::Short,
-        quantity: 0.9,
-        order_type: OrderType::Market,
+        decision: Decision::Long,
+        quantity: 4.0,
+        order_type: OrderType::Limit,
     };
 
     // Test Binance Execution
-    // let binance_exe = BinanceExecution::init().await.unwrap();
-    // binance_exe
+    let binance_exe = BinanceExecution::init().await.unwrap();
+    // let res = binance_exe
     //     .wallet_transfer(
     //         "OP".to_string(),
     //         "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string(),
     //     )
     //     .await;
-    // binance_exe.open_order(order.clone()).await;
-    // order.market_meta.close = 1.421;
-    // binance_exe.open_order(order).await;
+    // let res = binance_exe.open_order(order.clone()).await;
     // binance_exe
-    //     .cancel_order("CsY2NW2C9vPxuXCBLSsAUy".to_string(), "OPUSDT".to_string())
+    //     .cancel_order("gnHMeO0Cc9Nu1Lhpl4ZGPW".to_string(), "OPUSDT".to_string())
     //     .await;
-    // binance_exe.cancel_order_all("OPUSDT".to_string()).await;
-    // binance_exe.receive_responses().await;
+    binance_exe.cancel_order_all("OPUSDT".to_string()).await;
+    // println!("{:#?}", res);
+    binance_exe.receive_responses().await;
 
     // Test Poloniex Execution
-    let polo_exe = PoloniexExecution::init().await.unwrap();
-    let open_order = polo_exe.open_order(order).await;
-    println!("---> {:#?}", open_order);
-
-    // 9/fESRKvMlTYFZsujme3+m2Db3knmn9bfAhQdiaCxmI=
-    // 9/fESRKvMlTYFZsujme3+m2Db3knmn9bfAhQdiaCxmI=
+    // let polo_exe = PoloniexExecution::init().await.unwrap();
+    // let open_order = polo_exe.open_order(order).await;
+    // println!("---> {:#?}", open_order);
 
     // let _ = poloniex_testing2().await;
 

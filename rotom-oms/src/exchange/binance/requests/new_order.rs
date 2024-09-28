@@ -1,4 +1,5 @@
 use chrono::Utc;
+use rotom_data::protocols::http::request_builder::Authenticator;
 use rotom_data::protocols::http::rest_request::RestRequest;
 use serde::Deserialize;
 use serde::Serialize;
