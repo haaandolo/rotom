@@ -17,7 +17,7 @@ use crate::exchange::ExecutionClient2;
 use crate::exchange::ExecutionId;
 use crate::portfolio::OrderEvent;
 
-use super::auth::BinanceAuthenticator;
+use super::request_builder::BinanceRequestBuilder;
 use super::requests::cancel_order::BinanceCancelOrderResponse;
 use super::requests::listening_key::BinanceListeningKey;
 use super::requests::new_order::BinanceNewOrderResponses;
@@ -26,7 +26,7 @@ use super::requests::wallet_transfer::BinanceWalletTransferResponse;
 /*----- */
 // Convinent types
 /*----- */
-type BinanceRestClient = RestClient<StandardHttpParser, BinanceAuthenticator>;
+type BinanceRestClient = RestClient<StandardHttpParser, BinanceRequestBuilder>;
 const BINANCE_BASE_URL: &str = "https://api.binance.com";
 const BINANCE_USER_DATA_WS: &str = "wss://stream.binance.com:9443/ws/";
 
@@ -47,7 +47,7 @@ impl ExecutionClient2 for BinanceExecution {
     async fn init() -> Result<Self, SocketError> {
         // Initialise rest client
         let http_client =
-            RestClient::new(BINANCE_BASE_URL, StandardHttpParser, BinanceAuthenticator);
+            RestClient::new(BINANCE_BASE_URL, StandardHttpParser, BinanceRequestBuilder);
 
         // Spin up listening ws
         let (response, _) = http_client.execute(BinanceListeningKey).await.unwrap();

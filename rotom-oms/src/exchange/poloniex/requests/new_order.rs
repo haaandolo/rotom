@@ -1,14 +1,12 @@
 use std::borrow::Cow;
 
-use chrono::Utc;
 use rotom_data::protocols::http::rest_request::RestRequest;
-use serde::{Serialize, Serializer};
-use serde_json::{json, Value};
+use serde::Serialize;
+use serde_json::{Value};
 use uuid::Uuid;
 
 use crate::{
-    exchange::{errors::RequestBuildError, poloniex::auth::PoloniexAuthParams},
-    execution::model::order::Order,
+    exchange::errors::RequestBuildError,
     portfolio::{OrderEvent, OrderType},
 };
 

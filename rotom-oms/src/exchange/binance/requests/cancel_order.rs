@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use super::{BinanceOrderStatus, BinanceSide, BinanceTimeInForce};
-use crate::exchange::{binance::auth::BinanceAuthParams, errors::RequestBuildError};
+use crate::exchange::{binance::request_builder::BinanceAuthParams, errors::RequestBuildError};
 use rotom_data::shared::de::de_str;
 
 /*----- */

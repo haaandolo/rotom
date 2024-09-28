@@ -14,12 +14,12 @@ use crate::{
     portfolio::OrderEvent,
 };
 
-use super::{auth::PoloniexAuthenticator, requests::new_order::PoloniexNewOrder};
+use super::{request_builder::PoloniexRequestBuilder, requests::new_order::PoloniexNewOrder};
 
 /*----- */
 // Convinent types
 /*----- */
-type PoloniexRestClient = RestClient<StandardHttpParser, PoloniexAuthenticator>;
+type PoloniexRestClient = RestClient<StandardHttpParser, PoloniexRequestBuilder>;
 const POLONIEX_BASE_URL: &str = "https://api.poloniex.com";
 const POLONIEX_USER_DATA_WS: &str = "wss://stream.binance.com:9443/ws/"; // TODO
 
@@ -42,8 +42,8 @@ impl ExecutionClient2 for PoloniexExecution {
         Self: Sized,
     {
         // Initalise rest client
-        let http_client: RestClient<StandardHttpParser, PoloniexAuthenticator> =
-            RestClient::new(POLONIEX_BASE_URL, StandardHttpParser, PoloniexAuthenticator);
+        let http_client: RestClient<StandardHttpParser, PoloniexRequestBuilder> =
+            RestClient::new(POLONIEX_BASE_URL, StandardHttpParser, PoloniexRequestBuilder);
 
         // Spin up listening ws
         // let ws = connect(POLONIEX_USER_DATA_WS).await?;

@@ -2,33 +2,32 @@ use std::fmt::Debug;
 
 use bytes::Bytes;
 use chrono::Utc;
-use serde::Serialize;
 
 use crate::{
     error::SocketError,
     metric::{Field, Metric, Tag},
 };
 
-use super::{auth::Authenticator, http_parser::HttpParser, rest_request::RestRequest};
+use super::{request_builder::ExchangeRequestBuilder, http_parser::HttpParser, rest_request::RestRequest};
 
 #[derive(Debug)]
-pub struct RestClient<Parser, Auth> {
+pub struct RestClient<Parser, RequestBuilder> {
     pub http_client: reqwest::Client,
     pub base_url: &'static str,
     pub parser: Parser,
-    pub auth: Auth,
+    pub request_builder: RequestBuilder,
 }
 
-impl<Parser, Auth> RestClient<Parser, Auth>
+impl<Parser, RequestBuilder> RestClient<Parser, RequestBuilder>
 where
-    Auth: Authenticator,
+    RequestBuilder: ExchangeRequestBuilder,
 {
-    pub fn new(base_url: &'static str, parser: Parser, auth: Auth) -> Self {
+    pub fn new(base_url: &'static str, parser: Parser, request_builder: RequestBuilder) -> Self {
         Self {
             http_client: reqwest::Client::new(),
             base_url,
             parser,
-            auth,
+            request_builder,
         }
     }
 
@@ -63,12 +62,12 @@ where
         }
 
         // Add optional Body
-//        if let Some(body) = request.body() {
-//            builder = builder.body(body);
-//            // builder = builder.json(body);
-//        }
+        //        if let Some(body) = request.body() {
+        //            builder = builder.body(body);
+        //            // builder = builder.json(body);
+        //        }
 
-        Auth::build_signed_request(builder, request)
+        RequestBuilder::build_signed_request(builder, request)
     }
 
     pub async fn measured_execution<Request>(

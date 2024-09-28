@@ -1,13 +1,13 @@
 use crate::exchange::HmacSha256;
 use hmac::Mac;
-use rotom_data::{error::SocketError, protocols::http::auth::Authenticator};
+use rotom_data::{error::SocketError, protocols::http::request_builder::ExchangeRequestBuilder};
 
 /*----- */
 // Binance API Authentication
 /*----- */
 pub struct BinanceAuthParams;
 
-impl BinanceAuthParams {
+impl  BinanceAuthParams {
     pub const SECRET: &'static str = env!("BINANCE_API_SECRET");
     pub const KEY: &'static str = env!("BINANCE_API_KEY");
 
@@ -24,9 +24,9 @@ impl BinanceAuthParams {
 // Impl Authenticator for Binance
 /*----- */
 #[derive(Debug)]
-pub struct BinanceAuthenticator;
+pub struct BinanceRequestBuilder;
 
-impl Authenticator for BinanceAuthenticator {
+impl ExchangeRequestBuilder for BinanceRequestBuilder {
     type AuthParams = BinanceAuthParams;
 
     #[inline]

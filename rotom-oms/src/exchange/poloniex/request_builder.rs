@@ -5,7 +5,7 @@ use hmac::Mac;
 use reqwest::Request;
 use rotom_data::{
     error::SocketError,
-    protocols::http::{auth::Authenticator, rest_request::RestRequest},
+    protocols::http::{request_builder::ExchangeRequestBuilder, rest_request::RestRequest},
 };
 
 use crate::exchange::HmacSha256;
@@ -32,7 +32,7 @@ impl PoloniexAuthParams {
 // Impl Authenticator for Poloniex
 /*----- */
 #[derive(Debug)]
-pub struct PoloniexAuthenticator;
+pub struct PoloniexRequestBuilder;
 
 #[derive(Debug)]
 pub struct PoloniexConfig<'a, Request> {
@@ -74,7 +74,7 @@ where
     }
 }
 
-impl Authenticator for PoloniexAuthenticator {
+impl ExchangeRequestBuilder for PoloniexRequestBuilder {
     type AuthParams = PoloniexAuthParams;
 
     #[inline]

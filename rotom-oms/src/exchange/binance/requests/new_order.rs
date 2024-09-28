@@ -5,7 +5,7 @@ use serde::Serialize;
 use serde_urlencoded;
 use std::borrow::Cow;
 
-use crate::exchange::binance::auth::BinanceAuthParams;
+use crate::exchange::binance::request_builder::BinanceAuthParams;
 use crate::exchange::errors::RequestBuildError;
 use crate::portfolio::OrderEvent;
 use crate::portfolio::OrderType;

@@ -3,7 +3,7 @@ use rotom_data::protocols::http::rest_request::RestRequest;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
-use crate::exchange::{binance::auth::BinanceAuthParams, errors::RequestBuildError};
+use crate::exchange::{binance::request_builder::BinanceAuthParams, errors::RequestBuildError};
 
 /*----- */
 // Binance Wallet Transfer
