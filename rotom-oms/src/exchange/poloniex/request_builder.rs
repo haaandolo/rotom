@@ -1,8 +1,6 @@
-use chrono::Utc;
-
 use base64::Engine;
+use chrono::Utc;
 use hmac::Mac;
-use reqwest::Request;
 use rotom_data::{
     error::SocketError,
     protocols::http::{

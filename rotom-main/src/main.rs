@@ -67,7 +67,7 @@ pub async fn main() {
     };
 
     // Test Binance Execution
-    let binance_exe = BinanceExecution::init().await.unwrap();
+    // let binance_exe = BinanceExecution::init().await.unwrap();
     // let res = binance_exe
     //     .wallet_transfer(
     //         "OP".to_string(),
@@ -78,14 +78,14 @@ pub async fn main() {
     // binance_exe
     //     .cancel_order("gnHMeO0Cc9Nu1Lhpl4ZGPW".to_string(), "OPUSDT".to_string())
     //     .await;
-    binance_exe.cancel_order_all("OPUSDT".to_string()).await;
+    // binance_exe.cancel_order_all("OPUSDT".to_string()).await;
     // println!("{:#?}", res);
-    binance_exe.receive_responses().await;
+    // binance_exe.receive_responses().await;
 
     // Test Poloniex Execution
-    // let polo_exe = PoloniexExecution::init().await.unwrap();
-    // let open_order = polo_exe.open_order(order).await;
-    // println!("---> {:#?}", open_order);
+    let polo_exe = PoloniexExecution::init().await.unwrap();
+    let open_order = polo_exe.open_order(order).await;
+    println!("---> {:#?}", open_order);
 
     // let _ = poloniex_testing2().await;
 
@@ -304,8 +304,7 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - impl authorising request for poloniex and binance, move body into sign request builder as some need json and others need body
-// - start poloniex client
+// - polo cancel order
 // - error for http client for each exchange
 // - impl other user related data methods for execution client
 // - change level size to quantity (name change)
