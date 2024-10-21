@@ -14,7 +14,7 @@ use crate::{
     portfolio::OrderEvent,
 };
 
-use super::{request_builder::PoloniexRequestBuilder, requests::{cancel_order::PoloniexCancelOrder, new_order::PoloniexNewOrder}};
+use super::{request_builder::PoloniexRequestBuilder, requests::{cancel_order::{PoloniexCancelAllOrder, PoloniexCancelOrder}, new_order::PoloniexNewOrder}};
 
 /*----- */
 // Convinent types
@@ -33,7 +33,7 @@ pub struct PoloniexExecution {
 impl ExecutionClient2 for PoloniexExecution {
     const CLIENT: ExecutionId = ExecutionId::Poloniex;
     type CancelResponse = Value;
-    type CancelAllResponse = ();
+    type CancelAllResponse = Value;
     type NewOrderResponse = Value; // todo
     type WalletTransferResponse = ();
 
@@ -85,7 +85,11 @@ impl ExecutionClient2 for PoloniexExecution {
         &self,
         symbol: String,
     ) -> Result<Self::CancelAllResponse, SocketError> {
-        unimplemented!()
+        let response = self
+            .http_client
+            .execute(PoloniexCancelAllOrder::new(symbol))
+            .await?;
+        Ok(response.0)
     }
 
     // Run and receive responses

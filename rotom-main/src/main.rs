@@ -84,15 +84,19 @@ pub async fn main() {
 
     // Test Poloniex Execution
     let polo_exe = PoloniexExecution::init().await.unwrap();
-    // let open_order = polo_exe.open_order(order).await;
+    // let open_order = polo_exe.open_order(order.clone()).await;
 
-    let cancel_order = polo_exe
-        .cancel_order(
-            "40937132-ec87-4a33-95d0-1c848c7110c6".to_string(),
-            "None".to_string(),
-        )
-        .await;
+    // order.market_meta.close = 0.90;
+    // let open_order = polo_exe.open_order(order.clone()).await;
 
+    // let cancel_order = polo_exe
+    //     .cancel_order(
+    //         "40937132-ec87-4a33-95d0-1c848c7110c6".to_string(),
+    //         "None".to_string(),
+    //     )
+    //     .await;
+
+    let cancel_order = polo_exe.cancel_order_all("OP_USDT".to_string()).await;
     println!("---> {:#?}", cancel_order);
 
     // let _ = poloniex_testing2().await;
@@ -313,7 +317,7 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - polo cancel all orders
+// - receive reponse for polonoiex
 // - responses for each poloneix request
 // - error for http client for each exchange
 // - impl other user related data methods for execution client

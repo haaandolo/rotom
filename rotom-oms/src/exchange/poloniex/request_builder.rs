@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use base64::Engine;
 use chrono::Utc;
 use hmac::Mac;
@@ -53,7 +55,7 @@ where
     }
 
     pub fn generate_body(&self) -> Result<String, SocketError> {
-        Ok(serde_json::to_string(self.request.body().unwrap())
+        Ok(serde_json::to_string(self.request.body().unwrap()) //todo
             .map_err(SocketError::Serialise)?
             .replace(',', ", ")
             .replace(':', ": "))
