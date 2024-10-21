@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use rotom_data::protocols::http::rest_request::RestRequest;
 use serde::Serialize;
-use serde_json::{Value};
+use serde_json::Value;
 use uuid::Uuid;
 
 use crate::{
@@ -13,7 +13,7 @@ use crate::{
 use super::{PoloniexOrderType, PoloniexSide, PoloniexSymbol, PoloniexTimeInForce};
 
 /*----- */
-// Poliniex New Order
+// Poloniex New Order
 /*----- */
 #[derive(Debug, Serialize)]
 pub struct PoloniexNewOrder {
@@ -87,7 +87,7 @@ impl PoloniexNewOrder {
 }
 
 impl RestRequest for PoloniexNewOrder {
-    type Response = Value;
+    type Response = Value; // TODO
     type QueryParams = ();
     type Body = Self;
 

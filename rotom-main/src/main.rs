@@ -59,10 +59,10 @@ pub async fn main() {
         instrument: Instrument::new("op", "usdt"),
         market_meta: MarketMeta {
             time: Utc::now(),
-            close: 1.420,
+            close: 1.0,
         },
         decision: Decision::Long,
-        quantity: 4.0,
+        quantity: 5.0,
         order_type: OrderType::Limit,
     };
 
@@ -84,11 +84,20 @@ pub async fn main() {
 
     // Test Poloniex Execution
     let polo_exe = PoloniexExecution::init().await.unwrap();
-    let open_order = polo_exe.open_order(order).await;
-    println!("---> {:#?}", open_order);
+    // let open_order = polo_exe.open_order(order).await;
+
+    let cancel_order = polo_exe
+        .cancel_order(
+            "40937132-ec87-4a33-95d0-1c848c7110c6".to_string(),
+            "None".to_string(),
+        )
+        .await;
+
+    println!("---> {:#?}", cancel_order);
 
     // let _ = poloniex_testing2().await;
-
+    
+    ////////////////////////////////////////////////
     /*----- */
     // Trader builder
     /*----- */
@@ -304,7 +313,8 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - polo cancel order
+// - polo cancel all orders
+// - responses for each poloneix request
 // - error for http client for each exchange
 // - impl other user related data methods for execution client
 // - change level size to quantity (name change)

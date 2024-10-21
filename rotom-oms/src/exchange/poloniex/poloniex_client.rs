@@ -14,7 +14,7 @@ use crate::{
     portfolio::OrderEvent,
 };
 
-use super::{request_builder::PoloniexRequestBuilder, requests::new_order::PoloniexNewOrder};
+use super::{request_builder::PoloniexRequestBuilder, requests::{cancel_order::PoloniexCancelOrder, new_order::PoloniexNewOrder}};
 
 /*----- */
 // Convinent types
@@ -32,9 +32,9 @@ pub struct PoloniexExecution {
 #[async_trait]
 impl ExecutionClient2 for PoloniexExecution {
     const CLIENT: ExecutionId = ExecutionId::Poloniex;
-    type CancelResponse = ();
+    type CancelResponse = Value;
     type CancelAllResponse = ();
-    type NewOrderResponse = Value;
+    type NewOrderResponse = Value; // todo
     type WalletTransferResponse = ();
 
     async fn init() -> Result<Self, SocketError>
@@ -71,9 +71,13 @@ impl ExecutionClient2 for PoloniexExecution {
     async fn cancel_order(
         &self,
         order_id: String,
-        symbol: String,
+        _: String,
     ) -> Result<Self::CancelResponse, SocketError> {
-        unimplemented!()
+        let response = self
+            .http_client
+            .execute(PoloniexCancelOrder::new(order_id))
+            .await?;
+        Ok(response.0)
     }
 
     // Cancel all orders for a single asset
