@@ -10,7 +10,7 @@ use serde_json::Value;
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PoloniexWalletTransfer {
     pub coin: String,
-    pub network: String,
+    pub network: Option<String>,
     pub amount: f64,
     pub address: String,
     #[serde(rename(serialize = "addressTag"))]
@@ -22,7 +22,7 @@ pub struct PoloniexWalletTransfer {
 }
 
 impl PoloniexWalletTransfer {
-    pub fn new(coin: String, network: String, amount: f64, address: String) -> Self {
+    pub fn new(coin: String, network: Option<String>, amount: f64, address: String) -> Self {
         Self {
             coin,
             network,
@@ -40,7 +40,7 @@ impl RestRequest for PoloniexWalletTransfer {
     type Body = Self;
 
     fn path(&self) -> Cow<'static, str> {
-       Cow::Borrowed("/v2/wallets/withdraw") 
+        Cow::Borrowed("/v2/wallets/withdraw")
     }
 
     fn method() -> reqwest::Method {

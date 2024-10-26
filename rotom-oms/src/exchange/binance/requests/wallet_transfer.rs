@@ -14,15 +14,22 @@ pub struct BinanceWalletTransfer {
     pub amount: f64,
     pub timestamp: i64,
     pub address: String,
+    pub network: Option<String>,
     pub signature: String,
 }
 
 impl BinanceWalletTransfer {
-    pub fn new(coin: String, wallet_address: String, amount: f64) -> Result<Self, RequestBuildError> {
+    pub fn new(
+        coin: String,
+        wallet_address: String,
+        network: Option<String>,
+        amount: f64,
+    ) -> Result<Self, RequestBuildError> {
         Self::builder()
             .coin(coin)
-            .amount(amount) // todo
+            .amount(amount)
             .address(wallet_address)
+            .network(network)
             .sign()
             .build()
     }
@@ -59,6 +66,7 @@ pub struct BinanceWalletTransferBuilder {
     pub amount: Option<f64>,
     pub timestamp: i64,
     pub address: Option<String>,
+    pub network: Option<String>,
     pub signature: Option<String>,
 }
 
@@ -69,6 +77,7 @@ impl BinanceWalletTransferBuilder {
             amount: None,
             timestamp: Utc::now().timestamp_millis(),
             address: None,
+            network: None,
             signature: None,
         }
     }
@@ -92,6 +101,10 @@ impl BinanceWalletTransferBuilder {
             address: Some(address),
             ..self
         }
+    }
+
+    pub fn network(self, network: Option<String>) -> Self {
+        Self { network, ..self }
     }
 
     pub fn sign(self) -> Self {
@@ -118,6 +131,7 @@ impl BinanceWalletTransferBuilder {
                 exchange: "Binance",
                 request: "wallet transfer: address",
             })?,
+            network: self.network,
             signature: self.signature.ok_or(RequestBuildError::BuilderError {
                 exchange: "Binance",
                 request: "wallet transfer: signature",

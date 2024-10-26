@@ -31,9 +31,6 @@ impl BinanceCancelOrder {
     }
 }
 
-/*----- */
-// Impl RestRequest for Binance Cancel Order
-/*----- */
 impl RestRequest for BinanceCancelOrder {
     type Response = BinanceCancelOrderResponse;
     type QueryParams = Self;
@@ -88,9 +85,6 @@ impl BinanceCancelAllOrder {
     }
 }
 
-/*----- */
-// Impl RestRequest for Binance Cancel Order
-/*----- */
 impl RestRequest for BinanceCancelAllOrder {
     type Response = Vec<BinanceCancelOrderResponse>;
     type QueryParams = Self;
@@ -217,7 +211,8 @@ pub struct BinanceCancelOrderResponse {
 }
 
 /*----- */
-
+// Test
+/*----- */
 #[cfg(test)]
 mod test {
     use super::*;

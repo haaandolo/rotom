@@ -16,7 +16,7 @@ use rotom_oms::{
     event::{Event, EventTx},
     exchange::{
         binance::binance_client::BinanceExecution,
-        poloniex::{poloniex_client::PoloniexExecution, poloniex_testing, poloniex_testing2},
+        poloniex::{poloniex_client::PoloniexExecution},
         ExecutionClient2,
     },
     execution::{
@@ -73,8 +73,10 @@ pub async fn main() {
     // let binance_exe = BinanceExecution::init().await.unwrap();
     // let res = binance_exe
     //     .wallet_transfer(
-    //         "OP".to_string(),
-    //         "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string(),
+    //         "USDT".to_string(),
+    //         "TBw5BWoS97tWrVr7PSuBtUQeBXU6eJZpyg".to_string(),
+    //         Some("TRX".to_string()),
+    //         10.0,
     //     )
     //     .await;
     // let res = binance_exe.open_order(order.clone()).await;
@@ -85,8 +87,9 @@ pub async fn main() {
     // println!("{:#?}", res);
     // binance_exe.receive_responses().await;
 
+    ////////////////////////////////////////////////////
     // Test Poloniex Execution
-    let polo_exe = PoloniexExecution::init().await.unwrap();
+    // let polo_exe = PoloniexExecution::init().await.unwrap();
     //let open_order = polo_exe.open_order(order.clone()).await;
 
     // order.market_meta.close = 0.90;
@@ -103,13 +106,13 @@ pub async fn main() {
 
     // polo_exe.receive_responses().await;
 
-    let wallet_transfer_res = polo_exe.wallet_transfer(
-        "USDT".to_string(),
-        "TLHWcKwg5gdTXsv6Bko9srkiKZomRBYCr2".to_string(),
-        "TRX".to_string(),
-        5.0
-    ).await;
-    println!("---> {:#?}", wallet_transfer_res);
+    // let wallet_transfer_res = polo_exe.wallet_transfer(
+    //     "USDT".to_string(),
+    //     "TLHWcKwg5gdTXsv6Bko9srkiKZomRBYCr2".to_string(),
+    //     "TRX".to_string(),
+    //     5.0
+    // ).await;
+    // println!("---> {:#?}", wallet_transfer_res);
 
     // let _ = poloniex_testing2().await;
 
@@ -331,15 +334,8 @@ fn init_logging() {
 /*----- */
 // - responses for each poloneix request including ws reponses for orders and balances
 // - error for http client for each exchange
+// - check if wallet transfers show up in the user data streams
 // - rm todos
 // - impl other user related data methods for execution client
 // - change level size to quantity (name change)
 // - change r#type to enum instead of string
-
-/*
----> Ok(
-    Object {
-        "withdrawalRequestsId": Number(18135511),
-    },
-)
-*/

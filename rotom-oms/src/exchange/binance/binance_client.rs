@@ -103,12 +103,12 @@ impl ExecutionClient2 for BinanceExecution {
         &self,
         coin: String,
         wallet_address: String,
-        _network: String,
+        network: Option<String>,
         amount: f64,
     ) -> Result<Self::WalletTransferResponse, SocketError> {
         let response = self
             .http_client
-            .execute(BinanceWalletTransfer::new(coin, wallet_address, amount).unwrap())
+            .execute(BinanceWalletTransfer::new(coin, wallet_address, network, amount).unwrap())
             .await?;
         Ok(response.0)
     }

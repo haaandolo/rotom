@@ -147,7 +147,7 @@ impl ExecutionClient2 for PoloniexExecution {
         &self,
         coin: String,
         wallet_address: String,
-        network: String,
+        network: Option<String>,
         amount: f64,
     ) -> Result<Self::WalletTransferResponse, SocketError> {
         let response = self

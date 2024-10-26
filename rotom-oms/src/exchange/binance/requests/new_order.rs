@@ -98,9 +98,6 @@ impl BinanceNewOrder {
     }
 }
 
-/*----- */
-// Impl RestRequest for Binance New Order
-/*----- */
 impl RestRequest for BinanceNewOrder {
     type Response = BinanceNewOrderResponses;
     type QueryParams = Self;
