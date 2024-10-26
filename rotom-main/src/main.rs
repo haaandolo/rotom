@@ -34,7 +34,7 @@ use rotom_oms::{
 };
 use rotom_strategy::{spread::SpreadStategy, Decision};
 use std::{collections::HashMap, sync::Arc, time::Duration};
-use tokio::sync::mpsc::{self, UnboundedReceiver};
+use tokio::{sync::mpsc::{self, UnboundedReceiver}, time::sleep};
 use uuid::Uuid;
 
 const ENGINE_RUN_TIMEOUT: Duration = Duration::from_secs(5000);
@@ -84,7 +84,7 @@ pub async fn main() {
 
     // Test Poloniex Execution
     let polo_exe = PoloniexExecution::init().await.unwrap();
-    // let open_order = polo_exe.open_order(order.clone()).await;
+    //let open_order = polo_exe.open_order(order.clone()).await;
 
     // order.market_meta.close = 0.90;
     // let open_order = polo_exe.open_order(order.clone()).await;
@@ -96,8 +96,10 @@ pub async fn main() {
     //     )
     //     .await;
 
-    let cancel_order = polo_exe.cancel_order_all("OP_USDT".to_string()).await;
-    println!("---> {:#?}", cancel_order);
+    // let cancel_order = polo_exe.cancel_order_all("OP_USDT".to_string()).await;
+    // println!("---> {:#?}", open_order);
+
+    polo_exe.receive_responses().await;
 
     // let _ = poloniex_testing2().await;
     
@@ -320,6 +322,7 @@ fn init_logging() {
 // - receive reponse for polonoiex
 // - responses for each poloneix request
 // - error for http client for each exchange
+// - rm todos
 // - impl other user related data methods for execution client
 // - change level size to quantity (name change)
 // - change r#type to enum instead of string

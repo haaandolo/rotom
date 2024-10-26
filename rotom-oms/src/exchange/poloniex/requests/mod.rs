@@ -1,7 +1,7 @@
 pub mod cancel_order;
 pub mod new_order;
-pub mod request_builder;
 pub mod wallet_transfer;
+pub mod ws_auth;
 
 use rotom_data::shared::subscription_models::Instrument;
 use rotom_strategy::Decision;
