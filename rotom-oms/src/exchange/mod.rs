@@ -60,6 +60,8 @@ pub trait ExecutionClient2 {
         &self,
         coin: String,
         wallet_address: String,
+        network: String,
+        amount: f64
     ) -> Result<Self::WalletTransferResponse, SocketError>;
 }
 

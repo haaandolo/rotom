@@ -18,10 +18,10 @@ pub struct BinanceWalletTransfer {
 }
 
 impl BinanceWalletTransfer {
-    pub fn new(coin: String, wallet_address: String) -> Result<Self, RequestBuildError> {
+    pub fn new(coin: String, wallet_address: String, amount: f64) -> Result<Self, RequestBuildError> {
         Self::builder()
             .coin(coin)
-            .amount(1.01)
+            .amount(amount) // todo
             .address(wallet_address)
             .sign()
             .build()
@@ -32,9 +32,6 @@ impl BinanceWalletTransfer {
     }
 }
 
-/*----- */
-// Impl RestRequest for Binance Wallet Transfer
-/*----- */
 impl RestRequest for BinanceWalletTransfer {
     type Response = BinanceWalletTransferResponse;
     type QueryParams = Self;

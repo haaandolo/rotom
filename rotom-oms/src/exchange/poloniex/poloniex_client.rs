@@ -20,6 +20,7 @@ use super::{
     requests::{
         cancel_order::{PoloniexCancelAllOrder, PoloniexCancelOrder},
         new_order::PoloniexNewOrder,
+        wallet_transfer::PoloniexWalletTransfer,
         ws_auth::{PoloniexWsAuth, PoloniexWsAuthBalanceRequest, PoloniexWsAuthOrderRequest},
     },
 };
@@ -44,7 +45,7 @@ impl ExecutionClient2 for PoloniexExecution {
     type CancelResponse = Value;
     type CancelAllResponse = Value;
     type NewOrderResponse = Value; // todo
-    type WalletTransferResponse = ();
+    type WalletTransferResponse = Value;
 
     async fn init() -> Result<Self, SocketError>
     where
@@ -146,25 +147,18 @@ impl ExecutionClient2 for PoloniexExecution {
         &self,
         coin: String,
         wallet_address: String,
+        network: String,
+        amount: f64,
     ) -> Result<Self::WalletTransferResponse, SocketError> {
-        unimplemented!()
+        let response = self
+            .http_client
+            .execute(PoloniexWalletTransfer::new(
+                coin,
+                network,
+                amount,
+                wallet_address,
+            ))
+            .await?;
+        Ok(response.0)
     }
 }
-
-/*
->>> Ok(
-    Text(
-        "{\"channel\":\"auth\",\"data\":{\"success\":true,\"ts\":1729907814124}}",
-    ),
-)
->>> Ok(
-    Text(
-        "{\"event\":\"subscribe\",\"channel\":\"orders\",\"symbols\":[\"ALL\"]}",
-    ),
-)
->>> Ok(
-    Text(
-        "{\"event\":\"subscribe\",\"channel\":\"balances\"}",
-    ),
-)
-*/

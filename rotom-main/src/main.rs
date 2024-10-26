@@ -34,7 +34,10 @@ use rotom_oms::{
 };
 use rotom_strategy::{spread::SpreadStategy, Decision};
 use std::{collections::HashMap, sync::Arc, time::Duration};
-use tokio::{sync::mpsc::{self, UnboundedReceiver}, time::sleep};
+use tokio::{
+    sync::mpsc::{self, UnboundedReceiver},
+    time::sleep,
+};
 use uuid::Uuid;
 
 const ENGINE_RUN_TIMEOUT: Duration = Duration::from_secs(5000);
@@ -97,12 +100,19 @@ pub async fn main() {
     //     .await;
 
     // let cancel_order = polo_exe.cancel_order_all("OP_USDT".to_string()).await;
-    // println!("---> {:#?}", open_order);
 
-    polo_exe.receive_responses().await;
+    // polo_exe.receive_responses().await;
+
+    let wallet_transfer_res = polo_exe.wallet_transfer(
+        "USDT".to_string(),
+        "TLHWcKwg5gdTXsv6Bko9srkiKZomRBYCr2".to_string(),
+        "TRX".to_string(),
+        5.0
+    ).await;
+    println!("---> {:#?}", wallet_transfer_res);
 
     // let _ = poloniex_testing2().await;
-    
+
     ////////////////////////////////////////////////
     /*----- */
     // Trader builder
@@ -319,10 +329,17 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - receive reponse for polonoiex
-// - responses for each poloneix request
+// - responses for each poloneix request including ws reponses for orders and balances
 // - error for http client for each exchange
 // - rm todos
 // - impl other user related data methods for execution client
 // - change level size to quantity (name change)
 // - change r#type to enum instead of string
+
+/*
+---> Ok(
+    Object {
+        "withdrawalRequestsId": Number(18135511),
+    },
+)
+*/
