@@ -113,6 +113,7 @@ impl Ord for Order<Open> {
     }
 }
 
+#[allow(clippy::non_canonical_partial_ord_impl)]
 impl PartialOrd for Order<Open> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         match (self.side, other.side) {

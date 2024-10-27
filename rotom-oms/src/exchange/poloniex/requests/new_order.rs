@@ -1,14 +1,14 @@
 use std::borrow::Cow;
 
-use rotom_data::protocols::http::rest_request::RestRequest;
 use ::serde::{Deserialize, Serialize};
+use rotom_data::protocols::http::rest_request::RestRequest;
 use uuid::Uuid;
 
-use rotom_data::shared::de::de_str;
 use crate::{
     exchange::errors::RequestBuildError,
     portfolio::{OrderEvent, OrderType},
 };
+use rotom_data::shared::de::de_str;
 
 use super::{PoloniexOrderType, PoloniexSide, PoloniexSymbol, PoloniexTimeInForce};
 
@@ -48,14 +48,14 @@ pub struct PoloniexNewOrder {
 }
 
 impl PoloniexNewOrder {
-    pub fn new(order_event: &OrderEvent) -> Self {
+    pub fn new(order_event: &OrderEvent) -> Result<Self, RequestBuildError> {
         match &order_event.order_type {
             OrderType::Limit => Self::limit_order(order_event),
             OrderType::Market => Self::market_order(order_event),
         }
     }
 
-    pub fn limit_order(order_event: &OrderEvent) -> Self {
+    pub fn limit_order(order_event: &OrderEvent) -> Result<Self, RequestBuildError> {
         PoloniexNewOrderBuilder::new()
             .symbol(PoloniexSymbol::from(&order_event.instrument).0)
             .side(
@@ -69,10 +69,9 @@ impl PoloniexNewOrder {
             .time_in_force(PoloniexTimeInForce::GTC) // TODO
             .client_order_id(Uuid::new_v4())
             .build()
-            .unwrap() // TODO
     }
 
-    pub fn market_order(order_event: &OrderEvent) -> Self {
+    pub fn market_order(order_event: &OrderEvent) -> Result<Self, RequestBuildError> {
         PoloniexNewOrderBuilder::new()
             .symbol(PoloniexSymbol::from(&order_event.instrument).0)
             .side(
@@ -82,7 +81,6 @@ impl PoloniexNewOrder {
             )
             .quantity(order_event.quantity.to_string())
             .build()
-            .unwrap() // TODO
     }
 }
 
@@ -258,5 +256,5 @@ pub struct PoloniexNewOrderResponse {
     #[serde(deserialize_with = "de_str")]
     pub id: u64,
     #[serde(alias = "clientOrderId")]
-    pub client_order_id: String
+    pub client_order_id: String,
 }

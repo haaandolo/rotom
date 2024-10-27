@@ -73,6 +73,10 @@ pub enum SocketError {
 
     #[error("request authorisation invalid: {0}")]
     Unauthorised(String),
+
+    // Miscellaneous error
+    #[error("{0}")]
+    Misc(String)
 }
 
 impl From<reqwest::Error> for SocketError {

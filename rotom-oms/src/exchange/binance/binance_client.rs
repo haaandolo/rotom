@@ -50,7 +50,7 @@ impl ExecutionClient2 for BinanceExecution {
             RestClient::new(BINANCE_BASE_URL, StandardHttpParser, BinanceRequestBuilder);
 
         // Spin up listening ws
-        let (response, _) = http_client.execute(BinanceListeningKey).await.unwrap(); // TODO
+        let (response, _) = http_client.execute(BinanceListeningKey).await?;
         let listening_url = format!("{}{}", BINANCE_USER_DATA_WS, response.listen_key);
         let ws = connect(listening_url).await?;
         let (_, user_data_ws) = ws.split();
@@ -68,7 +68,7 @@ impl ExecutionClient2 for BinanceExecution {
     ) -> Result<Self::NewOrderResponse, SocketError> {
         let response = self
             .http_client
-            .execute(BinanceNewOrder::new(&open_requests))
+            .execute(BinanceNewOrder::new(&open_requests).unwrap())
             .await?;
         Ok(response.0)
     }

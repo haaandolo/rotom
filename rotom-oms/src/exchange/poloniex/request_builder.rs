@@ -55,10 +55,15 @@ where
     }
 
     pub fn generate_body(&self) -> Result<String, SocketError> {
-        Ok(serde_json::to_string(self.request.body().unwrap()) //todo
-            .map_err(SocketError::Serialise)?
-            .replace(',', ", ")
-            .replace(':', ": "))
+        match self.request.body() {
+            Some(request_body) => Ok(serde_json::to_string(request_body)
+                .map_err(SocketError::Serialise)?
+                .replace(',', ", ")
+                .replace(':', ": ")),
+            None => Err(SocketError::Misc(String::from(
+                "Body of Poloniex request was None",
+            ))),
+        }
     }
 
     pub fn generate_query(&self, request_body: &str) -> String {

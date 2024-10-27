@@ -100,5 +100,3 @@ pub struct PoloniexCancelOrderResponse {
     pub code: u64,
     pub message: String,
 }
-
-// "[{\"clientOrderId\":\"384cc028-fc20-4211-b504-b2f81ec31319\",\"code\":200,\"message\":\"\",\"orderId\":\"373391887307898880\",\"state\":\"PENDING_CANCEL\"}]

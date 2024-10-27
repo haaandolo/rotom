@@ -108,8 +108,9 @@ impl BinanceWalletTransferBuilder {
     }
 
     pub fn sign(self) -> Self {
-        let signature =
-            BinanceAuthParams::generate_signature(serde_urlencoded::to_string(&self).unwrap()); // TODO
+        let signature = BinanceAuthParams::generate_signature(
+            serde_urlencoded::to_string(&self).unwrap_or_default(),
+        );
         Self {
             signature: Some(signature),
             ..self

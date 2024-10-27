@@ -30,7 +30,7 @@ pub struct BinanceNewOrder {
     pub new_client_order_id: Option<String>,
     #[serde(rename(serialize = "newOrderRespType"))]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub new_order_resp_type: Option<u32>, // TODO: change to enum
+    pub new_order_resp_type: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub price: Option<f64>,
     pub quantity: Option<f64>,
@@ -42,7 +42,7 @@ pub struct BinanceNewOrder {
     pub recv_window: Option<u64>, // value cannot be > 60_000
     #[serde(rename(serialize = "selfTradePreventionMode"))]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub self_trade_prevention_mode: Option<u64>, // TODO: change to enum
+    pub self_trade_prevention_mode: Option<String>,
     pub side: BinanceSide,
     pub signature: Option<String>,
     #[serde(rename(serialize = "stopPrice"))]
@@ -66,27 +66,26 @@ pub struct BinanceNewOrder {
 }
 
 impl BinanceNewOrder {
-    pub fn new(order_event: &OrderEvent) -> Self {
+    pub fn new(order_event: &OrderEvent) -> Result<Self, RequestBuildError> {
         match &order_event.order_type {
             OrderType::Limit => Self::limit_order(order_event),
             OrderType::Market => Self::market_order(order_event),
         }
     }
 
-    fn limit_order(order_event: &OrderEvent) -> Self {
+    fn limit_order(order_event: &OrderEvent) -> Result<Self, RequestBuildError> {
         BinanceNewOrderParamsBuilder::default()
             .price(order_event.market_meta.close)
             .quantity(order_event.quantity)
             .side(BinanceSide::from(order_event.decision))
             .symbol(BinanceSymbol::from(&order_event.instrument).0)
-            .time_in_force(BinanceTimeInForce::GTC) // TODO
+            .time_in_force(BinanceTimeInForce::GTC) // todo
             .r#type(order_event.order_type.as_ref().to_uppercase())
             .sign()
             .build()
-            .unwrap() // TODO
     }
 
-    fn market_order(order_event: &OrderEvent) -> Self {
+    fn market_order(order_event: &OrderEvent) -> Result<Self, RequestBuildError> {
         BinanceNewOrderParamsBuilder::default()
             .quantity(order_event.quantity)
             .side(BinanceSide::from(order_event.decision))
@@ -94,7 +93,6 @@ impl BinanceNewOrder {
             .r#type(order_event.order_type.as_ref().to_uppercase())
             .sign()
             .build()
-            .unwrap() // TODO
     }
 }
 
@@ -129,7 +127,7 @@ pub struct BinanceNewOrderParamsBuilder {
     pub new_client_order_id: Option<String>,
     #[serde(rename(serialize = "newOrderRespType"))]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub new_order_resp_type: Option<u32>, // TODO: change to enum
+    pub new_order_resp_type: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub price: Option<f64>,
     pub quantity: Option<f64>,
@@ -141,7 +139,7 @@ pub struct BinanceNewOrderParamsBuilder {
     pub recv_window: Option<u64>, // value cannot be > 60_000
     #[serde(rename(serialize = "selfTradePreventionMode"))]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub self_trade_prevention_mode: Option<u64>, // TODO: change to enum
+    pub self_trade_prevention_mode: Option<String>,
     pub side: Option<BinanceSide>,
     pub signature: Option<String>,
     #[serde(rename(serialize = "stopPrice"))]
@@ -169,21 +167,21 @@ impl Default for BinanceNewOrderParamsBuilder {
         Self {
             iceberg_qty: None,
             new_client_order_id: None,
-            new_order_resp_type: None, // TODO: change to enum
+            new_order_resp_type: None,
             price: None,
             quantity: None,
             quote_order_qty: None,
-            recv_window: None,                // value cannot be > 60_000
-            self_trade_prevention_mode: None, // TODO: change to enum
-            side: None,                       // mandatory
+            recv_window: None,
+            self_trade_prevention_mode: None,
+            side: None,
             signature: None,
             stop_price: None,
             strategy_id: None,
             strategy_type: None,
-            symbol: None, // mandatory
+            symbol: None,
             time_in_force: None,
-            timestamp: Utc::now().timestamp_millis(), // mandatory
-            r#type: None,                             // Mandatory
+            timestamp: Utc::now().timestamp_millis(),
+            r#type: None,
             trailing_delta: None,
         }
     }
@@ -204,7 +202,7 @@ impl BinanceNewOrderParamsBuilder {
         }
     }
 
-    pub fn new_order_resp_type(self, new_order_resp_type: u32) -> Self {
+    pub fn new_order_resp_type(self, new_order_resp_type: String) -> Self {
         Self {
             new_order_resp_type: Some(new_order_resp_type),
             ..self
@@ -239,9 +237,9 @@ impl BinanceNewOrderParamsBuilder {
         }
     }
 
-    pub fn self_trade_prevention_mode(self, self_trade_prevention_mode: u64) -> Self {
+    pub fn self_trade_prevention_mode(self, self_trade_prevention_mode: String) -> Self {
         Self {
-            recv_window: Some(self_trade_prevention_mode),
+            self_trade_prevention_mode: Some(self_trade_prevention_mode),
             ..self
         }
     }
@@ -254,8 +252,9 @@ impl BinanceNewOrderParamsBuilder {
     }
 
     pub fn sign(self) -> Self {
-        let signature =
-            BinanceAuthParams::generate_signature(serde_urlencoded::to_string(&self).unwrap()); // TODO
+        let signature = BinanceAuthParams::generate_signature(
+            serde_urlencoded::to_string(&self).unwrap_or_default(),
+        );
 
         Self {
             signature: Some(signature),
@@ -440,58 +439,6 @@ pub struct BinanceNewOrderResponseAck {
     pub transact_time: u64,
 }
 
-// /*----- */
-// // Binance cancel and replace
-// /*----- */
-// #[derive(Debug, Serialize)]
-// pub struct BinanceCancelReplace {
-//     id: String,
-//     method: String,
-//     params: BinanceCancelReplaceParams,
-// }
-
-// #[derive(Debug, Serialize)]
-// pub struct BinanceCancelReplaceParams {
-//     symbol: String,
-//     #[serde(rename(serialize = "cancelReplaceMode"))]
-//     cancel_replace_mode: String,
-//     #[serde(rename(serialize = "cancelOrigClientOrderId"))]
-//     cancel_orig_client_order_id: String,
-//     side: String,
-//     r#type: String,
-//     #[serde(rename(serialize = "timeInForce"))]
-//     time_in_force: String,
-//     price: f64,
-//     quantity: f64,
-//     #[serde(rename(serialize = "apiKey"))]
-//     api_key: String,
-//     signature: String,
-//     timestamp: u64,
-// }
-
-// /*----- */
-// // Binance current open orders
-// /*----- */
-// #[derive(Debug, Serialize)]
-// pub struct BinanceCancelAll {
-//     id: String,
-//     method: String,
-//     params: BinanceCancelAllParams,
-// }
-
-// #[derive(Debug, Serialize)]
-// pub struct BinanceCancelAllParams {
-//     symbol: String,
-//     #[serde(rename(serialize = "apiKey"))]
-//     api_key: String,
-//     signature: String,
-//     timestamp: u64,
-// }
-
-// /*----- */
-// // Binance cancel open orders
-// /*----- */
-// /**/
 /*----- */
 // Tests
 /*----- */
