@@ -3,9 +3,12 @@ use serde::Deserialize;
 use super::{BinanceOrderStatus, BinanceSide, BinanceTimeInForce};
 use rotom_data::shared::de::de_str;
 
+/*----- */
+// Binance User Data - Order
+/*----- */
 #[derive(Debug, Deserialize)]
 #[allow(non_snake_case)]
-pub struct BinanceUserData {
+pub struct BinanceUserDataOrder {
     pub e: String,             // Event type
     pub E: u64,                // Event time
     pub s: String,             // Symbol
@@ -38,7 +41,7 @@ pub struct BinanceUserData {
     pub N: Option<String>, // Commission asset
     pub T: u64,    // Transaction time
     pub t: i8,     // Trade ID
-    pub v: Option<i8>,     // Prevented Match Id; This is only visible if the order expired due to STP
+    pub v: Option<i8>, // Prevented Match Id; This is only visible if the order expired due to STP
     pub I: u64,    // Ignore
     pub w: bool,   // Is the order on the book?
     pub m: bool,   // Is this trade the maker side?
@@ -52,6 +55,81 @@ pub struct BinanceUserData {
     pub Q: f64, // Quote Order Quantity
     pub W: u64,    // Working Time; This is only visible if the order has been placed on the book.
     pub V: String, // SelfTradePreventionMode
+}
+
+/*----- */
+// Binance User Data - Account Update
+/*----- */
+#[derive(Debug, Deserialize)]
+#[allow(non_snake_case)]
+pub struct BinanceUserDataAccount {
+    pub e: String,                          // event type
+    pub E: u64,                             // event time
+    pub u: u64,                             // time of last account update
+    pub B: Vec<BinanceUserDataAccountData>, // balance Array
+}
+
+#[derive(Debug, Deserialize)]
+#[allow(non_snake_case)]
+pub struct BinanceUserDataAccountData {
+    pub a: String, // asset
+    #[serde(deserialize_with = "de_str")]
+    pub f: f64, // free
+    #[serde(deserialize_with = "de_str")]
+    pub l: f64, // locked
+}
+
+/*----- */
+// Binance User Data - Balance
+/*----- */
+#[derive(Debug, Deserialize)]
+#[allow(non_snake_case)]
+pub struct BinanceUserDataBalance {
+    pub e: String, // event type
+    pub E: u64,    // event time
+    pub a: String, // asset
+    #[serde(deserialize_with = "de_str")]
+    pub d: f64, // balance delta
+    pub T: u64,    // clear time
+}
+
+/*----- */
+// Binance User Data - Order List
+/*----- */
+#[derive(Debug, Deserialize)]
+#[allow(non_snake_case)]
+pub struct BinanceUserDataList {
+    pub e: String, // event type
+    pub E: u64,    // event time
+    pub s: String, // symbol
+    pub g: u64,    // order list id
+    pub c: String, // contingency type
+    pub l: String, // list status type
+    pub L: String, // list order status
+    pub r: String, // list reject reason
+    pub C: String, // list client order id
+    pub T: u64,    // transaction time
+    pub O: Vec<BinanceUserDataListData>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct BinanceUserDataListData {
+    pub s: String, // symbol
+    pub i: u64,    // order id
+    pub c: String, // client order id
+}
+
+/*----- */
+// Binance User Data - Balance
+/*----- */
+#[derive(Debug, Deserialize)]
+#[allow(clippy::large_enum_variant)]
+#[serde(untagged)]
+pub enum BinanceUserData {
+    Order(BinanceUserDataOrder),
+    Account(BinanceUserDataAccount),
+    Balance(BinanceUserDataBalance),
+    List(BinanceUserDataList),
 }
 
 #[cfg(test)]

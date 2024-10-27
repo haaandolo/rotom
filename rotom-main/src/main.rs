@@ -69,7 +69,7 @@ pub async fn main() {
     };
 
     // Test Binance Execution
-    // let binance_exe = BinanceExecution::init().await.unwrap();
+    let binance_exe = BinanceExecution::init().await.unwrap();
     // let res = binance_exe
     //     .wallet_transfer(
     //         "USDT".to_string(),
@@ -84,11 +84,11 @@ pub async fn main() {
     //     .await;
     // binance_exe.cancel_order_all("OPUSDT".to_string()).await;
     // println!("{:#?}", res);
-    // binance_exe.receive_responses().await;
+    binance_exe.receive_responses().await;
 
     ////////////////////////////////////////////////////
     // Test Poloniex Execution
-    let polo_exe = PoloniexExecution::init().await.unwrap();
+    // let polo_exe = PoloniexExecution::init().await.unwrap();
     // let res = polo_exe.open_order(order.clone()).await;
 
     // order.market_meta.close = 0.90;
@@ -105,15 +105,13 @@ pub async fn main() {
 
     // polo_exe.receive_responses().await;
 
-    let res = polo_exe.wallet_transfer(
-        "USDT".to_string(),
-        "TLHWcKwg5gdTXsv6Bko9srkiKZomRBYCr2".to_string(),
-        Some("TRX".to_string()),
-        5.0
-    ).await;
-    println!("---> {:#?}", res);
-
-    // let _ = poloniex_testing2().await;
+    // let res = polo_exe.wallet_transfer(
+    //     "USDT".to_string(),
+    //     "TLHWcKwg5gdTXsv6Bko9srkiKZomRBYCr2".to_string(),
+    //     Some("TRX".to_string()),
+    //     5.0
+    // ).await;
+    // println!("---> {:#?}", res);
 
     ////////////////////////////////////////////////
     /*----- */
@@ -332,7 +330,6 @@ fn init_logging() {
 // Todo
 /*----- */
 // - error for http client for each exchange
-// - check if wallet transfers show up in the user data streams
 // - rm todos
 // - change cancel order symbol to Option<String>
 // - userdata stream for client execution auto reconnect

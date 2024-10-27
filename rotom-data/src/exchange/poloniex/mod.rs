@@ -52,7 +52,7 @@ impl Connector for PoloniexSpot {
 
     fn ping_interval() -> Option<PingInterval> {
         Some(PingInterval {
-            time: 30,
+            time: 25,
             message: json!({"event": "ping"}),
         })
     }
