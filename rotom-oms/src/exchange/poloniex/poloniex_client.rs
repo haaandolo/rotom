@@ -5,10 +5,13 @@ use rotom_data::{
     exchange::{poloniex::PoloniexSpot, Connector},
     protocols::{
         http::{client::RestClient, http_parser::StandardHttpParser},
-        ws::{connect, schedule_pings_to_exchange, ws_parser::{StreamParser, WebSocketParser}, JoinHandle, WsMessage, WsRead},
+        ws::{
+            connect, schedule_pings_to_exchange,
+            ws_parser::{StreamParser, WebSocketParser},
+            JoinHandle, WsMessage, WsRead,
+        },
     },
 };
-use serde_json::Value;
 
 use crate::{
     exchange::{poloniex::requests::user_data::PoloniexUserData, ExecutionClient2, ExecutionId},
@@ -18,9 +21,9 @@ use crate::{
 use super::{
     request_builder::PoloniexRequestBuilder,
     requests::{
-        cancel_order::{PoloniexCancelAllOrder, PoloniexCancelOrder},
-        new_order::PoloniexNewOrder,
-        wallet_transfer::PoloniexWalletTransfer,
+        cancel_order::{PoloniexCancelAllOrder, PoloniexCancelOrder, PoloniexCancelOrderResponse},
+        new_order::{PoloniexNewOrder, PoloniexNewOrderResponse},
+        wallet_transfer::{PoloniexWalletTransfer, PoloniexWalletTransferResponse},
         ws_auth::{PoloniexWsAuth, PoloniexWsAuthBalanceRequest, PoloniexWsAuthOrderRequest},
     },
 };
@@ -42,10 +45,10 @@ pub struct PoloniexExecution {
 #[async_trait]
 impl ExecutionClient2 for PoloniexExecution {
     const CLIENT: ExecutionId = ExecutionId::Poloniex;
-    type CancelResponse = Value;
-    type CancelAllResponse = Value;
-    type NewOrderResponse = Value; // todo
-    type WalletTransferResponse = Value;
+    type CancelResponse = Vec<PoloniexCancelOrderResponse>;
+    type CancelAllResponse = Vec<PoloniexCancelOrderResponse>;
+    type NewOrderResponse = PoloniexNewOrderResponse;
+    type WalletTransferResponse = PoloniexWalletTransferResponse;
 
     async fn init() -> Result<Self, SocketError>
     where

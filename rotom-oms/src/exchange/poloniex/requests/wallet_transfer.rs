@@ -2,7 +2,6 @@ use std::borrow::Cow;
 
 use rotom_data::protocols::http::rest_request::RestRequest;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 /*----- */
 // Poloniex Wallet Transfer
@@ -35,7 +34,7 @@ impl PoloniexWalletTransfer {
 }
 
 impl RestRequest for PoloniexWalletTransfer {
-    type Response = Value; // todo
+    type Response = PoloniexWalletTransferResponse;
     type QueryParams = ();
     type Body = Self;
 
@@ -50,4 +49,13 @@ impl RestRequest for PoloniexWalletTransfer {
     fn body(&self) -> Option<&Self::Body> {
         Some(self)
     }
+}
+
+/*----- */
+// Poloniex Wallet Transfer Response
+/*----- */
+#[derive(Debug, Deserialize)]
+pub struct PoloniexWalletTransferResponse {
+    #[serde(alias = "withdrawalRequestsId")]
+    pub withdrawal_request_id: u64
 }

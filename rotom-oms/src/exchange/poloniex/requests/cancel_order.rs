@@ -1,8 +1,10 @@
 use std::borrow::Cow;
 
 use rotom_data::protocols::http::rest_request::RestRequest;
-use serde::Serialize;
-use serde_json::Value;
+use serde::{Deserialize, Serialize};
+
+use super::PoloniexOrderStatus;
+use rotom_data::shared::de::de_str;
 
 /*----- */
 // Poloniex Cancel Order
@@ -19,7 +21,7 @@ impl PoloniexCancelOrder {
 }
 
 impl RestRequest for PoloniexCancelOrder {
-    type Response = Value; // TODO
+    type Response = Vec<PoloniexCancelOrderResponse>;
     type QueryParams = ();
     type Body = Self;
 
@@ -57,8 +59,8 @@ impl PoloniexCancelAllOrder {
 }
 
 impl RestRequest for PoloniexCancelAllOrder {
-    type Response = Value; // todo
-    type QueryParams = (); // todo
+    type Response = Vec<PoloniexCancelOrderResponse>;
+    type QueryParams = ();
     type Body = Self;
 
     fn path(&self) -> Cow<'static, str> {
@@ -73,3 +75,30 @@ impl RestRequest for PoloniexCancelAllOrder {
         Some(self)
     }
 }
+
+/*----- */
+// Poloniex Cancel Order Response
+/*----- */
+/*
+{
+  "orderId": "32487004629499904",
+  "clientOrderId": "54321",
+  "state": "PENDING_CANCEL",
+  "code": 200,
+  "message": ""
+}
+*/
+
+#[derive(Debug, Deserialize)]
+pub struct PoloniexCancelOrderResponse {
+    #[serde(deserialize_with = "de_str")]
+    #[serde(alias = "orderId")]
+    pub order_id: u64,
+    #[serde(alias = "clientOrderId")]
+    pub client_order_id: String,
+    pub state: PoloniexOrderStatus,
+    pub code: u64,
+    pub message: String,
+}
+
+// "[{\"clientOrderId\":\"384cc028-fc20-4211-b504-b2f81ec31319\",\"code\":200,\"message\":\"\",\"orderId\":\"373391887307898880\",\"state\":\"PENDING_CANCEL\"}]

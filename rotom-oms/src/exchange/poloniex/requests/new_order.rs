@@ -1,10 +1,10 @@
 use std::borrow::Cow;
 
 use rotom_data::protocols::http::rest_request::RestRequest;
-use serde::Serialize;
-use serde_json::Value;
+use ::serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use rotom_data::shared::de::de_str;
 use crate::{
     exchange::errors::RequestBuildError,
     portfolio::{OrderEvent, OrderType},
@@ -87,7 +87,7 @@ impl PoloniexNewOrder {
 }
 
 impl RestRequest for PoloniexNewOrder {
-    type Response = Value; // TODO
+    type Response = PoloniexNewOrderResponse;
     type QueryParams = ();
     type Body = Self;
 
@@ -248,4 +248,15 @@ impl PoloniexNewOrderBuilder {
             slippage_tolerance: self.slippage_tolerance,
         })
     }
+}
+
+/*----- */
+// Poloniex New Order Response
+/*----- */
+#[derive(Debug, Deserialize)]
+pub struct PoloniexNewOrderResponse {
+    #[serde(deserialize_with = "de_str")]
+    pub id: u64,
+    #[serde(alias = "clientOrderId")]
+    pub client_order_id: String
 }

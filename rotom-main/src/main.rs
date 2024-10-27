@@ -15,8 +15,7 @@ use rotom_main::{
 use rotom_oms::{
     event::{Event, EventTx},
     exchange::{
-        binance::binance_client::BinanceExecution,
-        poloniex::{poloniex_client::PoloniexExecution},
+        binance::binance_client::BinanceExecution, poloniex::poloniex_client::PoloniexExecution,
         ExecutionClient2,
     },
     execution::{
@@ -90,29 +89,29 @@ pub async fn main() {
     ////////////////////////////////////////////////////
     // Test Poloniex Execution
     let polo_exe = PoloniexExecution::init().await.unwrap();
-    //let open_order = polo_exe.open_order(order.clone()).await;
+    // let res = polo_exe.open_order(order.clone()).await;
 
     // order.market_meta.close = 0.90;
     // let open_order = polo_exe.open_order(order.clone()).await;
 
-    // let cancel_order = polo_exe
+    // let res = polo_exe
     //     .cancel_order(
-    //         "40937132-ec87-4a33-95d0-1c848c7110c6".to_string(),
+    //         "b604b645-0a6b-4afb-9c4c-955186583c06".to_string(),
     //         "None".to_string(),
     //     )
     //     .await;
 
-    // let cancel_order = polo_exe.cancel_order_all("OP_USDT".to_string()).await;
+    // let res= polo_exe.cancel_order_all("OP_USDT".to_string()).await;
 
-    polo_exe.receive_responses().await;
+    // polo_exe.receive_responses().await;
 
-    // let wallet_transfer_res = polo_exe.wallet_transfer(
-    //     "USDT".to_string(),
-    //     "TLHWcKwg5gdTXsv6Bko9srkiKZomRBYCr2".to_string(),
-    //     "TRX".to_string(),
-    //     5.0
-    // ).await;
-    // println!("---> {:#?}", wallet_transfer_res);
+    let res = polo_exe.wallet_transfer(
+        "USDT".to_string(),
+        "TLHWcKwg5gdTXsv6Bko9srkiKZomRBYCr2".to_string(),
+        Some("TRX".to_string()),
+        5.0
+    ).await;
+    println!("---> {:#?}", res);
 
     // let _ = poloniex_testing2().await;
 
@@ -332,10 +331,11 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - responses for each poloneix request including ws reponses for orders and balances
 // - error for http client for each exchange
 // - check if wallet transfers show up in the user data streams
 // - rm todos
+// - change cancel order symbol to Option<String>
+// - userdata stream for client execution auto reconnect
 // - standarise order types ie. limit, market etc
 // - impl other user related data methods for execution client
 // - change level size to quantity (name change)
