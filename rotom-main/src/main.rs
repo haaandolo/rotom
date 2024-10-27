@@ -89,7 +89,7 @@ pub async fn main() {
 
     ////////////////////////////////////////////////////
     // Test Poloniex Execution
-    // let polo_exe = PoloniexExecution::init().await.unwrap();
+    let polo_exe = PoloniexExecution::init().await.unwrap();
     //let open_order = polo_exe.open_order(order.clone()).await;
 
     // order.market_meta.close = 0.90;
@@ -104,7 +104,7 @@ pub async fn main() {
 
     // let cancel_order = polo_exe.cancel_order_all("OP_USDT".to_string()).await;
 
-    // polo_exe.receive_responses().await;
+    polo_exe.receive_responses().await;
 
     // let wallet_transfer_res = polo_exe.wallet_transfer(
     //     "USDT".to_string(),
@@ -336,6 +336,7 @@ fn init_logging() {
 // - error for http client for each exchange
 // - check if wallet transfers show up in the user data streams
 // - rm todos
+// - standarise order types ie. limit, market etc
 // - impl other user related data methods for execution client
 // - change level size to quantity (name change)
 // - change r#type to enum instead of string

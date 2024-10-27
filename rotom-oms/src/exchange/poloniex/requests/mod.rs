@@ -1,5 +1,6 @@
 pub mod cancel_order;
 pub mod new_order;
+pub mod user_data;
 pub mod wallet_transfer;
 pub mod ws_auth;
 
@@ -59,10 +60,22 @@ impl From<&Instrument> for PoloniexSymbol {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "SCREAMING_SNAKE_CASE"))]
 pub enum PoloniexOrderType {
     Market,
     Limit,
     LimitMarker,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all(deserialize = "SCREAMING_SNAKE_CASE"))]
+pub enum PoloniexOrderStatus {
+    New,
+    PartiallyFilled,
+    Filled,
+    PendingCancel,
+    PartiallyCanceled,
+    Canceled,
+    Failed,
 }

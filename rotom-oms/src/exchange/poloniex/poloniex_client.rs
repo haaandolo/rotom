@@ -5,13 +5,13 @@ use rotom_data::{
     exchange::{poloniex::PoloniexSpot, Connector},
     protocols::{
         http::{client::RestClient, http_parser::StandardHttpParser},
-        ws::{connect, schedule_pings_to_exchange, JoinHandle, WsMessage, WsRead},
+        ws::{connect, schedule_pings_to_exchange, ws_parser::{StreamParser, WebSocketParser}, JoinHandle, WsMessage, WsRead},
     },
 };
 use serde_json::Value;
 
 use crate::{
-    exchange::{ExecutionClient2, ExecutionId},
+    exchange::{poloniex::requests::user_data::PoloniexUserData, ExecutionClient2, ExecutionId},
     portfolio::OrderEvent,
 };
 
@@ -138,7 +138,8 @@ impl ExecutionClient2 for PoloniexExecution {
     // Run and receive responses
     async fn receive_responses(mut self) {
         while let Some(msg) = self.user_data_ws.next().await {
-            println!(">>> {:#?}", msg);
+            let msg_de = WebSocketParser::parse::<PoloniexUserData>(msg);
+            println!("{:#?}", msg_de);
         }
     }
 
