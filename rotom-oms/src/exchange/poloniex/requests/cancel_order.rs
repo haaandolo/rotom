@@ -79,16 +79,6 @@ impl RestRequest for PoloniexCancelAllOrder {
 /*----- */
 // Poloniex Cancel Order Response
 /*----- */
-/*
-{
-  "orderId": "32487004629499904",
-  "clientOrderId": "54321",
-  "state": "PENDING_CANCEL",
-  "code": 200,
-  "message": ""
-}
-*/
-
 #[derive(Debug, Deserialize)]
 pub struct PoloniexCancelOrderResponse {
     #[serde(deserialize_with = "de_str")]

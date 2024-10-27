@@ -69,7 +69,7 @@ pub async fn main() {
     };
 
     // Test Binance Execution
-    let binance_exe = BinanceExecution::init().await.unwrap();
+    // let binance_exe = BinanceExecution::init().await.unwrap();
     // let res = binance_exe
     //     .wallet_transfer(
     //         "USDT".to_string(),
@@ -84,12 +84,12 @@ pub async fn main() {
     //     .await;
     // binance_exe.cancel_order_all("OPUSDT".to_string()).await;
     // println!("{:#?}", res);
-    binance_exe.receive_responses().await;
+    // binance_exe.receive_responses().await;
 
     ////////////////////////////////////////////////////
     // Test Poloniex Execution
-    // let polo_exe = PoloniexExecution::init().await.unwrap();
-    // let res = polo_exe.open_order(order.clone()).await;
+    let polo_exe = PoloniexExecution::init().await.unwrap();
+    let res = polo_exe.open_order(order.clone()).await;
 
     // order.market_meta.close = 0.90;
     // let open_order = polo_exe.open_order(order.clone()).await;
@@ -111,7 +111,7 @@ pub async fn main() {
     //     Some("TRX".to_string()),
     //     5.0
     // ).await;
-    // println!("---> {:#?}", res);
+    println!("---> {:#?}", res);
 
     ////////////////////////////////////////////////
     /*----- */
@@ -329,8 +329,8 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - error for http client for each exchange
 // - rm todos
+// - make execution arena
 // - change cancel order symbol to Option<String>
 // - userdata stream for client execution auto reconnect
 // - standarise order types ie. limit, market etc

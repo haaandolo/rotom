@@ -108,7 +108,7 @@ impl ExecutionClient2 for PoloniexExecution {
     ) -> Result<Self::NewOrderResponse, SocketError> {
         let response = self
             .http_client
-            .execute(PoloniexNewOrder::new(&open_request).unwrap())
+            .execute(PoloniexNewOrder::new(&open_request)?)
             .await?;
         Ok(response.0)
     }

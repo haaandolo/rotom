@@ -76,7 +76,10 @@ pub enum SocketError {
 
     // Miscellaneous error
     #[error("{0}")]
-    Misc(String)
+    Misc(String),
+
+    #[error("{0}")]
+    RequestBuildError(String),
 }
 
 impl From<reqwest::Error> for SocketError {

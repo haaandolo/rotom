@@ -1,5 +1,6 @@
 pub mod allocator;
 pub mod error;
+#[allow(clippy::module_inception)]
 pub mod portfolio;
 pub mod position;
 pub mod repository;

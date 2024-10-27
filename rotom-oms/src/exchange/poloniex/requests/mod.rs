@@ -61,11 +61,11 @@ impl From<&Instrument> for PoloniexSymbol {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all(serialize = "SCREAMING_SNAKE_CASE"))]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum PoloniexOrderType {
     Market,
     Limit,
-    LimitMarker,
+    LimitMaker,
 }
 
 #[derive(Debug, Deserialize)]

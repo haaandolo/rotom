@@ -68,7 +68,7 @@ impl ExecutionClient2 for BinanceExecution {
     ) -> Result<Self::NewOrderResponse, SocketError> {
         let response = self
             .http_client
-            .execute(BinanceNewOrder::new(&open_requests).unwrap())
+            .execute(BinanceNewOrder::new(&open_requests)?)
             .await?;
         Ok(response.0)
     }
@@ -81,7 +81,7 @@ impl ExecutionClient2 for BinanceExecution {
     ) -> Result<Self::CancelResponse, SocketError> {
         let response = self
             .http_client
-            .execute(BinanceCancelOrder::new(orig_client_order_id, symbol).unwrap())
+            .execute(BinanceCancelOrder::new(orig_client_order_id, symbol)?)
             .await?;
         Ok(response.0)
     }
@@ -93,7 +93,7 @@ impl ExecutionClient2 for BinanceExecution {
     ) -> Result<Self::CancelAllResponse, SocketError> {
         let response = self
             .http_client
-            .execute(BinanceCancelAllOrder::new(symbol).unwrap())
+            .execute(BinanceCancelAllOrder::new(symbol)?)
             .await?;
         Ok(response.0)
     }
@@ -108,7 +108,7 @@ impl ExecutionClient2 for BinanceExecution {
     ) -> Result<Self::WalletTransferResponse, SocketError> {
         let response = self
             .http_client
-            .execute(BinanceWalletTransfer::new(coin, wallet_address, network, amount).unwrap())
+            .execute(BinanceWalletTransfer::new(coin, wallet_address, network, amount)?)
             .await?;
         Ok(response.0)
     }

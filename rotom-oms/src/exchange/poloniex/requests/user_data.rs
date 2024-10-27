@@ -1,7 +1,7 @@
 use rotom_data::shared::de::de_str;
 use serde::{Deserialize, Serialize};
 
-use super::{PoloniexOrderStatus, PoloniexSide};
+use super::{PoloniexOrderStatus, PoloniexOrderType, PoloniexSide};
 
 /*----- */
 // Poloniex User Data - Orders
@@ -17,7 +17,7 @@ pub struct PoloniexUserDataOrder {
 #[serde(rename_all = "camelCase")]
 pub struct PoloniexUserDataOrderParams {
     pub symbol: String,
-    pub r#type: String, // todo
+    pub r#type:  PoloniexOrderType,
     #[serde(deserialize_with = "de_str")]
     pub quantity: f64,
     #[serde(deserialize_with = "de_str")]

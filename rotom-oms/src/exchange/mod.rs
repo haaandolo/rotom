@@ -26,9 +26,9 @@ pub trait ExecutionClient2 {
     type NewOrderResponse;
     type WalletTransferResponse;
 
-    /// **Note:**
-    /// Usually entails spawning an asynchronous WebSocket event loop to consume [`AccountEvent`]s
-    /// from the exchange, as well as returning the HTTP client `Self`.
+    // **Note:**
+    // Usually entails spawning an asynchronous WebSocket event loop to consume [`AccountEvent`]s
+    // from the exchange, as well as returning the HTTP client `Self`.
     async fn init() -> Result<Self, SocketError>
     where
         Self: Sized;
