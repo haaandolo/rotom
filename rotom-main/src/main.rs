@@ -23,7 +23,7 @@ use rotom_oms::{
         Fees,
     },
     portfolio::{
-        allocator::default_allocator::DefaultAllocator, persistence::in_memory::InMemoryRepository, portfolio_types::default_portfolio::MetaPortfolio, risk_manager::default_risk_manager::DefaultRisk, OrderEvent, OrderType
+        allocator::default_allocator::DefaultAllocator, persistence::in_memory::InMemoryRepository, portfolio_type::default_portfolio::MetaPortfolio, risk_manager::default_risk_manager::DefaultRisk, OrderEvent, OrderType
     },
     statistic::summary::{
         trading::{Config as StatisticConfig, TradingSummary},

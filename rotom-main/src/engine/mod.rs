@@ -6,7 +6,7 @@ use prettytable::Table;
 use rotom_data::{Market, MarketId};
 use rotom_oms::{
     portfolio::{
-        persistence::{PositionHandler, StatisticHandler}, portfolio_types::{FillUpdater, MarketUpdater, OrderGenerator}, position::Position
+        persistence::{PositionHandler, StatisticHandler}, portfolio_type::{FillUpdater, MarketUpdater, OrderGenerator}, position::Position
     },
     statistic::summary::{self, PositionSummariser, TableBuilder},
 };
