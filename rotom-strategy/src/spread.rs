@@ -120,6 +120,12 @@ impl WithdrawalFee {
     }
 }
 
+impl Default for SpreadStategy {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /*----- */
 // Impl SignalGenerator for SpreadStategy
 /*----- */
@@ -133,12 +139,11 @@ impl SpreadStategy {
 
     pub fn generate_signal_map(
         current_spread: f64,
-        current_fee: f64,
+        _current_fee: f64,
     ) -> HashMap<Decision, SignalStrength> {
         let mut signals = HashMap::with_capacity(4);
 
-        // if current_spread - 1.0 > current_fee {
-        if current_spread - 1.0 > 0.0 {
+        if current_spread * -1.0 > 0.0 {
             signals.insert(Decision::Long, SignalStrength(1.0));
         }
 
@@ -332,7 +337,7 @@ impl SignalGenerator for SpreadStategy {
             let signals =
                 SpreadStategy::generate_signal_map(self.liquid_exchange.current_spread, fee_hurdle);
 
-            // println!("bin signal: {:?}", signals);
+            println!("bin signal: {:?}", signals);
 
             if signals.is_empty() {
                 return None;
@@ -366,7 +371,7 @@ impl SignalGenerator for SpreadStategy {
                 fee_hurdle,
             );
 
-            // println!("polo signal: {:?}", signals);
+            println!("polo signal: {:?}", signals);
 
             if signals.is_empty() {
                 return None;

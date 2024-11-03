@@ -23,8 +23,7 @@ use rotom_oms::{
         Fees,
     },
     portfolio::{
-        allocator::DefaultAllocator, portfolio::MetaPortfolio,
-        repository::in_memory::InMemoryRepository, risk::DefaultRisk, OrderEvent, OrderType,
+        allocator::default_allocator::DefaultAllocator, persistence::in_memory::InMemoryRepository, portfolio_types::default_portfolio::MetaPortfolio, risk_manager::default_risk_manager::DefaultRisk, OrderEvent, OrderType
     },
     statistic::summary::{
         trading::{Config as StatisticConfig, TradingSummary},
@@ -54,19 +53,20 @@ pub async fn main() {
     /*----- */
     // Testing
     /*----- */
+    ////////////////////////////////////////////////////
     // Order
-    let mut order = OrderEvent {
-        time: Utc::now(),
-        exchange: ExchangeId::PoloniexSpot,
-        instrument: Instrument::new("op", "usdt"),
-        market_meta: MarketMeta {
-            time: Utc::now(),
-            close: 1.0,
-        },
-        decision: Decision::Long,
-        quantity: 5.0,
-        order_type: OrderType::Limit,
-    };
+    // let mut order = OrderEvent {
+    //     time: Utc::now(),
+    //     exchange: ExchangeId::PoloniexSpot,
+    //     instrument: Instrument::new("op", "usdt"),
+    //     market_meta: MarketMeta {
+    //         time: Utc::now(),
+    //         close: 1.0,
+    //     },
+    //     decision: Decision::Long,
+    //     quantity: 5.0,
+    //     order_type: OrderType::Limit,
+    // };
 
     // Test Binance Execution
     // let binance_exe = BinanceExecution::init().await.unwrap();
@@ -79,17 +79,17 @@ pub async fn main() {
     //     )
     //     .await;
     // let res = binance_exe.open_order(order.clone()).await;
-    // binance_exe
-    //     .cancel_order("gnHMeO0Cc9Nu1Lhpl4ZGPW".to_string(), "OPUSDT".to_string())
+    // let res = binance_exe
+    //     .cancel_order("YTirLsT3mwmdxDED6HBH5c".to_string(), "OPUSDT".to_string())
     //     .await;
-    // binance_exe.cancel_order_all("OPUSDT".to_string()).await;
+    // // binance_exe.cancel_order_all("OPUSDT".to_string()).await;
     // println!("{:#?}", res);
     // binance_exe.receive_responses().await;
 
     ////////////////////////////////////////////////////
     // Test Poloniex Execution
-    let polo_exe = PoloniexExecution::init().await.unwrap();
-    let res = polo_exe.open_order(order.clone()).await;
+    // let polo_exe = PoloniexExecution::init().await.unwrap();
+    // let res = polo_exe.open_order(order.clone()).await;
 
     // order.market_meta.close = 0.90;
     // let open_order = polo_exe.open_order(order.clone()).await;
@@ -111,7 +111,7 @@ pub async fn main() {
     //     Some("TRX".to_string()),
     //     5.0
     // ).await;
-    println!("---> {:#?}", res);
+    // println!("---> {:#?}", res);
 
     ////////////////////////////////////////////////
     /*----- */
@@ -329,11 +329,10 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - rm todos
 // - make execution arena
-// - change cancel order symbol to Option<String>
 // - userdata stream for client execution auto reconnect
 // - standarise order types ie. limit, market etc
+// - rm todos
 // - impl other user related data methods for execution client
 // - change level size to quantity (name change)
 // - change r#type to enum instead of string

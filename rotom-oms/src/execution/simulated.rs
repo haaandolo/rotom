@@ -18,7 +18,6 @@ pub struct SimulatedExecution {
     fee_pct: Fees,
 }
 
-
 impl SimulatedExecution {
     pub fn new(config: Config) -> Self {
         Self {
@@ -45,7 +44,7 @@ impl SimulatedExecution {
 impl ExecutionClient for SimulatedExecution {
     fn generate_fill(&self, order: &OrderEvent) -> Result<FillEvent, ExecutionError> {
         let fill_value_gross = SimulatedExecution::calculate_fill_value_gross(order);
-    
+
         Ok(FillEvent {
             time: Utc::now(),
             exchange: order.exchange,

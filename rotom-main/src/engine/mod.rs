@@ -4,7 +4,12 @@ use error::EngineError;
 use parking_lot::Mutex;
 use prettytable::Table;
 use rotom_data::{Market, MarketId};
-use rotom_oms::{portfolio::{position::Position, repository::{PositionHandler, StatisticHandler}, FillUpdater, MarketUpdater, OrderGenerator}, statistic::summary::{self, PositionSummariser, TableBuilder}};
+use rotom_oms::{
+    portfolio::{
+        persistence::{PositionHandler, StatisticHandler}, portfolio_types::{FillUpdater, MarketUpdater, OrderGenerator}, position::Position
+    },
+    statistic::summary::{self, PositionSummariser, TableBuilder},
+};
 use serde::Serialize;
 use std::{collections::HashMap, sync::Arc, thread};
 use tokio::sync::{mpsc, oneshot};
@@ -294,9 +299,7 @@ where
             });
 
         // Combine Total & Per-Market Statistics Into Table
-        summary::combine(
-            stats_per_market.chain([("Total".to_owned(), self.statistics_summary)]),
-        )
+        summary::combine(stats_per_market.chain([("Total".to_owned(), self.statistics_summary)]))
     }
 }
 

@@ -61,7 +61,6 @@ impl ExecutionClient2 for BinanceExecution {
         })
     }
 
-    // Opens order for a single asset
     async fn open_order(
         &self,
         open_requests: OrderEvent,
@@ -73,7 +72,6 @@ impl ExecutionClient2 for BinanceExecution {
         Ok(response.0)
     }
 
-    // Cancels order for a single asset
     async fn cancel_order(
         &self,
         orig_client_order_id: String,
@@ -86,7 +84,6 @@ impl ExecutionClient2 for BinanceExecution {
         Ok(response.0)
     }
 
-    // Cancel all orders for a given asset
     async fn cancel_order_all(
         &self,
         symbol: String,
@@ -98,7 +95,6 @@ impl ExecutionClient2 for BinanceExecution {
         Ok(response.0)
     }
 
-    // Wallet transfers
     async fn wallet_transfer(
         &self,
         coin: String,

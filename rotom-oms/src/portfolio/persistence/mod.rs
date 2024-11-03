@@ -1,15 +1,14 @@
+pub mod error;
+pub mod in_memory;
+pub mod redis;
+
 use error::RepositoryError;
 use rotom_data::{Market, MarketId};
 use uuid::Uuid;
-
 use super::{
     position::{Position, PositionId},
     Balance,
 };
-
-pub mod error;
-pub mod in_memory;
-pub mod redis;
 
 /*----- */
 // Position Handler

@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use super::repository::error::RepositoryError;
+use super::persistence::error::RepositoryError;
 
 #[derive(Debug, Error)]
 pub enum PortfolioError {

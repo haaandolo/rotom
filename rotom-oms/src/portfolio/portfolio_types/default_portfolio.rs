@@ -1,7 +1,10 @@
 use std::{collections::HashMap, marker::PhantomData};
 
 use chrono::Utc;
-use rotom_data::{event_models::market_event::{DataKind, MarketEvent}, Market, MarketId, MarketMeta};
+use rotom_data::{
+    event_models::market_event::{DataKind, MarketEvent},
+    Market, MarketId, MarketMeta,
+};
 use rotom_strategy::{Decision, Signal, SignalForceExit, SignalStrength};
 use tracing::info;
 use uuid::Uuid;
@@ -9,20 +12,21 @@ use uuid::Uuid;
 use crate::{
     event::Event,
     execution::FillEvent,
+    portfolio::{
+        allocator::OrderAllocator,
+        error::PortfolioError,
+        persistence::{error::RepositoryError, BalanceHandler, PositionHandler, StatisticHandler},
+        position::{
+            determine_position_id, Position, PositionEnterer, PositionExiter, PositionId,
+            PositionUpdate, PositionUpdater, Side,
+        },
+        risk_manager::OrderEvaluator,
+        Balance, OrderEvent, OrderType,
+    },
     statistic::summary::{Initialiser, PositionSummariser},
 };
 
-use super::{
-    allocator::OrderAllocator,
-    error::PortfolioError,
-    position::{
-        determine_position_id, Position, PositionEnterer, PositionExiter, PositionId,
-        PositionUpdate, PositionUpdater, Side,
-    },
-    repository::{error::RepositoryError, BalanceHandler, PositionHandler, StatisticHandler},
-    risk::OrderEvaluator,
-    Balance, FillUpdater, MarketUpdater, OrderEvent, OrderGenerator, OrderType,
-};
+use super::{FillUpdater, MarketUpdater, OrderGenerator};
 
 /*----- */
 // Porfolio lego

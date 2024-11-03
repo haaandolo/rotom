@@ -1,53 +1,19 @@
 pub mod allocator;
 pub mod error;
-#[allow(clippy::module_inception)]
-pub mod portfolio;
+pub mod persistence;
+pub mod portfolio_types;
 pub mod position;
-pub mod repository;
-pub mod risk;
+pub mod risk_manager;
 
 use chrono::{DateTime, Utc};
 use error::PortfolioError;
-use position::PositionUpdate;
 use rotom_data::{
-    event_models::market_event::{DataKind, MarketEvent},
     shared::subscription_models::{ExchangeId, Instrument},
     MarketMeta,
 };
-use rotom_strategy::{Decision, Signal, SignalForceExit};
+use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-
-use crate::{event::Event, execution::FillEvent};
-
-/*----- */
-// Market Updater
-/*----- */
-pub trait MarketUpdater {
-    fn update_from_market(
-        &mut self,
-        market: &MarketEvent<DataKind>,
-    ) -> Result<Option<PositionUpdate>, PortfolioError>;
-}
-
-/*----- */
-// Order Generator
-/*----- */
-pub trait OrderGenerator {
-    fn generate_order(&mut self, signal: &Signal) -> Result<Option<OrderEvent>, PortfolioError>;
-
-    fn generate_exit_order(
-        &mut self,
-        signal: SignalForceExit,
-    ) -> Result<Option<OrderEvent>, PortfolioError>;
-}
-
-/*----- */
-// Fill Updater
-/*----- */
-pub trait FillUpdater {
-    fn update_from_fill(&mut self, fill: &FillEvent) -> Result<Vec<Event>, PortfolioError>;
-}
 
 /*----- */
 // Order Event

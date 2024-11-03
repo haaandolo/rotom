@@ -1,19 +1,9 @@
 use serde::Deserialize;
 
-use rotom_strategy::{Decision, SignalStrength};
-use super::{position::Position, OrderEvent};
+use crate::portfolio::position::Position;
 
-/*----- */
-// Order Allocator
-/*----- */
-pub trait OrderAllocator {
-    fn allocate_order(
-        &self,
-        order: &mut OrderEvent,
-        position: Option<&Position>,
-        signal_strength: SignalStrength,
-    );
-}
+use super::{OrderAllocator, OrderEvent};
+use rotom_strategy::{Decision, SignalStrength};
 
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug, Default, Deserialize)]
 pub struct DefaultAllocator {

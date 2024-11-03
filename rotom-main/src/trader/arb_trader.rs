@@ -8,7 +8,7 @@ use rotom_data::{
 use rotom_oms::{
     event::{Event, EventTx, MessageTransmitter},
     execution::ExecutionClient,
-    portfolio::{FillUpdater, MarketUpdater, OrderGenerator},
+    portfolio::portfolio_types::{FillUpdater, MarketUpdater, OrderGenerator},
 };
 use rotom_strategy::{SignalForceExit, SignalGenerator};
 use tokio::sync::mpsc;

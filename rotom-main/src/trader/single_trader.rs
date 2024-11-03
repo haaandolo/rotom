@@ -5,7 +5,11 @@ use rotom_data::{
     event_models::market_event::{DataKind, MarketEvent},
     Feed, Market, MarketGenerator,
 };
-use rotom_oms::{event::{Event, EventTx, MessageTransmitter}, execution::ExecutionClient, portfolio::{FillUpdater, MarketUpdater, OrderGenerator}};
+use rotom_oms::{
+    event::{Event, EventTx, MessageTransmitter},
+    execution::ExecutionClient,
+    portfolio::portfolio_types::{FillUpdater, MarketUpdater, OrderGenerator},
+};
 use rotom_strategy::{SignalForceExit, SignalGenerator};
 use tokio::sync::mpsc;
 use tracing::{debug, warn};

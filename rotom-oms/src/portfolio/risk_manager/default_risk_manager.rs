@@ -1,14 +1,8 @@
-use super::{OrderEvent, OrderType};
+use super::{OrderEvaluator, OrderEvent, OrderType};
 
 /*----- */
-// Order Evaluator
+// Default risk manager
 /*----- */
-pub trait OrderEvaluator {
-    const DEFAULT_ORDER_TYPE: OrderType;
-
-    fn evaluate_order(&self, order: OrderEvent) -> Option<OrderEvent>;
-}
-
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct DefaultRisk {}
 

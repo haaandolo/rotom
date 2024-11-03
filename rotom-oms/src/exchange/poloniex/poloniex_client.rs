@@ -101,7 +101,6 @@ impl ExecutionClient2 for PoloniexExecution {
         })
     }
 
-    // Open order for single asset
     async fn open_order(
         &self,
         open_request: OrderEvent,
@@ -113,7 +112,6 @@ impl ExecutionClient2 for PoloniexExecution {
         Ok(response.0)
     }
 
-    // Cancel order for a single asset
     async fn cancel_order(
         &self,
         order_id: String,
@@ -126,7 +124,6 @@ impl ExecutionClient2 for PoloniexExecution {
         Ok(response.0)
     }
 
-    // Cancel all orders for a single asset
     async fn cancel_order_all(
         &self,
         symbol: String,
@@ -138,7 +135,6 @@ impl ExecutionClient2 for PoloniexExecution {
         Ok(response.0)
     }
 
-    // Run and receive responses
     async fn receive_responses(mut self) {
         while let Some(msg) = self.user_data_ws.next().await {
             let msg_de = WebSocketParser::parse::<PoloniexUserData>(msg);
@@ -146,7 +142,6 @@ impl ExecutionClient2 for PoloniexExecution {
         }
     }
 
-    // Transfer to another wallet
     async fn wallet_transfer(
         &self,
         coin: String,
