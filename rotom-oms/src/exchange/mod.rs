@@ -25,6 +25,7 @@ pub trait ExecutionClient2 {
     type CancelAllResponse;
     type NewOrderResponse;
     type WalletTransferResponse;
+    type BalanceResponse;
 
     // **Note:**
     // Usually entails spawning an asynchronous WebSocket event loop to consume [`AccountEvent`]s
@@ -63,6 +64,9 @@ pub trait ExecutionClient2 {
         network: Option<String>,
         amount: f64,
     ) -> Result<Self::WalletTransferResponse, SocketError>;
+    
+    // Get balances for a given exchange
+    async fn get_balance_all(&self) -> Result<Self::BalanceResponse, SocketError>;
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]

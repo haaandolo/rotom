@@ -1,11 +1,12 @@
+pub mod arb_portfolio;
+pub mod default_portfolio;
+
 use rotom_data::event_models::market_event::{DataKind, MarketEvent};
 use rotom_strategy::{Signal, SignalForceExit};
 
 use crate::{event::Event, execution::FillEvent};
 
 use super::{error::PortfolioError, position::PositionUpdate, OrderEvent};
-
-pub mod default_portfolio;
 
 /*----- */
 // Market Updater

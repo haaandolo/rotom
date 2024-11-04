@@ -1,10 +1,10 @@
 use chrono::Utc;
-use rotom_data::protocols::http::{request_builder::Authenticator, rest_request::RestRequest};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 use super::{BinanceOrderStatus, BinanceSide, BinanceTimeInForce};
 use crate::exchange::{binance::request_builder::BinanceAuthParams, errors::RequestBuildError};
+use rotom_data::protocols::http::{request_builder::Authenticator, rest_request::RestRequest};
 use rotom_data::shared::de::de_str;
 
 /*----- */

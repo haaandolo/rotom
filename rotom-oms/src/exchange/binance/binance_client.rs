@@ -18,6 +18,8 @@ use crate::exchange::ExecutionId;
 use crate::portfolio::OrderEvent;
 
 use super::request_builder::BinanceRequestBuilder;
+use super::requests::balance::BinanceBalance;
+use super::requests::balance::BinanceBalanceResponse;
 use super::requests::cancel_order::BinanceCancelOrderResponse;
 use super::requests::listening_key::BinanceListeningKey;
 use super::requests::new_order::BinanceNewOrderResponses;
@@ -43,7 +45,9 @@ impl ExecutionClient2 for BinanceExecution {
     type CancelAllResponse = Vec<BinanceCancelOrderResponse>;
     type NewOrderResponse = BinanceNewOrderResponses;
     type WalletTransferResponse = BinanceWalletTransferResponse;
+    type BalanceResponse = BinanceBalanceResponse;
 
+    #[inline]
     async fn init() -> Result<Self, SocketError> {
         // Initialise rest client
         let http_client =
@@ -61,6 +65,7 @@ impl ExecutionClient2 for BinanceExecution {
         })
     }
 
+    #[inline]
     async fn open_order(
         &self,
         open_requests: OrderEvent,
@@ -72,6 +77,7 @@ impl ExecutionClient2 for BinanceExecution {
         Ok(response.0)
     }
 
+    #[inline]
     async fn cancel_order(
         &self,
         orig_client_order_id: String,
@@ -84,6 +90,7 @@ impl ExecutionClient2 for BinanceExecution {
         Ok(response.0)
     }
 
+    #[inline]
     async fn cancel_order_all(
         &self,
         symbol: String,
@@ -95,6 +102,7 @@ impl ExecutionClient2 for BinanceExecution {
         Ok(response.0)
     }
 
+    #[inline]
     async fn wallet_transfer(
         &self,
         coin: String,
@@ -104,11 +112,23 @@ impl ExecutionClient2 for BinanceExecution {
     ) -> Result<Self::WalletTransferResponse, SocketError> {
         let response = self
             .http_client
-            .execute(BinanceWalletTransfer::new(coin, wallet_address, network, amount)?)
+            .execute(BinanceWalletTransfer::new(
+                coin,
+                wallet_address,
+                network,
+                amount,
+            )?)
             .await?;
         Ok(response.0)
     }
 
+    #[inline]
+    async fn get_balance_all(&self) -> Result<Self::BalanceResponse, SocketError> {
+        let response = self.http_client.execute(BinanceBalance::new()?).await?;
+        Ok(response.0)
+    }
+
+    #[inline]
     async fn receive_responses(mut self) {
         while let Some(msg) = self.user_data_ws.next().await {
             let msg_de = WebSocketParser::parse::<BinanceUserData>(msg);

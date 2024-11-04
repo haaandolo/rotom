@@ -49,7 +49,9 @@ impl ExecutionClient2 for PoloniexExecution {
     type CancelAllResponse = Vec<PoloniexCancelOrderResponse>;
     type NewOrderResponse = PoloniexNewOrderResponse;
     type WalletTransferResponse = PoloniexWalletTransferResponse;
+    type BalanceResponse = serde_json::Value;
 
+    #[inline]
     async fn init() -> Result<Self, SocketError>
     where
         Self: Sized,
@@ -101,6 +103,7 @@ impl ExecutionClient2 for PoloniexExecution {
         })
     }
 
+    #[inline]
     async fn open_order(
         &self,
         open_request: OrderEvent,
@@ -112,6 +115,7 @@ impl ExecutionClient2 for PoloniexExecution {
         Ok(response.0)
     }
 
+    #[inline]
     async fn cancel_order(
         &self,
         order_id: String,
@@ -124,6 +128,7 @@ impl ExecutionClient2 for PoloniexExecution {
         Ok(response.0)
     }
 
+    #[inline]
     async fn cancel_order_all(
         &self,
         symbol: String,
@@ -135,6 +140,7 @@ impl ExecutionClient2 for PoloniexExecution {
         Ok(response.0)
     }
 
+    #[inline]
     async fn receive_responses(mut self) {
         while let Some(msg) = self.user_data_ws.next().await {
             let msg_de = WebSocketParser::parse::<PoloniexUserData>(msg);
@@ -142,6 +148,7 @@ impl ExecutionClient2 for PoloniexExecution {
         }
     }
 
+    #[inline]
     async fn wallet_transfer(
         &self,
         coin: String,
@@ -159,5 +166,10 @@ impl ExecutionClient2 for PoloniexExecution {
             ))
             .await?;
         Ok(response.0)
+    }
+
+    #[inline]
+    async fn get_balance_all(&self) -> Result<Self::BalanceResponse, SocketError> {
+        unimplemented!()
     }
 }

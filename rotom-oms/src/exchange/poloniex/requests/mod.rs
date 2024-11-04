@@ -1,3 +1,4 @@
+pub mod balance;
 pub mod cancel_order;
 pub mod new_order;
 pub mod user_data;

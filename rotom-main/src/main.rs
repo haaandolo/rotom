@@ -23,7 +23,9 @@ use rotom_oms::{
         Fees,
     },
     portfolio::{
-        allocator::default_allocator::DefaultAllocator, persistence::in_memory::InMemoryRepository, portfolio_type::default_portfolio::MetaPortfolio, risk_manager::default_risk_manager::DefaultRisk, OrderEvent, OrderType
+        allocator::default_allocator::DefaultAllocator, persistence::in_memory::InMemoryRepository,
+        portfolio_type::default_portfolio::MetaPortfolio,
+        risk_manager::default_risk_manager::DefaultRisk, OrderEvent, OrderType,
     },
     statistic::summary::{
         trading::{Config as StatisticConfig, TradingSummary},
@@ -69,7 +71,8 @@ pub async fn main() {
     // };
 
     // Test Binance Execution
-    // let binance_exe = BinanceExecution::init().await.unwrap();
+    let binance_exe = BinanceExecution::init().await.unwrap();
+    let res = binance_exe.get_balance_all().await;
     // let res = binance_exe
     //     .wallet_transfer(
     //         "USDT".to_string(),
@@ -83,7 +86,7 @@ pub async fn main() {
     //     .cancel_order("YTirLsT3mwmdxDED6HBH5c".to_string(), "OPUSDT".to_string())
     //     .await;
     // // binance_exe.cancel_order_all("OPUSDT".to_string()).await;
-    // println!("{:#?}", res);
+    println!("{:#?}", res);
     // binance_exe.receive_responses().await;
 
     ////////////////////////////////////////////////////
@@ -329,6 +332,8 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
+// - de balance reposne for binance
+// - get balanc for poloniex
 // - make execution arena
 // - userdata stream for client execution auto reconnect
 // - standarise order types ie. limit, market etc

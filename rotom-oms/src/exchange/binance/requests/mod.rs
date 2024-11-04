@@ -1,3 +1,4 @@
+pub mod balance;
 pub mod cancel_order;
 pub mod listening_key;
 pub mod new_order;
