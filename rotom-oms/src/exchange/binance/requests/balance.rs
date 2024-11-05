@@ -114,28 +114,39 @@ impl BinanceBalanceBuilder {
 // Binance Balance - Response
 /*----- */
 #[derive(Debug, Default, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct BinanceBalanceResponse {
-    pub maker_commission: f64,
-    pub taker_commission: f64,
-    pub buyer_commission: f64,
-    pub seller_commission: f64,
-    pub commission_rates: BinanceBalanceResponseCommisionData,
-    pub can_trade: bool,
-    pub can_withdraw: bool,
-    pub can_deposit: bool,
-    pub brokered: bool,
-    pub require_self_trade_prevention: bool,
-    pub prevent_sor: bool,
-    pub update_time: u64,
+    #[serde(alias = "accountType")]
     pub account_type: String,
     pub balances: Vec<BinanceBalanceResponseData>,
-    pub permission: Vec<String>,
-    pub uuid: u64,
+    pub brokered: bool,
+    #[serde(alias = "buyerCommission")]
+    pub buyer_commission: f64,
+    #[serde(alias = "canDeposit")]
+    pub can_deposit: bool,
+    #[serde(alias = "canTrade")]
+    pub can_trade: bool,
+    #[serde(alias = "canWithdraw")]
+    pub can_withdraw: bool,
+    #[serde(alias = "commissionRates")]
+    pub commission_rates: BinanceBalanceCommisionRates,
+    #[serde(alias = "makerCommission")]
+    pub maker_commission: u64,
+    pub permissions: Vec<String>,
+    #[serde(alias = "preventSor")]
+    pub prevent_sor: bool,
+    #[serde(alias = "requireSelfTradePrevention")]
+    pub require_self_trade_prevention: bool,
+    #[serde(alias = "sellerCommission")]
+    pub seller_commission: u64,
+    #[serde(alias = "takerCommission")]
+    pub taker_commission: u64,
+    pub uid: u64,
+    #[serde(alias = "updateTime")]
+    pub update_time: u64,
 }
 
 #[derive(Debug, Default, Deserialize)]
-pub struct BinanceBalanceResponseCommisionData {
+pub struct BinanceBalanceCommisionRates {
     #[serde(deserialize_with = "de_str")]
     pub maker: f64,
     #[serde(deserialize_with = "de_str")]
@@ -150,7 +161,7 @@ pub struct BinanceBalanceResponseCommisionData {
 pub struct BinanceBalanceResponseData {
     pub asset: String,
     #[serde(deserialize_with = "de_str")]
-    pub fee: f64,
+    pub free: f64,
     #[serde(deserialize_with = "de_str")]
     pub locked: f64,
 }
