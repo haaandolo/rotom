@@ -57,22 +57,22 @@ pub async fn main() {
     /*----- */
     ////////////////////////////////////////////////////
     // Order
-    // let mut order = OrderEvent {
-    //     time: Utc::now(),
-    //     exchange: ExchangeId::PoloniexSpot,
-    //     instrument: Instrument::new("op", "usdt"),
-    //     market_meta: MarketMeta {
-    //         time: Utc::now(),
-    //         close: 1.0,
-    //     },
-    //     decision: Decision::Long,
-    //     quantity: 5.0,
-    //     order_type: OrderType::Limit,
-    // };
+    let mut order = OrderEvent {
+        time: Utc::now(),
+        exchange: ExchangeId::PoloniexSpot,
+        instrument: Instrument::new("op", "usdt"),
+        market_meta: MarketMeta {
+            time: Utc::now(),
+            close: 1.0,
+        },
+        decision: Decision::Long,
+        quantity: 5.0,
+        order_type: OrderType::Limit,
+    };
 
     // Test Binance Execution
-    let binance_exe = BinanceExecution::init().await.unwrap();
-    let res = binance_exe.get_balance_all().await;
+    // let binance_exe = BinanceExecution::init().await.unwrap();
+    // let res = binance_exe.get_balance_all().await;
     // let res = binance_exe
     //     .wallet_transfer(
     //         "USDT".to_string(),
@@ -85,13 +85,14 @@ pub async fn main() {
     // let res = binance_exe
     //     .cancel_order("YTirLsT3mwmdxDED6HBH5c".to_string(), "OPUSDT".to_string())
     //     .await;
-    // // binance_exe.cancel_order_all("OPUSDT".to_string()).await;
-    println!("{:#?}", res);
+    // binance_exe.cancel_order_all("OPUSDT".to_string()).await;
+    // println!("{:#?}", res);
     // binance_exe.receive_responses().await;
 
     ////////////////////////////////////////////////////
     // Test Poloniex Execution
-    // let polo_exe = PoloniexExecution::init().await.unwrap();
+    let polo_exe = PoloniexExecution::init().await.unwrap();
+    let res = polo_exe.get_balance_all().await;
     // let res = polo_exe.open_order(order.clone()).await;
 
     // order.market_meta.close = 0.90;
@@ -99,7 +100,7 @@ pub async fn main() {
 
     // let res = polo_exe
     //     .cancel_order(
-    //         "b604b645-0a6b-4afb-9c4c-955186583c06".to_string(),
+    //         "b05590c2-be74-469b-955d-19d1b5cc8afd".to_string(),
     //         "None".to_string(),
     //     )
     //     .await;
@@ -114,7 +115,7 @@ pub async fn main() {
     //     Some("TRX".to_string()),
     //     5.0
     // ).await;
-    // println!("---> {:#?}", res);
+    println!("---> {:#?}", res);
 
     ////////////////////////////////////////////////
     /*----- */
@@ -332,12 +333,13 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - de balance reposne for binance
+// - change poloniex request builder to take request body as an optional param
 // - get balanc for poloniex
 // - make execution arena
 // - userdata stream for client execution auto reconnect
 // - standarise order types ie. limit, market etc
 // - rm todos
+// - mv binance auth to http client
 // - impl other user related data methods for execution client
 // - change level size to quantity (name change)
 // - change r#type to enum instead of string

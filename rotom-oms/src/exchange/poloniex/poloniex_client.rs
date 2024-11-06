@@ -21,6 +21,7 @@ use crate::{
 use super::{
     request_builder::PoloniexRequestBuilder,
     requests::{
+        balance::{PoloniexBalance, PoloniexBalanceResponse},
         cancel_order::{PoloniexCancelAllOrder, PoloniexCancelOrder, PoloniexCancelOrderResponse},
         new_order::{PoloniexNewOrder, PoloniexNewOrderResponse},
         wallet_transfer::{PoloniexWalletTransfer, PoloniexWalletTransferResponse},
@@ -49,7 +50,7 @@ impl ExecutionClient2 for PoloniexExecution {
     type CancelAllResponse = Vec<PoloniexCancelOrderResponse>;
     type NewOrderResponse = PoloniexNewOrderResponse;
     type WalletTransferResponse = PoloniexWalletTransferResponse;
-    type BalanceResponse = serde_json::Value;
+    type BalanceResponse = Vec<PoloniexBalanceResponse>;
 
     #[inline]
     async fn init() -> Result<Self, SocketError>
@@ -170,6 +171,7 @@ impl ExecutionClient2 for PoloniexExecution {
 
     #[inline]
     async fn get_balance_all(&self) -> Result<Self::BalanceResponse, SocketError> {
-        unimplemented!()
+        let response = self.http_client.execute(PoloniexBalance).await?;
+        Ok(response.0)
     }
 }

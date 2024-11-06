@@ -14,11 +14,15 @@ use crate::exchange::{binance::request_builder::BinanceAuthParams, errors::Reque
 /*----- */
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct BinanceBalance {
-    #[serde(rename(serialize = "omitZeroBalances"))]
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename(serialize = "omitZeroBalances"),
+        skip_serializing_if = "Option::is_none"
+    )]
     pub omit_zero_balances: Option<bool>,
-    #[serde(rename(serialize = "recWindow"))]
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename(serialize = "recWindow"),
+        skip_serializing_if = "Option::is_none"
+    )]
     pub rec_window: Option<u64>, // value cannot be > 60_000
     pub signature: Option<String>,
     pub timestamp: i64,
