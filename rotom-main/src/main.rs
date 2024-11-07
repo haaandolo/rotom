@@ -71,8 +71,8 @@ pub async fn main() {
     };
 
     // Test Binance Execution
-    // let binance_exe = BinanceExecution::init().await.unwrap();
-    // let res = binance_exe.get_balance_all().await;
+    let binance_exe = BinanceExecution::init().await.unwrap();
+    let res = binance_exe.get_balance_all().await;
     // let res = binance_exe
     //     .wallet_transfer(
     //         "USDT".to_string(),
@@ -86,13 +86,13 @@ pub async fn main() {
     //     .cancel_order("YTirLsT3mwmdxDED6HBH5c".to_string(), "OPUSDT".to_string())
     //     .await;
     // binance_exe.cancel_order_all("OPUSDT".to_string()).await;
-    // println!("{:#?}", res);
+    println!("{:#?}", res);
     // binance_exe.receive_responses().await;
 
     ////////////////////////////////////////////////////
     // Test Poloniex Execution
-    let polo_exe = PoloniexExecution::init().await.unwrap();
-    let res = polo_exe.get_balance_all().await;
+    // let polo_exe = PoloniexExecution::init().await.unwrap();
+    // let res = polo_exe.get_balance_all().await;
     // let res = polo_exe.open_order(order.clone()).await;
 
     // order.market_meta.close = 0.90;
@@ -115,7 +115,7 @@ pub async fn main() {
     //     Some("TRX".to_string()),
     //     5.0
     // ).await;
-    println!("---> {:#?}", res);
+    // println!("---> {:#?}", res);
 
     ////////////////////////////////////////////////
     /*----- */
@@ -333,8 +333,7 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - change poloniex request builder to take request body as an optional param
-// - get balanc for poloniex
+// - find general balance sturct and impl from trade for each exchange
 // - make execution arena
 // - userdata stream for client execution auto reconnect
 // - standarise order types ie. limit, market etc
