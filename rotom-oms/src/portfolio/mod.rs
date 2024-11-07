@@ -148,6 +148,18 @@ impl OrderEventBuilder {
 /*----- */
 pub type BalanceId = String;
 
+#[derive(Clone, PartialEq, PartialOrd, Debug, Serialize, Deserialize)]
+pub struct AssetBalance {
+    pub asset: String,
+    pub balance: Balance
+}
+
+impl AssetBalance {
+    pub fn new(asset: String, balance: Balance) -> Self {
+       Self { asset, balance } 
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, PartialOrd, Debug, Serialize, Deserialize)]
 pub struct Balance {
     pub time: DateTime<Utc>,

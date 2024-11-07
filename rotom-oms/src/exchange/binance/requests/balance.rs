@@ -7,7 +7,10 @@ use rotom_data::{
     shared::de::de_str,
 };
 
-use crate::exchange::{binance::request_builder::BinanceAuthParams, errors::RequestBuildError};
+use crate::{
+    exchange::{binance::request_builder::BinanceAuthParams, errors::RequestBuildError},
+    portfolio::{AssetBalance, Balance},
+};
 
 /*----- */
 // Binance Balance
@@ -168,4 +171,30 @@ pub struct BinanceBalanceResponseData {
     pub free: f64,
     #[serde(deserialize_with = "de_str")]
     pub locked: f64,
+}
+
+/*----- */
+// Impl balance from trait
+/*----- */
+impl From<BinanceBalanceResponseData> for Balance {
+    fn from(balance: BinanceBalanceResponseData) -> Self {
+        Self {
+            time: Utc::now(),
+            total: 0.0,
+            available: balance.free,
+        }
+    }
+}
+
+impl From<BinanceBalanceResponse> for Vec<AssetBalance> {
+    fn from(bin_balance: BinanceBalanceResponse) -> Self {
+        bin_balance
+            .balances
+            .into_iter()
+            .map(|mut balance| AssetBalance {
+                asset: std::mem::take(&mut balance.asset),
+                balance: Balance::from(balance),
+            })
+            .collect()
+    }
 }

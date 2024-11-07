@@ -50,7 +50,7 @@ impl ExecutionClient2 for PoloniexExecution {
     type CancelAllResponse = Vec<PoloniexCancelOrderResponse>;
     type NewOrderResponse = PoloniexNewOrderResponse;
     type WalletTransferResponse = PoloniexWalletTransferResponse;
-    type BalanceResponse = Vec<PoloniexBalanceResponse>;
+    type BalanceResponse = PoloniexBalanceResponse;
 
     #[inline]
     async fn init() -> Result<Self, SocketError>
