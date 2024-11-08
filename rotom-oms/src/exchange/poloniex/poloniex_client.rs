@@ -46,6 +46,9 @@ pub struct PoloniexExecution {
 #[async_trait]
 impl ExecutionClient2 for PoloniexExecution {
     const CLIENT: ExecutionId = ExecutionId::Poloniex;
+    const USERDATA_WS_URL: &'static str = "https://api.poloniex.com";
+    const BASE_URL: &'static str = "wss://ws.poloniex.com/ws/private";
+
     type CancelResponse = Vec<PoloniexCancelOrderResponse>;
     type CancelAllResponse = Vec<PoloniexCancelOrderResponse>;
     type NewOrderResponse = PoloniexNewOrderResponse;

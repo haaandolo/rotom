@@ -5,7 +5,7 @@ members = [
     "rotom-data",
     "rotom-strategy",
     "rotom-oms"
-]
+, "rotom-common"]
 
 [workspace.dependencies]
 # Async

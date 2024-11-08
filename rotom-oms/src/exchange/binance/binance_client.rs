@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use futures::StreamExt;
 use rotom_data::error::SocketError;
 use rotom_data::protocols::http::client::RestClient;
+use rotom_data::protocols::http::client2::RestClient2;
 use rotom_data::protocols::http::http_parser::StandardHttpParser;
 use rotom_data::protocols::ws::connect;
 use rotom_data::protocols::ws::ws_parser::StreamParser;
@@ -29,7 +30,8 @@ use super::requests::wallet_transfer::BinanceWalletTransferResponse;
 // Convinent types
 /*----- */
 type BinanceRestClient = RestClient<StandardHttpParser, BinanceRequestBuilder>;
-const BINANCE_BASE_URL: &str = "https://api.binance.com";
+// type BinanceRestClient2 = RestClient2<BINANCE_BASE_URL, StandardHttpParser, BinanceRequestBuilder>;
+pub const BINANCE_BASE_URL: &str = "https://api.binance.com";
 const BINANCE_USER_DATA_WS: &str = "wss://stream.binance.com:9443/ws/";
 
 #[derive(Debug)]
@@ -41,6 +43,9 @@ pub struct BinanceExecution {
 #[async_trait]
 impl ExecutionClient2 for BinanceExecution {
     const CLIENT: ExecutionId = ExecutionId::Binance;
+    const USERDATA_WS_URL: &'static str = "https://api.binance.com";
+    const BASE_URL: &'static str = "wss://stream.binance.com:9443/ws/";
+
     type CancelResponse = BinanceCancelOrderResponse;
     type CancelAllResponse = Vec<BinanceCancelOrderResponse>;
     type NewOrderResponse = BinanceNewOrderResponses;

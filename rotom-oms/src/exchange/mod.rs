@@ -21,6 +21,9 @@ type HmacSha256 = Hmac<Sha256>;
 #[async_trait]
 pub trait ExecutionClient2 {
     const CLIENT: ExecutionId;
+    const USERDATA_WS_URL: &'static str;
+    const BASE_URL: &'static str;
+
     type CancelResponse;
     type CancelAllResponse;
     type NewOrderResponse;
@@ -64,7 +67,7 @@ pub trait ExecutionClient2 {
         network: Option<String>,
         amount: f64,
     ) -> Result<Self::WalletTransferResponse, SocketError>;
-    
+
     // Get balances for a given exchange
     async fn get_balance_all(&self) -> Result<Self::BalanceResponse, SocketError>;
 }
