@@ -1,14 +1,15 @@
 pub mod error;
 pub mod in_memory;
+pub mod in_memory2;
 pub mod redis;
 
-use error::RepositoryError;
-use rotom_data::{Market, MarketId};
-use uuid::Uuid;
 use super::{
     position::{Position, PositionId},
     Balance,
 };
+use error::RepositoryError;
+use rotom_data::{Market, MarketId};
+use uuid::Uuid;
 
 /*----- */
 // Position Handler
@@ -60,10 +61,7 @@ pub trait StatisticHandler<Statistic> {
         statistics: Statistic,
     ) -> Result<(), RepositoryError>;
 
-    fn get_statistics(
-        &mut self,
-        market_id: &MarketId,
-    ) -> Result<Statistic, RepositoryError>;
+    fn get_statistics(&mut self, market_id: &MarketId) -> Result<Statistic, RepositoryError>;
 }
 
 /*----- */

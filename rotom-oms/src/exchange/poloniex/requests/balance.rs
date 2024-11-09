@@ -2,8 +2,10 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
-use rotom_data::protocols::http::rest_request::RestRequest;
 use rotom_data::shared::de::de_str;
+use rotom_data::{
+    protocols::http::rest_request::RestRequest, shared::subscription_models::ExchangeId,
+};
 
 use crate::portfolio::{AssetBalance, Balance};
 
@@ -73,6 +75,7 @@ impl From<PoloniexBalanceResponse> for Vec<AssetBalance> {
             for mut sub_balance in polo_balance.balances.into_iter() {
                 asset_balances.push(AssetBalance {
                     asset: std::mem::take(&mut sub_balance.currency),
+                    exchange: ExchangeId::PoloniexSpot,
                     balance: Balance::from(sub_balance),
                 })
             }

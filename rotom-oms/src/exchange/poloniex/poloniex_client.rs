@@ -46,14 +46,11 @@ pub struct PoloniexExecution {
 #[async_trait]
 impl ExecutionClient2 for PoloniexExecution {
     const CLIENT: ExecutionId = ExecutionId::Poloniex;
-    const USERDATA_WS_URL: &'static str = "https://api.poloniex.com";
-    const BASE_URL: &'static str = "wss://ws.poloniex.com/ws/private";
 
     type CancelResponse = Vec<PoloniexCancelOrderResponse>;
     type CancelAllResponse = Vec<PoloniexCancelOrderResponse>;
     type NewOrderResponse = PoloniexNewOrderResponse;
     type WalletTransferResponse = PoloniexWalletTransferResponse;
-    type BalanceResponse = PoloniexBalanceResponse;
 
     #[inline]
     async fn init() -> Result<Self, SocketError>
@@ -171,9 +168,34 @@ impl ExecutionClient2 for PoloniexExecution {
             .await?;
         Ok(response.0)
     }
+}
+
+/*----- */
+// Poloniex Private Data
+/*----- */
+#[derive(Debug)]
+pub struct PoloniexPrivateData {
+    pub http_client: PoloniexRestClient,
+}
+
+impl Default for PoloniexPrivateData {
+    fn default() -> Self {
+        PoloniexPrivateData::new()
+    }
+}
+
+impl PoloniexPrivateData {
+    pub fn new() -> Self {
+        let http_client = RestClient::new(
+            POLONIEX_BASE_URL,
+            StandardHttpParser,
+            PoloniexRequestBuilder,
+        );
+        Self { http_client }
+    }
 
     #[inline]
-    async fn get_balance_all(&self) -> Result<Self::BalanceResponse, SocketError> {
+    pub async fn get_balance_all(&self) -> Result<PoloniexBalanceResponse, SocketError> {
         let response = self.http_client.execute(PoloniexBalance).await?;
         Ok(response.0)
     }

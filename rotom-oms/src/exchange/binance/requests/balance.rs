@@ -4,7 +4,7 @@ use std::borrow::Cow;
 
 use rotom_data::{
     protocols::http::{request_builder::Authenticator, rest_request::RestRequest},
-    shared::de::de_str,
+    shared::{de::de_str, subscription_models::ExchangeId},
 };
 
 use crate::{
@@ -193,6 +193,7 @@ impl From<BinanceBalanceResponse> for Vec<AssetBalance> {
             .into_iter()
             .map(|mut balance| AssetBalance {
                 asset: std::mem::take(&mut balance.asset),
+                exchange: ExchangeId::BinanceSpot,
                 balance: Balance::from(balance),
             })
             .collect()

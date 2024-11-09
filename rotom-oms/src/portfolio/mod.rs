@@ -148,15 +148,32 @@ impl OrderEventBuilder {
 /*----- */
 pub type BalanceId = String;
 
+#[derive(Debug, Eq, PartialEq, Hash)]
+pub struct BalanceId2(pub String);
+
 #[derive(Clone, PartialEq, PartialOrd, Debug, Serialize, Deserialize)]
 pub struct AssetBalance {
     pub asset: String,
-    pub balance: Balance
+    pub exchange: ExchangeId,
+    pub balance: Balance,
 }
 
 impl AssetBalance {
-    pub fn new(asset: String, balance: Balance) -> Self {
-       Self { asset, balance } 
+    pub fn new(asset: String, exchange: ExchangeId, balance: Balance) -> Self {
+        Self {
+            asset,
+            exchange,
+            balance,
+        }
+    }
+}
+
+impl From<&AssetBalance> for BalanceId2 {
+    fn from(asset_balance: &AssetBalance) -> Self {
+        BalanceId2(format!(
+            "{}_{}",
+            asset_balance.asset, asset_balance.exchange
+        ))
     }
 }
 

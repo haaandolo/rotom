@@ -23,9 +23,11 @@ use rotom_oms::{
         Fees,
     },
     portfolio::{
-        allocator::default_allocator::DefaultAllocator, persistence::in_memory::InMemoryRepository,
-        portfolio_type::default_portfolio::MetaPortfolio,
-        risk_manager::default_risk_manager::DefaultRisk, AssetBalance, OrderEvent, OrderType,
+        allocator::default_allocator::DefaultAllocator,
+        persistence::{in_memory::InMemoryRepository, in_memory2::InMemoryRepository2},
+        portfolio_type::{arb_portfolio::ArbPortfolio, default_portfolio::MetaPortfolio},
+        risk_manager::default_risk_manager::DefaultRisk,
+        AssetBalance, OrderEvent, OrderType,
     },
     statistic::summary::{
         trading::{Config as StatisticConfig, TradingSummary},
@@ -56,19 +58,30 @@ pub async fn main() {
     // Testing
     /*----- */
     ////////////////////////////////////////////////////
+    // Portfolio
+    let arb_portfolio = ArbPortfolio::new(
+        vec![ExchangeId::BinanceSpot, ExchangeId::PoloniexSpot],
+        InMemoryRepository2::default(),
+    )
+    .init()
+    .await;
+
+    println!("{:#?}", arb_portfolio);
+
+    ////////////////////////////////////////////////////
     // Order
-    let mut order = OrderEvent {
-        time: Utc::now(),
-        exchange: ExchangeId::PoloniexSpot,
-        instrument: Instrument::new("op", "usdt"),
-        market_meta: MarketMeta {
-            time: Utc::now(),
-            close: 1.0,
-        },
-        decision: Decision::Long,
-        quantity: 5.0,
-        order_type: OrderType::Limit,
-    };
+    // let mut order = OrderEvent {
+    //     time: Utc::now(),
+    //     exchange: ExchangeId::PoloniexSpot,
+    //     instrument: Instrument::new("op", "usdt"),
+    //     market_meta: MarketMeta {
+    //         time: Utc::now(),
+    //         close: 1.0,
+    //     },
+    //     decision: Decision::Long,
+    //     quantity: 5.0,
+    //     order_type: OrderType::Limit,
+    // };
 
     // Test Binance Execution
     // let binance_exe = BinanceExecution::init().await.unwrap();
@@ -92,9 +105,7 @@ pub async fn main() {
 
     ////////////////////////////////////////////////////
     // Test Poloniex Execution
-    let polo_exe = PoloniexExecution::init().await.unwrap();
-    let res = polo_exe.get_balance_all().await;
-    let res: Vec<AssetBalance> = res.unwrap().into();
+    // let polo_exe = PoloniexExecution::init().await.unwrap();
     // let res = polo_exe.open_order(order.clone()).await;
 
     // order.market_meta.close = 0.90;
@@ -117,70 +128,90 @@ pub async fn main() {
     //     Some("TRX".to_string()),
     //     5.0
     // ).await;
-    println!("---> {:#?}", res);
+    // println!("---> {:#?}", res);
 
     ////////////////////////////////////////////////
-    /*----- */
-    // Trader builder
-    /*----- */
-    // // Testing
-    // let res = reqwest::get("https://api.binance.us/api/v3/depth?symbol=LTCBTC")
-    //     .await
-    //     .unwrap()
-    //     .text()
-    //     .await
-    //     .unwrap();
+    // //>>> UNCOMMENT FORM HERE ALL THE WAY DOWN <<<
+    // /*----- */
+    // // Trader builder
+    // /*----- */
+    // // // Testing
+    // // let res = reqwest::get("https://api.binance.us/api/v3/depth?symbol=LTCBTC")
+    // //     .await
+    // //     .unwrap()
+    // //     .text()
+    // //     .await
+    // //     .unwrap();
 
-    // println!("{:#?}", res);
+    // // println!("{:#?}", res);
 
-    // Engine id
-    let engine_id = Uuid::new_v4();
+    // // Engine id
+    // let engine_id = Uuid::new_v4();
 
-    // Market
-    let markets = vec![
-        Market::new(ExchangeId::BinanceSpot, Instrument::new("op", "usdt")),
-        Market::new(ExchangeId::PoloniexSpot, Instrument::new("op", "usdt")),
-    ];
+    // // Market
+    // let markets = vec![
+    //     Market::new(ExchangeId::BinanceSpot, Instrument::new("op", "usdt")),
+    //     Market::new(ExchangeId::PoloniexSpot, Instrument::new("op", "usdt")),
+    // ];
 
-    // Channels
-    // Create channel to distribute Commands to the Engine & it's Traders (eg/ Command::Terminate)
-    let (_command_tx, command_rx) = mpsc::channel(20);
+    // // Channels
+    // // Create channel to distribute Commands to the Engine & it's Traders (eg/ Command::Terminate)
+    // let (_command_tx, command_rx) = mpsc::channel(20);
 
-    // Create channel for each Trader so the Engine can distribute Commands to it
-    let (trader_command_tx, trader_command_rx) = mpsc::channel(10);
+    // // Create channel for each Trader so the Engine can distribute Commands to it
+    // let (trader_command_tx, trader_command_rx) = mpsc::channel(10);
 
-    // Create Event channel to listen to all Engine Events in real-time
-    let (event_tx, event_rx) = mpsc::unbounded_channel();
-    let event_tx = EventTx::new(event_tx);
+    // // Create Event channel to listen to all Engine Events in real-time
+    // let (event_tx, event_rx) = mpsc::unbounded_channel();
+    // let event_tx = EventTx::new(event_tx);
 
-    // Portfolio
-    let portfolio = Arc::new(Mutex::new(
-        MetaPortfolio::builder()
-            .engine_id(engine_id)
-            .markets(markets.clone())
-            .starting_cash(10000.0)
-            .repository(InMemoryRepository::<TradingSummary>::new())
-            .allocation_manager(DefaultAllocator {
-                default_order_value: 100.0,
-            })
-            .risk_manager(DefaultRisk {})
-            .statistic_config(StatisticConfig {
-                starting_equity: 10_000.0,
-                trading_days_per_year: 365,
-                risk_free_return: 0.0,
-            })
-            .build_init()
-            .unwrap(),
-    ));
+    // // Portfolio
+    // let portfolio = Arc::new(Mutex::new(
+    //     MetaPortfolio::builder()
+    //         .engine_id(engine_id)
+    //         .markets(markets.clone())
+    //         .starting_cash(10000.0)
+    //         .repository(InMemoryRepository::<TradingSummary>::new())
+    //         .allocation_manager(DefaultAllocator {
+    //             default_order_value: 100.0,
+    //         })
+    //         .risk_manager(DefaultRisk {})
+    //         .statistic_config(StatisticConfig {
+    //             starting_equity: 10_000.0,
+    //             trading_days_per_year: 365,
+    //             risk_free_return: 0.0,
+    //         })
+    //         .build_init()
+    //         .unwrap(),
+    // ));
 
-    // Build traders
-    // let single_market_trader = SingleMarketTrader::builder()
+    // // Build traders
+    // // let single_market_trader = SingleMarketTrader::builder()
+    // //     .engine_id(engine_id)
+    // //     .market(markets[0].clone())
+    // //     .command_rx(trader_command_rx)
+    // //     .event_tx(event_tx.clone())
+    // //     .portfolio(Arc::clone(&portfolio))
+    // //     .data(live::MarketFeed::new(stream_trades().await))
+    // //     .strategy(SpreadStategy::new())
+    // //     .execution(SimulatedExecution::new(Config {
+    // //         simulated_fees_pct: Fees {
+    // //             exchange: 0.01,
+    // //             slippage: 0.05,
+    // //             network: 0.0,
+    // //         },
+    // //     }))
+    // //     .build()
+    // //     .unwrap();
+    // // let single_traders = vec![single_market_trader];
+
+    // let arb_trader = ArbTrader::builder()
     //     .engine_id(engine_id)
-    //     .market(markets[0].clone())
+    //     .market(markets.clone())
     //     .command_rx(trader_command_rx)
-    //     .event_tx(event_tx.clone())
+    //     .event_tx(event_tx)
     //     .portfolio(Arc::clone(&portfolio))
-    //     .data(live::MarketFeed::new(stream_trades().await))
+    //     .data(MarketFeed::new(stream_trades().await))
     //     .strategy(SpreadStategy::new())
     //     .execution(SimulatedExecution::new(Config {
     //         simulated_fees_pct: Fees {
@@ -191,51 +222,32 @@ pub async fn main() {
     //     }))
     //     .build()
     //     .unwrap();
-    // let single_traders = vec![single_market_trader];
+    // let arb_traders = vec![arb_trader];
 
-    let arb_trader = ArbTrader::builder()
-        .engine_id(engine_id)
-        .market(markets.clone())
-        .command_rx(trader_command_rx)
-        .event_tx(event_tx)
-        .portfolio(Arc::clone(&portfolio))
-        .data(MarketFeed::new(stream_trades().await))
-        .strategy(SpreadStategy::new())
-        .execution(SimulatedExecution::new(Config {
-            simulated_fees_pct: Fees {
-                exchange: 0.01,
-                slippage: 0.05,
-                network: 0.0,
-            },
-        }))
-        .build()
-        .unwrap();
-    let arb_traders = vec![arb_trader];
+    // // Build engine TODO: (check the commands are doing what it is supposed to)
+    // let trader_command_txs = markets
+    //     .into_iter()
+    //     .map(|market| (market, trader_command_tx.clone()))
+    //     .collect::<HashMap<_, _>>();
 
-    // Build engine TODO: (check the commands are doing what it is supposed to)
-    let trader_command_txs = markets
-        .into_iter()
-        .map(|market| (market, trader_command_tx.clone()))
-        .collect::<HashMap<_, _>>();
+    // let engine = Engine::builder()
+    //     .engine_id(engine_id)
+    //     .command_rx(command_rx)
+    //     .portfolio(portfolio)
+    //     .traders(arb_traders)
+    //     .trader_command_txs(trader_command_txs)
+    //     .statistics_summary(TradingSummary::init(StatisticConfig {
+    //         starting_equity: 1000.0,
+    //         trading_days_per_year: 365,
+    //         risk_free_return: 0.0,
+    //     }))
+    //     .build()
+    //     .expect("failed to build engine");
 
-    let engine = Engine::builder()
-        .engine_id(engine_id)
-        .command_rx(command_rx)
-        .portfolio(portfolio)
-        .traders(arb_traders)
-        .trader_command_txs(trader_command_txs)
-        .statistics_summary(TradingSummary::init(StatisticConfig {
-            starting_equity: 1000.0,
-            trading_days_per_year: 365,
-            risk_free_return: 0.0,
-        }))
-        .build()
-        .expect("failed to build engine");
+    // // Run Engine trading & listen to Events it produces
+    // tokio::spawn(listen_to_engine_events(event_rx));
 
-    // Run Engine trading & listen to Events it produces
-    tokio::spawn(listen_to_engine_events(event_rx));
-
-    let _ = tokio::time::timeout(ENGINE_RUN_TIMEOUT, engine.run()).await;
+    // let _ = tokio::time::timeout(ENGINE_RUN_TIMEOUT, engine.run()).await;
 }
 
 /*----- */

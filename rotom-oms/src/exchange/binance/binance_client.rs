@@ -2,7 +2,6 @@ use async_trait::async_trait;
 use futures::StreamExt;
 use rotom_data::error::SocketError;
 use rotom_data::protocols::http::client::RestClient;
-use rotom_data::protocols::http::client2::RestClient2;
 use rotom_data::protocols::http::http_parser::StandardHttpParser;
 use rotom_data::protocols::ws::connect;
 use rotom_data::protocols::ws::ws_parser::StreamParser;
@@ -43,14 +42,11 @@ pub struct BinanceExecution {
 #[async_trait]
 impl ExecutionClient2 for BinanceExecution {
     const CLIENT: ExecutionId = ExecutionId::Binance;
-    const USERDATA_WS_URL: &'static str = "https://api.binance.com";
-    const BASE_URL: &'static str = "wss://stream.binance.com:9443/ws/";
 
     type CancelResponse = BinanceCancelOrderResponse;
     type CancelAllResponse = Vec<BinanceCancelOrderResponse>;
     type NewOrderResponse = BinanceNewOrderResponses;
     type WalletTransferResponse = BinanceWalletTransferResponse;
-    type BalanceResponse = BinanceBalanceResponse;
 
     #[inline]
     async fn init() -> Result<Self, SocketError> {
@@ -128,16 +124,38 @@ impl ExecutionClient2 for BinanceExecution {
     }
 
     #[inline]
-    async fn get_balance_all(&self) -> Result<Self::BalanceResponse, SocketError> {
-        let response = self.http_client.execute(BinanceBalance::new()?).await?;
-        Ok(response.0)
-    }
-
-    #[inline]
     async fn receive_responses(mut self) {
         while let Some(msg) = self.user_data_ws.next().await {
             let msg_de = WebSocketParser::parse::<BinanceUserData>(msg);
             println!("{:#?}", msg_de);
         }
+    }
+}
+
+/*----- */
+// Binance Private Data
+/*----- */
+#[derive(Debug)]
+pub struct BinancePrivateData {
+    pub http_client: BinanceRestClient,
+}
+
+impl Default for BinancePrivateData {
+    fn default() -> Self {
+        BinancePrivateData::new()
+    }
+}
+
+impl BinancePrivateData {
+    pub fn new() -> Self {
+        let http_client =
+            RestClient::new(BINANCE_BASE_URL, StandardHttpParser, BinanceRequestBuilder);
+        Self { http_client }
+    }
+
+    #[inline]
+    pub async fn get_balance_all(&self) -> Result<BinanceBalanceResponse, SocketError> {
+        let response = self.http_client.execute(BinanceBalance::new()?).await?;
+        Ok(response.0)
     }
 }
