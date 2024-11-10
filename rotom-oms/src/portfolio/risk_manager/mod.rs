@@ -1,4 +1,5 @@
 pub mod default_risk_manager;
+pub mod spot_cross_exchange_arb_rm;
 
 use super::{OrderEvent, OrderType};
 

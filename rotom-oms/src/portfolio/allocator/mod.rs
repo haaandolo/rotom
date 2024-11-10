@@ -1,4 +1,5 @@
 pub mod default_allocator;
+pub mod spot_arb_allocator;
 
 use rotom_strategy::SignalStrength;
 

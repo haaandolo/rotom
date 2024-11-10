@@ -54,6 +54,20 @@ impl InMemoryRepository2 {
         Ok(())
     }
 
+    pub fn get_open_position_mut(
+        &mut self,
+        position_id: &PositionId,
+    ) -> Result<Option<&mut Position>, RepositoryError> {
+        Ok(self.open_positions.get_mut(position_id))
+    }
+
+    pub fn get_open_position(
+        &self,
+        position_id: &PositionId,
+    ) -> Result<Option<&Position>, RepositoryError> {
+        Ok(self.open_positions.get(position_id))
+    }
+
     pub fn get_open_positions<'a, Markets: Iterator<Item = &'a Market>>(
         &mut self,
         engine_id: Uuid,

@@ -9,7 +9,7 @@ use rotom_data::{
     Market, MarketFeed, MarketMeta,
 };
 use rotom_main::{
-    engine::Engine,
+    engine::{self, Engine},
     trader::{arb_trader::ArbTrader, single_trader::SingleMarketTrader},
 };
 use rotom_oms::{
@@ -23,7 +23,7 @@ use rotom_oms::{
         Fees,
     },
     portfolio::{
-        allocator::default_allocator::DefaultAllocator,
+        allocator::{default_allocator::DefaultAllocator, spot_arb_allocator::SpotArbAllocator},
         persistence::{in_memory::InMemoryRepository, in_memory2::InMemoryRepository2},
         portfolio_type::{arb_portfolio::ArbPortfolio, default_portfolio::MetaPortfolio},
         risk_manager::default_risk_manager::DefaultRisk,
@@ -57,16 +57,6 @@ pub async fn main() {
     /*----- */
     // Testing
     /*----- */
-    ////////////////////////////////////////////////////
-    // Portfolio
-    let arb_portfolio = ArbPortfolio::new(
-        vec![ExchangeId::BinanceSpot, ExchangeId::PoloniexSpot],
-        InMemoryRepository2::default(),
-    )
-    .init()
-    .await;
-
-    println!("{:#?}", arb_portfolio);
 
     ////////////////////////////////////////////////////
     // Order
@@ -131,87 +121,86 @@ pub async fn main() {
     // println!("---> {:#?}", res);
 
     ////////////////////////////////////////////////
-    // //>>> UNCOMMENT FORM HERE ALL THE WAY DOWN <<<
-    // /*----- */
-    // // Trader builder
-    // /*----- */
-    // // // Testing
-    // // let res = reqwest::get("https://api.binance.us/api/v3/depth?symbol=LTCBTC")
-    // //     .await
-    // //     .unwrap()
-    // //     .text()
-    // //     .await
-    // //     .unwrap();
+    //>>> UNCOMMENT FORM HERE ALL THE WAY DOWN <<<
+    /*----- */
+    // Trader builder
+    /*----- */
+    // // Testing
+    // let res = reqwest::get("https://api.binance.us/api/v3/depth?symbol=LTCBTC")
+    //     .await
+    //     .unwrap()
+    //     .text()
+    //     .await
+    //     .unwrap();
 
-    // // println!("{:#?}", res);
+    // println!("{:#?}", res);
 
-    // // Engine id
-    // let engine_id = Uuid::new_v4();
+    // Engine id
+    let engine_id = Uuid::new_v4();
 
-    // // Market
-    // let markets = vec![
-    //     Market::new(ExchangeId::BinanceSpot, Instrument::new("op", "usdt")),
-    //     Market::new(ExchangeId::PoloniexSpot, Instrument::new("op", "usdt")),
-    // ];
+    ////////////////////////////////////////////////////
+    // Portfolio
+    let arb_portfolio = Arc::new(Mutex::new(
+        ArbPortfolio::new(
+            engine_id,
+            vec![ExchangeId::BinanceSpot, ExchangeId::PoloniexSpot],
+            InMemoryRepository2::default(),
+            SpotArbAllocator,
 
-    // // Channels
-    // // Create channel to distribute Commands to the Engine & it's Traders (eg/ Command::Terminate)
-    // let (_command_tx, command_rx) = mpsc::channel(20);
+        )
+        .init()
+        .await
+        .unwrap(),
+    ));
 
-    // // Create channel for each Trader so the Engine can distribute Commands to it
-    // let (trader_command_tx, trader_command_rx) = mpsc::channel(10);
+    println!("{:#?}", arb_portfolio);
 
-    // // Create Event channel to listen to all Engine Events in real-time
-    // let (event_tx, event_rx) = mpsc::unbounded_channel();
-    // let event_tx = EventTx::new(event_tx);
+    ///////////////////////////////////////////////////
+    // Market
+    let markets = vec![
+        Market::new(ExchangeId::BinanceSpot, Instrument::new("op", "usdt")),
+        Market::new(ExchangeId::PoloniexSpot, Instrument::new("op", "usdt")),
+    ];
 
-    // // Portfolio
-    // let portfolio = Arc::new(Mutex::new(
-    //     MetaPortfolio::builder()
-    //         .engine_id(engine_id)
-    //         .markets(markets.clone())
-    //         .starting_cash(10000.0)
-    //         .repository(InMemoryRepository::<TradingSummary>::new())
-    //         .allocation_manager(DefaultAllocator {
-    //             default_order_value: 100.0,
-    //         })
-    //         .risk_manager(DefaultRisk {})
-    //         .statistic_config(StatisticConfig {
-    //             starting_equity: 10_000.0,
-    //             trading_days_per_year: 365,
-    //             risk_free_return: 0.0,
-    //         })
-    //         .build_init()
-    //         .unwrap(),
-    // ));
+    // Channels
+    // Create channel to distribute Commands to the Engine & it's Traders (eg/ Command::Terminate)
+    let (_command_tx, command_rx) = mpsc::channel(20);
 
-    // // Build traders
-    // // let single_market_trader = SingleMarketTrader::builder()
-    // //     .engine_id(engine_id)
-    // //     .market(markets[0].clone())
-    // //     .command_rx(trader_command_rx)
-    // //     .event_tx(event_tx.clone())
-    // //     .portfolio(Arc::clone(&portfolio))
-    // //     .data(live::MarketFeed::new(stream_trades().await))
-    // //     .strategy(SpreadStategy::new())
-    // //     .execution(SimulatedExecution::new(Config {
-    // //         simulated_fees_pct: Fees {
-    // //             exchange: 0.01,
-    // //             slippage: 0.05,
-    // //             network: 0.0,
-    // //         },
-    // //     }))
-    // //     .build()
-    // //     .unwrap();
-    // // let single_traders = vec![single_market_trader];
+    // Create channel for each Trader so the Engine can distribute Commands to it
+    let (trader_command_tx, trader_command_rx) = mpsc::channel(10);
 
-    // let arb_trader = ArbTrader::builder()
+    // Create Event channel to listen to all Engine Events in real-time
+    let (event_tx, event_rx) = mpsc::unbounded_channel();
+    let event_tx = EventTx::new(event_tx);
+
+    // Portfolio
+    let portfolio = Arc::new(Mutex::new(
+        MetaPortfolio::builder()
+            .engine_id(engine_id)
+            .markets(markets.clone())
+            .starting_cash(10000.0)
+            .repository(InMemoryRepository::<TradingSummary>::new())
+            .allocation_manager(DefaultAllocator {
+                default_order_value: 100.0,
+            })
+            .risk_manager(DefaultRisk {})
+            .statistic_config(StatisticConfig {
+                starting_equity: 10_000.0,
+                trading_days_per_year: 365,
+                risk_free_return: 0.0,
+            })
+            .build_init()
+            .unwrap(),
+    ));
+
+    // Build traders
+    // let single_market_trader = SingleMarketTrader::builder()
     //     .engine_id(engine_id)
-    //     .market(markets.clone())
+    //     .market(markets[0].clone())
     //     .command_rx(trader_command_rx)
-    //     .event_tx(event_tx)
+    //     .event_tx(event_tx.clone())
     //     .portfolio(Arc::clone(&portfolio))
-    //     .data(MarketFeed::new(stream_trades().await))
+    //     .data(live::MarketFeed::new(stream_trades().await))
     //     .strategy(SpreadStategy::new())
     //     .execution(SimulatedExecution::new(Config {
     //         simulated_fees_pct: Fees {
@@ -222,32 +211,52 @@ pub async fn main() {
     //     }))
     //     .build()
     //     .unwrap();
-    // let arb_traders = vec![arb_trader];
+    // let single_traders = vec![single_market_trader];
 
-    // // Build engine TODO: (check the commands are doing what it is supposed to)
-    // let trader_command_txs = markets
-    //     .into_iter()
-    //     .map(|market| (market, trader_command_tx.clone()))
-    //     .collect::<HashMap<_, _>>();
+    let arb_trader = ArbTrader::builder()
+        .engine_id(engine_id)
+        .market(markets.clone())
+        .command_rx(trader_command_rx)
+        .event_tx(event_tx)
+        // .portfolio(Arc::clone(&portfolio))
+        .portfolio(Arc::clone(&arb_portfolio))
+        .data(MarketFeed::new(stream_trades().await))
+        .strategy(SpreadStategy::new())
+        .execution(SimulatedExecution::new(Config {
+            simulated_fees_pct: Fees {
+                exchange: 0.01,
+                slippage: 0.05,
+                network: 0.0,
+            },
+        }))
+        .build()
+        .unwrap();
+    let arb_traders = vec![arb_trader];
 
-    // let engine = Engine::builder()
-    //     .engine_id(engine_id)
-    //     .command_rx(command_rx)
-    //     .portfolio(portfolio)
-    //     .traders(arb_traders)
-    //     .trader_command_txs(trader_command_txs)
-    //     .statistics_summary(TradingSummary::init(StatisticConfig {
-    //         starting_equity: 1000.0,
-    //         trading_days_per_year: 365,
-    //         risk_free_return: 0.0,
-    //     }))
-    //     .build()
-    //     .expect("failed to build engine");
+    // Build engine TODO: (check the commands are doing what it is supposed to)
+    let trader_command_txs = markets
+        .into_iter()
+        .map(|market| (market, trader_command_tx.clone()))
+        .collect::<HashMap<_, _>>();
 
-    // // Run Engine trading & listen to Events it produces
-    // tokio::spawn(listen_to_engine_events(event_rx));
+    let engine = Engine::builder()
+        .engine_id(engine_id)
+        .command_rx(command_rx)
+        .portfolio(portfolio)
+        .traders(arb_traders)
+        .trader_command_txs(trader_command_txs)
+        .statistics_summary(TradingSummary::init(StatisticConfig {
+            starting_equity: 1000.0,
+            trading_days_per_year: 365,
+            risk_free_return: 0.0,
+        }))
+        .build()
+        .expect("failed to build engine");
 
-    // let _ = tokio::time::timeout(ENGINE_RUN_TIMEOUT, engine.run()).await;
+    // Run Engine trading & listen to Events it produces
+    tokio::spawn(listen_to_engine_events(event_rx));
+
+    let _ = tokio::time::timeout(ENGINE_RUN_TIMEOUT, engine.run()).await;
 }
 
 /*----- */
@@ -347,7 +356,7 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - portfolio init() func
+// - update from fill <-- do
 // - make execution arena
 // - userdata stream for client execution auto reconnect
 // - standarise order types ie. limit, market etc

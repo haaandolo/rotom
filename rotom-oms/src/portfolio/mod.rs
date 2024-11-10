@@ -29,6 +29,12 @@ pub struct OrderEvent {
     pub order_type: OrderType,
 }
 
+impl OrderEvent {
+    pub fn get_dollar_value(&self) -> f64 {
+        self.market_meta.close * self.quantity
+    }
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub enum OrderType {
     Market,
@@ -151,6 +157,10 @@ pub type BalanceId = String;
 #[derive(Debug, Eq, PartialEq, Hash)]
 pub struct BalanceId2(pub String);
 
+pub fn determine_balance_id(quote_asset: &String, exchange: &ExchangeId) -> BalanceId2 {
+    BalanceId2(format!("{}_{}", quote_asset, exchange))
+}
+
 #[derive(Clone, PartialEq, PartialOrd, Debug, Serialize, Deserialize)]
 pub struct AssetBalance {
     pub asset: String,
@@ -170,10 +180,7 @@ impl AssetBalance {
 
 impl From<&AssetBalance> for BalanceId2 {
     fn from(asset_balance: &AssetBalance) -> Self {
-        BalanceId2(format!(
-            "{}_{}",
-            asset_balance.asset, asset_balance.exchange
-        ))
+        BalanceId2(format!("{}_{}", asset_balance.asset, asset_balance.exchange).to_lowercase())
     }
 }
 

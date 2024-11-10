@@ -49,7 +49,8 @@ where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
     Execution: ExecutionClient,
-    Portfolio: MarketUpdater + OrderGenerator + FillUpdater,
+    // Portfolio: MarketUpdater + OrderGenerator + FillUpdater, todo
+    Portfolio: MarketUpdater + OrderGenerator,
 {
     engine_id: Uuid,
     command_rx: mpsc::Receiver<Command>,
@@ -163,6 +164,8 @@ where
                 match event {
                     Event::Market(market_event) => {
                         if let Some(signal) = self.stategy.generate_signal(&market_event) {
+                            // println!("##############################");
+                            // println!("signal --> {:#?}", signal);
                             self.event_tx.send(Event::Signal(signal.clone()));
                             self.event_queue.push_back(Event::Signal(signal))
                         }
@@ -173,6 +176,8 @@ where
                             .update_from_market(&market_event)
                             .expect("Failed to update Portfolio from MarketEvent")
                         {
+                            // println!("##############################");
+                            // println!("position update --> {:#?}", position_update);
                             self.event_tx.send(Event::PositionUpdate(position_update));
                         }
                     }
@@ -183,27 +188,31 @@ where
                             .generate_order(&signal)
                             .expect("Failed to generate order")
                         {
+                            println!("##############################");
+                            println!("order --> {:#?}", order);
                             self.event_tx.send(Event::OrderNew(order.clone()));
                             self.event_queue.push_back(Event::OrderNew(order));
                         }
                     }
-                    Event::SignalForceExit(signal_force_exit) => {
-                        if let Some(order) = self
-                            .portfolio
-                            .lock()
-                            .generate_exit_order(signal_force_exit)
-                            .expect("Failed to generate forced exit order")
-                        {
-                            self.event_tx.send(Event::OrderNew(order.clone()));
-                            self.event_queue.push_back(Event::OrderNew(order));
-                        }
-                    }
+                    // Event::SignalForceExit(signal_force_exit) => {
+                    //     if let Some(order) = self
+                    //         .portfolio
+                    //         .lock()
+                    //         .generate_exit_order(signal_force_exit)
+                    //         .expect("Failed to generate forced exit order")
+                    //     {
+                    //         self.event_tx.send(Event::OrderNew(order.clone()));
+                    //         self.event_queue.push_back(Event::OrderNew(order));
+                    //     }
+                    // }
                     Event::OrderNew(order) => {
                         let fill = self
                             .execution
                             .generate_fill(&order)
                             .expect("Failed to generate");
 
+                        println!("##############################");
+                        println!("fill --> {:#?}", fill);
                         self.event_tx.send(Event::Fill(fill.clone()));
                         self.event_queue.push_back(Event::Fill(fill));
                     }
@@ -213,6 +222,9 @@ where
                             .lock()
                             .update_from_fill(&fill)
                             .expect("Failed to update Portfolio from fill");
+
+                        println!("##############################");
+                        println!("fill event --> {:#?}", fill_side_effect_events);
                         self.event_tx.send_many(fill_side_effect_events);
                     }
                     _ => {}
@@ -353,3 +365,407 @@ where
         })
     }
 }
+
+/*
+Standards:
+- key: asset_exchange in lowercase
+
+Mutex {
+    data: ArbPortfolio {
+        engine_id: 4f6e26ab-daab-496e-ad87-3496397011fd,
+        exchanges: [
+            BinanceSpot,
+            PoloniexSpot,
+        ],
+        repository: InMemoryRepository2 {
+            open_positions: {},
+            closed_positions: {},
+            current_balance: {
+                BalanceId2(
+                    "USDCE_binancespot",
+                ): Balance {
+                    time: 2024-11-10T02:07:27.375456Z,
+                    total: 0.0,
+                    available: 1.0,
+                },
+                BalanceId2(
+                    "USDT_poloniexspot",
+                ): Balance {
+                    time: 2024-11-10T02:07:27.647360Z,
+                    total: 0.0,
+                    available: 8.97234541632,
+                },
+                BalanceId2(
+                    "OP_poloniexspot",
+                ): Balance {
+                    time: 2024-11-10T02:07:27.647363Z,
+                    total: 0.0,
+                    available: 8.56e-5,
+                },
+                BalanceId2(
+                    "OP_binancespot",
+                ): Balance {
+                    time: 2024-11-10T02:07:27.375457Z,
+                    total: 0.0,
+                    available: 0.3115208,
+                },
+                BalanceId2(
+                    "USDT_binancespot",
+                ): Balance {
+                    time: 2024-11-10T02:07:27.375452Z,
+                    total: 0.0,
+                    available: 14.76940179,
+                },
+            },
+        },
+        allocator: DefaultAllocator {
+            default_order_value: 100.0,
+        },
+    },
+}
+##############################
+order --> OrderEvent {
+    time: 2024-11-10T02:07:30.650301Z,
+    exchange: PoloniexSpot,
+    instrument: Instrument {
+        base: "op",
+        quote: "usdt",
+    },
+    market_meta: MarketMeta {
+        close: 1.6298,
+        time: 2024-11-10T02:07:30.650275Z,
+    },
+    decision: Long,
+    quantity: 61.3572,
+    order_type: Limit,
+}
+##############################
+fill --> FillEvent {
+    time: 2024-11-10T02:07:30.650400Z,
+    exchange: PoloniexSpot,
+    instrument: Instrument {
+        base: "op",
+        quote: "usdt",
+    },
+    market_meta: MarketMeta {
+        close: 1.6298,
+        time: 2024-11-10T02:07:30.650275Z,
+    },
+    decision: Long,
+    quantity: 61.3572,
+    fill_value_gross: 99.99996456,
+    fees: Fees {
+        exchange: 0.9999996456,
+        slippage: 4.999998228,
+        network: 0.0,
+    },
+}
+>>>>> SELF.REPOSITORY <<<<<<
+InMemoryRepository2 {
+    open_positions: {
+        "4f6e26ab-daab-496e-ad87-3496397011fd_poloniexspot_opusdt": Position {
+            position_id: "4f6e26ab-daab-496e-ad87-3496397011fd_poloniexspot_opusdt",
+            meta: PositionMeta {
+                enter_time: 2024-11-10T02:07:30.650275Z,
+                update_time: 2024-11-10T02:07:30.650400Z,
+                exit_balance: None,
+            },
+            exchange: PoloniexSpot,
+            instrument: Instrument {
+                base: "op",
+                quote: "usdt",
+            },
+            side: Buy,
+            quantity: 61.3572,
+            enter_fees: Fees {
+                exchange: 0.9999996456,
+                slippage: 4.999998228,
+                network: 0.0,
+            },
+            enter_fees_total: 5.9999978736,
+            enter_avg_price_gross: 1.6298,
+            enter_value_gross: 99.99996456,
+            exit_fees: Fees {
+                exchange: 0.0,
+                slippage: 0.0,
+                network: 0.0,
+            },
+            exit_fees_total: 0.0,
+            exit_avg_price_gross: 0.0,
+            exit_value_gross: 0.0,
+            current_symbol_price: 1.6298,
+            current_value_gross: 99.99996456,
+            unrealised_profit_loss: -11.9999957472,
+            realised_profit_loss: 0.0,
+        },
+    },
+    closed_positions: {},
+    current_balance: {
+        BalanceId2(
+            "USDCE_binancespot",
+        ): Balance {
+            time: 2024-11-10T02:07:27.375456Z,
+            total: 0.0,
+            available: 1.0,
+        },
+        BalanceId2(
+            "USDT_poloniexspot",
+        ): Balance {
+            time: 2024-11-10T02:07:27.647360Z,
+            total: 0.0,
+            available: 8.97234541632,
+        },
+        BalanceId2(
+            "OP_poloniexspot",
+        ): Balance {
+            time: 2024-11-10T02:07:27.647363Z,
+            total: 0.0,
+            available: 8.56e-5,
+        },
+        BalanceId2(
+            "OP_binancespot",
+        ): Balance {
+            time: 2024-11-10T02:07:27.375457Z,
+            total: 0.0,
+            available: 0.3115208,
+        },
+        BalanceId2(
+            "USDT_binancespot",
+        ): Balance {
+            time: 2024-11-10T02:07:27.375452Z,
+            total: 0.0,
+            available: 14.76940179,
+        },
+    },
+}
+##############################
+fill event --> [
+    PositionNew(
+        Position {
+            position_id: "4f6e26ab-daab-496e-ad87-3496397011fd_poloniexspot_opusdt",
+            meta: PositionMeta {
+                enter_time: 2024-11-10T02:07:30.650275Z,
+                update_time: 2024-11-10T02:07:30.650400Z,
+                exit_balance: None,
+            },
+            exchange: PoloniexSpot,
+            instrument: Instrument {
+                base: "op",
+                quote: "usdt",
+            },
+            side: Buy,
+            quantity: 61.3572,
+            enter_fees: Fees {
+                exchange: 0.9999996456,
+                slippage: 4.999998228,
+                network: 0.0,
+            },
+            enter_fees_total: 5.9999978736,
+            enter_avg_price_gross: 1.6298,
+            enter_value_gross: 99.99996456,
+            exit_fees: Fees {
+                exchange: 0.0,
+                slippage: 0.0,
+                network: 0.0,
+            },
+            exit_fees_total: 0.0,
+            exit_avg_price_gross: 0.0,
+            exit_value_gross: 0.0,
+            current_symbol_price: 1.6298,
+            current_value_gross: 99.99996456,
+            unrealised_profit_loss: -11.9999957472,
+            realised_profit_loss: 0.0,
+        },
+    ),
+]
+##############################
+order --> OrderEvent {
+    time: 2024-11-10T02:07:31.042574Z,
+    exchange: BinanceSpot,
+    instrument: Instrument {
+        base: "op",
+        quote: "usdt",
+    },
+    market_meta: MarketMeta {
+        close: 1.629,
+        time: 2024-11-10T02:07:31.042549Z,
+    },
+    decision: Long,
+    quantity: 61.3873,
+    order_type: Limit,
+}
+##############################
+fill --> FillEvent {
+    time: 2024-11-10T02:07:31.042624Z,
+    exchange: BinanceSpot,
+    instrument: Instrument {
+        base: "op",
+        quote: "usdt",
+    },
+    market_meta: MarketMeta {
+        close: 1.629,
+        time: 2024-11-10T02:07:31.042549Z,
+    },
+    decision: Long,
+    quantity: 61.3873,
+    fill_value_gross: 99.99991170000001,
+    fees: Fees {
+        exchange: 0.9999991170000001,
+        slippage: 4.999995585000001,
+        network: 0.0,
+    },
+}
+>>>>> SELF.REPOSITORY <<<<<<
+InMemoryRepository2 {
+    open_positions: {
+        "4f6e26ab-daab-496e-ad87-3496397011fd_poloniexspot_opusdt": Position {
+            position_id: "4f6e26ab-daab-496e-ad87-3496397011fd_poloniexspot_opusdt",
+            meta: PositionMeta {
+                enter_time: 2024-11-10T02:07:30.650275Z,
+                update_time: 2024-11-10T02:07:31.040907Z,
+                exit_balance: None,
+            },
+            exchange: PoloniexSpot,
+            instrument: Instrument {
+                base: "op",
+                quote: "usdt",
+            },
+            side: Buy,
+            quantity: 61.3572,
+            enter_fees: Fees {
+                exchange: 0.9999996456,
+                slippage: 4.999998228,
+                network: 0.0,
+            },
+            enter_fees_total: 5.9999978736,
+            enter_avg_price_gross: 1.6298,
+            enter_value_gross: 99.99996456,
+            exit_fees: Fees {
+                exchange: 0.0,
+                slippage: 0.0,
+                network: 0.0,
+            },
+            exit_fees_total: 0.0,
+            exit_avg_price_gross: 0.0,
+            exit_value_gross: 0.0,
+            current_symbol_price: 1.6319224032397628,
+            current_value_gross: 100.13018928006277,
+            unrealised_profit_loss: -11.86977102713723,
+            realised_profit_loss: 0.0,
+        },
+        "4f6e26ab-daab-496e-ad87-3496397011fd_binancespot_opusdt": Position {
+            position_id: "4f6e26ab-daab-496e-ad87-3496397011fd_binancespot_opusdt",
+            meta: PositionMeta {
+                enter_time: 2024-11-10T02:07:31.042549Z,
+                update_time: 2024-11-10T02:07:31.042624Z,
+                exit_balance: None,
+            },
+            exchange: BinanceSpot,
+            instrument: Instrument {
+                base: "op",
+                quote: "usdt",
+            },
+            side: Buy,
+            quantity: 61.3873,
+            enter_fees: Fees {
+                exchange: 0.9999991170000001,
+                slippage: 4.999995585000001,
+                network: 0.0,
+            },
+            enter_fees_total: 5.999994702,
+            enter_avg_price_gross: 1.6290000000000002,
+            enter_value_gross: 99.99991170000001,
+            exit_fees: Fees {
+                exchange: 0.0,
+                slippage: 0.0,
+                network: 0.0,
+            },
+            exit_fees_total: 0.0,
+            exit_avg_price_gross: 0.0,
+            exit_value_gross: 0.0,
+            current_symbol_price: 1.6290000000000002,
+            current_value_gross: 99.99991170000001,
+            unrealised_profit_loss: -11.999989404,
+            realised_profit_loss: 0.0,
+        },
+    },
+    closed_positions: {},
+    current_balance: {
+        BalanceId2(
+            "USDCE_binancespot",
+        ): Balance {
+            time: 2024-11-10T02:07:27.375456Z,
+            total: 0.0,
+            available: 1.0,
+        },
+        BalanceId2(
+            "USDT_poloniexspot",
+        ): Balance {
+            time: 2024-11-10T02:07:27.647360Z,
+            total: 0.0,
+            available: 8.97234541632,
+        },
+        BalanceId2(
+            "OP_poloniexspot",
+        ): Balance {
+            time: 2024-11-10T02:07:27.647363Z,
+            total: 0.0,
+            available: 8.56e-5,
+        },
+        BalanceId2(
+            "OP_binancespot",
+        ): Balance {
+            time: 2024-11-10T02:07:27.375457Z,
+            total: 0.0,
+            available: 0.3115208,
+        },
+        BalanceId2(
+            "USDT_binancespot",
+        ): Balance {
+            time: 2024-11-10T02:07:27.375452Z,
+            total: 0.0,
+            available: 14.76940179,
+        },
+    },
+}
+##############################
+fill event --> [
+    PositionNew(
+        Position {
+            position_id: "4f6e26ab-daab-496e-ad87-3496397011fd_binancespot_opusdt",
+            meta: PositionMeta {
+                enter_time: 2024-11-10T02:07:31.042549Z,
+                update_time: 2024-11-10T02:07:31.042624Z,
+                exit_balance: None,
+            },
+            exchange: BinanceSpot,
+            instrument: Instrument {
+                base: "op",
+                quote: "usdt",
+            },
+            side: Buy,
+            quantity: 61.3873,
+            enter_fees: Fees {
+                exchange: 0.9999991170000001,
+                slippage: 4.999995585000001,
+                network: 0.0,
+            },
+            enter_fees_total: 5.999994702,
+            enter_avg_price_gross: 1.6290000000000002,
+            enter_value_gross: 99.99991170000001,
+            exit_fees: Fees {
+                exchange: 0.0,
+                slippage: 0.0,
+                network: 0.0,
+            },
+            exit_fees_total: 0.0,
+            exit_avg_price_gross: 0.0,
+            exit_value_gross: 0.0,
+            current_symbol_price: 1.6290000000000002,
+            current_value_gross: 99.99991170000001,
+            unrealised_profit_loss: -11.999989404,
+            realised_profit_loss: 0.0,
+        },
+    ),
+]
+*/

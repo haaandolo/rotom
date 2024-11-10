@@ -6,11 +6,9 @@ use super::{OrderAllocator, OrderEvent};
 use rotom_strategy::{Decision, SignalStrength};
 
 #[derive(Copy, Clone, PartialEq, PartialOrd, Debug, Default, Deserialize)]
-pub struct DefaultAllocator {
-    pub default_order_value: f64,
-}
+pub struct SpotArbAllocator;
 
-impl OrderAllocator for DefaultAllocator {
+impl OrderAllocator for SpotArbAllocator {
     fn allocate_order(
         &self,
         order: &mut OrderEvent,
@@ -18,21 +16,18 @@ impl OrderAllocator for DefaultAllocator {
         signal_strength: SignalStrength,
     ) {
         // Calculate exact order_size
-        let default_order_size = self.default_order_value / order.market_meta.close;
-
-        // Then round it to a more appropriate decimal place
-        let default_order_size = (default_order_size * 10000.0).floor() / 10000.0;
+        let dollar_amount = order.market_meta.close * signal_strength.0;
+        let order_size = dollar_amount / order.market_meta.close;
 
         match order.decision {
             // Entry
-            Decision::Long => order.quantity = default_order_size * signal_strength.0,
+            Decision::Long => order.quantity = order_size,
 
             // Entry
-            Decision::Short => order.quantity = -default_order_size * signal_strength.0,
+            Decision::Short => order.quantity = -order_size,
 
             // Exit
             _ => order.quantity = 0.0 - position.as_ref().unwrap().quantity,
         }
     }
 }
-
