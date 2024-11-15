@@ -35,14 +35,14 @@ use crate::{
 use super::{FillUpdater, MarketUpdater, OrderGenerator};
 
 #[derive(Debug)]
-pub struct ArbPortfolio {
+pub struct SpotPortfolio {
     pub engine_id: Uuid,
     pub exchanges: Vec<ExchangeId>,
     pub repository: InMemoryRepository2,
     pub allocator: SpotArbAllocator,
 }
 
-impl ArbPortfolio {
+impl SpotPortfolio {
     pub fn new(
         engine_id: Uuid,
         exchanges: Vec<ExchangeId>,
@@ -57,7 +57,7 @@ impl ArbPortfolio {
         }
     }
 
-    pub async fn init(mut self) -> Result<ArbPortfolio, SocketError> {
+    pub async fn init(mut self) -> Result<SpotPortfolio, SocketError> {
         for exchange in self.exchanges.iter() {
             let exchange_balance = match exchange {
                 ExchangeId::BinanceSpot => {
@@ -82,7 +82,6 @@ impl ArbPortfolio {
         Ok(self)
     }
 
-    // todo
     pub fn no_cash_to_enter_new_position(
         &mut self,
         balance_id: BalanceId2,
@@ -95,7 +94,7 @@ impl ArbPortfolio {
     }
 }
 
-impl MarketUpdater for ArbPortfolio {
+impl MarketUpdater for SpotPortfolio {
     fn update_from_market(
         &mut self,
         market: &MarketEvent<DataKind>,
@@ -104,8 +103,6 @@ impl MarketUpdater for ArbPortfolio {
             determine_position_id(self.engine_id, &market.exchange, &market.instrument);
 
         if let Some(position) = self.repository.get_open_position_mut(&position_id)? {
-            // println!("##############################");
-            // println!("position in arb portfolio --> {:#?}", position);
             if let Some(position_update) = position.update(market) {
                 return Ok(Some(position_update));
             }
@@ -115,7 +112,7 @@ impl MarketUpdater for ArbPortfolio {
     }
 }
 
-impl OrderGenerator for ArbPortfolio {
+impl OrderGenerator for SpotPortfolio {
     fn generate_order(&mut self, signal: &Signal) -> Result<Option<OrderEvent>, PortfolioError> {
         let position_id =
             determine_position_id(self.engine_id, &signal.exchange, &signal.instrument);
@@ -159,7 +156,7 @@ impl OrderGenerator for ArbPortfolio {
     }
 }
 
-impl FillUpdater for ArbPortfolio {
+impl FillUpdater for SpotPortfolio{
     fn update_from_fill(&mut self, fill: &FillEvent) -> Result<Vec<Event>, PortfolioError> {
         let mut generate_events = Vec::new();
         let position = Position::enter(self.engine_id, fill)?;
@@ -200,27 +197,5 @@ pub fn parse_signal_decision<'a>(
         (Some(signal_long), None) => Some(signal_long),
         (None, Some(signal_short)) => Some(signal_short),
         _ => None,
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use std::collections::HashMap;
-
-    #[derive(Debug)]
-    pub struct Posit {
-        pub value: f64,
-    }
-
-    #[test]
-    fn testing() {
-        let mut testing_hash = HashMap::new();
-        let value = Posit { value: 40.0 };
-        testing_hash.insert("op", value);
-        println!("before {:#?}", testing_hash);
-
-        let pos = testing_hash.get_mut("op").unwrap();
-        pos.value = 69.0;
-        println!("after {:#?}", testing_hash);
     }
 }

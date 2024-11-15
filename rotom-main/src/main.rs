@@ -25,7 +25,7 @@ use rotom_oms::{
     portfolio::{
         allocator::{default_allocator::DefaultAllocator, spot_arb_allocator::SpotArbAllocator},
         persistence::{in_memory::InMemoryRepository, in_memory2::InMemoryRepository2},
-        portfolio_type::{arb_portfolio::ArbPortfolio, default_portfolio::MetaPortfolio},
+        portfolio_type::{spot_portfolio::SpotPortfolio, default_portfolio::MetaPortfolio},
         risk_manager::default_risk_manager::DefaultRisk,
         AssetBalance, OrderEvent, OrderType,
     },
@@ -141,7 +141,7 @@ pub async fn main() {
     ////////////////////////////////////////////////////
     // Portfolio
     let arb_portfolio = Arc::new(Mutex::new(
-        ArbPortfolio::new(
+        SpotPortfolio::new(
             engine_id,
             vec![ExchangeId::BinanceSpot, ExchangeId::PoloniexSpot],
             InMemoryRepository2::default(),

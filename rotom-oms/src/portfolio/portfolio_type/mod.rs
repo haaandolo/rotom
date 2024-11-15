@@ -1,4 +1,4 @@
-pub mod arb_portfolio;
+pub mod spot_portfolio;
 pub mod default_portfolio;
 
 use rotom_data::event_models::market_event::{DataKind, MarketEvent};

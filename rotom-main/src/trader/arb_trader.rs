@@ -49,7 +49,6 @@ where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
     Execution: ExecutionClient,
-    // Portfolio: MarketUpdater + OrderGenerator + FillUpdater, todo
     Portfolio: MarketUpdater + OrderGenerator,
 {
     engine_id: Uuid,
@@ -126,40 +125,40 @@ where
         }
     }
 
-    fn run(mut self) {
-        'trading: loop {
-            // Check for mew remote Commands
-            while let Some(command) = self.receive_remote_command() {
-                match command {
-                    Command::Terminate(_) => break 'trading,
-                    Command::ExitPosition(market) => {
-                        self.event_queue
-                            .push_back(Event::SignalForceExit(SignalForceExit::from(market)));
+        fn run(mut self) {
+            'trading: loop {
+                // Check for mew remote Commands
+                while let Some(command) = self.receive_remote_command() {
+                    match command {
+                        Command::Terminate(_) => break 'trading,
+                        Command::ExitPosition(market) => {
+                            self.event_queue
+                                .push_back(Event::SignalForceExit(SignalForceExit::from(market)));
+                        }
+                        _ => continue,
                     }
-                    _ => continue,
                 }
-            }
 
-            // If the Feed<MarketEvent> yields, populate the event queue with the next MarketEvent
-            match self.data.next() {
-                Feed::Next(market) => {
-                    // self.event_tx.send(Event::Market(market.clone()));
-                    self.event_queue.push_back(Event::Market(market));
+                // If the Feed<MarketEvent> yields, populate the event queue with the next MarketEvent
+                match self.data.next() {
+                    Feed::Next(market) => {
+                        // self.event_tx.send(Event::Market(market.clone()));
+                        self.event_queue.push_back(Event::Market(market));
+                    }
+                    Feed::UnHealthy => {
+                        warn!(
+                            engine_id = %self.engine_id,
+                            market = ?self.markets,
+                            action = "continuing while waiting for healthy Feed",
+                            "MarketFeed unhealthy"
+                        );
+                        continue 'trading;
+                    }
+                    Feed::Finished => break 'trading,
                 }
-                Feed::UnHealthy => {
-                    warn!(
-                        engine_id = %self.engine_id,
-                        market = ?self.markets,
-                        action = "continuing while waiting for healthy Feed",
-                        "MarketFeed unhealthy"
-                    );
-                    continue 'trading;
-                }
-                Feed::Finished => break 'trading,
-            }
 
-            // This while loop handles Events from the event_queue it will break if the event_queue
-            // empty and requires another MarketEvent
+                // This while loop handles Events from the event_queue it will break if the event_queue
+                // empty and requires another MarketEvent
             while let Some(event) = self.event_queue.pop_front() {
                 match event {
                     Event::Market(market_event) => {
