@@ -62,8 +62,8 @@ impl From<PoloniexBalanceResponseVec> for Balance {
     fn from(balance: PoloniexBalanceResponseVec) -> Self {
         Self {
             time: Utc::now(),
-            total: 0.0,
-            available: balance.available,
+            total: balance.available,
+            available: 0.0,
         }
     }
 }

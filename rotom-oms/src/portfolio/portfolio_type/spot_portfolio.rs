@@ -1,14 +1,11 @@
-use std::collections::HashMap;
-
 use chrono::Utc;
-use hmac::digest::consts::False;
 use rotom_data::{
     error::SocketError,
     event_models::market_event::{DataKind, MarketEvent},
-    exchange,
     shared::subscription_models::ExchangeId,
 };
 use rotom_strategy::{Decision, Signal, SignalForceExit, SignalStrength};
+use std::collections::HashMap;
 use uuid::Uuid;
 
 use crate::{
@@ -18,17 +15,15 @@ use crate::{
     },
     execution::FillEvent,
     portfolio::{
-        allocator::{
-            default_allocator::DefaultAllocator, spot_arb_allocator::SpotArbAllocator,
-            OrderAllocator,
-        },
+        allocator::{spot_arb_allocator::SpotArbAllocator, OrderAllocator},
         determine_balance_id,
         error::PortfolioError,
         persistence::in_memory2::InMemoryRepository2,
         position::{
-            determine_position_id, Position, PositionEnterer, PositionUpdate, PositionUpdater, Side,
+            determine_position_id, Position, PositionEnterer, PositionExiter, PositionUpdate,
+            PositionUpdater, Side,
         },
-        AssetBalance, BalanceId2, OrderEvent, OrderType,
+        AssetBalance, OrderEvent, OrderType, SpotBalanceId,
     },
 };
 
@@ -74,7 +69,7 @@ impl SpotPortfolio {
 
             for asset_balance in exchange_balance.into_iter() {
                 self.repository
-                    .set_balance(BalanceId2::from(&asset_balance), asset_balance.balance)
+                    .set_balance(SpotBalanceId::from(&asset_balance), asset_balance.balance)
                     .unwrap(); // todo
             }
         }
@@ -84,12 +79,12 @@ impl SpotPortfolio {
 
     pub fn no_cash_to_enter_new_position(
         &mut self,
-        balance_id: BalanceId2,
+        balance_id: SpotBalanceId,
         buy_sell_amount: f64,
     ) -> Result<bool, PortfolioError> {
         self.repository
-            .get_balance(balance_id)
-            .map(|balance| balance.available < buy_sell_amount)
+            .get_balance(&balance_id)
+            .map(|balance| balance.total * 0.98 < buy_sell_amount) // give 2% buffer to account for fee
             .map_err(PortfolioError::RepositoryInteraction)
     }
 }
@@ -156,15 +151,54 @@ impl OrderGenerator for SpotPortfolio {
     }
 }
 
-impl FillUpdater for SpotPortfolio{
+impl FillUpdater for SpotPortfolio {
     fn update_from_fill(&mut self, fill: &FillEvent) -> Result<Vec<Event>, PortfolioError> {
-        let mut generate_events = Vec::new();
-        let position = Position::enter(self.engine_id, fill)?;
-        generate_events.push(Event::PositionNew(position.clone()));
-        self.repository.set_open_position(position)?;
+        let mut generate_events = Vec::with_capacity(2);
 
-        println!(">>>>> SELF.REPOSITORY <<<<<<");
-        println!("{:#?}", self.repository);
+        // Get required balance and position ids
+        let base_asset_balance_id = determine_balance_id(&fill.instrument.base, &fill.exchange);
+        let quote_asset_balance_id = determine_balance_id(&fill.instrument.quote, &fill.exchange);
+
+        // Get balances of base and quote asset
+        let mut base_asset_balance = self.repository.get_balance(&base_asset_balance_id)?;
+        let mut quote_asset_balance = self.repository.get_balance(&quote_asset_balance_id)?;
+
+        let position_id = determine_position_id(self.engine_id, &fill.exchange, &fill.instrument);
+
+        match self.repository.remove_position(&position_id)? {
+            // Exit scenario
+            Some(mut position) => {
+                println!("########## REMOVE POSITION ##########");
+                let position_exit =
+                    position.exit_spot(&mut base_asset_balance, &mut quote_asset_balance, fill)?;
+                generate_events.push(Event::PositionExit(position_exit));
+            }
+            // Enter scenario
+            None => {
+                println!("######### REMOVE POSITION NONE ##########");
+                let position = Position::enter(self.engine_id, fill)?;
+                generate_events.push(Event::PositionNew(position.clone()));
+
+                // Update quote asset balance
+                quote_asset_balance.total += position.calculate_quote_asset_enter_price();
+                quote_asset_balance.time = fill.time;
+
+                // Update base asset balance
+                base_asset_balance.total += fill.quantity;
+                base_asset_balance.time = fill.time;
+
+                self.repository.set_open_position(position)?;
+            }
+        }
+
+        self.repository
+            .set_balance(quote_asset_balance_id, quote_asset_balance)?;
+
+        self.repository
+            .set_balance(base_asset_balance_id, base_asset_balance)?;
+
+        println!(">>>>> SELF.PORTFOLIO <<<<<<");
+        println!("{:#?}", self);
 
         Ok(generate_events)
     }

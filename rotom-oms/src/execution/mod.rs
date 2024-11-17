@@ -28,10 +28,15 @@ pub struct FillEvent {
     pub time: DateTime<Utc>,
     pub exchange: ExchangeId,
     pub instrument: Instrument,
+    // Metadata propagated from source MarketEvent
     pub market_meta: MarketMeta,
+    // LONG, CloseLong, SHORT or CloseShort
     pub decision: Decision,
+    // +ve or -ve Quantity depending on Decision
     pub quantity: f64,
+    // abs(Quantity) * ClosePrice, excluding TotalFees
     pub fill_value_gross: f64,
+    // All fee types incurred when executing OrderEvent, and their associated FeeAmount
     pub fees: Fees,
 }
 

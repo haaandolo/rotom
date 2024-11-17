@@ -1,5 +1,3 @@
-use std::fmt::{Display, Formatter};
-
 use chrono::{DateTime, Utc};
 use rotom_data::{
     event_models::market_event::{DataKind, MarketEvent},
@@ -7,6 +5,7 @@ use rotom_data::{
 };
 use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
+use std::fmt::{Display, Formatter};
 use uuid::Uuid;
 
 use crate::execution::{FeeAmount, Fees, FillEvent};
@@ -26,6 +25,13 @@ pub trait PositionUpdater {
 
 pub trait PositionExiter {
     fn exit(&mut self, balance: Balance, fill: &FillEvent) -> Result<PositionExit, PortfolioError>;
+
+    fn exit_spot(
+        &mut self,
+        base_asset_balance: &mut Balance,
+        quote_asset_balance: &mut Balance,
+        fill: &FillEvent,
+    ) -> Result<PositionExit, PortfolioError>;
 }
 
 /*----- */
@@ -94,6 +100,20 @@ pub struct Position {
 impl Position {
     pub fn builder() -> PositionBuilder {
         PositionBuilder::new()
+    }
+
+    pub fn calculate_quote_asset_enter_price(&self) -> f64 {
+        match self.side {
+            Side::Buy => self.enter_value_gross * -1.0, // if we enter a position, the quote asset will -ve
+            Side::Sell => self.enter_value_gross, // if we enter a position, the base asset will +ve
+        }
+    }
+
+    pub fn calculate_quote_asset_exit_price(&self) -> f64 {
+        match self.side {
+            Side::Buy => self.enter_value_gross, // if we exit a position, the quote asset will +ve
+            Side::Sell => self.enter_value_gross * -1.0, // if we exit a position, the base asset will -ve
+        }
     }
 
     pub fn calculate_avg_price_gross(fill: &FillEvent) -> f64 {
@@ -238,6 +258,37 @@ impl PositionExiter for Position {
         balance.total += self.realised_profit_loss;
         self.meta.update_time = fill.time;
         self.meta.exit_balance = Some(balance);
+
+        PositionExit::try_from(self)
+    }
+
+    fn exit_spot(
+        &mut self,
+        base_asset_balance: &mut Balance,
+        quote_asset_balance: &mut Balance,
+        fill: &FillEvent,
+    ) -> Result<PositionExit, PortfolioError> {
+        if fill.decision.is_entry() {
+            return Err(PortfolioError::CannotExitPositionWithEntryFill);
+        }
+
+        // Exit fees
+        self.exit_fees = fill.fees;
+        self.exit_fees_total = fill.fees.calculate_total_fees();
+
+        // Exit value & price
+        self.exit_value_gross = fill.fill_value_gross;
+        self.exit_avg_price_gross = Position::calculate_avg_price_gross(fill);
+
+        // Result profit & loss
+        self.realised_profit_loss = self.calculate_realised_profit_loss();
+        self.unrealised_profit_loss = self.realised_profit_loss;
+
+        // Update base and quote balances
+        quote_asset_balance.total += self.calculate_quote_asset_exit_price();
+        base_asset_balance.total += fill.quantity;
+        self.meta.update_time = fill.time;
+        self.meta.exit_balance = Some(quote_asset_balance.to_owned());
 
         PositionExit::try_from(self)
     }

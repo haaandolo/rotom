@@ -25,7 +25,7 @@ use rotom_oms::{
     portfolio::{
         allocator::{default_allocator::DefaultAllocator, spot_arb_allocator::SpotArbAllocator},
         persistence::{in_memory::InMemoryRepository, in_memory2::InMemoryRepository2},
-        portfolio_type::{spot_portfolio::SpotPortfolio, default_portfolio::MetaPortfolio},
+        portfolio_type::{default_portfolio::MetaPortfolio, spot_portfolio::SpotPortfolio},
         risk_manager::default_risk_manager::DefaultRisk,
         AssetBalance, OrderEvent, OrderType,
     },
@@ -146,7 +146,6 @@ pub async fn main() {
             vec![ExchangeId::BinanceSpot, ExchangeId::PoloniexSpot],
             InMemoryRepository2::default(),
             SpotArbAllocator,
-
         )
         .init()
         .await
@@ -154,7 +153,6 @@ pub async fn main() {
     ));
 
     println!("{:#?}", arb_portfolio);
-
     ///////////////////////////////////////////////////
     // Market
     let markets = vec![
@@ -218,7 +216,6 @@ pub async fn main() {
         .market(markets.clone())
         .command_rx(trader_command_rx)
         .event_tx(event_tx)
-        // .portfolio(Arc::clone(&portfolio))
         .portfolio(Arc::clone(&arb_portfolio))
         .data(MarketFeed::new(stream_trades().await))
         .strategy(SpreadStategy::new())
@@ -356,7 +353,9 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - update from fill <-- do
+// - figure out the balance +ve and -ve of quote and base asset for portfolio when the fill is updated
+// - make the above point more solid
+// - update parse decision signal to not let short positions be open for spot trades
 // - make execution arena
 // - userdata stream for client execution auto reconnect
 // - standarise order types ie. limit, market etc

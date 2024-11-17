@@ -154,36 +154,6 @@ impl OrderEventBuilder {
 /*----- */
 pub type BalanceId = String;
 
-#[derive(Debug, Eq, PartialEq, Hash)]
-pub struct BalanceId2(pub String);
-
-pub fn determine_balance_id(quote_asset: &String, exchange: &ExchangeId) -> BalanceId2 {
-    BalanceId2(format!("{}_{}", quote_asset, exchange))
-}
-
-#[derive(Clone, PartialEq, PartialOrd, Debug, Serialize, Deserialize)]
-pub struct AssetBalance {
-    pub asset: String,
-    pub exchange: ExchangeId,
-    pub balance: Balance,
-}
-
-impl AssetBalance {
-    pub fn new(asset: String, exchange: ExchangeId, balance: Balance) -> Self {
-        Self {
-            asset,
-            exchange,
-            balance,
-        }
-    }
-}
-
-impl From<&AssetBalance> for BalanceId2 {
-    fn from(asset_balance: &AssetBalance) -> Self {
-        BalanceId2(format!("{}_{}", asset_balance.asset, asset_balance.exchange).to_lowercase())
-    }
-}
-
 #[derive(Clone, Copy, PartialEq, PartialOrd, Debug, Serialize, Deserialize)]
 pub struct Balance {
     pub time: DateTime<Utc>,
@@ -212,5 +182,38 @@ impl Balance {
 
     pub fn balance_id(engine_id: Uuid) -> BalanceId {
         format!("{}_balance", engine_id)
+    }
+}
+
+/*----- */
+// Spot Balance
+/*----- */
+#[derive(Debug, Eq, PartialEq, Hash)]
+pub struct SpotBalanceId(pub String);
+
+pub fn determine_balance_id(asset: &String, exchange: &ExchangeId) -> SpotBalanceId {
+    SpotBalanceId(format!("{}_{}", asset, exchange))
+}
+
+#[derive(Clone, PartialEq, PartialOrd, Debug, Serialize, Deserialize)]
+pub struct AssetBalance {
+    pub asset: String,
+    pub exchange: ExchangeId,
+    pub balance: Balance,
+}
+
+impl AssetBalance {
+    pub fn new(asset: String, exchange: ExchangeId, balance: Balance) -> Self {
+        Self {
+            asset,
+            exchange,
+            balance,
+        }
+    }
+}
+
+impl From<&AssetBalance> for SpotBalanceId {
+    fn from(asset_balance: &AssetBalance) -> Self {
+        SpotBalanceId(format!("{}_{}", asset_balance.asset, asset_balance.exchange).to_lowercase())
     }
 }

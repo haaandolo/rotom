@@ -180,8 +180,8 @@ impl From<BinanceBalanceResponseData> for Balance {
     fn from(balance: BinanceBalanceResponseData) -> Self {
         Self {
             time: Utc::now(),
-            total: 0.0,
-            available: balance.free,
+            total: balance.free,
+            available: 0.0,
         }
     }
 }

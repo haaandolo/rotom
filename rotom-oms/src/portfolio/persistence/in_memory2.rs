@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
-use rotom_data::{shared::subscription_models::ExchangeId, Market, MarketId};
+use rotom_data::Market;
 use uuid::Uuid;
 
 use crate::{
     portfolio::{
         position::{determine_position_id, Position, PositionId},
-        AssetBalance, Balance, BalanceId, BalanceId2,
+        Balance, SpotBalanceId,
     },
     statistic::summary::PositionSummariser,
 };
@@ -23,7 +23,7 @@ use super::{
 pub struct InMemoryRepository2 {
     open_positions: HashMap<PositionId, Position>,
     closed_positions: HashMap<String, Vec<Position>>,
-    current_balance: HashMap<BalanceId2, Balance>,
+    current_balance: HashMap<SpotBalanceId, Balance>,
 }
 
 // /*----- */
@@ -33,16 +33,16 @@ impl InMemoryRepository2 {
     // Balance Hanlder
     pub fn set_balance(
         &mut self,
-        balance_id: BalanceId2,
+        balance_id: SpotBalanceId,
         balance: Balance,
     ) -> Result<(), RepositoryError> {
         self.current_balance.insert(balance_id, balance);
         Ok(())
     }
 
-    pub fn get_balance(&mut self, balance_id: BalanceId2) -> Result<Balance, RepositoryError> {
+    pub fn get_balance(&mut self, balance_id: &SpotBalanceId) -> Result<Balance, RepositoryError> {
         self.current_balance
-            .get(&balance_id)
+            .get(balance_id)
             .copied()
             .ok_or(RepositoryError::ExpectedDataNotPresentError)
     }
