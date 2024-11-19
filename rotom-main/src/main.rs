@@ -19,6 +19,7 @@ use rotom_oms::{
         ExecutionClient2,
     },
     execution::{
+        arena::arb_trader_arena::{ArbExecutor, ArbTraderArena},
         simulated::{Config, SimulatedExecution},
         Fees,
     },
@@ -134,7 +135,21 @@ pub async fn main() {
     //     .unwrap();
 
     // println!("{:#?}", res);
+    /////////////////////////////////////////////////
+    // Arena
+    // let arena = ArbExecutor::init().await;
 
+    let mut polo_exe = PoloniexExecution::init().await.unwrap();
+    while let Some(message) = polo_exe.rx.recv().await {
+        println!("--->>> {:#?}", message);
+    }
+
+    // let mut bin_exe = BinanceExecution::init().await.unwrap();
+    // while let Some(message) = bin_exe.rx.recv().await {
+    //     println!("--->>> {:#?}", message);
+    // }
+
+    /////////////////////////////////////////////////
     // Engine id
     let engine_id = Uuid::new_v4();
 
@@ -353,6 +368,8 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
+// - fix poloniex userdata deserialisation problem
+// - finish init() for areana, combine stream? and put a id trait on the userdata stream for both asset?
 // - figure out the balance +ve and -ve of quote and base asset for portfolio when the fill is updated
 // - make the above point more solid
 // - update parse decision signal to not let short positions be open for spot trades

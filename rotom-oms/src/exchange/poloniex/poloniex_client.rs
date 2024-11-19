@@ -8,13 +8,18 @@ use rotom_data::{
         ws::{
             connect, schedule_pings_to_exchange,
             ws_parser::{StreamParser, WebSocketParser},
-            JoinHandle, WsMessage, WsRead,
+            JoinHandle, WsMessage,
         },
     },
 };
+use serde::Deserialize;
+use tokio::sync::mpsc;
 
 use crate::{
-    exchange::{poloniex::requests::user_data::PoloniexUserData, ExecutionClient2, ExecutionId},
+    exchange::{
+        get_user_data_read_channel, poloniex::requests::user_data::PoloniexUserData,
+        ExecutionClient2, ExecutionId,
+    },
     portfolio::OrderEvent,
 };
 
@@ -38,9 +43,23 @@ const POLONIEX_USER_DATA_WS: &str = "wss://ws.poloniex.com/ws/private";
 
 #[derive(Debug)]
 pub struct PoloniexExecution {
-    pub user_data_ws: WsRead,
+    pub rx: mpsc::UnboundedReceiver<PoloniexUserData>,
     pub http_client: PoloniexRestClient,
     pub tasks: Vec<JoinHandle>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PoloniexWsBalanceResponse {
+    pub channel: String, // can be smolstr
+    pub event: String,   // can be smolstr
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum PoloniexWsUserDataValidation {
+    Auth(PoloniexWsResponseAuthMessage),
+    Orders(PoloniexWsOrderResponse),
+    Balance(PoloniexWsBalanceResponse),
 }
 
 #[async_trait]
@@ -51,6 +70,7 @@ impl ExecutionClient2 for PoloniexExecution {
     type CancelAllResponse = Vec<PoloniexCancelOrderResponse>;
     type NewOrderResponse = PoloniexNewOrderResponse;
     type WalletTransferResponse = PoloniexWalletTransferResponse;
+    type UserDataStreamResponse = PoloniexUserData;
 
     #[inline]
     async fn init() -> Result<Self, SocketError>
@@ -66,7 +86,7 @@ impl ExecutionClient2 for PoloniexExecution {
 
         // Spin up listening ws
         let ws = connect(POLONIEX_USER_DATA_WS).await?;
-        let (mut user_data_write, user_data_ws) = ws.split();
+        let (mut user_data_write, mut user_data_ws) = ws.split();
 
         // Send auth to initialise ws
         let _ = user_data_write
@@ -75,19 +95,51 @@ impl ExecutionClient2 for PoloniexExecution {
             ))
             .await;
 
-        // Subscribe to orders channel
-        let _ = user_data_write
-            .send(WsMessage::text(
-                serde_json::to_string(&PoloniexWsAuthOrderRequest::new()).unwrap(), // todo
-            ))
-            .await;
+        // Request to subscribe to order & balance messages must be sent after auth.
+        // Sometimes these requests get recognised before the auth request, hence,
+        // we have to do this ugly loop. Here if we can deserialise the the auth request
+        // message we know the auth worked because our PoloniexWsUserDataValidation only
+        // take three message types. If successful we then send the order and balance
+        // requests.
+        let expected_responses: usize = 3;
+        let mut success_responses: usize = 0;
+        let mut sent_balance_and_order_request = false;
 
-        // Subscribe to balance channel
-        let _ = user_data_write
-            .send(WsMessage::text(
-                serde_json::to_string(&PoloniexWsAuthBalanceRequest::new()).unwrap(), // todo
-            ))
-            .await;
+        loop {
+            if success_responses == expected_responses {
+                break;
+            }
+
+            if let Some(auth_message) = user_data_ws.next().await {
+                match WebSocketParser::parse::<PoloniexWsUserDataValidation>(auth_message) {
+                    // If deserialisation is sucessful send order and balance subscription request
+                    Some(Ok(_)) => {
+                        if !sent_balance_and_order_request {
+                            // Subscribe to orders channel
+                            let _ = user_data_write
+                                .send(WsMessage::text(
+                                    serde_json::to_string(&PoloniexWsAuthOrderRequest::new())
+                                        .unwrap(), // todo
+                                ))
+                                .await;
+
+                            // Subscribe to balance channel
+                            let _ = user_data_write
+                                .send(WsMessage::text(
+                                    serde_json::to_string(&PoloniexWsAuthBalanceRequest::new())
+                                        .unwrap(), // todo
+                                ))
+                                .await;
+
+                            sent_balance_and_order_request = true;
+                        }
+                        success_responses += 1;
+                    }
+                    Some(Err(_)) => return Err(SocketError::PrivateDataWsSub),
+                    None => continue,
+                };
+            }
+        }
 
         // Handle custom ping
         let mut tasks = Vec::new();
@@ -97,8 +149,11 @@ impl ExecutionClient2 for PoloniexExecution {
             tasks.push(ping_handler)
         }
 
+        // Convert ws_read to rx channel
+        let rx = get_user_data_read_channel::<PoloniexUserData>(user_data_ws).await?;
+
         Ok(PoloniexExecution {
-            user_data_ws,
+            rx,
             http_client,
             tasks,
         })
@@ -139,14 +194,6 @@ impl ExecutionClient2 for PoloniexExecution {
             .execute(PoloniexCancelAllOrder::new(symbol))
             .await?;
         Ok(response.0)
-    }
-
-    #[inline]
-    async fn receive_responses(mut self) {
-        while let Some(msg) = self.user_data_ws.next().await {
-            let msg_de = WebSocketParser::parse::<PoloniexUserData>(msg);
-            println!("{:#?}", msg_de);
-        }
     }
 
     #[inline]
@@ -199,4 +246,27 @@ impl PoloniexPrivateData {
         let response = self.http_client.execute(PoloniexBalance).await?;
         Ok(response.0)
     }
+}
+
+/*----- */
+// Poloniex ws auth responses
+/*----- */
+#[derive(Debug, Deserialize)]
+pub struct PoloniexWsResponseAuthMessage {
+    pub data: PoloniexWsResponseAuthMessageData,
+    pub channel: String, // can be smolstr
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PoloniexWsResponseAuthMessageData {
+    pub success: bool,
+    pub message: Option<String>, // can be smolstr
+    pub ts: u64,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PoloniexWsOrderResponse {
+    pub channel: String,      // can be smolstr
+    pub event: String,        // can be smolstr
+    pub symbols: Vec<String>, // can be smolstr
 }

@@ -11,9 +11,6 @@ pub enum SocketError {
     #[error("WebSocket error: {0}")]
     WebSocketError(#[from] tokio_tungstenite::tungstenite::Error),
 
-    #[error("Parsing error")]
-    ParsingError(String),
-
     #[error("Deserialising JSON error: {error} for payload: {payload}")]
     Deserialise {
         error: serde_json::Error,
@@ -41,26 +38,12 @@ pub enum SocketError {
     #[error("error subscribing to resources over the socket: {0}")]
     Subscribe(String),
 
-    #[error("Init method failed for ticker some tickers")]
-    Init,
-
     #[error("Could not retrieve tick size for {base}{quote}, {exchange}")]
     TickSizeError {
         base: String,
         quote: String,
         exchange: ExchangeId,
     },
-
-    // Terminal errors
-    #[error("{symbol} got InvalidSequence, first_update_id {first_update_id} does not follow on from the prev_last_update_id {prev_last_update_id}")]
-    InvalidSequence {
-        symbol: String,
-        prev_last_update_id: u64,
-        first_update_id: u64,
-    },
-
-    #[error("WebSocket disconnected: {error}")]
-    WebSocketDisconnected { error: WsError },
 
     #[error("HTTP error: {0}")]
     Http(reqwest::Error),
@@ -74,12 +57,25 @@ pub enum SocketError {
     #[error("request authorisation invalid: {0}")]
     Unauthorised(String),
 
-    // Miscellaneous error
     #[error("{0}")]
-    Misc(String),
+    Misc(String), // Miscellaneous error
 
     #[error("{0}")]
     RequestBuildError(String),
+
+    // Terminal errors
+    #[error("{symbol} got InvalidSequence, first_update_id {first_update_id} does not follow on from the prev_last_update_id {prev_last_update_id}")]
+    InvalidSequence {
+        symbol: String,
+        prev_last_update_id: u64,
+        first_update_id: u64,
+    },
+
+    #[error("WebSocket disconnected: {error}")]
+    WebSocketDisconnected { error: WsError },
+
+    #[error("Private data Websocket failed to send subscription request")]
+    PrivateDataWsSub,
 }
 
 impl From<reqwest::Error> for SocketError {
@@ -97,6 +93,7 @@ impl SocketError {
         match self {
             SocketError::InvalidSequence { .. } => true,
             SocketError::WebSocketDisconnected { .. } => true,
+            SocketError::PrivateDataWsSub => true,
             _ => false,
         }
     }

@@ -77,6 +77,7 @@ impl SpotPortfolio {
         Ok(self)
     }
 
+    // todo: adjust buffer?
     pub fn no_cash_to_enter_new_position(
         &mut self,
         balance_id: SpotBalanceId,

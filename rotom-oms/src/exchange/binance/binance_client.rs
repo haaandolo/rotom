@@ -4,15 +4,14 @@ use rotom_data::error::SocketError;
 use rotom_data::protocols::http::client::RestClient;
 use rotom_data::protocols::http::http_parser::StandardHttpParser;
 use rotom_data::protocols::ws::connect;
-use rotom_data::protocols::ws::ws_parser::StreamParser;
-use rotom_data::protocols::ws::ws_parser::WebSocketParser;
-use rotom_data::protocols::ws::WsRead;
+use tokio::sync::mpsc;
 
 use crate::exchange::binance::requests::cancel_order::BinanceCancelAllOrder;
 use crate::exchange::binance::requests::cancel_order::BinanceCancelOrder;
 use crate::exchange::binance::requests::new_order::BinanceNewOrder;
 use crate::exchange::binance::requests::user_data::BinanceUserData;
 use crate::exchange::binance::requests::wallet_transfer::BinanceWalletTransfer;
+use crate::exchange::get_user_data_read_channel;
 use crate::exchange::ExecutionClient2;
 use crate::exchange::ExecutionId;
 use crate::portfolio::OrderEvent;
@@ -35,7 +34,7 @@ const BINANCE_USER_DATA_WS: &str = "wss://stream.binance.com:9443/ws/";
 
 #[derive(Debug)]
 pub struct BinanceExecution {
-    pub user_data_ws: WsRead,
+    pub rx: mpsc::UnboundedReceiver<BinanceUserData>,
     pub http_client: BinanceRestClient,
 }
 
@@ -47,6 +46,7 @@ impl ExecutionClient2 for BinanceExecution {
     type CancelAllResponse = Vec<BinanceCancelOrderResponse>;
     type NewOrderResponse = BinanceNewOrderResponses;
     type WalletTransferResponse = BinanceWalletTransferResponse;
+    type UserDataStreamResponse = BinanceUserData;
 
     #[inline]
     async fn init() -> Result<Self, SocketError> {
@@ -60,10 +60,10 @@ impl ExecutionClient2 for BinanceExecution {
         let ws = connect(listening_url).await?;
         let (_, user_data_ws) = ws.split();
 
-        Ok(BinanceExecution {
-            user_data_ws,
-            http_client,
-        })
+        // Convert userdata ws_read to a rx channel
+        let rx = get_user_data_read_channel::<BinanceUserData>(user_data_ws).await?;
+
+        Ok(BinanceExecution { rx, http_client })
     }
 
     #[inline]
@@ -121,14 +121,6 @@ impl ExecutionClient2 for BinanceExecution {
             )?)
             .await?;
         Ok(response.0)
-    }
-
-    #[inline]
-    async fn receive_responses(mut self) {
-        while let Some(msg) = self.user_data_ws.next().await {
-            let msg_de = WebSocketParser::parse::<BinanceUserData>(msg);
-            println!("{:#?}", msg_de);
-        }
     }
 }
 
