@@ -1,20 +1,16 @@
-use std::collections::HashMap;
-
 use async_trait::async_trait;
 use chrono::Utc;
-use futures::stream::select_all;
 use rotom_data::{
+    error::SocketError,
     shared::subscription_models::{ExchangeId, Instrument},
     MarketMeta,
 };
-use tokio::sync::mpsc::{self, unbounded_channel};
-use tokio_stream::StreamMap;
+use tokio::sync::mpsc;
 
 use crate::{
     exchange::{
-        binance::{binance_client::BinanceExecution, requests::user_data::BinanceUserData},
-        poloniex::{poloniex_client::PoloniexExecution, requests::user_data::PoloniexUserData},
-        spawn_ws_read, ExecutionClient2,
+        binance::binance_client::BinanceExecution, poloniex::poloniex_client::PoloniexExecution,
+        ExecutionClient2,
     },
     execution::{error::ExecutionError, Fees, FillEvent},
     portfolio::OrderEvent,
@@ -28,7 +24,7 @@ pub trait ArbTraderArena {
     type ExchangeOne: ExecutionClient2;
     type ExchangeTwo: ExecutionClient2;
 
-    async fn init() -> bool;
+    async fn init() -> Result<(), SocketError>;
 
     fn generate_fill(&self, order: &OrderEvent) -> Result<FillEvent, ExecutionError>;
 }
@@ -42,6 +38,7 @@ enum CombinedUserStreams<UserDataOne, UserDataTwo> {
 /*----- */
 // Arb trader
 /*----- */
+#[derive(Debug, Default)]
 pub struct ArbExecutor;
 
 #[async_trait]
@@ -49,9 +46,9 @@ impl ArbTraderArena for ArbExecutor {
     type ExchangeOne = BinanceExecution;
     type ExchangeTwo = PoloniexExecution;
 
-    async fn init() -> bool {
-        let mut binance_execution = BinanceExecution::init().await.unwrap(); // todo
-        let mut poloniex_excution = PoloniexExecution::init().await.unwrap(); // todo
+    async fn init() -> Result<(), SocketError> {
+        let mut binance_execution = BinanceExecution::init().await?;
+        let mut poloniex_excution = PoloniexExecution::init().await?;
 
         let (combined_tx, mut combined_rx) = mpsc::unbounded_channel();
         let combined_tx_cloned = combined_tx.clone();
@@ -74,7 +71,7 @@ impl ArbTraderArena for ArbExecutor {
             println!("{:#?}", message);
         }
 
-        true
+        Ok(())
     }
 
     fn generate_fill(&self, order: &OrderEvent) -> Result<FillEvent, ExecutionError> {

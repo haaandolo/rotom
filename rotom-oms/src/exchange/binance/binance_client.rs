@@ -28,7 +28,6 @@ use super::requests::wallet_transfer::BinanceWalletTransferResponse;
 // Convinent types
 /*----- */
 type BinanceRestClient = RestClient<StandardHttpParser, BinanceRequestBuilder>;
-// type BinanceRestClient2 = RestClient2<BINANCE_BASE_URL, StandardHttpParser, BinanceRequestBuilder>;
 pub const BINANCE_BASE_URL: &str = "https://api.binance.com";
 const BINANCE_USER_DATA_WS: &str = "wss://stream.binance.com:9443/ws/";
 

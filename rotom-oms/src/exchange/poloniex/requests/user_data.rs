@@ -143,9 +143,95 @@ pub enum PoloniexUserData {
 
 /*
 
-"{\"channel\":\"balances\",\"data\":[{\"id\":381810886546833408,\"accountId\":\"292264758130978818\",\"available\":\"5.97234541632\",\"accountType\":\"SPOT\",\"hold\":\"3\",\"changeTime\":1731997209056,\"userId\":1887604,\"currency\":\"USDT\",\"eventType\":\"PLACE_ORDER\",\"ts\":1731997209063}]}",
-"{\"channel\":\"orders\",\"data\":[{\"orderId\":\"381810886496567298\",\"tradeId\":\"0\",\"clientOrderId\":\"\",\"accountType\":\"SPOT\",\"eventType\":\"place\",\"symbol\":\"OP_USDT\",\"side\":\"BUY\",\"type\":\"LIMIT\",\"price\":\"1\",\"quantity\":\"3\",\"state\":\"NEW\",\"createTime\":1731997209044,\"tradeTime\":0,\"tradePrice\":\"0\",\"tradeQty\":\"0\",\"feeCurrency\":\"\",\"tradeFee\":\"0\",\"tradeAmount\":\"0\",\"filledQuantity\":\"0\",\"filledAmount\":\"0\",\"ts\":1731997209076,\"source\":\"WEB\",\"orderAmount\":\"0\",\"matchRole\":\"\"}]}",
+"{
+    \"channel\":\"balances\",
+    \"data\":[{
+        \"id\":381810886546833408,
+        \"accountId\":\"292264758130978818\",
+        \"available\":\"5.97234541632\",
+        \"accountType\":\"SPOT\",
+        \"hold\":\"3\",\"changeTime\":1731997209056,
+        \"userId\":1887604,
+        \"currency\":\"USDT\",
+        \"eventType\":\"PLACE_ORDER\",
+        \"ts\":1731997209063
+        }]
+}",
 
-"{\"channel\":\"balances\",\"data\":[{\"id\":381815419855466496,\"accountId\":\"292264758130978818\",\"available\":\"8.97234541632\",\"accountType\":\"SPOT\",\"hold\":\"0\",\"changeTime\":1731998289881,\"userId\":1887604,\"currency\":\"USDT\",\"eventType\":\"CANCELED_ORDER\",\"ts\":1731998289885}]}",
-"{\"channel\":\"orders\",\"data\":[{\"orderId\":\"381810886496567298\",\"tradeId\":\"0\",\"clientOrderId\":\"\",\"accountType\":\"SPOT\",\"eventType\":\"canceled\",\"symbol\":\"OP_USDT\",\"side\":\"BUY\",\"type\":\"LIMIT\",\"price\":\"1\",\"quantity\":\"3\",\"state\":\"CANCELED\",\"createTime\":1731997209044,\"tradeTime\":0,\"tradePrice\":\"0\",\"tradeQty\":\"0\",\"feeCurrency\":\"\",\"tradeFee\":\"0\",\"tradeAmount\":\"0\",\"filledQuantity\":\"0\",\"filledAmount\":\"0\",\"ts\":1731998289897,\"source\":\"WEB\",\"orderAmount\":\"0\",\"matchRole\":\"\"}]}",
+"{
+    \"channel\":\"orders\",
+    \"data\":[{
+        \"orderId\":\"381810886496567298\",
+        \"tradeId\":\"0\",
+        \"clientOrderId\":\"\",
+        \"accountType\":\"SPOT\",
+        \"eventType\":\"place\",
+        \"symbol\":\"OP_USDT\",
+        \"side\":\"BUY\",
+        \"type\":\"LIMIT\",
+        \"price\":\"1\",
+        \"quantity\":\"3\",
+        \"state\":\"NEW\",
+        \"createTime\":1731997209044,
+        \"tradeTime\":0,
+        \"tradePrice\":\"0\",
+        \"tradeQty\":\"0\",
+        \"feeCurrency\":\"\",
+        \"tradeFee\":\"0\",
+        \"tradeAmount\":\"0\",
+        \"filledQuantity\":\"0\",
+        \"filledAmount\":\"0\",
+        \"ts\":1731997209076,
+        \"source\":\"WEB\",
+        \"orderAmount\":\"0\",
+        \"matchRole\":\"\"
+        }]
+    }",
+
+"{
+    \"channel\":\"balances\",
+    \"data\":[{
+        \"id\":381815419855466496,
+        \"accountId\":\"292264758130978818\",
+        \"available\":\"8.97234541632\",
+        \"accountType\":\"SPOT\",
+        \"hold\":\"0\",
+        \"changeTime\":1731998289881,
+        \"userId\":1887604,
+        \"currency\":\"USDT\",
+        \"eventType\":\"CANCELED_ORDER\",
+        \"ts\":1731998289885
+        }]
+}",
+
+
+"{
+    \"channel\":\"orders\",
+    \"data\":[{
+        \"orderId\":\"381810886496567298\",
+        \"tradeId\":\"0\",
+        \"clientOrderId\":\"\",
+        \"accountType\":\"SPOT\",
+        \"eventType\":\"canceled\",
+        \"symbol\":\"OP_USDT\",
+        \"side\":\"BUY\",
+        \"type\":\"LIMIT\",
+        \"price\":\"1\",
+        \"quantity\":\"3\",
+        \"state\":\"CANCELED\",
+        \"createTime\":1731997209044,
+        \"tradeTime\":0,
+        \"tradePrice\":\"0\",
+        \"tradeQty\":\"0\",
+        \"feeCurrency\":\"\",
+        \"tradeFee\":\"0\",
+        \"tradeAmount\":\"0\",
+        \"filledQuantity\":\"0\",
+        \"filledAmount\":\"0\",
+        \"ts\":1731998289897,
+        \"source\":\"WEB\",
+        \"orderAmount\":\"0\",
+        \"matchRole\":\"\"
+        }]
+}",
 */

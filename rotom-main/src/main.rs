@@ -137,12 +137,12 @@ pub async fn main() {
     // println!("{:#?}", res);
     /////////////////////////////////////////////////
     // Arena
-    // let arena = ArbExecutor::init().await;
+    let _ = ArbExecutor::init().await;
 
-    let mut polo_exe = PoloniexExecution::init().await.unwrap();
-    while let Some(message) = polo_exe.rx.recv().await {
-        println!("--->>> {:#?}", message);
-    }
+    // let mut polo_exe = PoloniexExecution::init().await.unwrap();
+    // while let Some(message) = polo_exe.rx.recv().await {
+    //     println!("--->>> {:#?}", message);
+    // }
 
     // let mut bin_exe = BinanceExecution::init().await.unwrap();
     // while let Some(message) = bin_exe.rx.recv().await {
@@ -368,7 +368,6 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - fix poloniex userdata deserialisation problem
 // - finish init() for areana, combine stream? and put a id trait on the userdata stream for both asset?
 // - figure out the balance +ve and -ve of quote and base asset for portfolio when the fill is updated
 // - make the above point more solid

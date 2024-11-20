@@ -93,35 +93,22 @@ pub async fn get_user_data_read_channel<UserDataResponse>(
     mut web_socket: WsRead,
 ) -> Result<mpsc::UnboundedReceiver<UserDataResponse>, SocketError>
 where
-    UserDataResponse: for<'de> Deserialize<'de> + std::fmt::Debug,
+    UserDataResponse: for<'de> Deserialize<'de> + Send + Debug + 'static,
 {
     let (tx, rx) = mpsc::unbounded_channel();
-    while let Some(msg) = web_socket.next().await {
-        println!("$$$$$ {:#?}", msg);
-        let response = match WebSocketParser::parse::<UserDataResponse>(msg) {
-            Some(Ok(exchange_message)) => exchange_message,
-            Some(Err(err)) => return Err(err),
-            None => continue,
-        };
-        let _ = tx.send(response);
-    }
-    Ok(rx)
-}
+    tokio::spawn(async move {
+        while let Some(msg) = web_socket.next().await {
+            let response = match WebSocketParser::parse::<UserDataResponse>(msg) {
+                Some(Ok(exchange_message)) => exchange_message,
+                Some(Err(err)) => return Err(err),
+                None => continue,
+            };
+            let _ = tx.send(response);
 
-pub async fn spawn_ws_read<UserDataResponse>(
-    mut web_socket: WsRead,
-    tx: mpsc::UnboundedSender<UserDataResponse>,
-) -> Result<(), SocketError>
-where
-    UserDataResponse: for<'de> Deserialize<'de>,
-{
-    while let Some(msg) = web_socket.next().await {
-        let response = match WebSocketParser::parse::<UserDataResponse>(msg) {
-            Some(Ok(exchange_message)) => exchange_message,
-            Some(Err(err)) => return Err(err),
-            None => continue,
-        };
-        let _ = tx.send(response);
-    }
-    Ok(())
+            // >>> AUTO RECONNECT NEEDS TO BE HERE <<<
+
+        }
+        Ok(())
+    });
+    Ok(rx)
 }
