@@ -9,8 +9,8 @@ use tokio::sync::mpsc;
 
 use crate::{
     exchange::{
-        binance::binance_client::BinanceExecution, poloniex::poloniex_client::PoloniexExecution,
-        ExecutionClient2,
+        binance::binance_client::BinanceExecution, consume_account_data_ws,
+        poloniex::poloniex_client::PoloniexExecution, ExecutionClient2,
     },
     execution::{error::ExecutionError, Fees, FillEvent},
     portfolio::OrderEvent,
@@ -47,23 +47,28 @@ impl ArbTraderArena for ArbExecutor {
     type ExchangeTwo = PoloniexExecution;
 
     async fn init() -> Result<(), SocketError> {
-        let mut binance_execution = BinanceExecution::init().await?;
-        let mut poloniex_excution = PoloniexExecution::init().await?;
+        // Convert first exchange ws to channel
+        let (exchange_one_tx, mut exchange_one_rx) = mpsc::unbounded_channel();
+        tokio::spawn(consume_account_data_ws::<BinanceExecution>(exchange_one_tx));
 
+        // Convert second exchange ws to channel
+        let (exchange_two_tx, mut exchange_two_rx) = mpsc::unbounded_channel();
+        tokio::spawn(consume_account_data_ws::<PoloniexExecution>(
+            exchange_two_tx,
+        ));
+
+        // Combine channels into one
         let (combined_tx, mut combined_rx) = mpsc::unbounded_channel();
         let combined_tx_cloned = combined_tx.clone();
-
         tokio::spawn(async move {
-            while let Some(message) = binance_execution.rx.recv().await {
+            while let Some(message) = exchange_one_rx.recv().await {
                 let _ = combined_tx_cloned.send(CombinedUserStreams::ExchangeOne(message));
             }
         });
 
         tokio::spawn(async move {
-            while let Some(message) = poloniex_excution.rx.recv().await {
-                let _ = combined_tx
-                    .clone()
-                    .send(CombinedUserStreams::ExchangeTwo(message));
+            while let Some(message) = exchange_two_rx.recv().await {
+                let _ = combined_tx.send(CombinedUserStreams::ExchangeTwo(message));
             }
         });
 
@@ -74,7 +79,7 @@ impl ArbTraderArena for ArbExecutor {
         Ok(())
     }
 
-    fn generate_fill(&self, order: &OrderEvent) -> Result<FillEvent, ExecutionError> {
+    fn generate_fill(&self, _order: &OrderEvent) -> Result<FillEvent, ExecutionError> {
         Ok(FillEvent {
             time: Utc::now(),
             exchange: ExchangeId::BinanceSpot,

@@ -11,12 +11,13 @@ use rotom_data::{
     error::SocketError,
     protocols::ws::{
         ws_parser::{StreamParser, WebSocketParser},
-        WsRead,
+        JoinHandle, WsRead,
     },
 };
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 use tokio::sync::mpsc;
+use tracing::{debug, error, info, warn};
 
 use crate::portfolio::OrderEvent;
 
@@ -26,7 +27,25 @@ use crate::portfolio::OrderEvent;
 type HmacSha256 = Hmac<Sha256>;
 
 /*----- */
-// Execution Clinet Trait
+// Private Data Ws Stream
+/*----- */
+pub struct UserDataStream {
+    pub user_data_ws: WsRead,
+    pub tasks: Option<Vec<JoinHandle>>,
+}
+
+impl UserDataStream {
+    pub fn cancel_running_tasks(self) {
+        if let Some(tasks) = self.tasks {
+            tasks.iter().for_each(|task| {
+                task.abort();
+            });
+        }
+    }
+}
+
+/*----- */
+// Execution Client Trait
 /*----- */
 #[async_trait]
 pub trait ExecutionClient2 {
@@ -38,10 +57,11 @@ pub trait ExecutionClient2 {
     type WalletTransferResponse;
     type UserDataStreamResponse;
 
-    // **Note:**
-    // Usually entails spawning an asynchronous WebSocket event loop to consume [`AccountEvent`]s
-    // from the exchange, as well as returning the HTTP client `Self`.
-    async fn init() -> Result<Self, SocketError>
+    // Init user data websocket
+    async fn account_data_ws_init() -> Result<UserDataStream, SocketError>;
+
+    // Init exchange executor
+    fn http_client_init() -> Result<Self, SocketError>
     where
         Self: Sized;
 
@@ -64,11 +84,6 @@ pub trait ExecutionClient2 {
         symbol: String,
     ) -> Result<Self::CancelAllResponse, SocketError>;
 
-    // // Run and receive responses
-    // async fn receive_responses(
-    //     self,
-    // ) -> Result<mpsc::UnboundedReceiver<Self::UserDataStreamResponse>, SocketError>;
-
     // Transfer to another wallet
     async fn wallet_transfer(
         &self,
@@ -79,6 +94,10 @@ pub trait ExecutionClient2 {
     ) -> Result<Self::WalletTransferResponse, SocketError>;
 }
 
+
+/*----- */
+// Execution ID
+/*----- */
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]
 #[serde(rename = "execution", rename_all = "snake_case")]
 pub enum ExecutionId {
@@ -86,29 +105,73 @@ pub enum ExecutionId {
     Binance,
 }
 
+impl std::fmt::Display for ExecutionId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ExecutionId::Binance => write!(f, "binance"),
+            ExecutionId::Poloniex => write!(f, "poloniex"),
+        }
+    }
+}
+
 /*----- */
 // Function to spawn and return a tx for private user ws
 /*----- */
-pub async fn get_user_data_read_channel<UserDataResponse>(
-    mut web_socket: WsRead,
-) -> Result<mpsc::UnboundedReceiver<UserDataResponse>, SocketError>
+pub async fn consume_account_data_ws<ExchangeClient>(
+    account_data_tx: mpsc::UnboundedSender<ExchangeClient::UserDataStreamResponse>,
+) -> Result<(), SocketError>
 where
-    UserDataResponse: for<'de> Deserialize<'de> + Send + Debug + 'static,
+    ExchangeClient: ExecutionClient2,
+    ExchangeClient::UserDataStreamResponse: for<'de> Deserialize<'de> + Send + Debug + 'static,
 {
-    let (tx, rx) = mpsc::unbounded_channel();
-    tokio::spawn(async move {
-        while let Some(msg) = web_socket.next().await {
-            let response = match WebSocketParser::parse::<UserDataResponse>(msg) {
-                Some(Ok(exchange_message)) => exchange_message,
-                Some(Err(err)) => return Err(err),
+    let exchange_id = ExchangeClient::CLIENT;
+    let mut connection_attempt: u32 = 0;
+    let mut _backoff_ms: u64 = 125;
+
+    info!(
+        exchange = %exchange_id,
+        action = "Connecting to private user websocket stream"
+    );
+
+    loop {
+        let mut stream = ExchangeClient::account_data_ws_init().await?;
+        connection_attempt += 1;
+        _backoff_ms *= 2;
+
+        while let Some(msg) = stream.user_data_ws.next().await {
+            match WebSocketParser::parse::<ExchangeClient::UserDataStreamResponse>(msg) {
+                Some(Ok(exchange_message)) => {
+                    if let Err(error) = account_data_tx.send(exchange_message) {
+                        debug!(
+                            payload = ?error.0,
+                            why = "receiver dropped",
+                            action = "shutting account data ws stream",
+                            "failed to send account data event to Exchange receiver"
+                        );
+                        break;
+                    }
+                }
+                Some(Err(err)) => {
+                    if err.is_terminal() {
+                        stream.cancel_running_tasks();
+                        error!(
+                            exchange = %exchange_id,
+                            error = %err,
+                            action = "Reconnecting account data web socket",
+                            message = "Encounted a terminal error for account data ws"
+                        );
+                        break;
+                    }
+                }
                 None => continue,
-            };
-            let _ = tx.send(response);
-
-            // >>> AUTO RECONNECT NEEDS TO BE HERE <<<
-
+            }
         }
-        Ok(())
-    });
-    Ok(rx)
+
+        // Wait a certain ms before trying to reconnect
+        warn!(
+            exchange = %exchange_id,
+            action = "attempting re-connection after backoff",
+            reconnection_attempts = connection_attempt,
+        );
+    }
 }

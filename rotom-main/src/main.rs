@@ -368,12 +368,10 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - finish init() for areana, combine stream? and put a id trait on the userdata stream for both asset?
 // - figure out the balance +ve and -ve of quote and base asset for portfolio when the fill is updated
 // - make the above point more solid
 // - update parse decision signal to not let short positions be open for spot trades
 // - make execution arena
-// - userdata stream for client execution auto reconnect
 // - standarise order types ie. limit, market etc
 // - rm todos
 // - mv binance auth to http client

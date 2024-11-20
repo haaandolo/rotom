@@ -8,17 +8,16 @@ use rotom_data::{
         ws::{
             connect, schedule_pings_to_exchange,
             ws_parser::{StreamParser, WebSocketParser},
-            JoinHandle, WsMessage,
+            WsMessage,
         },
     },
 };
 use serde::Deserialize;
-use tokio::sync::mpsc;
 
 use crate::{
     exchange::{
-        get_user_data_read_channel, poloniex::requests::user_data::PoloniexUserData,
-        ExecutionClient2, ExecutionId,
+        poloniex::requests::user_data::PoloniexUserData, ExecutionClient2, ExecutionId,
+        UserDataStream,
     },
     portfolio::OrderEvent,
 };
@@ -43,9 +42,7 @@ const POLONIEX_USER_DATA_WS: &str = "wss://ws.poloniex.com/ws/private";
 
 #[derive(Debug)]
 pub struct PoloniexExecution {
-    pub rx: mpsc::UnboundedReceiver<PoloniexUserData>,
     pub http_client: PoloniexRestClient,
-    pub tasks: Vec<JoinHandle>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -73,17 +70,7 @@ impl ExecutionClient2 for PoloniexExecution {
     type UserDataStreamResponse = PoloniexUserData;
 
     #[inline]
-    async fn init() -> Result<Self, SocketError>
-    where
-        Self: Sized,
-    {
-        // Initalise rest client
-        let http_client: RestClient<StandardHttpParser, PoloniexRequestBuilder> = RestClient::new(
-            POLONIEX_BASE_URL,
-            StandardHttpParser,
-            PoloniexRequestBuilder,
-        );
-
+    async fn account_data_ws_init() -> Result<UserDataStream, SocketError> {
         // Spin up listening ws
         let ws = connect(POLONIEX_USER_DATA_WS).await?;
         let (mut user_data_write, mut user_data_ws) = ws.split();
@@ -149,14 +136,22 @@ impl ExecutionClient2 for PoloniexExecution {
             tasks.push(ping_handler)
         }
 
-        // Convert ws_read to rx channel
-        let rx = get_user_data_read_channel::<PoloniexUserData>(user_data_ws).await?;
-
-        Ok(PoloniexExecution {
-            rx,
-            http_client,
-            tasks,
+        Ok(UserDataStream {
+            user_data_ws,
+            tasks: Some(tasks),
         })
+    }
+
+    #[inline]
+    fn http_client_init() -> Result<Self, SocketError> {
+        // Initalise rest client
+        let http_client = PoloniexRestClient::new(
+            POLONIEX_BASE_URL,
+            StandardHttpParser,
+            PoloniexRequestBuilder,
+        );
+
+        Ok(PoloniexExecution { http_client })
     }
 
     #[inline]
