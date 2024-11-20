@@ -94,7 +94,6 @@ pub trait ExecutionClient2 {
     ) -> Result<Self::WalletTransferResponse, SocketError>;
 }
 
-
 /*----- */
 // Execution ID
 /*----- */
@@ -139,6 +138,7 @@ where
         _backoff_ms *= 2;
 
         while let Some(msg) = stream.user_data_ws.next().await {
+            println!("testing ping: {:#?}",msg); // de
             match WebSocketParser::parse::<ExchangeClient::UserDataStreamResponse>(msg) {
                 Some(Ok(exchange_message)) => {
                     if let Err(error) = account_data_tx.send(exchange_message) {
@@ -175,3 +175,7 @@ where
         );
     }
 }
+
+/*----- */
+// Data Identifier Trait - to identify data when user data streams get combined
+/*----- */

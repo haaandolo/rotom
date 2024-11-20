@@ -19,7 +19,7 @@ use rotom_oms::{
         ExecutionClient2,
     },
     execution::{
-        arena::arb_trader_arena::{ArbExecutor, ArbTraderArena},
+        arena::arb_trader_arena::{SpotArbArena, SpotArbExecutor},
         simulated::{Config, SimulatedExecution},
         Fees,
     },
@@ -36,7 +36,11 @@ use rotom_oms::{
     },
 };
 use rotom_strategy::{spread::SpreadStategy, Decision};
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use std::{
+    collections::HashMap,
+    sync::{atomic, Arc},
+    time::Duration,
+};
 use tokio::{
     sync::mpsc::{self, UnboundedReceiver},
     time::sleep,
@@ -137,7 +141,15 @@ pub async fn main() {
     // println!("{:#?}", res);
     /////////////////////////////////////////////////
     // Arena
-    let _ = ArbExecutor::init().await;
+    let mut arb_exe = SpotArbExecutor::<BinanceExecution, PoloniexExecution>::new()
+        .await
+        .unwrap();
+
+    while let Some(msg) = arb_exe.combined_stream.recv().await {
+        println!("{:#?}", msg);
+    }
+
+    // let arb_exe = ArbExecutor::<BinanceExecution, PoloniexExecution>::default();
 
     // let mut polo_exe = PoloniexExecution::init().await.unwrap();
     // while let Some(message) = polo_exe.rx.recv().await {
@@ -378,3 +390,4 @@ fn init_logging() {
 // - impl other user related data methods for execution client
 // - change level size to quantity (name change)
 // - change r#type to enum instead of string
+// - unify auto reconnect script?
