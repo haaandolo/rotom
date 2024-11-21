@@ -12,6 +12,7 @@ use uuid::Uuid;
 use crate::{
     event::Event,
     execution::FillEvent,
+    model::balance::Balance,
     portfolio::{
         allocator::OrderAllocator,
         error::PortfolioError,
@@ -21,7 +22,7 @@ use crate::{
             PositionUpdate, PositionUpdater, Side,
         },
         risk_manager::OrderEvaluator,
-        Balance, OrderEvent, OrderType,
+        OrderEvent, OrderType,
     },
     statistic::summary::{Initialiser, PositionSummariser},
 };
@@ -99,7 +100,6 @@ where
         self.repository.set_balance(
             self.engine_id,
             Balance {
-                time: Utc::now(),
                 total: starting_cash,
                 available: starting_cash,
             },
@@ -370,7 +370,6 @@ where
     fn update_from_fill(&mut self, fill: &FillEvent) -> Result<Vec<Event>, PortfolioError> {
         let mut generate_events = Vec::with_capacity(2);
         let mut balance = self.repository.get_balance(self.engine_id)?;
-        balance.time = fill.time;
 
         let position_id = determine_position_id(self.engine_id, &fill.exchange, &fill.instrument);
 

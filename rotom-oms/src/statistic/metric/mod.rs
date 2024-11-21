@@ -2,8 +2,7 @@ pub mod drawdown;
 pub mod ratio;
 
 use crate::{
-    portfolio::{position::Position, Balance},
-    statistic::summary::PositionSummariser,
+    model::balance::Balance, portfolio::position::Position, statistic::summary::PositionSummariser,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -27,7 +26,7 @@ impl Default for EquityPoint {
 impl From<Balance> for EquityPoint {
     fn from(balance: Balance) -> Self {
         Self {
-            time: balance.time,
+            time: Utc::now(),
             total: balance.total,
         }
     }
@@ -42,8 +41,7 @@ impl PositionSummariser for EquityPoint {
                 self.time = position.meta.update_time;
                 self.total += position.unrealised_profit_loss;
             }
-            Some(exit_balance) => {
-                self.time = exit_balance.time;
+            Some(_exit_balance) => {
                 self.total += position.realised_profit_loss;
             }
         }
@@ -60,10 +58,9 @@ mod tests {
 
     #[test]
     fn equity_point_update() {
-        fn equity_update_position_closed(exit_time: DateTime<Utc>, result_pnl: f64) -> Position {
+        fn equity_update_position_closed(_exit_time: DateTime<Utc>, result_pnl: f64) -> Position {
             let mut position = position();
             position.meta.exit_balance = Some(Balance {
-                time: exit_time,
                 total: 100.0,
                 available: 100.0,
             });

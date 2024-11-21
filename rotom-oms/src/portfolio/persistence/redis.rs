@@ -3,14 +3,16 @@ use std::{
     marker::PhantomData,
 };
 
-use redis::{Connection, ErrorKind, Commands};
+use redis::{Commands, Connection, ErrorKind};
 use rotom_data::{Market, MarketId};
 use serde::{de::DeserializeOwned, Serialize};
 use uuid::Uuid;
 
 use crate::{
+    model::balance::Balance,
     portfolio::{
-        error::PortfolioError, position::{determine_position_id, Position, PositionId}, Balance
+        error::PortfolioError,
+        position::{determine_position_id, Position, PositionId},
     },
     statistic::summary::PositionSummariser,
 };
@@ -212,7 +214,6 @@ where
         f.debug_struct("RedisRepository").finish()
     }
 }
-
 
 /*----- */
 // Redis Repository builder

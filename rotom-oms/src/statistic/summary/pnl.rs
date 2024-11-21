@@ -50,7 +50,7 @@ impl PositionSummariser for PnLReturnSummary {
         }
 
         // Update duration of trading session & trades per day
-        self.update_trading_session_duration(position);
+        // self.update_trading_session_duration(position);
         self.update_trades_per_day();
 
         // Calculate the Position PnL Return
@@ -112,15 +112,15 @@ impl PnLReturnSummary {
         }
     }
 
-    pub fn update_trading_session_duration(&mut self, position: &Position) {
-        self.duration = match position.meta.exit_balance {
-            None => {
-                // Since Position is not exited, estimate duration w/ last_update_time
-                position.meta.update_time.signed_duration_since(self.time)
-            }
-            Some(exit_balance) => exit_balance.time.signed_duration_since(self.time),
-        }
-    }
+    // pub fn update_trading_session_duration(&mut self, position: &Position) {
+    //     self.duration = match position.meta.exit_balance {
+    //         None => {
+    //             // Since Position is not exited, estimate duration w/ last_update_time
+    //             position.meta.update_time.signed_duration_since(self.time)
+    //         }
+    //         Some(exit_balance) => exit_balance.time.signed_duration_since(self.time),
+    //     }
+    // }
 
     pub fn update_trades_per_day(&mut self) {
         self.trades_per_day = self.total.count as f64
@@ -200,51 +200,50 @@ impl ProfitLossSummary {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::{portfolio::Balance, statistic::test_util::position};
-    use chrono::{Duration, Utc};
+    // use super::*;
+    // use crate::{model::balance::Balance, statistic::test_util::position};
+    // use chrono::{Duration, Utc};
 
     #[test]
     fn update_pnl_return_summary() {
         // Todo:
     }
 
-    #[test]
-    fn update_trading_session_duration_with_non_exited_position() {
-        let base_time = Utc::now();
+    // #[test]
+    // fn update_trading_session_duration_with_non_exited_position() {
+    //     let base_time = Utc::now();
 
-        let mut pnl_return_view = PnLReturnSummary::new();
-        pnl_return_view.time = base_time;
+    //     let mut pnl_return_view = PnLReturnSummary::new();
+    //     pnl_return_view.time = base_time;
 
-        let mut input_position = position();
-        input_position.meta.exit_balance = None;
-        input_position.meta.update_time = base_time.checked_add_signed(Duration::days(10)).unwrap();
+    //     let mut input_position = position();
+    //     input_position.meta.exit_balance = None;
+    //     input_position.meta.update_time = base_time.checked_add_signed(Duration::days(10)).unwrap();
 
-        pnl_return_view.update_trading_session_duration(&input_position);
+    //     pnl_return_view.update_trading_session_duration(&input_position);
 
-        let expected = Duration::days(10);
+    //     let expected = Duration::days(10);
 
-        assert_eq!(pnl_return_view.duration, expected);
-    }
+    //     assert_eq!(pnl_return_view.duration, expected);
+    // }
 
-    #[test]
-    fn update_trading_session_duration_with_exited_position() {
-        let base_time = Utc::now();
+    // #[test]
+    // fn update_trading_session_duration_with_exited_position() {
+    //     let base_time = Utc::now();
 
-        let mut pnl_return_view = PnLReturnSummary::new();
-        pnl_return_view.time = base_time;
+    //     let mut pnl_return_view = PnLReturnSummary::new();
+    //     pnl_return_view.time = base_time;
 
-        let mut input_position = position();
-        input_position.meta.exit_balance = Some(Balance {
-            time: base_time.checked_add_signed(Duration::days(15)).unwrap(),
-            total: 0.0,
-            available: 0.0,
-        });
+    //     let mut input_position = position();
+    //     input_position.meta.exit_balance = Some(Balance {
+    //         total: 0.0,
+    //         available: 0.0,
+    //     });
 
-        pnl_return_view.update_trading_session_duration(&input_position);
+    //     pnl_return_view.update_trading_session_duration(&input_position);
 
-        let expected = Duration::days(15);
+    //     let expected = Duration::days(15);
 
-        assert_eq!(pnl_return_view.duration, expected);
-    }
+    //     assert_eq!(pnl_return_view.duration, expected);
+    // }
 }

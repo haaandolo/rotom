@@ -8,7 +8,6 @@ use crate::{
         },
     },
 };
-use chrono::{DateTime, Duration, Utc};
 use prettytable::{row, Cell, Row};
 use serde::{Deserialize, Serialize};
 
@@ -123,12 +122,11 @@ impl TableBuilder for TearSheet {
     }
 }
 
-pub fn calculate_trading_duration(start_time: &DateTime<Utc>, position: &Position) -> Duration {
-    match position.meta.exit_balance {
-        None => {
-            // Since Position is not exited, estimate duration w/ last_update_time
-            position.meta.update_time.signed_duration_since(*start_time)
-        }
-        Some(exit_balance) => exit_balance.time.signed_duration_since(*start_time),
-    }
-}
+//     match position.meta.exit_balance {
+//         None => {
+//             // Since Position is not exited, estimate duration w/ last_update_time
+//             position.meta.update_time.signed_duration_since(*start_time)
+//         }
+//         Some(exit_balance) => Utc::now(),
+//     }
+// }

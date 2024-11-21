@@ -1,4 +1,3 @@
-use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
@@ -7,7 +6,7 @@ use rotom_data::{
     protocols::http::rest_request::RestRequest, shared::subscription_models::ExchangeId,
 };
 
-use crate::portfolio::{AssetBalance, Balance};
+use crate::model::balance::{AssetBalance, Balance};
 
 /*----- */
 // Poloniex Balance
@@ -61,7 +60,6 @@ pub struct PoloniexBalanceResponseVec {
 impl From<PoloniexBalanceResponseVec> for Balance {
     fn from(balance: PoloniexBalanceResponseVec) -> Self {
         Self {
-            time: Utc::now(),
             total: balance.available,
             available: 0.0,
         }

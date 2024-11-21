@@ -14,16 +14,16 @@ use crate::{
         binance::binance_client::BinancePrivateData, poloniex::poloniex_client::PoloniexPrivateData,
     },
     execution::FillEvent,
+    model::balance::{determine_balance_id, AssetBalance, SpotBalanceId},
     portfolio::{
         allocator::{spot_arb_allocator::SpotArbAllocator, OrderAllocator},
-        determine_balance_id,
         error::PortfolioError,
         persistence::in_memory2::InMemoryRepository2,
         position::{
             determine_position_id, Position, PositionEnterer, PositionExiter, PositionUpdate,
             PositionUpdater, Side,
         },
-        AssetBalance, OrderEvent, OrderType, SpotBalanceId,
+        OrderEvent, OrderType,
     },
 };
 
@@ -146,7 +146,7 @@ impl OrderGenerator for SpotPortfolio {
 
     fn generate_exit_order(
         &mut self,
-        signal: SignalForceExit,
+        _signal: SignalForceExit,
     ) -> Result<Option<OrderEvent>, PortfolioError> {
         unimplemented!()
     }
@@ -182,11 +182,9 @@ impl FillUpdater for SpotPortfolio {
 
                 // Update quote asset balance
                 quote_asset_balance.total += position.calculate_quote_asset_enter_price();
-                quote_asset_balance.time = fill.time;
 
                 // Update base asset balance
                 base_asset_balance.total += fill.quantity;
-                base_asset_balance.time = fill.time;
 
                 self.repository.set_open_position(position)?;
             }

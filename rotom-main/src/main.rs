@@ -28,7 +28,7 @@ use rotom_oms::{
         persistence::{in_memory::InMemoryRepository, in_memory2::InMemoryRepository2},
         portfolio_type::{default_portfolio::MetaPortfolio, spot_portfolio::SpotPortfolio},
         risk_manager::default_risk_manager::DefaultRisk,
-        AssetBalance, OrderEvent, OrderType,
+        OrderEvent, OrderType,
     },
     statistic::summary::{
         trading::{Config as StatisticConfig, TradingSummary},

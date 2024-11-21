@@ -3,10 +3,9 @@ pub mod in_memory;
 pub mod in_memory2;
 pub mod redis;
 
-use super::{
-    position::{Position, PositionId},
-    Balance,
-};
+use crate::model::balance::Balance;
+
+use super::position::{Position, PositionId};
 use error::RepositoryError;
 use rotom_data::{Market, MarketId};
 use uuid::Uuid;

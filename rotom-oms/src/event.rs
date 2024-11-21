@@ -1,8 +1,9 @@
 use crate::{
     execution::FillEvent,
+    model::balance::Balance,
     portfolio::{
         position::{Position, PositionExit, PositionUpdate},
-        Balance, OrderEvent,
+        OrderEvent,
     },
 };
 use rotom_data::event_models::market_event::{DataKind, MarketEvent};

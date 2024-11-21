@@ -9,7 +9,7 @@ use rotom_data::{
 
 use crate::{
     exchange::{binance::request_builder::BinanceAuthParams, errors::RequestBuildError},
-    portfolio::{AssetBalance, Balance},
+    model::balance::{AssetBalance, Balance},
 };
 
 /*----- */
@@ -179,7 +179,6 @@ pub struct BinanceBalanceResponseData {
 impl From<BinanceBalanceResponseData> for Balance {
     fn from(balance: BinanceBalanceResponseData) -> Self {
         Self {
-            time: Utc::now(),
             total: balance.free,
             available: 0.0,
         }

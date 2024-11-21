@@ -12,8 +12,7 @@ use rotom_data::{
     MarketMeta,
 };
 use rotom_strategy::Decision;
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+use serde::Deserialize;
 
 /*----- */
 // Order Event
@@ -146,74 +145,5 @@ impl OrderEventBuilder {
                 .order_type
                 .ok_or(PortfolioError::BuilderIncomplete("order_type"))?,
         })
-    }
-}
-
-/*----- */
-// Balance
-/*----- */
-pub type BalanceId = String;
-
-#[derive(Clone, Copy, PartialEq, PartialOrd, Debug, Serialize, Deserialize)]
-pub struct Balance {
-    pub time: DateTime<Utc>,
-    pub total: f64,
-    pub available: f64,
-}
-
-impl Default for Balance {
-    fn default() -> Self {
-        Self {
-            time: Utc::now(),
-            total: 0.0,
-            available: 0.0,
-        }
-    }
-}
-
-impl Balance {
-    pub fn new(time: DateTime<Utc>, total: f64, available: f64) -> Self {
-        Self {
-            time,
-            total,
-            available,
-        }
-    }
-
-    pub fn balance_id(engine_id: Uuid) -> BalanceId {
-        format!("{}_balance", engine_id)
-    }
-}
-
-/*----- */
-// Spot Balance
-/*----- */
-#[derive(Debug, Eq, PartialEq, Hash)]
-pub struct SpotBalanceId(pub String);
-
-pub fn determine_balance_id(asset: &String, exchange: &ExchangeId) -> SpotBalanceId {
-    SpotBalanceId(format!("{}_{}", asset, exchange))
-}
-
-#[derive(Clone, PartialEq, PartialOrd, Debug, Serialize, Deserialize)]
-pub struct AssetBalance {
-    pub asset: String,
-    pub exchange: ExchangeId,
-    pub balance: Balance,
-}
-
-impl AssetBalance {
-    pub fn new(asset: String, exchange: ExchangeId, balance: Balance) -> Self {
-        Self {
-            asset,
-            exchange,
-            balance,
-        }
-    }
-}
-
-impl From<&AssetBalance> for SpotBalanceId {
-    fn from(asset_balance: &AssetBalance) -> Self {
-        SpotBalanceId(format!("{}_{}", asset_balance.asset, asset_balance.exchange).to_lowercase())
     }
 }

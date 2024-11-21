@@ -8,9 +8,9 @@ use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use uuid::Uuid;
 
-use crate::execution::{FeeAmount, Fees, FillEvent};
+use crate::{execution::{FeeAmount, Fees, FillEvent}, model::balance::Balance};
 
-use super::{error::PortfolioError, Balance};
+use super::error::PortfolioError;
 
 /*----- */
 // Position traits

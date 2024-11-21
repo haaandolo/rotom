@@ -4,16 +4,12 @@ use rotom_data::Market;
 use uuid::Uuid;
 
 use crate::{
-    portfolio::{
-        position::{determine_position_id, Position, PositionId},
-        Balance, SpotBalanceId,
-    },
-    statistic::summary::PositionSummariser,
+    model::balance::{Balance, SpotBalanceId},
+    portfolio::position::{determine_position_id, Position, PositionId},
 };
 
 use super::{
-    determine_exited_positions_id, error::RepositoryError, BalanceHandler, PositionHandler,
-    StatisticHandler,
+    determine_exited_positions_id, error::RepositoryError,
 };
 
 /*----- */
