@@ -141,11 +141,11 @@ pub async fn main() {
     // println!("{:#?}", res);
     /////////////////////////////////////////////////
     // Arena
-    let mut arb_exe = SpotArbExecutor::<BinanceExecution, PoloniexExecution>::new()
+    let mut arb_exe = SpotArbExecutor::<BinanceExecution, PoloniexExecution>::init()
         .await
         .unwrap();
 
-    while let Some(msg) = arb_exe.combined_stream.recv().await {
+    while let Some(msg) = arb_exe.streams.recv().await {
         println!("{:#?}", msg);
     }
 
