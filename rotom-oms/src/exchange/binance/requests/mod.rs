@@ -2,7 +2,7 @@ pub mod balance;
 pub mod cancel_order;
 pub mod listening_key;
 pub mod new_order;
-pub mod user_data;
+pub mod account_data;
 pub mod wallet_transfer;
 
 use rotom_data::shared::de::de_str;

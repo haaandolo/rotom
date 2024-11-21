@@ -8,7 +8,7 @@ use rotom_data::shared::de::de_str;
 /*----- */
 #[derive(Debug, Deserialize)]
 #[allow(non_snake_case)]
-pub struct BinanceUserDataOrder {
+pub struct BinanceAccountDataOrder {
     pub e: String,             // Event type
     pub E: u64,                // Event time
     pub s: String,             // Symbol
@@ -62,16 +62,16 @@ pub struct BinanceUserDataOrder {
 /*----- */
 #[derive(Debug, Deserialize)]
 #[allow(non_snake_case)]
-pub struct BinanceUserDataAccount {
+pub struct BinanceAccountDataDelta {
     pub e: String,                          // event type
     pub E: u64,                             // event time
     pub u: u64,                             // time of last account update
-    pub B: Vec<BinanceUserDataAccountData>, // balance Array
+    pub B: Vec<BinanceAccountDataDeltaVec>, // balance Array
 }
 
 #[derive(Debug, Deserialize)]
 #[allow(non_snake_case)]
-pub struct BinanceUserDataAccountData {
+pub struct BinanceAccountDataDeltaVec {
     pub a: String, // asset
     #[serde(deserialize_with = "de_str")]
     pub f: f64, // free
@@ -84,7 +84,7 @@ pub struct BinanceUserDataAccountData {
 /*----- */
 #[derive(Debug, Deserialize)]
 #[allow(non_snake_case)]
-pub struct BinanceUserDataBalance {
+pub struct BinanceAccountDataBalance {
     pub e: String, // event type
     pub E: u64,    // event time
     pub a: String, // asset
@@ -98,7 +98,7 @@ pub struct BinanceUserDataBalance {
 /*----- */
 #[derive(Debug, Deserialize)]
 #[allow(non_snake_case)]
-pub struct BinanceUserDataList {
+pub struct BinanceAccountDataList {
     pub e: String, // event type
     pub E: u64,    // event time
     pub s: String, // symbol
@@ -125,11 +125,11 @@ pub struct BinanceUserDataListData {
 #[derive(Debug, Deserialize)]
 #[allow(clippy::large_enum_variant)]
 #[serde(untagged)]
-pub enum BinanceUserData {
-    Order(BinanceUserDataOrder),
-    Account(BinanceUserDataAccount),
-    Balance(BinanceUserDataBalance),
-    List(BinanceUserDataList),
+pub enum BinanceAccountEvents {
+    Order(BinanceAccountDataOrder),
+    Account(BinanceAccountDataDelta),
+    Balance(BinanceAccountDataBalance),
+    List(BinanceAccountDataList),
 }
 
 #[cfg(test)]
@@ -175,7 +175,7 @@ mod test {
             "V":"EXPIRE_MAKER"
         }"#;
 
-        let response_de = serde_json::from_str::<BinanceUserData>(response);
+        let response_de = serde_json::from_str::<BinanceAccountEvents>(response);
         let mut _result = false;
 
         match response_de {

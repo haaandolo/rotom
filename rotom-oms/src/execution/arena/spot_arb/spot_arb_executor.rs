@@ -27,8 +27,8 @@ where
     pub exchange_two: ExchangeTwo,
     pub streams: mpsc::UnboundedReceiver<
         AccountStreamsCombined<
-            ExchangeOne::UserDataStreamResponse,
-            ExchangeTwo::UserDataStreamResponse,
+            ExchangeOne::AccountDataStreamResponse,
+            ExchangeTwo::AccountDataStreamResponse,
         >,
     >,
 }
@@ -37,8 +37,8 @@ impl<ExchangeOne, ExchangeTwo> SpotArbExecutor<ExchangeOne, ExchangeTwo>
 where
     ExchangeOne: ExecutionClient2 + 'static,
     ExchangeTwo: ExecutionClient2 + 'static,
-    ExchangeOne::UserDataStreamResponse: Send + for<'de> Deserialize<'de> + Debug,
-    ExchangeTwo::UserDataStreamResponse: Send + for<'de> Deserialize<'de> + Debug,
+    ExchangeOne::AccountDataStreamResponse: Send + for<'de> Deserialize<'de> + Debug,
+    ExchangeTwo::AccountDataStreamResponse: Send + for<'de> Deserialize<'de> + Debug,
 {
     pub async fn init() -> Result<SpotArbExecutor<ExchangeOne, ExchangeTwo>, SocketError> {
         // Convert first exchange ws to channel

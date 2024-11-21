@@ -16,7 +16,7 @@ use serde::Deserialize;
 
 use crate::{
     exchange::{
-        poloniex::requests::user_data::PoloniexUserData, ExecutionClient2, ExecutionId,
+        poloniex::requests::account_data::PoloniexAccountEvents, ExecutionClient2, ExecutionId,
         UserDataStream,
     },
     portfolio::OrderEvent,
@@ -67,7 +67,7 @@ impl ExecutionClient2 for PoloniexExecution {
     type CancelAllResponse = Vec<PoloniexCancelOrderResponse>;
     type NewOrderResponse = PoloniexNewOrderResponse;
     type WalletTransferResponse = PoloniexWalletTransferResponse;
-    type UserDataStreamResponse = PoloniexUserData;
+    type AccountDataStreamResponse = PoloniexAccountEvents;
 
     async fn create_account_data_ws() -> Result<UserDataStream, SocketError> {
         // Spin up listening ws

@@ -55,7 +55,7 @@ pub trait ExecutionClient2 {
     type CancelAllResponse;
     type NewOrderResponse;
     type WalletTransferResponse;
-    type UserDataStreamResponse;
+    type AccountDataStreamResponse;
 
     // Init user data websocket
     async fn create_account_data_ws() -> Result<UserDataStream, SocketError>;
@@ -117,11 +117,11 @@ impl std::fmt::Display for ExecutionId {
 // Function to spawn and return a tx for private user ws
 /*----- */
 pub async fn consume_account_data_ws<ExchangeClient>(
-    account_data_tx: mpsc::UnboundedSender<ExchangeClient::UserDataStreamResponse>,
+    account_data_tx: mpsc::UnboundedSender<ExchangeClient::AccountDataStreamResponse>,
 ) -> Result<(), SocketError>
 where
     ExchangeClient: ExecutionClient2,
-    ExchangeClient::UserDataStreamResponse: for<'de> Deserialize<'de> + Send + Debug + 'static,
+    ExchangeClient::AccountDataStreamResponse: for<'de> Deserialize<'de> + Send + Debug + 'static,
 {
     let exchange_id = ExchangeClient::CLIENT;
     let mut connection_attempt: u32 = 0;
@@ -138,7 +138,7 @@ where
         _backoff_ms *= 2;
 
         while let Some(msg) = stream.user_data_ws.next().await {
-            match WebSocketParser::parse::<ExchangeClient::UserDataStreamResponse>(msg) {
+            match WebSocketParser::parse::<ExchangeClient::AccountDataStreamResponse>(msg) {
                 Some(Ok(exchange_message)) => {
                     if let Err(error) = account_data_tx.send(exchange_message) {
                         debug!(

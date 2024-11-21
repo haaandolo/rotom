@@ -5,10 +5,10 @@ use rotom_data::protocols::http::client::RestClient;
 use rotom_data::protocols::http::http_parser::StandardHttpParser;
 use rotom_data::protocols::ws::connect;
 
+use crate::exchange::binance::requests::account_data::BinanceAccountEvents;
 use crate::exchange::binance::requests::cancel_order::BinanceCancelAllOrder;
 use crate::exchange::binance::requests::cancel_order::BinanceCancelOrder;
 use crate::exchange::binance::requests::new_order::BinanceNewOrder;
-use crate::exchange::binance::requests::user_data::BinanceUserData;
 use crate::exchange::binance::requests::wallet_transfer::BinanceWalletTransfer;
 use crate::exchange::ExecutionClient2;
 use crate::exchange::ExecutionId;
@@ -43,7 +43,7 @@ impl ExecutionClient2 for BinanceExecution {
     type CancelAllResponse = Vec<BinanceCancelOrderResponse>;
     type NewOrderResponse = BinanceNewOrderResponses;
     type WalletTransferResponse = BinanceWalletTransferResponse;
-    type UserDataStreamResponse = BinanceUserData;
+    type AccountDataStreamResponse = BinanceAccountEvents;
 
     async fn create_account_data_ws() -> Result<UserDataStream, SocketError> {
         let http_client =

@@ -1,7 +1,7 @@
 pub mod balance;
 pub mod cancel_order;
 pub mod new_order;
-pub mod user_data;
+pub mod account_data;
 pub mod wallet_transfer;
 pub mod ws_auth;
 
