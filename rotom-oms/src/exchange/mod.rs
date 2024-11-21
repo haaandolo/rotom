@@ -58,10 +58,10 @@ pub trait ExecutionClient2 {
     type UserDataStreamResponse;
 
     // Init user data websocket
-    async fn account_data_ws_init() -> Result<UserDataStream, SocketError>;
+    async fn create_account_data_ws() -> Result<UserDataStream, SocketError>;
 
     // Init exchange executor
-    fn http_client_init() -> Result<Self, SocketError>
+    fn create_http_client() -> Result<Self, SocketError>
     where
         Self: Sized;
 
@@ -133,12 +133,11 @@ where
     );
 
     loop {
-        let mut stream = ExchangeClient::account_data_ws_init().await?;
+        let mut stream = ExchangeClient::create_account_data_ws().await?;
         connection_attempt += 1;
         _backoff_ms *= 2;
 
         while let Some(msg) = stream.user_data_ws.next().await {
-            println!("testing ping: {:#?}",msg); // de
             match WebSocketParser::parse::<ExchangeClient::UserDataStreamResponse>(msg) {
                 Some(Ok(exchange_message)) => {
                     if let Err(error) = account_data_tx.send(exchange_message) {

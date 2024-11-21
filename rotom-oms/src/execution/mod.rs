@@ -21,6 +21,13 @@ pub trait ExecutionClient {
 }
 
 /*----- */
+// Execution Client
+/*----- */
+pub trait FillGenerator {
+    fn generate_fill(&self, order: &OrderEvent) -> Result<FillEvent, ExecutionError>;
+}
+
+/*----- */
 // Fill Event
 /*----- */
 #[derive(Debug, PartialEq, PartialOrd, Clone)]

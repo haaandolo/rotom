@@ -1,1 +1,1 @@
-pub mod arb_trader_arena;
+pub mod spot_arb;

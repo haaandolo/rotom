@@ -1,28 +1,9 @@
-use std::fmt::Debug;
-
-use async_trait::async_trait;
-use chrono::Utc;
-use rotom_data::{
-    error::SocketError,
-    shared::subscription_models::{ExchangeId, Instrument},
-    MarketMeta,
-};
+use rotom_data::error::SocketError;
 use serde::Deserialize;
+use std::fmt::Debug;
 use tokio::sync::mpsc;
 
-use crate::{
-    exchange::{consume_account_data_ws, ExecutionClient2},
-    execution::{error::ExecutionError, Fees, FillEvent},
-    portfolio::OrderEvent,
-};
-
-/*----- */
-// Arb Trader Trait
-/*----- */
-#[async_trait]
-pub trait FillGenerator {
-    fn generate_fill(&self, order: &OrderEvent) -> Result<FillEvent, ExecutionError>;
-}
+use crate::exchange::{consume_account_data_ws, ExecutionClient2};
 
 /*----- */
 // Convinenent type to combine two account data streams
@@ -84,45 +65,13 @@ where
         });
 
         // Init exchange http clients
-        let exchange_one_http = ExchangeOne::http_client_init()?;
-        let exchange_two_http = ExchangeTwo::http_client_init()?;
+        let exchange_one_http = ExchangeOne::create_http_client()?;
+        let exchange_two_http = ExchangeTwo::create_http_client()?;
 
         Ok(SpotArbExecutor {
             exchange_one: exchange_one_http,
             exchange_two: exchange_two_http,
             combined_stream: combined_rx,
-        })
-    }
-}
-
-/*----- */
-// Spot Arb Arena
-/*----- */
-#[derive(Debug)]
-pub struct SpotArbArena;
-
-#[async_trait]
-impl FillGenerator for SpotArbArena {
-    fn generate_fill(&self, _order: &OrderEvent) -> Result<FillEvent, ExecutionError> {
-        Ok(FillEvent {
-            time: Utc::now(),
-            exchange: ExchangeId::BinanceSpot,
-            instrument: Instrument {
-                base: "op".to_string(),
-                quote: "usdt".to_string(),
-            },
-            market_meta: MarketMeta {
-                time: Utc::now(),
-                close: 0.0,
-            },
-            decision: rotom_strategy::Decision::Long,
-            quantity: 0.0,
-            fill_value_gross: 0.0,
-            fees: Fees {
-                exchange: 0.0,
-                network: 0.0,
-                slippage: 0.0,
-            },
         })
     }
 }

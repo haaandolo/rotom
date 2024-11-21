@@ -19,7 +19,7 @@ use rotom_oms::{
         ExecutionClient2,
     },
     execution::{
-        arena::arb_trader_arena::{SpotArbArena, SpotArbExecutor},
+        arena::spot_arb::spot_arb_executor::SpotArbExecutor,
         simulated::{Config, SimulatedExecution},
         Fees,
     },

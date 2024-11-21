@@ -45,8 +45,7 @@ impl ExecutionClient2 for BinanceExecution {
     type WalletTransferResponse = BinanceWalletTransferResponse;
     type UserDataStreamResponse = BinanceUserData;
 
-    #[inline]
-    async fn account_data_ws_init() -> Result<UserDataStream, SocketError> {
+    async fn create_account_data_ws() -> Result<UserDataStream, SocketError> {
         let http_client =
             BinanceRestClient::new(BINANCE_BASE_URL, StandardHttpParser, BinanceRequestBuilder);
 
@@ -61,14 +60,12 @@ impl ExecutionClient2 for BinanceExecution {
         })
     }
 
-    #[inline]
-    fn http_client_init() -> Result<Self, SocketError> {
+    fn create_http_client() -> Result<Self, SocketError> {
         let http_client =
             BinanceRestClient::new(BINANCE_BASE_URL, StandardHttpParser, BinanceRequestBuilder);
         Ok(BinanceExecution { http_client })
     }
 
-    #[inline]
     async fn open_order(
         &self,
         open_requests: OrderEvent,
@@ -80,7 +77,6 @@ impl ExecutionClient2 for BinanceExecution {
         Ok(response.0)
     }
 
-    #[inline]
     async fn cancel_order(
         &self,
         orig_client_order_id: String,
@@ -93,7 +89,6 @@ impl ExecutionClient2 for BinanceExecution {
         Ok(response.0)
     }
 
-    #[inline]
     async fn cancel_order_all(
         &self,
         symbol: String,
@@ -105,7 +100,6 @@ impl ExecutionClient2 for BinanceExecution {
         Ok(response.0)
     }
 
-    #[inline]
     async fn wallet_transfer(
         &self,
         coin: String,

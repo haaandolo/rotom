@@ -69,8 +69,7 @@ impl ExecutionClient2 for PoloniexExecution {
     type WalletTransferResponse = PoloniexWalletTransferResponse;
     type UserDataStreamResponse = PoloniexUserData;
 
-    #[inline]
-    async fn account_data_ws_init() -> Result<UserDataStream, SocketError> {
+    async fn create_account_data_ws() -> Result<UserDataStream, SocketError> {
         // Spin up listening ws
         let ws = connect(POLONIEX_USER_DATA_WS).await?;
         let (mut user_data_write, mut user_data_ws) = ws.split();
@@ -142,8 +141,7 @@ impl ExecutionClient2 for PoloniexExecution {
         })
     }
 
-    #[inline]
-    fn http_client_init() -> Result<Self, SocketError> {
+    fn create_http_client() -> Result<Self, SocketError> {
         // Initalise rest client
         let http_client = PoloniexRestClient::new(
             POLONIEX_BASE_URL,
@@ -154,7 +152,6 @@ impl ExecutionClient2 for PoloniexExecution {
         Ok(PoloniexExecution { http_client })
     }
 
-    #[inline]
     async fn open_order(
         &self,
         open_request: OrderEvent,
@@ -166,7 +163,6 @@ impl ExecutionClient2 for PoloniexExecution {
         Ok(response.0)
     }
 
-    #[inline]
     async fn cancel_order(
         &self,
         order_id: String,
@@ -179,7 +175,6 @@ impl ExecutionClient2 for PoloniexExecution {
         Ok(response.0)
     }
 
-    #[inline]
     async fn cancel_order_all(
         &self,
         symbol: String,
@@ -191,7 +186,6 @@ impl ExecutionClient2 for PoloniexExecution {
         Ok(response.0)
     }
 
-    #[inline]
     async fn wallet_transfer(
         &self,
         coin: String,
