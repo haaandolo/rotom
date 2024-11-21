@@ -49,7 +49,7 @@ where
         let (exchange_two_tx, mut exchange_two_rx) = mpsc::unbounded_channel();
         tokio::spawn(consume_account_data_ws::<ExchangeTwo>(exchange_two_tx));
 
-        // Combine channels into one stream
+        // Combine channels into one
         let (combined_tx, combined_rx) = mpsc::unbounded_channel();
         let combined_tx_cloned = combined_tx.clone();
         tokio::spawn(async move {
