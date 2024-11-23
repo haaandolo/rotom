@@ -79,7 +79,7 @@ pub async fn main() {
     // };
 
     // Test Binance Execution
-    // let binance_exe = BinanceExecution::init().await.unwrap();
+    // let binance_exe = BinanceExecution::create_http_client().unwrap();
     // let res = binance_exe.get_balance_all().await;
     // let res: Vec<AssetBalance> = res.unwrap().into();
     // let res = binance_exe
@@ -380,10 +380,12 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
+// - impl From trait for order and balance for polo and bin
 // - figure out the balance +ve and -ve of quote and base asset for portfolio when the fill is updated
 // - make the above point more solid
 // - update parse decision signal to not let short positions be open for spot trades
 // - make execution arena
+// - unify types like Side, OrderType etc into one
 // - standarise order types ie. limit, market etc
 // - rm todos
 // - mv binance auth to http client

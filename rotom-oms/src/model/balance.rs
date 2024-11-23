@@ -3,6 +3,32 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 /*----- */
+// AssetBalance
+/*----- */
+#[derive(Clone, PartialEq, PartialOrd, Debug, Serialize, Deserialize)]
+pub struct AssetBalance {
+    pub asset: String, // can be smolstr e.g btc
+    pub exchange: ExchangeId,
+    pub balance: Balance,
+}
+
+impl AssetBalance {
+    pub fn new(asset: String, exchange: ExchangeId, balance: Balance) -> Self {
+        Self {
+            asset,
+            exchange,
+            balance,
+        }
+    }
+}
+
+impl From<&AssetBalance> for SpotBalanceId {
+    fn from(asset_balance: &AssetBalance) -> Self {
+        SpotBalanceId(format!("{}_{}", asset_balance.asset, asset_balance.exchange).to_lowercase())
+    }
+}
+
+/*----- */
 // Balance
 /*----- */
 pub type BalanceId = String;
@@ -30,37 +56,28 @@ impl Balance {
     pub fn balance_id(engine_id: Uuid) -> BalanceId {
         format!("{}_balance", engine_id)
     }
+
+    pub fn apply_delta(&mut self, delta: BalanceDelta) {
+        self.total += delta.total;
+        self.available += delta.available;
+    }
+}
+
+// Used for when deposits and withdrawls happen and shows the delta
+#[derive(Clone, PartialEq, PartialOrd, Debug, Serialize, Deserialize)]
+pub struct BalanceDelta {
+    pub asset: String,
+    pub exchange: ExchangeId,
+    pub total: f64,
+    pub available: f64, // only used for margin will be zero if spot
 }
 
 /*----- */
-// Spot Balance
+// Spot Balance id
 /*----- */
 #[derive(Debug, Eq, PartialEq, Hash)]
 pub struct SpotBalanceId(pub String);
 
 pub fn determine_balance_id(asset: &String, exchange: &ExchangeId) -> SpotBalanceId {
     SpotBalanceId(format!("{}_{}", asset, exchange))
-}
-
-#[derive(Clone, PartialEq, PartialOrd, Debug, Serialize, Deserialize)]
-pub struct AssetBalance {
-    pub asset: String, // can be smolstr e.g btc
-    pub exchange: ExchangeId,
-    pub balance: Balance,
-}
-
-impl AssetBalance {
-    pub fn new(asset: String, exchange: ExchangeId, balance: Balance) -> Self {
-        Self {
-            asset,
-            exchange,
-            balance,
-        }
-    }
-}
-
-impl From<&AssetBalance> for SpotBalanceId {
-    fn from(asset_balance: &AssetBalance) -> Self {
-        SpotBalanceId(format!("{}_{}", asset_balance.asset, asset_balance.exchange).to_lowercase())
-    }
 }

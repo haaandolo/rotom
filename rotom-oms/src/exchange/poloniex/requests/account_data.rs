@@ -1,9 +1,17 @@
 use chrono::{DateTime, Utc};
 use rotom_data::shared::de::de_str;
 use rotom_data::shared::de::de_u64_epoch_ms_as_datetime_utc;
+use rotom_data::shared::subscription_models::ExchangeId;
 use serde::{Deserialize, Serialize};
 
-use super::{PoloniexOrderStatus, PoloniexOrderType, PoloniexSide};
+use crate::model::balance::AssetBalance;
+use crate::model::balance::Balance;
+use crate::model::order::Open;
+use crate::model::order::Order;
+use crate::model::ClientOrderId;
+use crate::model::Side;
+
+use super::{PoloniexOrderStatus, PoloniexOrderType};
 
 /*----- */
 // Poloniex User Data - Orders
@@ -30,7 +38,7 @@ pub struct PoloniexAccountDataOrderParams {
     pub fee_currency: String,
     pub event_type: PoloniexOrderEventType,
     pub source: String,
-    pub side: PoloniexSide,
+    pub side: Side,
     #[serde(deserialize_with = "de_str")]
     pub filled_quantity: f64,
     #[serde(deserialize_with = "de_str")]
@@ -64,6 +72,23 @@ pub enum PoloniexOrderEventType {
     Canceled,
 }
 
+impl From<PoloniexAccountDataOrder> for Order<Open> {
+    fn from(mut order: PoloniexAccountDataOrder) -> Self {
+        Self {
+            exchange: ExchangeId::PoloniexSpot,
+            instrument: std::mem::take(&mut order.data[0].symbol),
+            client_order_id: ClientOrderId(std::mem::take(&mut order.data[0].client_order_id)),
+            side: order.data[0].side,
+            state: Open {
+                id: order.data[0].order_id,
+                price: order.data[0].price,
+                quantity: order.data[0].quantity,
+                filled_quantity: order.data[0].filled_amount,
+            },
+        }
+    }
+}
+
 /*----- */
 // Poloniex User Data - Balance
 /*----- */
@@ -92,6 +117,19 @@ pub struct PoloniexAccountDataBalanceParams {
     pub ts: u64,
 }
 
+impl From<PoloniexAccountDataBalance> for AssetBalance {
+    fn from(mut account_balance: PoloniexAccountDataBalance) -> Self {
+        Self {
+            asset: std::mem::take(&mut account_balance.data[0].currency), // when changed to small string, can rm std::mem::take
+            exchange: ExchangeId::PoloniexSpot,
+            balance: Balance {
+                total: account_balance.data[0].hold,
+                available: account_balance.data[0].available,
+            },
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all(deserialize = "SCREAMING_SNAKE_CASE"))]
 pub enum PoloniexBalanceEventType {
@@ -113,3 +151,12 @@ pub enum PoloniexAccountEvents {
     Order(PoloniexAccountDataOrder),
     Balance(PoloniexAccountDataBalance),
 }
+
+// impl From<PoloniexAccountEvents> for AccountData {
+//     fn from(value: PoloniexAccountEvents) -> Self {
+//         match value {
+//             PoloniexAccountEvents::Order(order) => AccountData::from(order),
+//             PoloniexAccountEvents::Balance(balance) => AccountData::from(balance),
+//         }
+//     }
+// }

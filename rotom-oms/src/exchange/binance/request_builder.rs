@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use crate::exchange::HmacSha256;
 use hmac::Mac;
 use rotom_data::{
@@ -53,3 +55,8 @@ impl ExchangeRequestBuilder for BinanceRequestBuilder {
             .build()?)
     }
 }
+
+/*
+"price=1.0&quantity=5.0&side=BUY&signature=938a83922076c3686505d135dcc55335768c0d2da803abdbc22047c2358590b6&symbol=OPUSDT&timeInForce=GTC&timestamp=1732314749540&type=LIMIT",
+"price=1.0&quantity=5.0&side=BUY&signature=2fffdeb43aafb0de862ad6d9932d902f5ab01f9f91e7ae8035ab4de0792ce295&symbol=OPUSDT&timeInForce=GTC&timestamp=1732314597189&type=LIMIT"
+*/

@@ -1,6 +1,6 @@
 use serde::{
     de::{SeqAccess, Visitor},
-    Deserialize, Deserializer,
+    Deserialize, Deserializer, Serializer,
 };
 use std::{fmt, marker::PhantomData};
 
@@ -139,4 +139,12 @@ where
         Some(s) => s.parse::<T>().map(Some).map_err(serde::de::Error::custom),
         None => Ok(None),
     }
+}
+
+// Serialise value to upper case
+pub fn se_uppercase<S, T: ToString>(value: &T, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    serializer.serialize_str(&value.to_string().to_uppercase())
 }

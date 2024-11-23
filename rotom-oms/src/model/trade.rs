@@ -1,6 +1,6 @@
 use rotom_data::shared::subscription_models::Instrument;
 
-use super::{order::OrderId, Side};
+use super::{OrderId, Side};
 
 #[derive(Debug)]
 pub struct PrivateTrade {

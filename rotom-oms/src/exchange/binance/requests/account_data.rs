@@ -1,7 +1,13 @@
 use serde::Deserialize;
 
-use super::{BinanceOrderStatus, BinanceSide, BinanceTimeInForce};
-use rotom_data::shared::de::de_str;
+use crate::model::{
+    balance::{AssetBalance, Balance, BalanceDelta},
+    order::{Open, Order},
+    ClientOrderId, Side,
+};
+
+use super::{BinanceOrderStatus, BinanceTimeInForce};
+use rotom_data::shared::{de::de_str, subscription_models::ExchangeId};
 
 /*----- */
 // Binance User Data - Order
@@ -13,7 +19,7 @@ pub struct BinanceAccountDataOrder {
     pub E: u64,                // Event time
     pub s: String,             // Symbol
     pub c: String,             // Client order ID
-    pub S: BinanceSide,        // Side
+    pub S: Side,               // Side
     pub o: String,             // Order type
     pub f: BinanceTimeInForce, // Time in force
     #[serde(deserialize_with = "de_str")]
@@ -57,21 +63,38 @@ pub struct BinanceAccountDataOrder {
     pub V: String, // SelfTradePreventionMode
 }
 
+impl From<BinanceAccountDataOrder> for Order<Open> {
+    fn from(order: BinanceAccountDataOrder) -> Self {
+        Order {
+            exchange: ExchangeId::BinanceSpot,
+            instrument: order.s,
+            client_order_id: ClientOrderId(order.c),
+            side: order.S,
+            state: Open {
+                id: order.i,
+                price: order.p,
+                quantity: 0.0,
+                filled_quantity: order.Q,
+            },
+        }
+    }
+}
+
 /*----- */
 // Binance User Data - Account Update
 /*----- */
 #[derive(Debug, Deserialize)]
 #[allow(non_snake_case)]
-pub struct BinanceAccountDataDelta {
-    pub e: String,                          // event type
-    pub E: u64,                             // event time
-    pub u: u64,                             // time of last account update
-    pub B: Vec<BinanceAccountDataDeltaVec>, // balance Array
+pub struct BinanceAccountDataBalance {
+    pub e: String,                            // event type
+    pub E: u64,                               // event time
+    pub u: u64,                               // time of last account update
+    pub B: Vec<BinanceAccountDataBalanceVec>, // balance Array
 }
 
 #[derive(Debug, Deserialize)]
 #[allow(non_snake_case)]
-pub struct BinanceAccountDataDeltaVec {
+pub struct BinanceAccountDataBalanceVec {
     pub a: String, // asset
     #[serde(deserialize_with = "de_str")]
     pub f: f64, // free
@@ -79,18 +102,46 @@ pub struct BinanceAccountDataDeltaVec {
     pub l: f64, // locked
 }
 
+impl From<BinanceAccountDataBalance> for Vec<AssetBalance> {
+    fn from(account_balances: BinanceAccountDataBalance) -> Self {
+        account_balances
+            .B
+            .into_iter()
+            .map(|balance| AssetBalance {
+                asset: balance.a,
+                exchange: ExchangeId::BinanceSpot,
+                balance: Balance {
+                    total: balance.f,
+                    available: 0.0,
+                },
+            })
+            .collect()
+    }
+}
+
 /*----- */
 // Binance User Data - Balance
 /*----- */
 #[derive(Debug, Deserialize)]
 #[allow(non_snake_case)]
-pub struct BinanceAccountDataBalance {
+pub struct BinanceAccountDataDelta {
     pub e: String, // event type
     pub E: u64,    // event time
     pub a: String, // asset
     #[serde(deserialize_with = "de_str")]
     pub d: f64, // balance delta
     pub T: u64,    // clear time
+}
+
+impl From<BinanceAccountDataDelta> for BalanceDelta {
+    fn from(delta: BinanceAccountDataDelta) -> Self {
+        BalanceDelta {
+            asset: delta.e,
+            exchange: ExchangeId::BinanceSpot,
+            total: delta.d,
+            available: 0.0,
+        }
+    }
 }
 
 /*----- */
@@ -127,7 +178,7 @@ pub struct BinanceUserDataListData {
 #[serde(untagged)]
 pub enum BinanceAccountEvents {
     Order(BinanceAccountDataOrder),
-    Account(BinanceAccountDataDelta),
+    BalanceDelta(BinanceAccountDataDelta),
     Balance(BinanceAccountDataBalance),
     List(BinanceAccountDataList),
 }

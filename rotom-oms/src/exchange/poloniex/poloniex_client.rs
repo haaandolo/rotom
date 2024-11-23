@@ -45,20 +45,6 @@ pub struct PoloniexExecution {
     pub http_client: PoloniexRestClient,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct PoloniexWsBalanceResponse {
-    pub channel: String, // can be smolstr
-    pub event: String,   // can be smolstr
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-pub enum PoloniexWsUserDataValidation {
-    Auth(PoloniexWsResponseAuthMessage),
-    Orders(PoloniexWsOrderResponse),
-    Balance(PoloniexWsBalanceResponse),
-}
-
 #[async_trait]
 impl ExecutionClient2 for PoloniexExecution {
     const CLIENT: ExecutionId = ExecutionId::Poloniex;
@@ -258,4 +244,18 @@ pub struct PoloniexWsOrderResponse {
     pub channel: String,      // can be smolstr
     pub event: String,        // can be smolstr
     pub symbols: Vec<String>, // can be smolstr
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PoloniexWsBalanceResponse {
+    pub channel: String, // can be smolstr
+    pub event: String,   // can be smolstr
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum PoloniexWsUserDataValidation {
+    Auth(PoloniexWsResponseAuthMessage),
+    Orders(PoloniexWsOrderResponse),
+    Balance(PoloniexWsBalanceResponse),
 }
