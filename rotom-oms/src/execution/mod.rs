@@ -13,15 +13,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::model::order::{Order, RequestOpen};
 
-// /*----- */
-// // Execution Client
-// /*----- */
-// pub trait ExecutionClient {
-//     fn generate_fill(&self, order: &OrderEvent) -> Result<FillEvent, ExecutionError>;
-// }
-
 /*----- */
-// Execution Client
+// Fill Genereator
 /*----- */
 pub trait FillGenerator {
     fn generate_fill(&self, order: &Order<RequestOpen>) -> Result<FillEvent, ExecutionError>;

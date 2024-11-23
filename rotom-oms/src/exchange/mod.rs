@@ -174,7 +174,3 @@ where
         );
     }
 }
-
-/*----- */
-// Data Identifier Trait - to identify data when user data streams get combined
-/*----- */

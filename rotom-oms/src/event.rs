@@ -4,9 +4,7 @@ use crate::{
         balance::Balance,
         order::{Order, RequestOpen},
     },
-    portfolio::{
-        position::{Position, PositionExit, PositionUpdate},
-    },
+    portfolio::position::{Position, PositionExit, PositionUpdate},
 };
 use rotom_data::event_models::market_event::{DataKind, MarketEvent};
 use rotom_strategy::{Signal, SignalForceExit};
