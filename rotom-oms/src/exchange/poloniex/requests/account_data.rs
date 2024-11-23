@@ -72,22 +72,22 @@ pub enum PoloniexOrderEventType {
     Canceled,
 }
 
-impl From<PoloniexAccountDataOrder> for Order<Open> {
-    fn from(mut order: PoloniexAccountDataOrder) -> Self {
-        Self {
-            exchange: ExchangeId::PoloniexSpot,
-            instrument: std::mem::take(&mut order.data[0].symbol),
-            client_order_id: ClientOrderId(std::mem::take(&mut order.data[0].client_order_id)),
-            side: order.data[0].side,
-            state: Open {
-                id: order.data[0].order_id,
-                price: order.data[0].price,
-                quantity: order.data[0].quantity,
-                filled_quantity: order.data[0].filled_amount,
-            },
-        }
-    }
-}
+// impl From<PoloniexAccountDataOrder> for Order<Open> {
+//     fn from(mut order: PoloniexAccountDataOrder) -> Self {
+//         Self {
+//             exchange: ExchangeId::PoloniexSpot,
+//             instrument: std::mem::take(&mut order.data[0].symbol),
+//             client_order_id: ClientOrderId(std::mem::take(&mut order.data[0].client_order_id)),
+//             side: order.data[0].side,
+//             state: Open {
+//                 id: order.data[0].order_id,
+//                 price: order.data[0].price,
+//                 quantity: order.data[0].quantity,
+//                 filled_quantity: order.data[0].filled_amount,
+//             },
+//         }
+//     }
+// }
 
 /*----- */
 // Poloniex User Data - Balance

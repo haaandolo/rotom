@@ -65,21 +65,21 @@ pub async fn main() {
 
     ////////////////////////////////////////////////////
     // Order
-    // let mut order = OrderEvent {
-    //     time: Utc::now(),
-    //     exchange: ExchangeId::PoloniexSpot,
-    //     instrument: Instrument::new("op", "usdt"),
-    //     market_meta: MarketMeta {
-    //         time: Utc::now(),
-    //         close: 1.0,
-    //     },
-    //     decision: Decision::Long,
-    //     quantity: 5.0,
-    //     order_type: OrderType::Limit,
-    // };
+    let mut order = OrderEvent {
+        time: Utc::now(),
+        exchange: ExchangeId::PoloniexSpot,
+        instrument: Instrument::new("op", "usdt"),
+        market_meta: MarketMeta {
+            time: Utc::now(),
+            close: 1.0,
+        },
+        decision: Decision::Long,
+        quantity: 5.0,
+        order_type: OrderType::Limit,
+    };
 
     // Test Binance Execution
-    // let binance_exe = BinanceExecution::create_http_client().unwrap();
+    let binance_exe = BinanceExecution::create_http_client().unwrap();
     // let res = binance_exe.get_balance_all().await;
     // let res: Vec<AssetBalance> = res.unwrap().into();
     // let res = binance_exe
@@ -90,12 +90,12 @@ pub async fn main() {
     //         10.0,
     //     )
     //     .await;
-    // let res = binance_exe.open_order(order.clone()).await;
+    let res = binance_exe.open_order(order.clone()).await;
     // let res = binance_exe
     //     .cancel_order("YTirLsT3mwmdxDED6HBH5c".to_string(), "OPUSDT".to_string())
     //     .await;
     // binance_exe.cancel_order_all("OPUSDT".to_string()).await;
-    // println!("{:#?}", res);
+    println!("{:#?}", res);
     // binance_exe.receive_responses().await;
 
     ////////////////////////////////////////////////////

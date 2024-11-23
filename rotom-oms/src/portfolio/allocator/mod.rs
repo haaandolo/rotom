@@ -3,7 +3,9 @@ pub mod spot_arb_allocator;
 
 use rotom_strategy::SignalStrength;
 
-use super::{position::Position, OrderEvent};
+use crate::model::order::{Order, RequestOpen};
+
+use super::position::Position;
 
 /*----- */
 // Order Allocator
@@ -11,7 +13,7 @@ use super::{position::Position, OrderEvent};
 pub trait OrderAllocator {
     fn allocate_order(
         &self,
-        order: &mut OrderEvent,
+        order: &mut Order<RequestOpen>,
         position: Option<&Position>,
         signal_strength: SignalStrength,
     );

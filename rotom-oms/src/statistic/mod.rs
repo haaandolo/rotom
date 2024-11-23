@@ -29,8 +29,7 @@ where
 /*----- */
 pub mod test_util {
     use crate::{
-        execution::{Fees, FillEvent},
-        portfolio::{position::{Position, Side}, OrderEvent, OrderType},
+        execution::{Fees, FillEvent}, model::Side, portfolio::{position::Position, OrderEvent, OrderType}
     };
     use chrono::Utc;
     use rotom_data::{assets::level::Level, event_models::{event_trade::EventTrade, market_event::{DataKind, MarketEvent}}, shared::subscription_models::{ExchangeId, Instrument}, MarketMeta};

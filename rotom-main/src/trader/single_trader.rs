@@ -7,7 +7,7 @@ use rotom_data::{
 };
 use rotom_oms::{
     event::{Event, EventTx, MessageTransmitter},
-    execution::ExecutionClient,
+    execution::FillGenerator,
     portfolio::portfolio_type::{FillUpdater, MarketUpdater, OrderGenerator},
 };
 use rotom_strategy::{SignalForceExit, SignalGenerator};
@@ -27,7 +27,7 @@ pub struct SingleMarketTraderLego<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
-    Execution: ExecutionClient,
+    Execution: FillGenerator,
     Portfolio: MarketUpdater + OrderGenerator + FillUpdater,
 {
     pub engine_id: Uuid,
@@ -48,7 +48,7 @@ pub struct SingleMarketTrader<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
-    Execution: ExecutionClient,
+    Execution: FillGenerator,
     Portfolio: MarketUpdater + OrderGenerator + FillUpdater,
 {
     engine_id: Uuid,
@@ -66,7 +66,7 @@ impl<Data, Strategy, Execution, Portfolio> SingleMarketTrader<Data, Strategy, Ex
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
-    Execution: ExecutionClient,
+    Execution: FillGenerator,
     Portfolio: MarketUpdater + OrderGenerator + FillUpdater,
 {
     pub fn new(lego: SingleMarketTraderLego<Data, Strategy, Execution, Portfolio>) -> Self {
@@ -96,7 +96,7 @@ impl<Data, Strategy, Execution, Portfolio> TraderRun
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
-    Execution: ExecutionClient,
+    Execution: FillGenerator,
     Portfolio: MarketUpdater + OrderGenerator + FillUpdater,
 {
     fn receive_remote_command(&mut self) -> Option<Command> {
@@ -187,17 +187,17 @@ where
                             self.event_queue.push_back(Event::OrderNew(order));
                         }
                     }
-                    Event::SignalForceExit(signal_force_exit) => {
-                        if let Some(order) = self
-                            .portfolio
-                            .lock()
-                            .generate_exit_order(signal_force_exit)
-                            .expect("Failed to generate forced exit order")
-                        {
-                            self.event_tx.send(Event::OrderNew(order.clone()));
-                            self.event_queue.push_back(Event::OrderNew(order));
-                        }
-                    }
+                    // Event::SignalForceExit(signal_force_exit) => {
+                    //     if let Some(order) = self
+                    //         .portfolio
+                    //         .lock()
+                    //         .generate_exit_order(signal_force_exit)
+                    //         .expect("Failed to generate forced exit order")
+                    //     {
+                    //         self.event_tx.send(Event::OrderNew(order.clone()));
+                    //         self.event_queue.push_back(Event::OrderNew(order));
+                    //     }
+                    // }
                     Event::OrderNew(order) => {
                         let fill = self
                             .execution
@@ -236,7 +236,7 @@ pub struct SingleMarketTraderBuilder<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
-    Execution: ExecutionClient,
+    Execution: FillGenerator,
     Portfolio: MarketUpdater + OrderGenerator + FillUpdater,
 {
     pub engine_id: Option<Uuid>,
@@ -254,7 +254,7 @@ impl<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
-    Execution: ExecutionClient,
+    Execution: FillGenerator,
     Portfolio: MarketUpdater + OrderGenerator + FillUpdater,
 {
     pub fn new() -> Self {

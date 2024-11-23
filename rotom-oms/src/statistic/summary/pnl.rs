@@ -1,9 +1,8 @@
 use crate::{
-    portfolio::position::{Position, Side},
-    statistic::{
+    model::Side, portfolio::position::Position, statistic::{
         de_duration_from_secs, se_duration_as_secs,
         summary::{data::DataSummary, Initialiser, PositionSummariser, TableBuilder},
-    },
+    }
 };
 use chrono::{DateTime, Duration, Utc};
 use prettytable::{row, Row};

@@ -63,22 +63,22 @@ pub struct BinanceAccountDataOrder {
     pub V: String, // SelfTradePreventionMode
 }
 
-impl From<BinanceAccountDataOrder> for Order<Open> {
-    fn from(order: BinanceAccountDataOrder) -> Self {
-        Order {
-            exchange: ExchangeId::BinanceSpot,
-            instrument: order.s,
-            client_order_id: ClientOrderId(order.c),
-            side: order.S,
-            state: Open {
-                id: order.i,
-                price: order.p,
-                quantity: 0.0,
-                filled_quantity: order.Q,
-            },
-        }
-    }
-}
+// impl From<BinanceAccountDataOrder> for Order<Open> {
+//     fn from(order: BinanceAccountDataOrder) -> Self {
+//         Order {
+//             exchange: ExchangeId::BinanceSpot,
+//             instrument: order.s,
+//             client_order_id: ClientOrderId(order.c),
+//             side: order.S,
+//             state: Open {
+//                 id: order.i,
+//                 price: order.p,
+//                 quantity: 0.0,
+//                 filled_quantity: order.Q,
+//             },
+//         }
+//     }
+// }
 
 /*----- */
 // Binance User Data - Account Update

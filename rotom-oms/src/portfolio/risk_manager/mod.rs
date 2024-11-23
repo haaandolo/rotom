@@ -1,7 +1,9 @@
 pub mod default_risk_manager;
 pub mod spot_cross_exchange_arb_rm;
 
-use super::{OrderEvent, OrderType};
+use crate::model::order::{Order, RequestOpen};
+
+use super::OrderType;
 
 /*----- */
 // Order Evaluator
@@ -9,5 +11,5 @@ use super::{OrderEvent, OrderType};
 pub trait OrderEvaluator {
     const DEFAULT_ORDER_TYPE: OrderType;
 
-    fn evaluate_order(&self, order: OrderEvent) -> Option<OrderEvent>;
+    fn evaluate_order(&self, order: Order<RequestOpen>) -> Option<Order<RequestOpen>>;
 }

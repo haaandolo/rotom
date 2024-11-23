@@ -1,9 +1,11 @@
 use crate::{
     execution::FillEvent,
-    model::balance::Balance,
+    model::{
+        balance::Balance,
+        order::{Order, RequestOpen},
+    },
     portfolio::{
         position::{Position, PositionExit, PositionUpdate},
-        OrderEvent,
     },
 };
 use rotom_data::event_models::market_event::{DataKind, MarketEvent};
@@ -16,7 +18,7 @@ pub enum Event {
     Market(MarketEvent<DataKind>),
     Signal(Signal),
     SignalForceExit(SignalForceExit),
-    OrderNew(OrderEvent),
+    OrderNew(Order<RequestOpen>),
     OrderUpdate,
     Fill(FillEvent),
     PositionNew(Position),

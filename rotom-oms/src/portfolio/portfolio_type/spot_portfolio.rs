@@ -1,4 +1,3 @@
-use chrono::Utc;
 use rotom_data::{
     error::SocketError,
     event_models::market_event::{DataKind, MarketEvent},
@@ -14,16 +13,20 @@ use crate::{
         binance::binance_client::BinancePrivateData, poloniex::poloniex_client::PoloniexPrivateData,
     },
     execution::FillEvent,
-    model::balance::{determine_balance_id, AssetBalance, SpotBalanceId},
+    model::{
+        balance::{determine_balance_id, AssetBalance, SpotBalanceId},
+        order::{Order, RequestOpen},
+        ClientOrderId, OrderKind, Side,
+    },
     portfolio::{
         allocator::{spot_arb_allocator::SpotArbAllocator, OrderAllocator},
         error::PortfolioError,
         persistence::in_memory2::InMemoryRepository2,
         position::{
             determine_position_id, Position, PositionEnterer, PositionExiter, PositionUpdate,
-            PositionUpdater, Side,
+            PositionUpdater,
         },
-        OrderEvent, OrderType,
+        OrderEvent,
     },
 };
 
@@ -109,7 +112,10 @@ impl MarketUpdater for SpotPortfolio {
 }
 
 impl OrderGenerator for SpotPortfolio {
-    fn generate_order(&mut self, signal: &Signal) -> Result<Option<OrderEvent>, PortfolioError> {
+    fn generate_order(
+        &mut self,
+        signal: &Signal,
+    ) -> Result<Option<Order<RequestOpen>>, PortfolioError> {
         let position_id =
             determine_position_id(self.engine_id, &signal.exchange, &signal.instrument);
         let position = self.repository.get_open_position(&position_id)?;
@@ -120,14 +126,17 @@ impl OrderGenerator for SpotPortfolio {
                 Some(net_signal) => net_signal,
             };
 
-        let mut order = OrderEvent {
-            time: Utc::now(),
+        let mut order = Order {
             exchange: signal.exchange,
             instrument: signal.instrument.clone(),
-            market_meta: signal.market_meta,
-            decision: *signal_decision,
-            quantity: 0.0,
-            order_type: OrderType::default(),
+            client_order_id: ClientOrderId(Uuid::new_v4()),
+            side: Side::from(*signal_decision),
+            state: RequestOpen {
+                kind: OrderKind::Limit,
+                price: signal.market_meta.close,
+                quantity: 0.0,
+                decision: *signal_decision,
+            },
         };
 
         self.allocator
@@ -136,7 +145,7 @@ impl OrderGenerator for SpotPortfolio {
         let balance_id = determine_balance_id(&signal.instrument.quote, &signal.exchange);
 
         if position.is_none()
-            && self.no_cash_to_enter_new_position(balance_id, order.get_dollar_value())?
+            && self.no_cash_to_enter_new_position(balance_id, order.state.get_dollar_value())?
         {
             return Ok(None);
         }

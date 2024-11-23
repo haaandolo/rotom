@@ -12,14 +12,16 @@ use uuid::Uuid;
 use crate::{
     event::Event,
     execution::FillEvent,
-    model::balance::Balance,
+    model::{
+        balance::Balance, order::{Order, RequestOpen}, ClientOrderId, OrderKind, Side
+    },
     portfolio::{
         allocator::OrderAllocator,
         error::PortfolioError,
         persistence::{error::RepositoryError, BalanceHandler, PositionHandler, StatisticHandler},
         position::{
             determine_position_id, Position, PositionEnterer, PositionExiter, PositionId,
-            PositionUpdate, PositionUpdater, Side,
+            PositionUpdate, PositionUpdater,
         },
         risk_manager::OrderEvaluator,
         OrderEvent, OrderType,
@@ -290,7 +292,10 @@ where
     RiskManager: OrderEvaluator,
     Statistic: Initialiser + PositionSummariser,
 {
-    fn generate_order(&mut self, signal: &Signal) -> Result<Option<OrderEvent>, PortfolioError> {
+    fn generate_order(
+        &mut self,
+        signal: &Signal,
+    ) -> Result<Option<Order<RequestOpen>>, PortfolioError> {
         let position_id =
             determine_position_id(self.engine_id, &signal.exchange, &signal.instrument);
         let position = self.repository.get_open_position(&position_id)?;
@@ -306,14 +311,17 @@ where
                 Some(net_signal) => net_signal,
             };
 
-        let mut order = OrderEvent {
-            time: Utc::now(),
+        let mut order = Order {
             exchange: signal.exchange,
             instrument: signal.instrument.clone(),
-            market_meta: signal.market_meta,
-            decision: *signal_decision,
-            quantity: 0.0,
-            order_type: OrderType::default(),
+            client_order_id: ClientOrderId(Uuid::new_v4()),
+            side: Side::from(*signal_decision),
+            state: RequestOpen {
+                kind: OrderKind::Limit,
+                price: signal.market_meta.close,
+                quantity: 0.0,
+                decision: *signal_decision,
+            },
         };
 
         self.allocation_manager

@@ -1,4 +1,5 @@
-use rotom_data::shared::subscription_models::ExchangeId;
+use rotom_data::shared::subscription_models::{ExchangeId, Instrument};
+use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
 
 use super::{ClientOrderId, OrderId, OrderKind, Side};
@@ -9,7 +10,7 @@ use super::{ClientOrderId, OrderId, OrderKind, Side};
 #[derive(Clone, Eq, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
 pub struct Order<State> {
     pub exchange: ExchangeId,
-    pub instrument: String, // todo change?
+    pub instrument: Instrument, // todo change?
     pub client_order_id: ClientOrderId,
     pub side: Side, // todo check duplicated enum
     pub state: State,
@@ -18,10 +19,18 @@ pub struct Order<State> {
 /*----- */
 // Order - RequestOpen
 /*----- */
+#[derive(Debug, Clone)]
 pub struct RequestOpen {
     pub kind: OrderKind,
     pub price: f64,
     pub quantity: f64,
+    pub decision: Decision,
+}
+
+impl RequestOpen {
+    pub fn get_dollar_value(&self) -> f64 {
+        self.price * self.quantity
+    }
 }
 
 /*----- */

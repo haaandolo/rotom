@@ -11,20 +11,20 @@ use rotom_data::{
 use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
 
-use crate::portfolio::OrderEvent;
+use crate::model::order::{Order, RequestOpen};
 
-/*----- */
-// Execution Client
-/*----- */
-pub trait ExecutionClient {
-    fn generate_fill(&self, order: &OrderEvent) -> Result<FillEvent, ExecutionError>;
-}
+// /*----- */
+// // Execution Client
+// /*----- */
+// pub trait ExecutionClient {
+//     fn generate_fill(&self, order: &OrderEvent) -> Result<FillEvent, ExecutionError>;
+// }
 
 /*----- */
 // Execution Client
 /*----- */
 pub trait FillGenerator {
-    fn generate_fill(&self, order: &OrderEvent) -> Result<FillEvent, ExecutionError>;
+    fn generate_fill(&self, order: &Order<RequestOpen>) -> Result<FillEvent, ExecutionError>;
 }
 
 /*----- */

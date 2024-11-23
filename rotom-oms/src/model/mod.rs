@@ -5,12 +5,13 @@ use std::fmt::{Display, Formatter};
 
 use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 /*----- */
 // Client Order Id
 /*----- */
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]
-pub struct ClientOrderId(pub String); // todo: change to UUid
+pub struct ClientOrderId(pub Uuid);
 
 /*----- */
 // Order Id
@@ -46,16 +47,21 @@ impl From<Decision> for Side {
 
 impl std::fmt::Display for Side {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Side::Buy => write!(f, "buy"),
-            Side::Sell => write!(f, "sell"),
-        }
+        write!(
+            f,
+            "{}",
+            match self {
+                Side::Buy => "buy",
+                Side::Sell => "sell",
+            }
+        )
     }
 }
 
 /*----- */
 // Order Kind
 /*----- */
+#[derive(Debug, Clone)]
 pub enum OrderKind {
     Market,
     Limit,

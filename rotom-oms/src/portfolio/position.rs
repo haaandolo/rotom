@@ -5,10 +5,12 @@ use rotom_data::{
 };
 use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter};
 use uuid::Uuid;
 
-use crate::{execution::{FeeAmount, Fees, FillEvent}, model::balance::Balance};
+use crate::{
+    execution::{FeeAmount, Fees, FillEvent},
+    model::{balance::Balance, Side},
+};
 
 use super::error::PortfolioError;
 
@@ -328,27 +330,6 @@ impl From<&mut Position> for PositionUpdate {
             current_value_gross: updated_position.current_value_gross,
             unrealised_profit_loss: updated_position.unrealised_profit_loss,
         }
-    }
-}
-
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]
-pub enum Side {
-    #[serde(alias = "buy", alias = "BUY", alias = "b")]
-    Buy,
-    #[serde(alias = "sell", alias = "SELL", alias = "s")]
-    Sell,
-}
-
-impl Display for Side {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Side::Buy => "buy",
-                Side::Sell => "sell",
-            }
-        )
     }
 }
 

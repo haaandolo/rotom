@@ -1,8 +1,12 @@
 use chrono::Utc;
+use rotom_data::MarketMeta;
 
-use crate::portfolio::OrderEvent;
+use crate::{
+    model::order::{Order, RequestOpen},
+    portfolio::OrderEvent,
+};
 
-use super::{error::ExecutionError, ExecutionClient, Fees, FillEvent};
+use super::{error::ExecutionError, Fees, FillEvent, FillGenerator};
 
 /*----- */
 // Config
@@ -25,8 +29,8 @@ impl SimulatedExecution {
         }
     }
 
-    fn calculate_fill_value_gross(order: &OrderEvent) -> f64 {
-        order.quantity.abs() * order.market_meta.close
+    fn calculate_fill_value_gross(order: &Order<RequestOpen>) -> f64 {
+        order.state.quantity.abs() * order.state.price
     }
 
     fn calculate_fees(&self, fill_value_gross: &f64) -> Fees {
@@ -41,17 +45,20 @@ impl SimulatedExecution {
 /*----- */
 // Impl the ExecutionClient
 /*----- */
-impl ExecutionClient for SimulatedExecution {
-    fn generate_fill(&self, order: &OrderEvent) -> Result<FillEvent, ExecutionError> {
+impl FillGenerator for SimulatedExecution {
+    fn generate_fill(&self, order: &Order<RequestOpen>) -> Result<FillEvent, ExecutionError> {
         let fill_value_gross = SimulatedExecution::calculate_fill_value_gross(order);
 
         Ok(FillEvent {
             time: Utc::now(),
             exchange: order.exchange,
             instrument: order.instrument.clone(),
-            market_meta: order.market_meta,
-            decision: order.decision,
-            quantity: order.quantity,
+            market_meta: MarketMeta {
+                close: order.state.price,
+                time: Utc::now(),
+            },
+            decision: order.state.decision,
+            quantity: order.state.quantity,
             fill_value_gross,
             fees: self.calculate_fees(&fill_value_gross),
         })
