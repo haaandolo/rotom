@@ -19,7 +19,7 @@ use crate::{
         poloniex::requests::account_data::PoloniexAccountEvents, ExecutionClient2, ExecutionId,
         UserDataStream,
     },
-    portfolio::OrderEvent,
+    model::order::{Order, RequestOpen},
 };
 
 use super::{
@@ -140,7 +140,7 @@ impl ExecutionClient2 for PoloniexExecution {
 
     async fn open_order(
         &self,
-        open_request: OrderEvent,
+        open_request: Order<RequestOpen>,
     ) -> Result<Self::NewOrderResponse, SocketError> {
         let response = self
             .http_client

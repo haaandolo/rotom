@@ -8,8 +8,9 @@ use std::borrow::Cow;
 
 use crate::exchange::binance::request_builder::BinanceAuthParams;
 use crate::exchange::errors::RequestBuildError;
-use crate::portfolio::OrderEvent;
-use crate::portfolio::OrderType;
+use crate::model::order::Order;
+use crate::model::order::RequestOpen;
+use crate::model::OrderKind;
 use rotom_data::shared::de::de_str;
 
 use super::BinanceFill;
@@ -66,31 +67,31 @@ pub struct BinanceNewOrder {
 }
 
 impl BinanceNewOrder {
-    pub fn new(order_event: &OrderEvent) -> Result<Self, RequestBuildError> {
-        match &order_event.order_type {
-            OrderType::Limit => Self::limit_order(order_event),
-            OrderType::Market => Self::market_order(order_event),
+    pub fn new(order_event: &Order<RequestOpen>) -> Result<Self, RequestBuildError> {
+        match &order_event.state.kind {
+            OrderKind::Limit => Self::limit_order(order_event),
+            OrderKind::Market => Self::market_order(order_event),
         }
     }
 
-    fn limit_order(order_event: &OrderEvent) -> Result<Self, RequestBuildError> {
+    fn limit_order(order_event: &Order<RequestOpen>) -> Result<Self, RequestBuildError> {
         BinanceNewOrderParamsBuilder::default()
-            .price(order_event.market_meta.close)
-            .quantity(order_event.quantity)
-            .side(BinanceSide::from(order_event.decision))
+            .price(order_event.state.price)
+            .quantity(order_event.state.quantity)
+            .side(BinanceSide::from(order_event.state.decision))
             .symbol(BinanceSymbol::from(&order_event.instrument).0)
             .time_in_force(BinanceTimeInForce::GTC) // todo
-            .r#type(order_event.order_type.as_ref().to_uppercase())
+            .r#type(order_event.state.kind.as_ref().to_uppercase())
             .sign()
             .build()
     }
 
-    fn market_order(order_event: &OrderEvent) -> Result<Self, RequestBuildError> {
+    fn market_order(order_event: &Order<RequestOpen>) -> Result<Self, RequestBuildError> {
         BinanceNewOrderParamsBuilder::default()
-            .quantity(order_event.quantity)
-            .side(BinanceSide::from(order_event.decision))
+            .quantity(order_event.state.quantity)
+            .side(BinanceSide::from(order_event.state.decision))
             .symbol(BinanceSymbol::from(&order_event.instrument).0)
-            .r#type(order_event.order_type.as_ref().to_uppercase())
+            .r#type(order_event.state.kind.as_ref().to_uppercase())
             .sign()
             .build()
     }

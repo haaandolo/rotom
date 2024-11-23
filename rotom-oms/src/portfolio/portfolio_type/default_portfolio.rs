@@ -1,19 +1,19 @@
 use std::{collections::HashMap, marker::PhantomData};
 
-use chrono::Utc;
 use rotom_data::{
     event_models::market_event::{DataKind, MarketEvent},
-    Market, MarketId, MarketMeta,
+    Market, MarketId,
 };
 use rotom_strategy::{Decision, Signal, SignalForceExit, SignalStrength};
-use tracing::info;
 use uuid::Uuid;
 
 use crate::{
     event::Event,
     execution::FillEvent,
     model::{
-        balance::Balance, order::{Order, RequestOpen}, ClientOrderId, OrderKind, Side
+        balance::Balance,
+        order::{Order, RequestOpen},
+        ClientOrderId, OrderKind, Side,
     },
     portfolio::{
         allocator::OrderAllocator,
@@ -24,7 +24,6 @@ use crate::{
             PositionUpdate, PositionUpdater,
         },
         risk_manager::OrderEvaluator,
-        OrderEvent, OrderType,
     },
     statistic::summary::{Initialiser, PositionSummariser},
 };
@@ -332,35 +331,9 @@ where
 
     fn generate_exit_order(
         &mut self,
-        signal: SignalForceExit,
-    ) -> Result<Option<OrderEvent>, PortfolioError> {
-        let position_id =
-            determine_position_id(self.engine_id, &signal.exchange, &signal.instrument);
-
-        let position = match self.repository.get_open_position(&position_id)? {
-            None => {
-                info!(
-                    position_id = &*position_id,
-                    outcome = "no forced exit OrderEvent generated",
-                    "cannot generate forced exit OrderEvent for a Position that isn't open"
-                );
-                return Ok(None);
-            }
-            Some(position) => position,
-        };
-
-        Ok(Some(OrderEvent {
-            time: Utc::now(),
-            exchange: signal.exchange,
-            instrument: signal.instrument,
-            market_meta: MarketMeta {
-                close: position.current_symbol_price,
-                time: position.meta.update_time,
-            },
-            decision: position.determine_exit_decision(),
-            quantity: 0.0 - position.quantity,
-            order_type: OrderType::Market,
-        }))
+        _signal: SignalForceExit,
+    ) -> Result<Option<Order<RequestOpen>>, PortfolioError> {
+        unimplemented!()
     }
 }
 

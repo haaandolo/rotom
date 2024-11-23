@@ -26,7 +26,6 @@ use crate::{
             determine_position_id, Position, PositionEnterer, PositionExiter, PositionUpdate,
             PositionUpdater,
         },
-        OrderEvent,
     },
 };
 
@@ -156,7 +155,7 @@ impl OrderGenerator for SpotPortfolio {
     fn generate_exit_order(
         &mut self,
         _signal: SignalForceExit,
-    ) -> Result<Option<OrderEvent>, PortfolioError> {
+    ) -> Result<Option<Order<RequestOpen>>, PortfolioError> {
         unimplemented!()
     }
 }

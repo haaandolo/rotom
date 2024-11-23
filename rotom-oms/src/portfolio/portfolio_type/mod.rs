@@ -10,7 +10,7 @@ use crate::{
     model::order::{Order, RequestOpen},
 };
 
-use super::{error::PortfolioError, position::PositionUpdate, OrderEvent};
+use super::{error::PortfolioError, position::PositionUpdate};
 
 /*----- */
 // Market Updater
@@ -34,7 +34,7 @@ pub trait OrderGenerator {
     fn generate_exit_order(
         &mut self,
         signal: SignalForceExit,
-    ) -> Result<Option<OrderEvent>, PortfolioError>;
+    ) -> Result<Option<Order<RequestOpen>>, PortfolioError>;
 }
 
 /*----- */

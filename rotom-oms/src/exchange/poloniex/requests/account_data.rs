@@ -6,9 +6,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::model::balance::AssetBalance;
 use crate::model::balance::Balance;
-use crate::model::order::Open;
-use crate::model::order::Order;
-use crate::model::ClientOrderId;
 use crate::model::Side;
 
 use super::{PoloniexOrderStatus, PoloniexOrderType};

@@ -2,8 +2,7 @@ use serde::Deserialize;
 
 use crate::model::{
     balance::{AssetBalance, Balance, BalanceDelta},
-    order::{Open, Order},
-    ClientOrderId, Side,
+    Side,
 };
 
 use super::{BinanceOrderStatus, BinanceTimeInForce};

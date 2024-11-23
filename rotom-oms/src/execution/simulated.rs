@@ -1,10 +1,7 @@
 use chrono::Utc;
 use rotom_data::MarketMeta;
 
-use crate::{
-    model::order::{Order, RequestOpen},
-    portfolio::OrderEvent,
-};
+use crate::model::order::{Order, RequestOpen};
 
 use super::{error::ExecutionError, Fees, FillEvent, FillGenerator};
 

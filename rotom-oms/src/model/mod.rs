@@ -67,6 +67,15 @@ pub enum OrderKind {
     Limit,
 }
 
+impl AsRef<str> for OrderKind {
+    fn as_ref(&self) -> &str {
+        match self {
+            OrderKind::Market => "market",
+            OrderKind::Limit => "limit",
+        }
+    }
+}
+
 impl Display for OrderKind {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(

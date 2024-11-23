@@ -29,10 +29,19 @@ where
 /*----- */
 pub mod test_util {
     use crate::{
-        execution::{Fees, FillEvent}, model::Side, portfolio::{position::Position, OrderEvent, OrderType}
+        execution::{Fees, FillEvent},
+        model::Side,
+        portfolio::position::Position,
     };
     use chrono::Utc;
-    use rotom_data::{assets::level::Level, event_models::{event_trade::EventTrade, market_event::{DataKind, MarketEvent}}, shared::subscription_models::{ExchangeId, Instrument}, MarketMeta};
+    use rotom_data::{
+        assets::level::Level,
+        event_models::{
+            event_trade::EventTrade,
+            market_event::{DataKind, MarketEvent},
+        },
+        shared::subscription_models::{ExchangeId, Instrument},
+    };
     use rotom_strategy::{Decision, Signal};
 
     // Build a [`MarketEvent`] of [`DataKind::PublicTrade`](DataKind), with the provided [`Side`].
@@ -57,19 +66,6 @@ pub mod test_util {
             instrument: Instrument::new("btc", "usdt"),
             signals: Default::default(),
             market_meta: Default::default(),
-        }
-    }
-
-    /// Build an [`OrderEvent`] to buy 1.0 contract.
-    pub fn order_event() -> OrderEvent {
-        OrderEvent {
-            time: Utc::now(),
-            exchange: ExchangeId::BinanceSpot,
-            instrument: Instrument::new("btc", "usdt"),
-            market_meta: MarketMeta::default(),
-            decision: Decision::default(),
-            quantity: 1.0,
-            order_type: OrderType::default(),
         }
     }
 

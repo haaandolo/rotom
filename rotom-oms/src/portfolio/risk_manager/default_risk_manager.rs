@@ -1,6 +1,9 @@
-use crate::model::order::{Order, RequestOpen};
+use crate::model::{
+    order::{Order, RequestOpen},
+    OrderKind,
+};
 
-use super::{OrderEvaluator, OrderType};
+use super::OrderEvaluator;
 
 /*----- */
 // Default risk manager
@@ -9,13 +12,13 @@ use super::{OrderEvaluator, OrderType};
 pub struct DefaultRisk {}
 
 impl OrderEvaluator for DefaultRisk {
-    const DEFAULT_ORDER_TYPE: OrderType = OrderType::Market;
+    const DEFAULT_ORDER_TYPE: OrderKind = OrderKind::Market;
 
     fn evaluate_order(&self, mut order: Order<RequestOpen>) -> Option<Order<RequestOpen>> {
         if self.risk_too_high(&order) {
             return None;
         }
-        // order.order_type = DefaultRisk::DEFAULT_ORDER_TYPE;
+        order.state.kind = DefaultRisk::DEFAULT_ORDER_TYPE;
         Some(order)
     }
 }

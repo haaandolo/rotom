@@ -19,7 +19,7 @@ use sha2::Sha256;
 use tokio::sync::mpsc;
 use tracing::{debug, error, info, warn};
 
-use crate::portfolio::OrderEvent;
+use crate::model::order::{Order, RequestOpen};
 
 /*----- */
 // Convenient types
@@ -68,7 +68,7 @@ pub trait ExecutionClient2 {
     // Open order for single asset
     async fn open_order(
         &self,
-        open_requests: OrderEvent,
+        open_requests: Order<RequestOpen>,
     ) -> Result<Self::NewOrderResponse, SocketError>;
 
     // Cancel order for a single asset
