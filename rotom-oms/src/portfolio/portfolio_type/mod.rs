@@ -4,11 +4,7 @@ pub mod spot_portfolio;
 use rotom_data::event_models::market_event::{DataKind, MarketEvent};
 use rotom_strategy::{Signal, SignalForceExit};
 
-use crate::{
-    event::Event,
-    execution::FillEvent,
-    model::order::{Order, RequestOpen},
-};
+use crate::{event::Event, execution::FillEvent, model::order::OrderEvent};
 
 use super::{error::PortfolioError, position::PositionUpdate};
 
@@ -26,15 +22,12 @@ pub trait MarketUpdater {
 // Order Generator
 /*----- */
 pub trait OrderGenerator {
-    fn generate_order(
-        &mut self,
-        signal: &Signal,
-    ) -> Result<Option<Order<RequestOpen>>, PortfolioError>;
+    fn generate_order(&mut self, signal: &Signal) -> Result<Option<OrderEvent>, PortfolioError>;
 
     fn generate_exit_order(
         &mut self,
         signal: SignalForceExit,
-    ) -> Result<Option<Order<RequestOpen>>, PortfolioError>;
+    ) -> Result<Option<OrderEvent>, PortfolioError>;
 }
 
 /*----- */

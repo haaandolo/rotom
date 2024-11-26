@@ -11,3 +11,6 @@ rotom-data = { path = "../rotom-data"}
 
 # Misc
 chrono = { workspace = true, features = ["serde"]}
+
+# SerDe
+serde = { workspace = true, features = ["derive"] }

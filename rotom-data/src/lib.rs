@@ -9,6 +9,7 @@ pub mod streams;
 pub mod transformer;
 
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use shared::subscription_models::{ExchangeId, Instrument};
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 
@@ -32,7 +33,7 @@ pub enum Feed<Event> {
 /*----- */
 // Market metadata
 /*----- */
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Deserialize, Serialize)]
 pub struct MarketMeta {
     pub close: f64,
     pub time: DateTime<Utc>,

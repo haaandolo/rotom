@@ -11,13 +11,13 @@ use rotom_data::{
 use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
 
-use crate::model::order::{Order, RequestOpen};
+use crate::model::order::OrderEvent;
 
 /*----- */
 // Fill Genereator
 /*----- */
 pub trait FillGenerator {
-    fn generate_fill(&self, order: &Order<RequestOpen>) -> Result<FillEvent, ExecutionError>;
+    fn generate_fill(&self, order: &OrderEvent) -> Result<FillEvent, ExecutionError>;
 }
 
 /*----- */

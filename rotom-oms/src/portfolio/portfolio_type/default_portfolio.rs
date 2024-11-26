@@ -1,5 +1,6 @@
 use std::{collections::HashMap, marker::PhantomData};
 
+use chrono::Utc;
 use rotom_data::{
     event_models::market_event::{DataKind, MarketEvent},
     Market, MarketId,
@@ -10,11 +11,7 @@ use uuid::Uuid;
 use crate::{
     event::Event,
     execution::FillEvent,
-    model::{
-        balance::Balance,
-        order::{Order, RequestOpen},
-        ClientOrderId, OrderKind, Side,
-    },
+    model::{balance::Balance, order::OrderEvent, ClientOrderId, OrderKind, Side},
     portfolio::{
         allocator::OrderAllocator,
         error::PortfolioError,
@@ -291,10 +288,7 @@ where
     RiskManager: OrderEvaluator,
     Statistic: Initialiser + PositionSummariser,
 {
-    fn generate_order(
-        &mut self,
-        signal: &Signal,
-    ) -> Result<Option<Order<RequestOpen>>, PortfolioError> {
+    fn generate_order(&mut self, signal: &Signal) -> Result<Option<OrderEvent>, PortfolioError> {
         let position_id =
             determine_position_id(self.engine_id, &signal.exchange, &signal.instrument);
         let position = self.repository.get_open_position(&position_id)?;
@@ -310,17 +304,15 @@ where
                 Some(net_signal) => net_signal,
             };
 
-        let mut order = Order {
+        let mut order = OrderEvent {
+            time: Utc::now(),
             exchange: signal.exchange,
             instrument: signal.instrument.clone(),
             client_order_id: ClientOrderId(Uuid::new_v4()),
-            side: Side::from(*signal_decision),
-            state: RequestOpen {
-                kind: OrderKind::Limit,
-                price: signal.market_meta.close,
-                quantity: 0.0,
-                decision: *signal_decision,
-            },
+            market_meta: signal.market_meta,
+            decision: *signal_decision,
+            quantity: 0.0,
+            order_kind: OrderKind::Limit,
         };
 
         self.allocation_manager
@@ -332,7 +324,7 @@ where
     fn generate_exit_order(
         &mut self,
         _signal: SignalForceExit,
-    ) -> Result<Option<Order<RequestOpen>>, PortfolioError> {
+    ) -> Result<Option<OrderEvent>, PortfolioError> {
         unimplemented!()
     }
 }

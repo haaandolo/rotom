@@ -1,3 +1,4 @@
+use chrono::Utc;
 use rotom_data::{
     error::SocketError,
     event_models::market_event::{DataKind, MarketEvent},
@@ -15,7 +16,7 @@ use crate::{
     execution::FillEvent,
     model::{
         balance::{determine_balance_id, AssetBalance, SpotBalanceId},
-        order::{Order, RequestOpen},
+        order::OrderEvent,
         ClientOrderId, OrderKind, Side,
     },
     portfolio::{
@@ -111,10 +112,7 @@ impl MarketUpdater for SpotPortfolio {
 }
 
 impl OrderGenerator for SpotPortfolio {
-    fn generate_order(
-        &mut self,
-        signal: &Signal,
-    ) -> Result<Option<Order<RequestOpen>>, PortfolioError> {
+    fn generate_order(&mut self, signal: &Signal) -> Result<Option<OrderEvent>, PortfolioError> {
         let position_id =
             determine_position_id(self.engine_id, &signal.exchange, &signal.instrument);
         let position = self.repository.get_open_position(&position_id)?;
@@ -125,17 +123,15 @@ impl OrderGenerator for SpotPortfolio {
                 Some(net_signal) => net_signal,
             };
 
-        let mut order = Order {
+        let mut order = OrderEvent {
+            time: Utc::now(),
             exchange: signal.exchange,
             instrument: signal.instrument.clone(),
             client_order_id: ClientOrderId(Uuid::new_v4()),
-            side: Side::from(*signal_decision),
-            state: RequestOpen {
-                kind: OrderKind::Limit,
-                price: signal.market_meta.close,
-                quantity: 0.0,
-                decision: *signal_decision,
-            },
+            market_meta: signal.market_meta,
+            decision: *signal_decision,
+            quantity: 0.0,
+            order_kind: OrderKind::Limit,
         };
 
         self.allocator
@@ -144,7 +140,7 @@ impl OrderGenerator for SpotPortfolio {
         let balance_id = determine_balance_id(&signal.instrument.quote, &signal.exchange);
 
         if position.is_none()
-            && self.no_cash_to_enter_new_position(balance_id, order.state.get_dollar_value())?
+            && self.no_cash_to_enter_new_position(balance_id, order.get_dollar_value())?
         {
             return Ok(None);
         }
@@ -155,7 +151,7 @@ impl OrderGenerator for SpotPortfolio {
     fn generate_exit_order(
         &mut self,
         _signal: SignalForceExit,
-    ) -> Result<Option<Order<RequestOpen>>, PortfolioError> {
+    ) -> Result<Option<OrderEvent>, PortfolioError> {
         unimplemented!()
     }
 }

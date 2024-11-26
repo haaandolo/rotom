@@ -23,10 +23,7 @@ use rotom_oms::{
         simulated::{Config, SimulatedExecution},
         Fees,
     },
-    model::{
-        order::{Order, RequestOpen},
-        ClientOrderId,
-    },
+    model::{order::OrderEvent, ClientOrderId},
     portfolio::{
         allocator::{default_allocator::DefaultAllocator, spot_arb_allocator::SpotArbAllocator},
         persistence::{in_memory::InMemoryRepository, in_memory2::InMemoryRepository2},
@@ -68,21 +65,22 @@ pub async fn main() {
 
     ////////////////////////////////////////////////////
     // Order
-    let mut order = Order {
+    let mut order = OrderEvent {
+        time: Utc::now(),
         exchange: ExchangeId::BinanceSpot,
         instrument: Instrument::new("op", "usdt"),
         client_order_id: ClientOrderId(Uuid::new_v4()),
-        side: rotom_oms::model::Side::Buy,
-        state: RequestOpen {
-            kind: rotom_oms::model::OrderKind::Limit,
-            price: 1.0,
-            quantity: 5.0,
-            decision: Decision::Long,
+        market_meta: MarketMeta {
+            close: 1.0,
+            time: Utc::now(),
         },
+        decision: Decision::Long,
+        quantity: 5.0,
+        order_kind: rotom_oms::model::OrderKind::Limit,
     };
 
     // Test Binance Execution
-    // let binance_exe = BinanceExecution::create_http_client().unwrap();
+    let binance_exe = BinanceExecution::create_http_client().unwrap();
     // let res = binance_exe.get_balance_all().await;
     // let res: Vec<AssetBalance> = res.unwrap().into();
     // let res = binance_exe
@@ -94,27 +92,27 @@ pub async fn main() {
     //     )
     //     .await;
     // let res = binance_exe.open_order(order.clone()).await;
-    // let res = binance_exe
-    //     .cancel_order("YTirLsT3mwmdxDED6HBH5c".to_string(), "OPUSDT".to_string())
-    //     .await;
+    let res = binance_exe
+        .cancel_order("hZTowVTt4U27pK32UQ5ma2".to_string(), "OPUSDT".to_string())
+        .await;
     // binance_exe.cancel_order_all("OPUSDT".to_string()).await;
-    // println!("{:#?}", res);
+    println!("{:#?}", res);
     // binance_exe.receive_responses().await;
 
     ////////////////////////////////////////////////////
     // Test Poloniex Execution
-    // let polo_exe = PoloniexExecution::create_http_client().unwrap();
+    let polo_exe = PoloniexExecution::create_http_client().unwrap();
     // let res = polo_exe.open_order(order.clone()).await;
 
     // order.market_meta.close = 0.90;
     // let res = polo_exe.open_order(order.clone()).await;
 
-    // let res = polo_exe
-    //     .cancel_order(
-    //         "0adc007d-836f-424c-b954-b05e297269c8".to_string(),
-    //         "None".to_string(),
-    //     )
-    //     .await;
+    let res = polo_exe
+        .cancel_order(
+            "6fa85248-3701-46f4-b1a5-63ae379d2dfe".to_string(),
+            "None".to_string(),
+        )
+        .await;
 
     // let res= polo_exe.cancel_order_all("OP_USDT".to_string()).await;
 
@@ -126,7 +124,7 @@ pub async fn main() {
     //     Some("TRX".to_string()),
     //     5.0
     // ).await;
-    // println!("---> {:#?}", res);
+    println!("---> {:#?}", res);
 
     ////////////////////////////////////////////////
     //>>> UNCOMMENT FORM HERE ALL THE WAY DOWN <<<

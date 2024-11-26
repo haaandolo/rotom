@@ -13,8 +13,7 @@ use crate::exchange::binance::requests::wallet_transfer::BinanceWalletTransfer;
 use crate::exchange::ExecutionClient2;
 use crate::exchange::ExecutionId;
 use crate::exchange::UserDataStream;
-use crate::model::order::Order;
-use crate::model::order::RequestOpen;
+use crate::model::order::OrderEvent;
 
 use super::request_builder::BinanceRequestBuilder;
 use super::requests::balance::BinanceBalance;
@@ -69,7 +68,7 @@ impl ExecutionClient2 for BinanceExecution {
 
     async fn open_order(
         &self,
-        open_requests: Order<RequestOpen>,
+        open_requests: OrderEvent,
     ) -> Result<Self::NewOrderResponse, SocketError> {
         let response = self
             .http_client

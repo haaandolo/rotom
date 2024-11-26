@@ -7,7 +7,7 @@ use rotom_data::{
 use crate::{
     exchange::ExecutionClient2,
     execution::{error::ExecutionError, Fees, FillEvent, FillGenerator},
-    model::order::{Order, RequestOpen},
+    model::order::OrderEvent,
 };
 
 use super::spot_arb_executor::SpotArbExecutor;
@@ -41,7 +41,7 @@ where
     ExchangeOne: ExecutionClient2,
     ExchangeTwo: ExecutionClient2,
 {
-    fn generate_fill(&self, _order: &Order<RequestOpen>) -> Result<FillEvent, ExecutionError> {
+    fn generate_fill(&self, _order: &OrderEvent) -> Result<FillEvent, ExecutionError> {
         Ok(FillEvent {
             time: Utc::now(),
             exchange: ExchangeId::BinanceSpot,

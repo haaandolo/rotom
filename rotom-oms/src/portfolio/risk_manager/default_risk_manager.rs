@@ -1,7 +1,4 @@
-use crate::model::{
-    order::{Order, RequestOpen},
-    OrderKind,
-};
+use crate::model::{order::OrderEvent, OrderKind};
 
 use super::OrderEvaluator;
 
@@ -14,17 +11,17 @@ pub struct DefaultRisk {}
 impl OrderEvaluator for DefaultRisk {
     const DEFAULT_ORDER_TYPE: OrderKind = OrderKind::Market;
 
-    fn evaluate_order(&self, mut order: Order<RequestOpen>) -> Option<Order<RequestOpen>> {
+    fn evaluate_order(&self, mut order: OrderEvent) -> Option<OrderEvent> {
         if self.risk_too_high(&order) {
             return None;
         }
-        order.state.kind = DefaultRisk::DEFAULT_ORDER_TYPE;
+        order.order_kind = DefaultRisk::DEFAULT_ORDER_TYPE;
         Some(order)
     }
 }
 
 impl DefaultRisk {
-    fn risk_too_high(&self, _: &Order<RequestOpen>) -> bool {
+    fn risk_too_high(&self, _: &OrderEvent) -> bool {
         false
     }
 }

@@ -61,7 +61,7 @@ impl std::fmt::Display for Side {
 /*----- */
 // Order Kind
 /*----- */
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub enum OrderKind {
     Market,
     Limit,

@@ -6,6 +6,7 @@ use rotom_data::{
     shared::subscription_models::{ExchangeId, Instrument},
     Market, MarketMeta,
 };
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /*----- */
@@ -33,7 +34,7 @@ pub struct SignalStrength(pub f64);
 /*----- */
 // Decision
 /*----- */
-#[derive(Debug, Default, Eq, PartialEq, PartialOrd, Hash, Clone, Copy)]
+#[derive(Debug, Default, Eq, PartialEq, PartialOrd, Hash, Clone, Copy, Serialize, Deserialize)]
 pub enum Decision {
     #[default]
     Long,

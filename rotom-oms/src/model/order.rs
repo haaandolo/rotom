@@ -1,64 +1,53 @@
-use rotom_data::shared::subscription_models::{ExchangeId, Instrument};
+use chrono::{DateTime, Utc};
+use rotom_data::{
+    shared::subscription_models::{ExchangeId, Instrument},
+    MarketMeta,
+};
 use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
 
-use super::{ClientOrderId, OrderId, OrderKind, Side};
-
-/*----- */
-// Order
-/*----- */
-#[derive(Clone, Eq, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
-pub struct Order<State> {
-    pub exchange: ExchangeId,
-    pub instrument: Instrument, // todo change?
-    pub client_order_id: ClientOrderId,
-    pub side: Side, // todo check duplicated enum
-    pub state: State,
-}
-
-/*----- */
-// Order - RequestOpen
-/*----- */
-#[derive(Debug, Clone)]
-pub struct RequestOpen {
-    pub kind: OrderKind,
-    pub price: f64,
-    pub quantity: f64,
-    pub decision: Decision,
-}
-
-impl RequestOpen {
-    pub fn get_dollar_value(&self) -> f64 {
-        self.price * self.quantity
-    }
-}
-
-/*----- */
-// Order - RequestCancel
-/*----- */
-pub struct RequestCancel {
-    pub id: OrderId,
-}
-
-/*----- */
-// Open - order has been open
-/*----- */
-#[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
-pub struct Open {
-    pub id: u64,
-    pub price: f64,
-    pub quantity: f64,
-    pub filled_quantity: f64,
-}
-
-impl Open {
-    pub fn remaining_quantity(&self) -> f64 {
-        self.quantity - self.filled_quantity
-    }
-}
+use super::{ClientOrderId, OrderKind};
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize, Serialize)]
 pub enum OrderFill {
     Full,
     Partial,
 }
+
+#[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
+pub struct OrderEvent {
+    pub time: DateTime<Utc>,
+    pub exchange: ExchangeId,
+    pub client_order_id: ClientOrderId,
+    pub instrument: Instrument,
+    /// Metadata propagated from source MarketEvent
+    pub market_meta: MarketMeta,
+    /// LONG, CloseLong, SHORT or CloseShort
+    pub decision: Decision,
+    /// +ve or -ve Quantity depending on Decision
+    pub quantity: f64,
+    /// MARKET, LIMIT etc
+    pub order_kind: OrderKind,
+}
+
+impl OrderEvent {
+    pub fn get_dollar_value(&self) -> f64 {
+        self.quantity * self.market_meta.close
+    }
+}
+
+/*
+### Status
+- Open
+- Closed
+- Canceled
+
+
+### Order
+- price
+- quantity
+- status
+- order execution time
+- symbol
+-
+*/
