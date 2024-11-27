@@ -4,11 +4,11 @@ use rotom_data::shared::de::de_u64_epoch_ms_as_datetime_utc;
 use rotom_data::shared::subscription_models::ExchangeId;
 use serde::{Deserialize, Serialize};
 
+use crate::model::account_data::OrderStatus;
 use crate::model::balance::AssetBalance;
 use crate::model::balance::Balance;
+use crate::model::OrderKind;
 use crate::model::Side;
-
-use super::{PoloniexOrderStatus, PoloniexOrderType};
 
 /*----- */
 // Poloniex User Data - Orders
@@ -23,7 +23,7 @@ pub struct PoloniexAccountDataOrder {
 #[serde(rename_all = "camelCase")]
 pub struct PoloniexAccountDataOrderParams {
     pub symbol: String,
-    pub r#type: PoloniexOrderType,
+    pub r#type: OrderKind,
     #[serde(deserialize_with = "de_str")]
     pub quantity: f64,
     #[serde(deserialize_with = "de_str")]
@@ -41,7 +41,7 @@ pub struct PoloniexAccountDataOrderParams {
     #[serde(deserialize_with = "de_str")]
     pub filled_amount: f64,
     pub match_role: String,
-    pub state: PoloniexOrderStatus,
+    pub state: OrderStatus,
     #[serde(deserialize_with = "de_u64_epoch_ms_as_datetime_utc")]
     pub trade_time: DateTime<Utc>,
     #[serde(deserialize_with = "de_str")]

@@ -80,7 +80,7 @@ pub async fn main() {
     };
 
     // Test Binance Execution
-    let binance_exe = BinanceExecution::create_http_client().unwrap();
+    // let binance_exe = BinanceExecution::create_http_client().unwrap();
     // let res = binance_exe.get_balance_all().await;
     // let res: Vec<AssetBalance> = res.unwrap().into();
     // let res = binance_exe
@@ -92,27 +92,27 @@ pub async fn main() {
     //     )
     //     .await;
     // let res = binance_exe.open_order(order.clone()).await;
-    let res = binance_exe
-        .cancel_order("hZTowVTt4U27pK32UQ5ma2".to_string(), "OPUSDT".to_string())
-        .await;
+    // let res = binance_exe
+    //     .cancel_order("hZTowVTt4U27pK32UQ5ma2".to_string(), "OPUSDT".to_string())
+    //     .await;
     // binance_exe.cancel_order_all("OPUSDT".to_string()).await;
-    println!("{:#?}", res);
+    // println!("{:#?}", res);
     // binance_exe.receive_responses().await;
 
     ////////////////////////////////////////////////////
     // Test Poloniex Execution
-    let polo_exe = PoloniexExecution::create_http_client().unwrap();
+    // let polo_exe = PoloniexExecution::create_http_client().unwrap();
     // let res = polo_exe.open_order(order.clone()).await;
 
     // order.market_meta.close = 0.90;
     // let res = polo_exe.open_order(order.clone()).await;
 
-    let res = polo_exe
-        .cancel_order(
-            "6fa85248-3701-46f4-b1a5-63ae379d2dfe".to_string(),
-            "None".to_string(),
-        )
-        .await;
+    // let res = polo_exe
+    //     .cancel_order(
+    //         "6fa85248-3701-46f4-b1a5-63ae379d2dfe".to_string(),
+    //         "None".to_string(),
+    //     )
+    //     .await;
 
     // let res= polo_exe.cancel_order_all("OP_USDT".to_string()).await;
 
@@ -124,7 +124,7 @@ pub async fn main() {
     //     Some("TRX".to_string()),
     //     5.0
     // ).await;
-    println!("---> {:#?}", res);
+    // println!("---> {:#?}", res);
 
     ////////////////////////////////////////////////
     //>>> UNCOMMENT FORM HERE ALL THE WAY DOWN <<<

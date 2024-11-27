@@ -52,6 +52,7 @@ impl PoloniexNewOrder {
         match &order_event.order_kind {
             OrderKind::Limit => Self::limit_order(order_event),
             OrderKind::Market => Self::market_order(order_event),
+            _ => unimplemented!(), // todo
         }
     }
 

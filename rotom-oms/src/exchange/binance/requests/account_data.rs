@@ -1,11 +1,12 @@
 use serde::Deserialize;
 
 use crate::model::{
+    account_data::OrderStatus,
     balance::{AssetBalance, Balance, BalanceDelta},
-    Side,
+    OrderKind, Side,
 };
 
-use super::{BinanceOrderStatus, BinanceTimeInForce};
+use super::BinanceTimeInForce;
 use rotom_data::shared::{de::de_str, subscription_models::ExchangeId};
 
 /*----- */
@@ -19,7 +20,7 @@ pub struct BinanceAccountDataOrder {
     pub s: String,             // Symbol
     pub c: String,             // Client order ID
     pub S: Side,               // Side
-    pub o: String,             // Order type
+    pub o: OrderKind,          // Order type
     pub f: BinanceTimeInForce, // Time in force
     #[serde(deserialize_with = "de_str")]
     pub q: f64, // Order quantity
@@ -31,8 +32,8 @@ pub struct BinanceAccountDataOrder {
     pub F: f64, // Iceberg quantity
     pub g: i8,                 // OrderListId
     pub C: String, // Original client order ID; This is the ID of the order being canceled
-    pub x: BinanceOrderStatus, // Current execution type
-    pub X: BinanceOrderStatus, // Current order status
+    pub x: OrderStatus, // Current execution type
+    pub X: OrderStatus, // Current order status
     pub r: String, // Order reject reason; will be an error code.
     pub i: u64,    // Order ID
     #[serde(deserialize_with = "de_str")]

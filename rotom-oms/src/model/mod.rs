@@ -1,10 +1,11 @@
+pub mod account_data;
 pub mod balance;
 pub mod order;
 pub mod trade;
-use std::fmt::{Display, Formatter};
 
 use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
+use std::fmt::{Display, Formatter};
 use uuid::Uuid;
 
 /*----- */
@@ -62,9 +63,15 @@ impl std::fmt::Display for Side {
 // Order Kind
 /*----- */
 #[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[serde(rename_all(deserialize = "SCREAMING_SNAKE_CASE"))]
 pub enum OrderKind {
     Market,
     Limit,
+    StopLoss,
+    StopLossLimit,
+    TakeProfit,
+    TakeProfitLimit,
+    LimitMaker,
 }
 
 impl AsRef<str> for OrderKind {
@@ -72,6 +79,11 @@ impl AsRef<str> for OrderKind {
         match self {
             OrderKind::Market => "market",
             OrderKind::Limit => "limit",
+            OrderKind::LimitMaker => "limit maker",
+            OrderKind::StopLoss => "stop loss",
+            OrderKind::StopLossLimit => "stop loss limit",
+            OrderKind::TakeProfit => "take profit",
+            OrderKind::TakeProfitLimit => "take profit limit",
         }
     }
 }
@@ -84,29 +96,12 @@ impl Display for OrderKind {
             match self {
                 OrderKind::Market => "market",
                 OrderKind::Limit => "limit",
+                OrderKind::LimitMaker => "limit maker",
+                OrderKind::StopLoss => "stop loss",
+                OrderKind::StopLossLimit => "stop loss limit",
+                OrderKind::TakeProfit => "take profit",
+                OrderKind::TakeProfitLimit => "take profit limit",
             }
         )
     }
-}
-
-/*----- */
-// State
-/*----- */
-#[derive(Debug, Deserialize)]
-#[serde(rename_all(deserialize = "SCREAMING_SNAKE_CASE"))]
-pub enum State {
-    New,
-    PartiallyFilled,
-    Filled,
-    PendingCancel,
-    PartiallyCanceled,
-    Canceled,
-    Failed,
-    Replaced,
-    Rejected,
-    Trade,
-    Expired,
-    TradePrevention,
-    PendingNew,
-    ExpiredInMatch,
 }
