@@ -381,6 +381,7 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
+// - continue normalisation of account data, impl from traits
 // - impl From trait for order and balance for polo and bin
 // - figure out the balance +ve and -ve of quote and base asset for portfolio when the fill is updated
 // - make the above point more solid

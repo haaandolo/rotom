@@ -3,16 +3,10 @@ use serde::Deserialize;
 use std::fmt::Debug;
 use tokio::sync::mpsc;
 
-use crate::exchange::{consume_account_data_ws, ExecutionClient2};
-
-/*----- */
-// Convinenent type to combine two account data streams
-/*----- */
-#[derive(Debug)]
-pub enum AccountStreamsCombined<AccountStreamOne, AccountStreamTwo> {
-    ExchangeOne(AccountStreamOne),
-    ExchangeTwo(AccountStreamTwo),
-}
+use crate::{
+    exchange::{consume_account_data_ws, ExecutionClient2},
+    model::account_data::AccountData,
+};
 
 /*----- */
 // Spot Arb Executor - combines exchange execution client's for spot arb
@@ -25,20 +19,17 @@ where
 {
     pub exchange_one: ExchangeOne,
     pub exchange_two: ExchangeTwo,
-    pub streams: mpsc::UnboundedReceiver<
-        AccountStreamsCombined<
-            ExchangeOne::AccountDataStreamResponse,
-            ExchangeTwo::AccountDataStreamResponse,
-        >,
-    >,
+    pub streams: mpsc::UnboundedReceiver<AccountData>, 
 }
 
 impl<ExchangeOne, ExchangeTwo> SpotArbExecutor<ExchangeOne, ExchangeTwo>
 where
     ExchangeOne: ExecutionClient2 + 'static,
     ExchangeTwo: ExecutionClient2 + 'static,
-    ExchangeOne::AccountDataStreamResponse: Send + for<'de> Deserialize<'de> + Debug,
-    ExchangeTwo::AccountDataStreamResponse: Send + for<'de> Deserialize<'de> + Debug,
+    ExchangeOne::AccountDataStreamResponse:
+        Send + for<'de> Deserialize<'de> + Debug + Into<AccountData>,
+    ExchangeTwo::AccountDataStreamResponse:
+        Send + for<'de> Deserialize<'de> + Debug + Into<AccountData>,
 {
     pub async fn init() -> Result<SpotArbExecutor<ExchangeOne, ExchangeTwo>, SocketError> {
         // Convert first exchange ws to channel
@@ -54,13 +45,13 @@ where
         let combined_tx_cloned = combined_tx.clone();
         tokio::spawn(async move {
             while let Some(message) = exchange_one_rx.recv().await {
-                let _ = combined_tx_cloned.send(AccountStreamsCombined::ExchangeOne(message));
+                let _ = combined_tx_cloned.send(message);
             }
         });
 
         tokio::spawn(async move {
             while let Some(message) = exchange_two_rx.recv().await {
-                let _ = combined_tx.send(AccountStreamsCombined::ExchangeTwo(message));
+                let _ = combined_tx.send(message);
             }
         });
 

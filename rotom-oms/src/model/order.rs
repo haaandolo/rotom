@@ -35,19 +35,3 @@ impl OrderEvent {
         self.quantity * self.market_meta.close
     }
 }
-
-/*
-### Status
-- Open
-- Closed
-- Canceled
-
-
-### Order
-- price
-- quantity
-- status
-- order execution time
-- symbol
--
-*/

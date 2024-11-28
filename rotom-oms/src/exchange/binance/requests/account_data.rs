@@ -1,13 +1,19 @@
+use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
 use crate::model::{
-    account_data::OrderStatus,
-    balance::{AssetBalance, Balance, BalanceDelta},
+    account_data::{
+        AccountData, AccountDataBalance, AccountDataBalanceDelta, AccountDataOrder, OrderStatus,
+    },
+    balance::Balance,
     OrderKind, Side,
 };
 
 use super::BinanceTimeInForce;
-use rotom_data::shared::{de::de_str, subscription_models::ExchangeId};
+use rotom_data::shared::{
+    de::{de_str, de_u64_epoch_ms_as_datetime_utc},
+    subscription_models::ExchangeId,
+};
 
 /*----- */
 // Binance User Data - Order
@@ -45,14 +51,16 @@ pub struct BinanceAccountDataOrder {
     #[serde(deserialize_with = "de_str")]
     pub n: f64, // Commission amount
     pub N: Option<String>, // Commission asset
-    pub T: u64,    // Transaction time
+    #[serde(deserialize_with = "de_u64_epoch_ms_as_datetime_utc")]
+    pub T: DateTime<Utc>, // Transaction time
     pub t: i8,     // Trade ID
     pub v: Option<i8>, // Prevented Match Id; This is only visible if the order expired due to STP
     pub I: u64,    // Ignore
     pub w: bool,   // Is the order on the book?
     pub m: bool,   // Is this trade the maker side?
     pub M: bool,   // Ignore
-    pub O: u64,    // Order creation time
+    #[serde(deserialize_with = "de_u64_epoch_ms_as_datetime_utc")]
+    pub O: DateTime<Utc>, // Order creation time
     #[serde(deserialize_with = "de_str")]
     pub Z: f64, // Cumulative quote asset transacted quantity
     #[serde(deserialize_with = "de_str")]
@@ -63,22 +71,20 @@ pub struct BinanceAccountDataOrder {
     pub V: String, // SelfTradePreventionMode
 }
 
-// impl From<BinanceAccountDataOrder> for Order<Open> {
-//     fn from(order: BinanceAccountDataOrder) -> Self {
-//         Order {
-//             exchange: ExchangeId::BinanceSpot,
-//             instrument: order.s,
-//             client_order_id: ClientOrderId(order.c),
-//             side: order.S,
-//             state: Open {
-//                 id: order.i,
-//                 price: order.p,
-//                 quantity: 0.0,
-//                 filled_quantity: order.Q,
-//             },
-//         }
-//     }
-// }
+impl From<BinanceAccountDataOrder> for AccountDataOrder {
+    fn from(order: BinanceAccountDataOrder) -> Self {
+        Self {
+            exchange: ExchangeId::BinanceSpot,
+            asset: order.s,
+            price: order.p, // todo!
+            quantity: order.q,
+            status: order.X,
+            execution_time: order.T,
+            side: order.S,
+            fee: order.n,
+        }
+    }
+}
 
 /*----- */
 // Binance User Data - Account Update
@@ -102,12 +108,12 @@ pub struct BinanceAccountDataBalanceVec {
     pub l: f64, // locked
 }
 
-impl From<BinanceAccountDataBalance> for Vec<AssetBalance> {
+impl From<BinanceAccountDataBalance> for Vec<AccountDataBalance> {
     fn from(account_balances: BinanceAccountDataBalance) -> Self {
         account_balances
             .B
             .into_iter()
-            .map(|balance| AssetBalance {
+            .map(|balance| AccountDataBalance {
                 asset: balance.a,
                 exchange: ExchangeId::BinanceSpot,
                 balance: Balance {
@@ -133,9 +139,9 @@ pub struct BinanceAccountDataDelta {
     pub T: u64,    // clear time
 }
 
-impl From<BinanceAccountDataDelta> for BalanceDelta {
+impl From<BinanceAccountDataDelta> for AccountDataBalanceDelta {
     fn from(delta: BinanceAccountDataDelta) -> Self {
-        BalanceDelta {
+        AccountDataBalanceDelta {
             asset: delta.e,
             exchange: ExchangeId::BinanceSpot,
             total: delta.d,
@@ -181,6 +187,21 @@ pub enum BinanceAccountEvents {
     BalanceDelta(BinanceAccountDataDelta),
     Balance(BinanceAccountDataBalance),
     List(BinanceAccountDataList),
+}
+
+impl From<BinanceAccountEvents> for AccountData {
+    fn from(account_events: BinanceAccountEvents) -> Self {
+        match account_events {
+            BinanceAccountEvents::Order(order) => AccountData::Order(AccountDataOrder::from(order)),
+            BinanceAccountEvents::Balance(balance) => {
+                AccountData::Balance(Vec::<AccountDataBalance>::from(balance))
+            }
+            BinanceAccountEvents::BalanceDelta(balance_delta) => {
+                AccountData::BalanceDelta(AccountDataBalanceDelta::from(balance_delta))
+            }
+            _ => unimplemented!(),
+        }
+    }
 }
 
 #[cfg(test)]

@@ -7,7 +7,7 @@ use super::{balance::Balance, Side};
 /*----- */
 // State
 /*----- */
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Copy, Clone, Deserialize)]
 #[serde(rename_all(deserialize = "SCREAMING_SNAKE_CASE"))]
 pub enum OrderStatus {
     New,
@@ -43,9 +43,18 @@ pub struct AccountDataBalance {
 }
 
 #[derive(Debug)]
+pub struct AccountDataBalanceDelta {
+    pub asset: String,
+    pub exchange: ExchangeId,
+    pub total: f64,
+    pub available: f64, // only used for margin will be zero if spot
+}
+
+#[derive(Debug)]
 pub enum AccountData {
     Order(AccountDataOrder),
-    Balance(AccountDataBalance),
+    Balance(Vec<AccountDataBalance>),
+    BalanceDelta(AccountDataBalanceDelta),
 }
 
 /*

@@ -19,7 +19,7 @@ use sha2::Sha256;
 use tokio::sync::mpsc;
 use tracing::{debug, error, info, warn};
 
-use crate::model::order::OrderEvent;
+use crate::model::{account_data::AccountData, order::OrderEvent};
 
 /*----- */
 // Convenient types
@@ -117,11 +117,12 @@ impl std::fmt::Display for ExecutionId {
 // Function to spawn and return a tx for private user ws
 /*----- */
 pub async fn consume_account_data_ws<ExchangeClient>(
-    account_data_tx: mpsc::UnboundedSender<ExchangeClient::AccountDataStreamResponse>,
+    account_data_tx: mpsc::UnboundedSender<AccountData>,
 ) -> Result<(), SocketError>
 where
     ExchangeClient: ExecutionClient2,
-    ExchangeClient::AccountDataStreamResponse: for<'de> Deserialize<'de> + Send + Debug + 'static,
+    ExchangeClient::AccountDataStreamResponse:
+        for<'de> Deserialize<'de> + Send + Debug + 'static + Into<AccountData>,
 {
     let exchange_id = ExchangeClient::CLIENT;
     let mut connection_attempt: u32 = 0;
@@ -140,7 +141,7 @@ where
         while let Some(msg) = stream.user_data_ws.next().await {
             match WebSocketParser::parse::<ExchangeClient::AccountDataStreamResponse>(msg) {
                 Some(Ok(exchange_message)) => {
-                    if let Err(error) = account_data_tx.send(exchange_message) {
+                    if let Err(error) = account_data_tx.send(exchange_message.into()) {
                         debug!(
                             payload = ?error.0,
                             why = "receiver dropped",

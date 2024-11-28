@@ -1,7 +1,6 @@
 pub mod account_data;
 pub mod balance;
 pub mod order;
-pub mod trade;
 
 use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};

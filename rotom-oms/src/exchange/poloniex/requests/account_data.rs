@@ -4,8 +4,10 @@ use rotom_data::shared::de::de_u64_epoch_ms_as_datetime_utc;
 use rotom_data::shared::subscription_models::ExchangeId;
 use serde::{Deserialize, Serialize};
 
+use crate::model::account_data::AccountData;
+use crate::model::account_data::AccountDataBalance;
+use crate::model::account_data::AccountDataOrder;
 use crate::model::account_data::OrderStatus;
-use crate::model::balance::AssetBalance;
 use crate::model::balance::Balance;
 use crate::model::OrderKind;
 use crate::model::Side;
@@ -61,6 +63,21 @@ pub struct PoloniexAccountDataOrderParams {
     pub ts: u64,
 }
 
+impl From<PoloniexAccountDataOrder> for AccountDataOrder {
+    fn from(mut order: PoloniexAccountDataOrder) -> Self {
+        Self {
+            exchange: ExchangeId::PoloniexSpot,
+            asset: std::mem::take(&mut order.data[0].symbol),
+            price: order.data[0].filled_amount, // todo
+            quantity: order.data[0].quantity,
+            status: order.data[0].state,
+            execution_time: order.data[0].create_time,
+            side: order.data[0].side,
+            fee: order.data[0].trade_fee,
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum PoloniexOrderEventType {
@@ -68,23 +85,6 @@ pub enum PoloniexOrderEventType {
     Trade,
     Canceled,
 }
-
-// impl From<PoloniexAccountDataOrder> for Order<Open> {
-//     fn from(mut order: PoloniexAccountDataOrder) -> Self {
-//         Self {
-//             exchange: ExchangeId::PoloniexSpot,
-//             instrument: std::mem::take(&mut order.data[0].symbol),
-//             client_order_id: ClientOrderId(std::mem::take(&mut order.data[0].client_order_id)),
-//             side: order.data[0].side,
-//             state: Open {
-//                 id: order.data[0].order_id,
-//                 price: order.data[0].price,
-//                 quantity: order.data[0].quantity,
-//                 filled_quantity: order.data[0].filled_amount,
-//             },
-//         }
-//     }
-// }
 
 /*----- */
 // Poloniex User Data - Balance
@@ -114,16 +114,16 @@ pub struct PoloniexAccountDataBalanceParams {
     pub ts: u64,
 }
 
-impl From<PoloniexAccountDataBalance> for AssetBalance {
-    fn from(mut account_balance: PoloniexAccountDataBalance) -> Self {
-        Self {
+impl From<PoloniexAccountDataBalance> for Vec<AccountDataBalance> {
+    fn from(mut account_balance: PoloniexAccountDataBalance) -> Vec<AccountDataBalance> {
+        vec![AccountDataBalance {
             asset: std::mem::take(&mut account_balance.data[0].currency), // when changed to small string, can rm std::mem::take
             exchange: ExchangeId::PoloniexSpot,
             balance: Balance {
-                total: account_balance.data[0].hold,
-                available: account_balance.data[0].available,
+                total: account_balance.data[0].available,
+                available: 0.0,
             },
-        }
+        }]
     }
 }
 
@@ -149,11 +149,15 @@ pub enum PoloniexAccountEvents {
     Balance(PoloniexAccountDataBalance),
 }
 
-// impl From<PoloniexAccountEvents> for AccountData {
-//     fn from(value: PoloniexAccountEvents) -> Self {
-//         match value {
-//             PoloniexAccountEvents::Order(order) => AccountData::from(order),
-//             PoloniexAccountEvents::Balance(balance) => AccountData::from(balance),
-//         }
-//     }
-// }
+impl From<PoloniexAccountEvents> for AccountData {
+    fn from(account_events: PoloniexAccountEvents) -> Self {
+        match account_events {
+            PoloniexAccountEvents::Order(order) => {
+                AccountData::Order(AccountDataOrder::from(order))
+            }
+            PoloniexAccountEvents::Balance(balance) => {
+                AccountData::Balance(Vec::<AccountDataBalance>::from(balance))
+            }
+        }
+    }
+}
