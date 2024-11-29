@@ -1,7 +1,7 @@
-use std::fmt::Debug;
-
 use crate::exchange::HmacSha256;
 use hmac::Mac;
+use std::fmt::Debug;
+
 use rotom_data::{
     error::SocketError,
     protocols::http::{

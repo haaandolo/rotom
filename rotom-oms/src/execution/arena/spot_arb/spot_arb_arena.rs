@@ -15,21 +15,21 @@ use super::spot_arb_executor::SpotArbExecutor;
 /*----- */
 // Spot Arbitrage Arena
 /*----- */
-pub struct SpotArbArena<ExchangeOne, ExchangeTwo>
+pub struct SpotArbArena<LiquidExchange, IlliquidExchange>
 where
-    ExchangeOne: ExecutionClient + 'static,
-    ExchangeTwo: ExecutionClient + 'static,
+    LiquidExchange: ExecutionClient + 'static,
+    IlliquidExchange: ExecutionClient + 'static,
 {
-    pub executor: SpotArbExecutor<ExchangeOne, ExchangeTwo>,
+    pub executor: SpotArbExecutor<LiquidExchange, IlliquidExchange>,
 }
 
-impl<ExchangeOne, ExchangeTwo> SpotArbArena<ExchangeOne, ExchangeTwo>
+impl<LiquidExchange, IlliquidExchange> SpotArbArena<LiquidExchange, IlliquidExchange>
 where
-    ExchangeOne: ExecutionClient + 'static,
-    ExchangeTwo: ExecutionClient + 'static,
+    LiquidExchange: ExecutionClient + 'static,
+    IlliquidExchange: ExecutionClient + 'static,
 {
     pub async fn new() -> Self {
-        let executor = SpotArbExecutor::<ExchangeOne, ExchangeTwo>::init()
+        let executor = SpotArbExecutor::<LiquidExchange, IlliquidExchange>::init()
             .await
             .unwrap(); // todo
         Self { executor }
@@ -39,10 +39,11 @@ where
 /*----- */
 // Impl FillGenerator for SpotArbArena
 /*----- */
-impl<ExchangeOne, ExchangeTwo> FillGenerator for SpotArbArena<ExchangeOne, ExchangeTwo>
+impl<LiquidExchange, IlliquidExchange> FillGenerator
+    for SpotArbArena<LiquidExchange, IlliquidExchange>
 where
-    ExchangeOne: ExecutionClient,
-    ExchangeTwo: ExecutionClient,
+    LiquidExchange: ExecutionClient,
+    IlliquidExchange: ExecutionClient,
 {
     fn generate_fill(&self, _order: &OrderEvent) -> Result<FillEvent, ExecutionError> {
         Ok(FillEvent {
