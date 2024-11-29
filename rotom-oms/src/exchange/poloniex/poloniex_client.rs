@@ -16,7 +16,7 @@ use serde::Deserialize;
 
 use crate::{
     exchange::{
-        poloniex::requests::account_data::PoloniexAccountEvents, ExecutionClient2, ExecutionId,
+        poloniex::requests::account_data::PoloniexAccountEvents, ExecutionClient, ExecutionId,
         UserDataStream,
     },
     model::order::OrderEvent,
@@ -46,7 +46,7 @@ pub struct PoloniexExecution {
 }
 
 #[async_trait]
-impl ExecutionClient2 for PoloniexExecution {
+impl ExecutionClient for PoloniexExecution {
     const CLIENT: ExecutionId = ExecutionId::Poloniex;
 
     type CancelResponse = Vec<PoloniexCancelOrderResponse>;

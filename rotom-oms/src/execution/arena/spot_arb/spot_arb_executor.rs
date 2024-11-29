@@ -1,10 +1,9 @@
 use rotom_data::error::SocketError;
-use serde::Deserialize;
 use std::fmt::Debug;
 use tokio::sync::mpsc;
 
 use crate::{
-    exchange::{consume_account_data_ws, ExecutionClient2},
+    exchange::{consume_account_data_ws, ExecutionClient},
     model::account_data::AccountData,
 };
 
@@ -14,22 +13,18 @@ use crate::{
 #[derive(Debug)]
 pub struct SpotArbExecutor<ExchangeOne, ExchangeTwo>
 where
-    ExchangeOne: ExecutionClient2,
-    ExchangeTwo: ExecutionClient2,
+    ExchangeOne: ExecutionClient,
+    ExchangeTwo: ExecutionClient,
 {
     pub exchange_one: ExchangeOne,
     pub exchange_two: ExchangeTwo,
-    pub streams: mpsc::UnboundedReceiver<AccountData>, 
+    pub streams: mpsc::UnboundedReceiver<AccountData>,
 }
 
 impl<ExchangeOne, ExchangeTwo> SpotArbExecutor<ExchangeOne, ExchangeTwo>
 where
-    ExchangeOne: ExecutionClient2 + 'static,
-    ExchangeTwo: ExecutionClient2 + 'static,
-    ExchangeOne::AccountDataStreamResponse:
-        Send + for<'de> Deserialize<'de> + Debug + Into<AccountData>,
-    ExchangeTwo::AccountDataStreamResponse:
-        Send + for<'de> Deserialize<'de> + Debug + Into<AccountData>,
+    ExchangeOne: ExecutionClient + 'static,
+    ExchangeTwo: ExecutionClient + 'static,
 {
     pub async fn init() -> Result<SpotArbExecutor<ExchangeOne, ExchangeTwo>, SocketError> {
         // Convert first exchange ws to channel

@@ -16,7 +16,7 @@ use rotom_oms::{
     event::{Event, EventTx},
     exchange::{
         binance::binance_client::BinanceExecution, poloniex::poloniex_client::PoloniexExecution,
-        ExecutionClient2,
+        ExecutionClient,
     },
     execution::{
         arena::spot_arb::spot_arb_executor::SpotArbExecutor,
@@ -381,8 +381,6 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - continue normalisation of account data, impl from traits
-// - impl From trait for order and balance for polo and bin
 // - figure out the balance +ve and -ve of quote and base asset for portfolio when the fill is updated
 // - make the above point more solid
 // - update parse decision signal to not let short positions be open for spot trades

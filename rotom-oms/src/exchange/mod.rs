@@ -48,14 +48,14 @@ impl UserDataStream {
 // Execution Client Trait
 /*----- */
 #[async_trait]
-pub trait ExecutionClient2 {
+pub trait ExecutionClient {
     const CLIENT: ExecutionId;
 
     type CancelResponse;
     type CancelAllResponse;
     type NewOrderResponse;
     type WalletTransferResponse;
-    type AccountDataStreamResponse;
+    type AccountDataStreamResponse: Send + for<'de> Deserialize<'de> + Debug + Into<AccountData>;
 
     // Init user data websocket
     async fn create_account_data_ws() -> Result<UserDataStream, SocketError>;
@@ -120,9 +120,7 @@ pub async fn consume_account_data_ws<ExchangeClient>(
     account_data_tx: mpsc::UnboundedSender<AccountData>,
 ) -> Result<(), SocketError>
 where
-    ExchangeClient: ExecutionClient2,
-    ExchangeClient::AccountDataStreamResponse:
-        for<'de> Deserialize<'de> + Send + Debug + 'static + Into<AccountData>,
+    ExchangeClient: ExecutionClient,
 {
     let exchange_id = ExchangeClient::CLIENT;
     let mut connection_attempt: u32 = 0;

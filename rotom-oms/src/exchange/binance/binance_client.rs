@@ -10,7 +10,7 @@ use crate::exchange::binance::requests::cancel_order::BinanceCancelAllOrder;
 use crate::exchange::binance::requests::cancel_order::BinanceCancelOrder;
 use crate::exchange::binance::requests::new_order::BinanceNewOrder;
 use crate::exchange::binance::requests::wallet_transfer::BinanceWalletTransfer;
-use crate::exchange::ExecutionClient2;
+use crate::exchange::ExecutionClient;
 use crate::exchange::ExecutionId;
 use crate::exchange::UserDataStream;
 use crate::model::order::OrderEvent;
@@ -36,7 +36,7 @@ pub struct BinanceExecution {
 }
 
 #[async_trait]
-impl ExecutionClient2 for BinanceExecution {
+impl ExecutionClient for BinanceExecution {
     const CLIENT: ExecutionId = ExecutionId::Binance;
 
     type CancelResponse = BinanceCancelOrderResponse;

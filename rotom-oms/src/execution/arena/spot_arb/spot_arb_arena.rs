@@ -5,7 +5,7 @@ use rotom_data::{
 };
 
 use crate::{
-    exchange::ExecutionClient2,
+    exchange::ExecutionClient,
     execution::{error::ExecutionError, Fees, FillEvent, FillGenerator},
     model::order::OrderEvent,
 };
@@ -17,18 +17,21 @@ use super::spot_arb_executor::SpotArbExecutor;
 /*----- */
 pub struct SpotArbArena<ExchangeOne, ExchangeTwo>
 where
-    ExchangeOne: ExecutionClient2,
-    ExchangeTwo: ExecutionClient2,
+    ExchangeOne: ExecutionClient + 'static,
+    ExchangeTwo: ExecutionClient + 'static,
 {
     pub executor: SpotArbExecutor<ExchangeOne, ExchangeTwo>,
 }
 
 impl<ExchangeOne, ExchangeTwo> SpotArbArena<ExchangeOne, ExchangeTwo>
 where
-    ExchangeOne: ExecutionClient2,
-    ExchangeTwo: ExecutionClient2,
+    ExchangeOne: ExecutionClient + 'static,
+    ExchangeTwo: ExecutionClient + 'static,
 {
-    pub fn new(executor: SpotArbExecutor<ExchangeOne, ExchangeTwo>) -> Self {
+    pub async fn new() -> Self {
+        let executor = SpotArbExecutor::<ExchangeOne, ExchangeTwo>::init()
+            .await
+            .unwrap(); // todo
         Self { executor }
     }
 }
@@ -38,8 +41,8 @@ where
 /*----- */
 impl<ExchangeOne, ExchangeTwo> FillGenerator for SpotArbArena<ExchangeOne, ExchangeTwo>
 where
-    ExchangeOne: ExecutionClient2,
-    ExchangeTwo: ExecutionClient2,
+    ExchangeOne: ExecutionClient,
+    ExchangeTwo: ExecutionClient,
 {
     fn generate_fill(&self, _order: &OrderEvent) -> Result<FillEvent, ExecutionError> {
         Ok(FillEvent {
