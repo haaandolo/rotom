@@ -11,7 +11,11 @@ use uuid::Uuid;
 use crate::{
     event::Event,
     execution::FillEvent,
-    model::{balance::Balance, order::OrderEvent, ClientOrderId, OrderKind, Side},
+    model::{
+        balance::Balance,
+        order::{OrderEvent, OrderState},
+        ClientOrderId, OrderKind, Side,
+    },
     portfolio::{
         allocator::OrderAllocator,
         error::PortfolioError,
@@ -313,6 +317,7 @@ where
             decision: *signal_decision,
             quantity: 0.0,
             order_kind: OrderKind::Limit,
+            state: OrderState::InTransit,
         };
 
         self.allocation_manager

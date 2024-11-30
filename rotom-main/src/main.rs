@@ -19,7 +19,7 @@ use rotom_oms::{
         ExecutionClient,
     },
     execution::{
-        arena::spot_arb::spot_arb_executor::SpotArbExecutor,
+        arena::spot_arb::{spot_arb_arena::SpotArbArena, spot_arb_executor::SpotArbExecutor},
         simulated::{Config, SimulatedExecution},
         Fees,
     },
@@ -77,6 +77,7 @@ pub async fn main() {
         decision: Decision::Long,
         quantity: 5.0,
         order_kind: rotom_oms::model::OrderKind::Limit,
+        state: rotom_oms::model::order::OrderState::InTransit,
     };
 
     // Test Binance Execution
@@ -142,13 +143,15 @@ pub async fn main() {
     // println!("{:#?}", res);
     /////////////////////////////////////////////////
     // Arena
-    let mut arb_exe = SpotArbExecutor::<BinanceExecution, PoloniexExecution>::init()
-        .await
-        .unwrap();
+    // let mut arb_exe = SpotArbArena::<BinanceExecution, PoloniexExecution>::init().await;
 
-    while let Some(msg) = arb_exe.streams.recv().await {
-        println!("{:#?}", msg);
-    }
+    // let mut arb_exe = SpotArbExecutor::<BinanceExecution, PoloniexExecution>::init()
+    //     .await
+    //     .unwrap();
+
+    // while let Some(msg) = arb_exe.streams.recv().await {
+    //     println!("{:#?}", msg);
+    // }
 
     // let arb_exe = ArbExecutor::<BinanceExecution, PoloniexExecution>::default();
 
@@ -381,6 +384,7 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
+// - connect trade to execution via channels
 // - figure out the balance +ve and -ve of quote and base asset for portfolio when the fill is updated
 // - make the above point more solid
 // - update parse decision signal to not let short positions be open for spot trades

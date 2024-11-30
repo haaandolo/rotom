@@ -14,6 +14,9 @@ pub enum OrderFill {
     Partial,
 }
 
+#[derive(Debug)]
+pub struct AssetFormatted(pub String);
+
 #[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
 pub struct OrderEvent {
     pub time: DateTime<Utc>,
@@ -28,10 +31,31 @@ pub struct OrderEvent {
     pub quantity: f64,
     /// MARKET, LIMIT etc
     pub order_kind: OrderKind,
+    pub state: OrderState,
 }
 
 impl OrderEvent {
     pub fn get_dollar_value(&self) -> f64 {
         self.quantity * self.market_meta.close
     }
+}
+
+impl From<(&ExchangeId, &Instrument)> for AssetFormatted {
+    fn from((exchange, instrument): (&ExchangeId, &Instrument)) -> Self {
+        match exchange {
+            ExchangeId::BinanceSpot => {
+                AssetFormatted(format!("{}{}", instrument.base, instrument.quote).to_uppercase())
+            }
+            ExchangeId::PoloniexSpot => {
+                AssetFormatted(format!("{}_{}", instrument.base, instrument.quote).to_uppercase())
+            }
+        }
+    }
+}
+
+#[derive(Clone, Eq, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
+pub enum OrderState {
+    Open,
+    InTransit,
+    Cancelled,
 }

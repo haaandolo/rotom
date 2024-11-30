@@ -28,11 +28,17 @@ where
     LiquidExchange: ExecutionClient + 'static,
     IlliquidExchange: ExecutionClient + 'static,
 {
-    pub async fn new() -> Self {
+    pub async fn init() -> Self {
         let executor = SpotArbExecutor::<LiquidExchange, IlliquidExchange>::init()
             .await
             .unwrap(); // todo
         Self { executor }
+    }
+
+    pub async fn testing(&mut self) {
+        while let Some(msg) = self.executor.streams.recv().await {
+            println!("{:#?}", msg)
+        }
     }
 }
 
@@ -45,7 +51,7 @@ where
     LiquidExchange: ExecutionClient,
     IlliquidExchange: ExecutionClient,
 {
-    fn generate_fill(&self, _order: &OrderEvent) -> Result<FillEvent, ExecutionError> {
+    fn generate_fill(&mut self, _order: OrderEvent) -> Result<FillEvent, ExecutionError> {
         Ok(FillEvent {
             time: Utc::now(),
             exchange: ExchangeId::BinanceSpot,

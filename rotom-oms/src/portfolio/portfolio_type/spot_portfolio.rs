@@ -16,7 +16,7 @@ use crate::{
     execution::FillEvent,
     model::{
         balance::{determine_balance_id, AssetBalance, SpotBalanceId},
-        order::OrderEvent,
+        order::{OrderEvent, OrderState},
         ClientOrderId, OrderKind, Side,
     },
     portfolio::{
@@ -132,6 +132,7 @@ impl OrderGenerator for SpotPortfolio {
             decision: *signal_decision,
             quantity: 0.0,
             order_kind: OrderKind::Limit,
+            state: OrderState::InTransit,
         };
 
         self.allocator

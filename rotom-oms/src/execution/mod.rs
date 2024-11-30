@@ -17,7 +17,7 @@ use crate::model::order::OrderEvent;
 // Fill Genereator
 /*----- */
 pub trait FillGenerator {
-    fn generate_fill(&self, order: &OrderEvent) -> Result<FillEvent, ExecutionError>;
+    fn generate_fill(&mut self, order: OrderEvent) -> Result<FillEvent, ExecutionError>;
 }
 
 /*----- */

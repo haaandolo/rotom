@@ -43,8 +43,8 @@ impl SimulatedExecution {
 // Impl the ExecutionClient
 /*----- */
 impl FillGenerator for SimulatedExecution {
-    fn generate_fill(&self, order: &OrderEvent) -> Result<FillEvent, ExecutionError> {
-        let fill_value_gross = SimulatedExecution::calculate_fill_value_gross(order);
+    fn generate_fill(&mut self, order: OrderEvent) -> Result<FillEvent, ExecutionError> {
+        let fill_value_gross = SimulatedExecution::calculate_fill_value_gross(&order);
 
         Ok(FillEvent {
             time: Utc::now(),
