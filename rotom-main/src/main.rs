@@ -10,7 +10,10 @@ use rotom_data::{
 };
 use rotom_main::{
     engine::{self, Engine},
-    trader::{arb_trader::ArbTrader, single_trader::SingleMarketTrader},
+    trader::{
+        arb_trader::{self, ArbTrader},
+        single_trader::SingleMarketTrader,
+    },
 };
 use rotom_oms::{
     event::{Event, EventTx},
@@ -141,29 +144,6 @@ pub async fn main() {
     //     .unwrap();
 
     // println!("{:#?}", res);
-    /////////////////////////////////////////////////
-    // Arena
-    // let mut arb_exe = SpotArbArena::<BinanceExecution, PoloniexExecution>::init().await;
-
-    // let mut arb_exe = SpotArbExecutor::<BinanceExecution, PoloniexExecution>::init()
-    //     .await
-    //     .unwrap();
-
-    // while let Some(msg) = arb_exe.streams.recv().await {
-    //     println!("{:#?}", msg);
-    // }
-
-    // let arb_exe = ArbExecutor::<BinanceExecution, PoloniexExecution>::default();
-
-    // let mut polo_exe = PoloniexExecution::init().await.unwrap();
-    // while let Some(message) = polo_exe.rx.recv().await {
-    //     println!("--->>> {:#?}", message);
-    // }
-
-    // let mut bin_exe = BinanceExecution::init().await.unwrap();
-    // while let Some(message) = bin_exe.rx.recv().await {
-    //     println!("--->>> {:#?}", message);
-    // }
 
     /////////////////////////////////////////////////
     // Engine id
@@ -196,7 +176,7 @@ pub async fn main() {
     let (_command_tx, command_rx) = mpsc::channel(20);
 
     // Create channel for each Trader so the Engine can distribute Commands to it
-    let (trader_command_tx, trader_command_rx) = mpsc::channel(10);
+    // let (trader_command_tx, trader_command_rx) = mpsc::channel(10);
 
     // Create Event channel to listen to all Engine Events in real-time
     let (event_tx, event_rx) = mpsc::unbounded_channel();
@@ -242,30 +222,64 @@ pub async fn main() {
     //     .unwrap();
     // let single_traders = vec![single_market_trader];
 
-    let arb_trader = ArbTrader::builder()
-        .engine_id(engine_id)
-        .market(markets.clone())
-        .command_rx(trader_command_rx)
-        .event_tx(event_tx)
-        .portfolio(Arc::clone(&arb_portfolio))
-        .data(MarketFeed::new(stream_trades().await))
-        .strategy(SpreadStategy::new())
-        .execution(SimulatedExecution::new(Config {
-            simulated_fees_pct: Fees {
-                exchange: 0.01,
-                slippage: 0.05,
-                network: 0.0,
-            },
-        }))
-        .build()
-        .unwrap();
-    let arb_traders = vec![arb_trader];
+    //////////////
+    // Arb trader
+    //////////////
+
+    let op = vec![
+        Market::new(ExchangeId::BinanceSpot, Instrument::new("op", "usdt")),
+        Market::new(ExchangeId::PoloniexSpot, Instrument::new("op", "usdt")),
+    ];
+
+    let arb = vec![
+        Market::new(ExchangeId::BinanceSpot, Instrument::new("arb", "usdt")),
+        Market::new(ExchangeId::PoloniexSpot, Instrument::new("arb", "usdt")),
+    ];
+
+    let market2 = vec![op, arb];
+
+    let (excution_arena_order_event_tx, execution_arena_order_event_rx) = mpsc::unbounded_channel();
+    let mut arb_traders = Vec::new();
+    let mut trader_command_txs = HashMap::new();
+    let mut order_update_txs = HashMap::new();
+
+    for market in market2.into_iter() {
+        // Trade command, to receive commands from the engine
+        let (trader_command_tx, trader_command_rx) = mpsc::channel(10);
+        trader_command_txs.insert(market[0].clone(), trader_command_tx); // todo: arb trader has 2 markets
+
+        // Make channels to be able to receive order update from execution arena
+        let (order_update_tx, order_update_rx) = mpsc::channel(10);
+        order_update_txs.insert(market[0].clone(), order_update_tx); // todo: arb trader has 2 markets
+
+        let arb_trader = ArbTrader::builder()
+            .engine_id(engine_id)
+            .market(market)
+            .command_rx(trader_command_rx)
+            .event_tx(event_tx.clone())
+            .portfolio(Arc::clone(&arb_portfolio))
+            .data(MarketFeed::new(stream_trades().await))
+            .strategy(SpreadStategy::new())
+            .execution(SimulatedExecution::new(Config {
+                simulated_fees_pct: Fees {
+                    exchange: 0.01,
+                    slippage: 0.05,
+                    network: 0.0,
+                },
+            }))
+            .send_order_tx(excution_arena_order_event_tx.clone())
+            .order_update_rx(order_update_rx)
+            .build()
+            .unwrap();
+
+        arb_traders.push(arb_trader)
+    }
 
     // Build engine TODO: (check the commands are doing what it is supposed to)
-    let trader_command_txs = markets
-        .into_iter()
-        .map(|market| (market, trader_command_tx.clone()))
-        .collect::<HashMap<_, _>>();
+    // let trader_command_txs = markets
+    //     .into_iter()
+    //     .map(|market| (market, trader_command_tx.clone()))
+    //     .collect::<HashMap<_, _>>();
 
     let engine = Engine::builder()
         .engine_id(engine_id)
@@ -281,6 +295,39 @@ pub async fn main() {
         .build()
         .expect("failed to build engine");
 
+    /////////////////////////////////////////////////
+    // Arena
+    let mut arb_exe = SpotArbArena::<BinanceExecution, PoloniexExecution>::new(
+        execution_arena_order_event_rx,
+        order_update_txs,
+    )
+    .await;
+
+    tokio::spawn(async move {
+        arb_exe.testing().await;
+    });
+
+    // let mut arb_exe = SpotArbExecutor::<BinanceExecution, PoloniexExecution>::init()
+    //     .await
+    //     .unwrap();
+
+    // while let Some(msg) = arb_exe.streams.recv().await {
+    //     println!("{:#?}", msg);
+    // }
+
+    // let arb_exe = ArbExecutor::<BinanceExecution, PoloniexExecution>::default();
+
+    // let mut polo_exe = PoloniexExecution::init().await.unwrap();
+    // while let Some(message) = polo_exe.rx.recv().await {
+    //     println!("--->>> {:#?}", message);
+    // }
+
+    // let mut bin_exe = BinanceExecution::init().await.unwrap();
+    // while let Some(message) = bin_exe.rx.recv().await {
+    //     println!("--->>> {:#?}", message);
+    // }
+
+    ///////////////////////////////////////////////////
     // Run Engine trading & listen to Events it produces
     tokio::spawn(listen_to_engine_events(event_rx));
 
@@ -385,6 +432,7 @@ fn init_logging() {
 // Todo
 /*----- */
 // - connect trade to execution via channels
+// - implement trade id instread of market?
 // - figure out the balance +ve and -ve of quote and base asset for portfolio when the fill is updated
 // - make the above point more solid
 // - update parse decision signal to not let short positions be open for spot trades

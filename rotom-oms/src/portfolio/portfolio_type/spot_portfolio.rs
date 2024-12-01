@@ -132,7 +132,7 @@ impl OrderGenerator for SpotPortfolio {
             decision: *signal_decision,
             quantity: 0.0,
             order_kind: OrderKind::Limit,
-            state: OrderState::InTransit,
+            state: OrderState::RequestOpen,
         };
 
         self.allocator

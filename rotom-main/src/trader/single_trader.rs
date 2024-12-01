@@ -201,7 +201,7 @@ where
                     Event::OrderNew(order) => {
                         let fill = self
                             .execution
-                            .generate_fill(&order)
+                            .generate_fill(order)
                             .expect("Failed to generate");
 
                         self.event_tx.send(Event::Fill(fill.clone()));

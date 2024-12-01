@@ -8,6 +8,8 @@ pub mod shared;
 pub mod streams;
 pub mod transformer;
 
+use std::fmt::Display;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use shared::subscription_models::{ExchangeId, Instrument};
@@ -72,6 +74,20 @@ impl From<(ExchangeId, Instrument)> for Market {
             exchange,
             instrument,
         }
+    }
+}
+
+impl Display for Market {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "
+                exchange: {}, 
+                base: {}, 
+                quote: {}
+            ",
+            self.exchange, self.instrument.base, self.instrument.quote
+        )
     }
 }
 

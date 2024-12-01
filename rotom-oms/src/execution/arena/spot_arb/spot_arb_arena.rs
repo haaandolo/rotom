@@ -1,8 +1,11 @@
+use std::collections::HashMap;
+
 use chrono::Utc;
 use rotom_data::{
     shared::subscription_models::{ExchangeId, Instrument},
-    MarketMeta,
+    Market, MarketMeta,
 };
+use tokio::sync::mpsc::{self, error::TryRecvError};
 
 use crate::{
     exchange::ExecutionClient,
@@ -21,6 +24,9 @@ where
     IlliquidExchange: ExecutionClient + 'static,
 {
     pub executor: SpotArbExecutor<LiquidExchange, IlliquidExchange>,
+    pub order_rx: mpsc::UnboundedReceiver<OrderEvent>,
+    pub trader_order_updater: HashMap<Market, mpsc::Sender<FillEvent>>,
+    pub orders: HashMap<Market, OrderEvent>,
 }
 
 impl<LiquidExchange, IlliquidExchange> SpotArbArena<LiquidExchange, IlliquidExchange>
@@ -28,17 +34,41 @@ where
     LiquidExchange: ExecutionClient + 'static,
     IlliquidExchange: ExecutionClient + 'static,
 {
-    pub async fn init() -> Self {
+    pub async fn new(
+        order_rx: mpsc::UnboundedReceiver<OrderEvent>,
+        trader_order_updater: HashMap<Market, mpsc::Sender<FillEvent>>,
+    ) -> Self {
         let executor = SpotArbExecutor::<LiquidExchange, IlliquidExchange>::init()
             .await
             .unwrap(); // todo
-        Self { executor }
+        Self {
+            executor,
+            order_rx,
+            trader_order_updater,
+            orders: HashMap::new(),
+        }
+    }
+
+    pub async fn long_exchange_transfer(&self, order: OrderEvent) {
+        // Post market order
+        let long = self.executor.liquid_exchange.open_order(order).await;
     }
 
     pub async fn testing(&mut self) {
-        while let Some(msg) = self.executor.streams.recv().await {
-            println!("{:#?}", msg)
+        loop {
+            match self.order_rx.try_recv() {
+                Ok(order) => self.long_exchange_transfer(order).await,
+                Err(TryRecvError::Empty) => tokio::task::yield_now().await,
+                Err(TryRecvError::Disconnected) => break,
+            }
         }
+        // while let Some(msg) = self.order_rx.recv().await {
+        //     println!("in arena -> {:#?}", msg);
+        // }
+
+        // while let Some(msg) = self.executor.streams.recv().await {
+        //     println!("{:#?}", msg)
+        // }
     }
 }
 

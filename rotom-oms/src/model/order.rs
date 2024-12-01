@@ -55,6 +55,7 @@ impl From<(&ExchangeId, &Instrument)> for AssetFormatted {
 
 #[derive(Clone, Eq, PartialEq, PartialOrd, Debug, Deserialize, Serialize)]
 pub enum OrderState {
+    RequestOpen,
     Open,
     InTransit,
     Cancelled,

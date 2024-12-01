@@ -7,7 +7,8 @@ use rotom_data::{
 };
 use rotom_oms::{
     event::{Event, EventTx, MessageTransmitter},
-    execution::FillGenerator,
+    execution::{FillEvent, FillGenerator},
+    model::{account_data::AccountData, order::OrderEvent},
     portfolio::portfolio_type::{FillUpdater, MarketUpdater, OrderGenerator},
 };
 use rotom_strategy::{SignalForceExit, SignalGenerator};
@@ -37,6 +38,8 @@ where
     pub data: Data,
     pub stategy: Strategy,
     pub execution: Execution,
+    pub send_order_tx: mpsc::UnboundedSender<OrderEvent>,
+    pub order_update_rx: mpsc::Receiver<FillEvent>,
     pub porfolio: Arc<Mutex<Portfolio>>,
 }
 
@@ -58,6 +61,8 @@ where
     data: Data,
     stategy: Strategy,
     execution: Execution,
+    send_order_tx: mpsc::UnboundedSender<OrderEvent>,
+    order_update_rx: mpsc::Receiver<FillEvent>,
     event_queue: VecDeque<Event>,
     portfolio: Arc<Mutex<Portfolio>>,
 }
@@ -78,6 +83,8 @@ where
             data: lego.data,
             stategy: lego.stategy,
             execution: lego.execution,
+            send_order_tx: lego.send_order_tx,
+            order_update_rx: lego.order_update_rx,
             event_queue: VecDeque::with_capacity(4),
             portfolio: lego.porfolio,
         }
@@ -157,6 +164,23 @@ where
                 Feed::Finished => break 'trading,
             }
 
+            // Check for FillEvents
+            match self.order_update_rx.try_recv() {
+                Ok(fill) => {
+                    self.event_queue.push_back(Event::Fill(fill));
+                }
+                Err(error) => {
+                    if error == mpsc::error::TryRecvError::Disconnected {
+                        warn!(
+                            message = "Order update rx for ArbTrader disconnected",
+                            asset_one  = %self.markets[0],
+                            asset_two  = %self.markets[1]
+                        );
+                        break 'trading;
+                    }
+                }
+            }
+
             // This while loop handles Events from the event_queue it will break if the event_queue
             // empty and requires another MarketEvent
             while let Some(event) = self.event_queue.pop_front() {
@@ -187,8 +211,8 @@ where
                             .generate_order(&signal)
                             .expect("Failed to generate order")
                         {
-                            println!("##############################");
-                            println!("order --> {:#?}", order);
+                            // println!("##############################");
+                            // println!("order --> {:#?}", order);
                             self.event_tx.send(Event::OrderNew(order.clone()));
                             self.event_queue.push_back(Event::OrderNew(order));
                         }
@@ -205,15 +229,17 @@ where
                     //     }
                     // }
                     Event::OrderNew(order) => {
-                        let fill = self
-                            .execution
-                            .generate_fill(&order)
-                            .expect("Failed to generate");
+                        // println!("new order herer...");
+                        let _ = self.send_order_tx.send(order.clone());
+                        // let fill = self
+                        //     .execution
+                        //     .generate_fill(order)
+                        //     .expect("Failed to generate");
 
-                        println!("##############################");
-                        println!("fill --> {:#?}", fill);
-                        self.event_tx.send(Event::Fill(fill.clone()));
-                        self.event_queue.push_back(Event::Fill(fill));
+                        // println!("##############################");
+                        // println!("fill --> {:#?}", fill);
+                        // self.event_tx.send(Event::Fill(fill.clone()));
+                        // self.event_queue.push_back(Event::Fill(fill));
                     }
                     Event::Fill(fill) => {
                         let fill_side_effect_events = self
@@ -257,6 +283,8 @@ where
     pub data: Option<Data>,
     pub strategy: Option<Strategy>,
     pub execution: Option<Execution>,
+    pub send_order_tx: Option<mpsc::UnboundedSender<OrderEvent>>,
+    pub order_update_rx: Option<mpsc::Receiver<FillEvent>>,
     pub portfolio: Option<Arc<Mutex<Portfolio>>>,
 }
 
@@ -276,6 +304,8 @@ where
             data: None,
             strategy: None,
             execution: None,
+            send_order_tx: None,
+            order_update_rx: None,
             portfolio: None,
         }
     }
@@ -329,6 +359,20 @@ where
         }
     }
 
+    pub fn send_order_tx(self, value: mpsc::UnboundedSender<OrderEvent>) -> Self {
+        Self {
+            send_order_tx: Some(value),
+            ..self
+        }
+    }
+
+    pub fn order_update_rx(self, value: mpsc::Receiver<FillEvent>) -> Self {
+        Self {
+            order_update_rx: Some(value),
+            ..self
+        }
+    }
+
     pub fn portfolio(self, value: Arc<Mutex<Portfolio>>) -> Self {
         Self {
             portfolio: Some(value),
@@ -357,6 +401,12 @@ where
             execution: self
                 .execution
                 .ok_or(EngineError::BuilderIncomplete("execution"))?,
+            send_order_tx: self
+                .send_order_tx
+                .ok_or(EngineError::BuilderIncomplete("send_order_tx"))?,
+            order_update_rx: self
+                .order_update_rx
+                .ok_or(EngineError::BuilderIncomplete("order_update_rx"))?,
             event_queue: VecDeque::with_capacity(2),
             portfolio: self
                 .portfolio
