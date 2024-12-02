@@ -5,7 +5,7 @@ use rotom_data::{
     protocols::{http::http_parser::StandardHttpParser, ws::connect},
 };
 
-use crate::exchange::{AccountDataStream, ExecutionId, UserDataStream};
+use crate::exchange::{AccountDataStream, AccountDataWebsocket, ExecutionId};
 
 use super::{
     binance_client::{BinanceRestClient, BINANCE_BASE_URL},
@@ -23,7 +23,7 @@ impl AccountDataStream for BinanaceAccountDataStream {
     const CLIENT: ExecutionId = ExecutionId::Binance;
     type AccountDataStreamResponse = BinanceAccountEvents;
 
-    async fn init() -> Result<UserDataStream, SocketError> {
+    async fn init() -> Result<AccountDataWebsocket, SocketError> {
         let http_client =
             BinanceRestClient::new(BINANCE_BASE_URL, StandardHttpParser, BinanceRequestBuilder);
 
@@ -32,7 +32,7 @@ impl AccountDataStream for BinanaceAccountDataStream {
         let ws = connect(listening_url).await?;
         let (_, user_data_ws) = ws.split();
 
-        Ok(UserDataStream {
+        Ok(AccountDataWebsocket {
             user_data_ws,
             tasks: None,
         })

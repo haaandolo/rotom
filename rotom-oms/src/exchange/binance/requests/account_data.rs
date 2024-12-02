@@ -194,7 +194,7 @@ impl From<BinanceAccountEvents> for AccountData {
         match account_events {
             BinanceAccountEvents::Order(order) => AccountData::Order(AccountDataOrder::from(order)),
             BinanceAccountEvents::Balance(balance) => {
-                AccountData::Balance(Vec::<AccountDataBalance>::from(balance))
+                AccountData::BalanceVec(Vec::<AccountDataBalance>::from(balance))
             }
             BinanceAccountEvents::BalanceDelta(balance_delta) => {
                 AccountData::BalanceDelta(AccountDataBalanceDelta::from(balance_delta))

@@ -7,8 +7,8 @@ use rotom_data::{
 };
 use rotom_oms::{
     event::{Event, EventTx, MessageTransmitter},
-    execution::{FillEvent, FillGenerator},
-    model::order::OrderEvent,
+    execution::FillGenerator,
+    model::{account_data::AccountData, order::OrderEvent},
     portfolio::portfolio_type::{FillUpdater, MarketUpdater, OrderGenerator},
 };
 use rotom_strategy::{SignalForceExit, SignalGenerator};
@@ -39,7 +39,7 @@ where
     pub stategy: Strategy,
     pub execution: Execution,
     pub send_order_tx: mpsc::UnboundedSender<OrderEvent>,
-    pub order_update_rx: mpsc::Receiver<FillEvent>,
+    pub order_update_rx: mpsc::Receiver<AccountData>,
     pub porfolio: Arc<Mutex<Portfolio>>,
 }
 
@@ -62,7 +62,7 @@ where
     stategy: Strategy,
     execution: Execution,
     send_order_tx: mpsc::UnboundedSender<OrderEvent>,
-    order_update_rx: mpsc::Receiver<FillEvent>,
+    order_update_rx: mpsc::Receiver<AccountData>,
     event_queue: VecDeque<Event>,
     portfolio: Arc<Mutex<Portfolio>>,
 }
@@ -166,19 +166,22 @@ where
 
             // Check for FillEvents
             match self.order_update_rx.try_recv() {
-                Ok(fill) => {
-                    self.event_queue.push_back(Event::Fill(fill));
-                }
-                Err(error) => {
-                    if error == mpsc::error::TryRecvError::Disconnected {
-                        warn!(
-                            message = "Order update rx for ArbTrader disconnected",
-                            asset_one  = %self.markets[0],
-                            asset_two  = %self.markets[1]
-                        );
-                        break 'trading;
-                    }
-                }
+                Ok(account_data) => println!(">>> AccountData: {:#?}", account_data),
+                Err(error) => (),
+                // Err(error) => println!(">>> AccountData Error: {:#?}", error),
+                // Ok(fill) => {
+                //     self.event_queue.push_back(Event::Fill(fill));
+                // }
+                // Err(error) => {
+                //     if error == mpsc::error::TryRecvError::Disconnected {
+                //         warn!(
+                //             message = "Order update rx for ArbTrader disconnected",
+                //             asset_one  = %self.markets[0],
+                //             asset_two  = %self.markets[1]
+                //         );
+                //         break 'trading;
+                //     }
+                // }
             }
 
             // This while loop handles Events from the event_queue it will break if the event_queue
@@ -284,7 +287,7 @@ where
     pub strategy: Option<Strategy>,
     pub execution: Option<Execution>,
     pub send_order_tx: Option<mpsc::UnboundedSender<OrderEvent>>,
-    pub order_update_rx: Option<mpsc::Receiver<FillEvent>>,
+    pub order_update_rx: Option<mpsc::Receiver<AccountData>>,
     pub portfolio: Option<Arc<Mutex<Portfolio>>>,
 }
 
@@ -366,7 +369,7 @@ where
         }
     }
 
-    pub fn order_update_rx(self, value: mpsc::Receiver<FillEvent>) -> Self {
+    pub fn order_update_rx(self, value: mpsc::Receiver<AccountData>) -> Self {
         Self {
             order_update_rx: Some(value),
             ..self

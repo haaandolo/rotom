@@ -10,7 +10,7 @@ use rotom_data::{
     },
 };
 
-use crate::exchange::{AccountDataStream, ExecutionId, UserDataStream};
+use crate::exchange::{AccountDataStream, AccountDataWebsocket, ExecutionId};
 
 use super::{
     poloniex_client::PoloniexWsUserDataValidation,
@@ -30,7 +30,7 @@ impl AccountDataStream for PoloniexAccountDataStream {
     const CLIENT: ExecutionId = ExecutionId::Poloniex;
     type AccountDataStreamResponse = PoloniexAccountEvents;
 
-    async fn init() -> Result<UserDataStream, SocketError> {
+    async fn init() -> Result<AccountDataWebsocket, SocketError> {
         // Spin up listening ws
         let ws = connect(POLONIEX_USER_DATA_WS).await?;
         let (mut user_data_write, mut user_data_ws) = ws.split();
@@ -96,7 +96,7 @@ impl AccountDataStream for PoloniexAccountDataStream {
             tasks.push(ping_handler)
         }
 
-        Ok(UserDataStream {
+        Ok(AccountDataWebsocket {
             user_data_ws,
             tasks: Some(tasks),
         })

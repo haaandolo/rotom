@@ -53,7 +53,8 @@ pub struct AccountDataBalanceDelta {
 #[derive(Debug)]
 pub enum AccountData {
     Order(AccountDataOrder),
-    Balance(Vec<AccountDataBalance>),
+    BalanceVec(Vec<AccountDataBalance>),
+    Balance(AccountDataBalance),
     BalanceDelta(AccountDataBalanceDelta),
 }
 

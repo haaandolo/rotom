@@ -156,7 +156,9 @@ impl From<PoloniexAccountEvents> for AccountData {
                 AccountData::Order(AccountDataOrder::from(order))
             }
             PoloniexAccountEvents::Balance(balance) => {
-                AccountData::Balance(Vec::<AccountDataBalance>::from(balance))
+                // todo: maybe poloniex one does not need a vec
+                AccountData::BalanceVec(Vec::<AccountDataBalance>::from(balance))
+                
             }
         }
     }

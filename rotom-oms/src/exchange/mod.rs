@@ -2,7 +2,7 @@ pub mod binance;
 pub mod errors;
 pub mod poloniex;
 
-use std::fmt::Debug;
+use std::{collections::HashMap, fmt::Debug};
 
 use async_trait::async_trait;
 use futures::StreamExt;
@@ -29,13 +29,12 @@ type HmacSha256 = Hmac<Sha256>;
 /*----- */
 // Private Data Ws Stream
 /*----- */
-// todo: change to accountDataStream
-pub struct UserDataStream {
+pub struct AccountDataWebsocket {
     pub user_data_ws: WsRead,
     pub tasks: Option<Vec<JoinHandle>>,
 }
 
-impl UserDataStream {
+impl AccountDataWebsocket {
     pub fn cancel_running_tasks(self) {
         if let Some(tasks) = self.tasks {
             tasks.iter().for_each(|task| {
@@ -53,7 +52,7 @@ pub trait AccountDataStream {
     const CLIENT: ExecutionId;
     type AccountDataStreamResponse: Send + for<'de> Deserialize<'de> + Debug + Into<AccountData>;
 
-    async fn init() -> Result<UserDataStream, SocketError>;
+    async fn init() -> Result<AccountDataWebsocket, SocketError>;
 }
 
 /*----- */
@@ -188,8 +187,8 @@ where
 // Account Data Stream - Combine Streams
 /*----- */
 pub async fn combine_account_data_streams<StreamOne, StreamTwo>(
-) -> mpsc::UnboundedReceiver<AccountData>
-where
+    arb_trader_tx: HashMap<String, mpsc::Sender<AccountData>>,
+) where
     StreamOne: AccountDataStream + 'static,
     StreamTwo: AccountDataStream + 'static,
 {
@@ -216,5 +215,43 @@ where
         }
     });
 
-    combined_rx
+    // Send data from Account stream to respective traders
+    tokio::spawn(send_account_data_to_traders(arb_trader_tx, combined_rx));
+}
+
+/*----- */
+// Account Data Stream - Send to corresponding trader
+/*----- */
+pub async fn send_account_data_to_traders(
+    trader_tx: HashMap<String, mpsc::Sender<AccountData>>,
+    mut account_data_stream: mpsc::UnboundedReceiver<AccountData>,
+) {
+    while let Some(message) = account_data_stream.recv().await {
+        match message {
+            AccountData::Order(order) => {
+                if let Some(trader_tx) = trader_tx.get(&order.asset) {
+                    let _ = trader_tx.send(AccountData::Order(order)).await;
+                }
+            }
+            AccountData::BalanceVec(balances) => {
+                for balance in balances.into_iter() {
+                    if let Some(trader_tx) = trader_tx.get(&balance.asset) {
+                        let _ = trader_tx.send(AccountData::Balance(balance)).await;
+                    }
+                }
+            }
+            AccountData::BalanceDelta(balance_delta) => {
+                if let Some(trader_tx) = trader_tx.get(&balance_delta.asset) {
+                    let _ = trader_tx
+                        .send(AccountData::BalanceDelta(balance_delta))
+                        .await;
+                }
+            }
+            AccountData::Balance(balance) => {
+                if let Some(trader_tx) = trader_tx.get(&balance.asset) {
+                    let _ = trader_tx.send(AccountData::Balance(balance)).await;
+                }
+            }
+        }
+    }
 }

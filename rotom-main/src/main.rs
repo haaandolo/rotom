@@ -18,7 +18,13 @@ use rotom_main::{
 use rotom_oms::{
     event::{Event, EventTx},
     exchange::{
-        binance::binance_client::BinanceExecution, poloniex::poloniex_client::PoloniexExecution,
+        binance::{
+            account_data_stream::BinanaceAccountDataStream, binance_client::BinanceExecution,
+        },
+        combine_account_data_streams,
+        poloniex::{
+            account_data_stream::PoloniexAccountDataStream, poloniex_client::PoloniexExecution,
+        },
         ExecutionClient,
     },
     execution::{
@@ -26,7 +32,10 @@ use rotom_oms::{
         simulated::{Config, SimulatedExecution},
         Fees,
     },
-    model::{order::OrderEvent, ClientOrderId},
+    model::{
+        order::{AssetFormatted, OrderEvent},
+        ClientOrderId,
+    },
     portfolio::{
         allocator::{default_allocator::DefaultAllocator, spot_arb_allocator::SpotArbAllocator},
         persistence::{in_memory::InMemoryRepository, in_memory2::InMemoryRepository2},
@@ -241,20 +250,29 @@ pub async fn main() {
     let (excution_arena_order_event_tx, execution_arena_order_event_rx) = mpsc::unbounded_channel();
     let mut arb_traders = Vec::new();
     let mut trader_command_txs = HashMap::new();
+
     let mut order_update_txs = HashMap::new();
 
-    for market in market2.into_iter() {
+    for markets in market2.into_iter() {
         // Trade command, to receive commands from the engine
         let (trader_command_tx, trader_command_rx) = mpsc::channel(10);
-        trader_command_txs.insert(market[0].clone(), trader_command_tx); // todo: arb trader has 2 markets
+        trader_command_txs.insert(markets[0].clone(), trader_command_tx); // todo: arb trader has 2 markets
 
         // Make channels to be able to receive order update from execution arena
+        // Since arb trader has 2 assets its tradiding we need to clone the send
+        // tx for each asset per exchange. We are using the exchange specific
+        // formatting of the asset for the hashmap keys. For example, op_usdt
+        // will have a OPUSDT (binance) and OP_USDT (poloniex). Even if 2 exchange
+        // have the same asset format it would not matter as the key will just be replaced
         let (order_update_tx, order_update_rx) = mpsc::channel(10);
-        order_update_txs.insert(market[0].clone(), order_update_tx); // todo: arb trader has 2 markets
+        for market in markets.clone().into_iter() {
+            let asset_formatted = AssetFormatted::from((&market.exchange, &market.instrument));
+            order_update_txs.insert(asset_formatted.0, order_update_tx.clone());
+        }
 
         let arb_trader = ArbTrader::builder()
             .engine_id(engine_id)
-            .market(market)
+            .market(markets)
             .command_rx(trader_command_rx)
             .event_tx(event_tx.clone())
             .portfolio(Arc::clone(&arb_portfolio))
@@ -274,6 +292,12 @@ pub async fn main() {
 
         arb_traders.push(arb_trader)
     }
+
+    // Spawn acccount data ws
+    tokio::spawn(combine_account_data_streams::<
+        BinanaceAccountDataStream,
+        PoloniexAccountDataStream,
+    >(order_update_txs));
 
     // Build engine TODO: (check the commands are doing what it is supposed to)
     // let trader_command_txs = markets
@@ -297,15 +321,15 @@ pub async fn main() {
 
     /////////////////////////////////////////////////
     // Arena
-    let mut arb_exe = SpotArbArena::<BinanceExecution, PoloniexExecution>::new(
-        execution_arena_order_event_rx,
-        order_update_txs,
-    )
-    .await;
+    // let mut arb_exe = SpotArbArena::<BinanceExecution, PoloniexExecution>::new(
+    //     execution_arena_order_event_rx,
+    //     order_update_txs,
+    // )
+    // .await;
 
-    tokio::spawn(async move {
-        arb_exe.testing().await;
-    });
+    // tokio::spawn(async move {
+    //     arb_exe.testing().await;
+    // });
 
     // let mut arb_exe = SpotArbExecutor::<BinanceExecution, PoloniexExecution>::init()
     //     .await
