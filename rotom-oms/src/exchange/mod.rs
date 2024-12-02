@@ -29,6 +29,7 @@ type HmacSha256 = Hmac<Sha256>;
 /*----- */
 // Private Data Ws Stream
 /*----- */
+// todo: change to accountDataStream
 pub struct UserDataStream {
     pub user_data_ws: WsRead,
     pub tasks: Option<Vec<JoinHandle>>,
@@ -45,6 +46,17 @@ impl UserDataStream {
 }
 
 /*----- */
+// Account Data Trait
+/*----- */
+#[async_trait]
+pub trait AccountDataStream {
+    const CLIENT: ExecutionId;
+    type AccountDataStreamResponse: Send + for<'de> Deserialize<'de> + Debug + Into<AccountData>;
+
+    async fn init() -> Result<UserDataStream, SocketError>;
+}
+
+/*----- */
 // Execution Client Trait
 /*----- */
 #[async_trait]
@@ -55,13 +67,9 @@ pub trait ExecutionClient {
     type CancelAllResponse;
     type NewOrderResponse;
     type WalletTransferResponse;
-    type AccountDataStreamResponse: Send + for<'de> Deserialize<'de> + Debug + Into<AccountData>;
-
-    // Init user data websocket
-    async fn create_account_data_ws() -> Result<UserDataStream, SocketError>;
 
     // Init exchange executor
-    fn create_http_client() -> Result<Self, SocketError>
+    fn new() -> Result<Self, SocketError>
     where
         Self: Sized;
 
@@ -114,15 +122,15 @@ impl std::fmt::Display for ExecutionId {
 }
 
 /*----- */
-// Function to spawn and return a tx for private user ws
+// Account User Data Auto Reconnect
 /*----- */
-pub async fn consume_account_data_ws<ExchangeClient>(
+pub async fn consume_account_data_stream<ExchangeAccountDataStream>(
     account_data_tx: mpsc::UnboundedSender<AccountData>,
 ) -> Result<(), SocketError>
 where
-    ExchangeClient: ExecutionClient,
+    ExchangeAccountDataStream: AccountDataStream,
 {
-    let exchange_id = ExchangeClient::CLIENT;
+    let exchange_id = ExchangeAccountDataStream::CLIENT;
     let mut connection_attempt: u32 = 0;
     let mut _backoff_ms: u64 = 125;
 
@@ -132,12 +140,14 @@ where
     );
 
     loop {
-        let mut stream = ExchangeClient::create_account_data_ws().await?;
+        let mut stream = ExchangeAccountDataStream::init().await?;
         connection_attempt += 1;
         _backoff_ms *= 2;
 
         while let Some(msg) = stream.user_data_ws.next().await {
-            match WebSocketParser::parse::<ExchangeClient::AccountDataStreamResponse>(msg) {
+            match WebSocketParser::parse::<ExchangeAccountDataStream::AccountDataStreamResponse>(
+                msg,
+            ) {
                 Some(Ok(exchange_message)) => {
                     if let Err(error) = account_data_tx.send(exchange_message.into()) {
                         debug!(
@@ -172,4 +182,39 @@ where
             reconnection_attempts = connection_attempt,
         );
     }
+}
+
+/*----- */
+// Account Data Stream - Combine Streams
+/*----- */
+pub async fn combine_account_data_streams<StreamOne, StreamTwo>(
+) -> mpsc::UnboundedReceiver<AccountData>
+where
+    StreamOne: AccountDataStream + 'static,
+    StreamTwo: AccountDataStream + 'static,
+{
+    // Convert first exchange ws to channel
+    let (exchange_one_tx, mut exchange_one_rx) = mpsc::unbounded_channel();
+    tokio::spawn(consume_account_data_stream::<StreamOne>(exchange_one_tx));
+
+    // Convert second exchange ws to channel
+    let (exchange_two_tx, mut exchange_two_rx) = mpsc::unbounded_channel();
+    tokio::spawn(consume_account_data_stream::<StreamTwo>(exchange_two_tx));
+
+    // Combine channels into one
+    let (combined_tx, combined_rx) = mpsc::unbounded_channel();
+    let combined_tx_cloned = combined_tx.clone();
+    tokio::spawn(async move {
+        while let Some(message) = exchange_one_rx.recv().await {
+            let _ = combined_tx_cloned.send(message);
+        }
+    });
+
+    tokio::spawn(async move {
+        while let Some(message) = exchange_two_rx.recv().await {
+            let _ = combined_tx.send(message);
+        }
+    });
+
+    combined_rx
 }

@@ -431,6 +431,7 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
+// - separate out account data stream
 // - connect trade to execution via channels
 // - implement trade id instread of market?
 // - figure out the balance +ve and -ve of quote and base asset for portfolio when the fill is updated

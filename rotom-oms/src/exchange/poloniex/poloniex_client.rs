@@ -1,24 +1,12 @@
 use async_trait::async_trait;
-use futures::{SinkExt, StreamExt};
 use rotom_data::{
     error::SocketError,
-    exchange::{poloniex::PoloniexSpot, Connector},
-    protocols::{
-        http::{client::RestClient, http_parser::StandardHttpParser},
-        ws::{
-            connect, schedule_pings_to_exchange,
-            ws_parser::{StreamParser, WebSocketParser},
-            WsMessage,
-        },
-    },
+    protocols::http::{client::RestClient, http_parser::StandardHttpParser},
 };
 use serde::Deserialize;
 
 use crate::{
-    exchange::{
-        poloniex::requests::account_data::PoloniexAccountEvents, ExecutionClient, ExecutionId,
-        UserDataStream,
-    },
+    exchange::{ExecutionClient, ExecutionId},
     model::order::OrderEvent,
 };
 
@@ -29,7 +17,6 @@ use super::{
         cancel_order::{PoloniexCancelAllOrder, PoloniexCancelOrder, PoloniexCancelOrderResponse},
         new_order::{PoloniexNewOrder, PoloniexNewOrderResponse},
         wallet_transfer::{PoloniexWalletTransfer, PoloniexWalletTransferResponse},
-        ws_auth::{PoloniexWsAuth, PoloniexWsAuthBalanceRequest, PoloniexWsAuthOrderRequest},
     },
 };
 
@@ -38,7 +25,6 @@ use super::{
 /*----- */
 type PoloniexRestClient = RestClient<StandardHttpParser, PoloniexRequestBuilder>;
 const POLONIEX_BASE_URL: &str = "https://api.poloniex.com";
-const POLONIEX_USER_DATA_WS: &str = "wss://ws.poloniex.com/ws/private";
 
 #[derive(Debug)]
 pub struct PoloniexExecution {
@@ -53,81 +39,8 @@ impl ExecutionClient for PoloniexExecution {
     type CancelAllResponse = Vec<PoloniexCancelOrderResponse>;
     type NewOrderResponse = PoloniexNewOrderResponse;
     type WalletTransferResponse = PoloniexWalletTransferResponse;
-    type AccountDataStreamResponse = PoloniexAccountEvents;
 
-    async fn create_account_data_ws() -> Result<UserDataStream, SocketError> {
-        // Spin up listening ws
-        let ws = connect(POLONIEX_USER_DATA_WS).await?;
-        let (mut user_data_write, mut user_data_ws) = ws.split();
-
-        // Send auth to initialise ws
-        let _ = user_data_write
-            .send(WsMessage::text(
-                serde_json::to_string(&PoloniexWsAuth::new()).unwrap(), // todo
-            ))
-            .await;
-
-        // Request to subscribe to order & balance messages must be sent after auth.
-        // Sometimes these requests get recognised before the auth request, hence,
-        // we have to do this ugly loop. Here if we can deserialise the the auth request
-        // message we know the auth worked because our PoloniexWsUserDataValidation only
-        // take three message types. If successful we then send the order and balance
-        // requests.
-        let expected_responses: usize = 3;
-        let mut success_responses: usize = 0;
-        let mut sent_balance_and_order_request = false;
-
-        loop {
-            if success_responses == expected_responses {
-                break;
-            }
-
-            if let Some(auth_message) = user_data_ws.next().await {
-                match WebSocketParser::parse::<PoloniexWsUserDataValidation>(auth_message) {
-                    // If deserialisation is sucessful send order and balance subscription request
-                    Some(Ok(_)) => {
-                        if !sent_balance_and_order_request {
-                            // Subscribe to orders channel
-                            let _ = user_data_write
-                                .send(WsMessage::text(
-                                    serde_json::to_string(&PoloniexWsAuthOrderRequest::new())
-                                        .unwrap(), // todo
-                                ))
-                                .await;
-
-                            // Subscribe to balance channel
-                            let _ = user_data_write
-                                .send(WsMessage::text(
-                                    serde_json::to_string(&PoloniexWsAuthBalanceRequest::new())
-                                        .unwrap(), // todo
-                                ))
-                                .await;
-
-                            sent_balance_and_order_request = true;
-                        }
-                        success_responses += 1;
-                    }
-                    Some(Err(_)) => return Err(SocketError::PrivateDataWsSub),
-                    None => continue,
-                };
-            }
-        }
-
-        // Handle custom ping
-        let mut tasks = Vec::new();
-        if let Some(ping_interval) = PoloniexSpot::ping_interval() {
-            let ping_handler =
-                tokio::spawn(schedule_pings_to_exchange(user_data_write, ping_interval));
-            tasks.push(ping_handler)
-        }
-
-        Ok(UserDataStream {
-            user_data_ws,
-            tasks: Some(tasks),
-        })
-    }
-
-    fn create_http_client() -> Result<Self, SocketError> {
+    fn new() -> Result<Self, SocketError> {
         // Initalise rest client
         let http_client = PoloniexRestClient::new(
             POLONIEX_BASE_URL,

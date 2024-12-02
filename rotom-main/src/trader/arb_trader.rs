@@ -8,7 +8,7 @@ use rotom_data::{
 use rotom_oms::{
     event::{Event, EventTx, MessageTransmitter},
     execution::{FillEvent, FillGenerator},
-    model::{account_data::AccountData, order::OrderEvent},
+    model::order::OrderEvent,
     portfolio::portfolio_type::{FillUpdater, MarketUpdater, OrderGenerator},
 };
 use rotom_strategy::{SignalForceExit, SignalGenerator};
