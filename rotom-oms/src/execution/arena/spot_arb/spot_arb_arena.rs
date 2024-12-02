@@ -38,7 +38,7 @@ where
         order_rx: mpsc::UnboundedReceiver<OrderEvent>,
         trader_order_updater: HashMap<Market, mpsc::Sender<FillEvent>>,
     ) -> Self {
-        let executor = SpotArbExecutor::<LiquidExchange, IlliquidExchange>::init()
+        let executor = SpotArbExecutor::<LiquidExchange, IlliquidExchange>::new()
             .await
             .unwrap(); // todo
         Self {
@@ -51,7 +51,7 @@ where
 
     pub async fn long_exchange_transfer(&self, order: OrderEvent) {
         // Post market order
-        let long = self.executor.liquid_exchange.open_order(order).await;
+        let _long = self.executor.liquid_exchange.open_order(order).await;
     }
 
     pub async fn testing(&mut self) {

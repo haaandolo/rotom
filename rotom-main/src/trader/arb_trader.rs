@@ -21,10 +21,10 @@ use crate::engine::{error::EngineError, Command};
 use super::TraderRun;
 
 /*----- */
-// Single Market Trader Lego
+// Spot Arb Trader Lego
 /*----- */
 #[derive(Debug)]
-pub struct ArbTraderLego<Data, Strategy, Execution, Portfolio>
+pub struct SpotArbTraderLego<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
@@ -44,10 +44,10 @@ where
 }
 
 /*----- */
-// Single Market Trader
+// Spot Arb Trader
 /*----- */
 #[derive(Debug)]
-pub struct ArbTrader<Data, Strategy, Execution, Portfolio>
+pub struct SpotArbTrader<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
@@ -61,20 +61,20 @@ where
     data: Data,
     stategy: Strategy,
     execution: Execution,
-    send_order_tx: mpsc::UnboundedSender<OrderEvent>,
+    send_order_tx: mpsc::UnboundedSender<OrderEvent>, // todo: probs not required
     order_update_rx: mpsc::Receiver<AccountData>,
     event_queue: VecDeque<Event>,
     portfolio: Arc<Mutex<Portfolio>>,
 }
 
-impl<Data, Strategy, Execution, Portfolio> ArbTrader<Data, Strategy, Execution, Portfolio>
+impl<Data, Strategy, Execution, Portfolio> SpotArbTrader<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
     Execution: FillGenerator,
     Portfolio: MarketUpdater + OrderGenerator + FillUpdater,
 {
-    pub fn new(lego: ArbTraderLego<Data, Strategy, Execution, Portfolio>) -> Self {
+    pub fn new(lego: SpotArbTraderLego<Data, Strategy, Execution, Portfolio>) -> Self {
         Self {
             engine_id: lego.engine_id,
             command_rx: lego.command_rx,
@@ -90,8 +90,8 @@ where
         }
     }
 
-    pub fn builder() -> ArbTraderBuilder<Data, Strategy, Execution, Portfolio> {
-        ArbTraderBuilder::new()
+    pub fn builder() -> SpotArbTraderBuilder<Data, Strategy, Execution, Portfolio> {
+        SpotArbTraderBuilder::new()
     }
 }
 
@@ -99,7 +99,7 @@ where
 // Impl Trader trait for Single Market Trader
 /*----- */
 impl<Data, Strategy, Execution, Portfolio> TraderRun
-    for ArbTrader<Data, Strategy, Execution, Portfolio>
+    for SpotArbTrader<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
@@ -272,7 +272,7 @@ where
 // Single Market Trader builder
 /*----- */
 #[derive(Debug, Default)]
-pub struct ArbTraderBuilder<Data, Strategy, Execution, Portfolio>
+pub struct SpotArbTraderBuilder<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
@@ -291,7 +291,8 @@ where
     pub portfolio: Option<Arc<Mutex<Portfolio>>>,
 }
 
-impl<Data, Strategy, Execution, Portfolio> ArbTraderBuilder<Data, Strategy, Execution, Portfolio>
+impl<Data, Strategy, Execution, Portfolio>
+    SpotArbTraderBuilder<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
@@ -383,8 +384,8 @@ where
         }
     }
 
-    pub fn build(self) -> Result<ArbTrader<Data, Strategy, Execution, Portfolio>, EngineError> {
-        Ok(ArbTrader {
+    pub fn build(self) -> Result<SpotArbTrader<Data, Strategy, Execution, Portfolio>, EngineError> {
+        Ok(SpotArbTrader {
             engine_id: self
                 .engine_id
                 .ok_or(EngineError::BuilderIncomplete("engine_id"))?,

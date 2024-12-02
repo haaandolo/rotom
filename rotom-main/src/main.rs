@@ -11,7 +11,7 @@ use rotom_data::{
 use rotom_main::{
     engine::{self, Engine},
     trader::{
-        arb_trader::{self, ArbTrader},
+        arb_trader::{self, SpotArbTrader},
         single_trader::SingleMarketTrader,
     },
 };
@@ -270,7 +270,7 @@ pub async fn main() {
             order_update_txs.insert(asset_formatted.0, order_update_tx.clone());
         }
 
-        let arb_trader = ArbTrader::builder()
+        let arb_trader = SpotArbTrader::builder()
             .engine_id(engine_id)
             .market(markets)
             .command_rx(trader_command_rx)
@@ -455,11 +455,10 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - separate out account data stream
-// - connect trade to execution via channels
-// - implement trade id instread of market?
+// - start execution function to limit buy -> transfer -> taker sell, i think this should be a function
 // - figure out the balance +ve and -ve of quote and base asset for portfolio when the fill is updated
 // - make the above point more solid
+// - does the balance account data stream for poloniex need to be a Vec<T> or can it be T?
 // - update parse decision signal to not let short positions be open for spot trades
 // - make execution arena
 // - unify types like Side, OrderType etc into one
