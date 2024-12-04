@@ -21,6 +21,18 @@ use crate::engine::{error::EngineError, Command};
 use super::TraderRun;
 
 /*----- */
+// Spot Arb Trader - Metadata info
+/*----- */
+struct ArbTraderMetaData {
+    taker_buy_liquid: bool,
+    taker_sell_liquid: bool,
+    transfering_to_illiquid: bool,
+    maker_buy_illiquid: bool,
+    maker_sell_illiquid: bool,
+    transfering_to_liquid: bool,
+}
+
+/*----- */
 // Spot Arb Trader Lego
 /*----- */
 #[derive(Debug)]
@@ -164,24 +176,42 @@ where
                 Feed::Finished => break 'trading,
             }
 
-            // Check for FillEvents
+            // Check for account data event and break out trading loop if the
+            // rx disconnects
             match self.order_update_rx.try_recv() {
-                Ok(account_data) => println!(">>> AccountData: {:#?}", account_data),
-                Err(error) => (),
-                // Err(error) => println!(">>> AccountData Error: {:#?}", error),
-                // Ok(fill) => {
-                //     self.event_queue.push_back(Event::Fill(fill));
-                // }
-                // Err(error) => {
-                //     if error == mpsc::error::TryRecvError::Disconnected {
-                //         warn!(
-                //             message = "Order update rx for ArbTrader disconnected",
-                //             asset_one  = %self.markets[0],
-                //             asset_two  = %self.markets[1]
-                //         );
-                //         break 'trading;
-                //     }
-                // }
+                Ok(account_data) => match account_data {
+                    AccountData::Order(order) => {
+                        println!("AccountData: {:#?}", order);
+                        self.event_queue.push_back(Event::AccountDataOrder(order))
+                    }
+                    AccountData::BalanceVec(balances) => {
+                        println!("AccountData: {:#?}", balances);
+                        self.event_queue
+                            .push_back(Event::AccountDataBalanceVec(balances));
+                    }
+
+                    AccountData::BalanceDelta(balance_delta) => {
+                        println!("AccountData: {:#?}", balance_delta);
+                        self.event_queue
+                            .push_back(Event::AccountDataBalanceDelta(balance_delta))
+                    }
+
+                    AccountData::Balance(balance) => {
+                        println!("AccountData: {:#?}", balance);
+                        self.event_queue
+                            .push_back(Event::AccountDataBalance(balance))
+                    }
+                },
+                Err(error) => {
+                    if error == mpsc::error::TryRecvError::Disconnected {
+                        warn!(
+                            message = "Order update rx for ArbTrader disconnected",
+                            asset_one  = %self.markets[0],
+                            asset_two  = %self.markets[1]
+                        );
+                        break 'trading;
+                    }
+                }
             }
 
             // This while loop handles Events from the event_queue it will break if the event_queue
@@ -220,29 +250,25 @@ where
                             self.event_queue.push_back(Event::OrderNew(order));
                         }
                     }
-                    // Event::SignalForceExit(signal_force_exit) => {
-                    //     if let Some(order) = self
-                    //         .portfolio
-                    //         .lock()
-                    //         .generate_exit_order(signal_force_exit)
-                    //         .expect("Failed to generate forced exit order")
-                    //     {
-                    //         self.event_tx.send(Event::OrderNew(order.clone()));
-                    //         self.event_queue.push_back(Event::OrderNew(order));
-                    //     }
-                    // }
+                    Event::SignalForceExit(signal_force_exit) => {
+                        if let Some(order) = self
+                            .portfolio
+                            .lock()
+                            .generate_exit_order(signal_force_exit)
+                            .expect("Failed to generate forced exit order")
+                        {
+                            self.event_tx.send(Event::OrderNew(order.clone()));
+                            self.event_queue.push_back(Event::OrderNew(order));
+                        }
+                    }
                     Event::OrderNew(order) => {
-                        // println!("new order herer...");
-                        let _ = self.send_order_tx.send(order.clone());
-                        // let fill = self
-                        //     .execution
-                        //     .generate_fill(order)
-                        //     .expect("Failed to generate");
+                        let fill = self
+                            .execution
+                            .generate_fill(order)
+                            .expect("Failed to generate");
 
-                        // println!("##############################");
-                        // println!("fill --> {:#?}", fill);
-                        // self.event_tx.send(Event::Fill(fill.clone()));
-                        // self.event_queue.push_back(Event::Fill(fill));
+                        self.event_tx.send(Event::Fill(fill.clone()));
+                        self.event_queue.push_back(Event::Fill(fill));
                     }
                     Event::Fill(fill) => {
                         let fill_side_effect_events = self

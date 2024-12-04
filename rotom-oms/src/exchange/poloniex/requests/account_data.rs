@@ -67,6 +67,7 @@ impl From<PoloniexAccountDataOrder> for AccountDataOrder {
     fn from(mut order: PoloniexAccountDataOrder) -> Self {
         Self {
             exchange: ExchangeId::PoloniexSpot,
+            client_order_id: std::mem::take(&mut order.data[0].client_order_id),
             asset: std::mem::take(&mut order.data[0].symbol),
             price: order.data[0].filled_amount, // todo
             quantity: order.data[0].quantity,
@@ -74,6 +75,7 @@ impl From<PoloniexAccountDataOrder> for AccountDataOrder {
             execution_time: order.data[0].create_time,
             side: order.data[0].side,
             fee: order.data[0].trade_fee,
+            filled_gross: order.data[0].filled_amount,
         }
     }
 }
@@ -158,7 +160,6 @@ impl From<PoloniexAccountEvents> for AccountData {
             PoloniexAccountEvents::Balance(balance) => {
                 // todo: maybe poloniex one does not need a vec
                 AccountData::BalanceVec(Vec::<AccountDataBalance>::from(balance))
-                
             }
         }
     }

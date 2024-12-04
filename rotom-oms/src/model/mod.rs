@@ -5,13 +5,12 @@ pub mod order;
 use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
-use uuid::Uuid;
 
 /*----- */
 // Client Order Id
 /*----- */
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]
-pub struct ClientOrderId(pub Uuid);
+pub struct ClientOrderId(pub String); // can be smolstr probs
 
 /*----- */
 // Order Id

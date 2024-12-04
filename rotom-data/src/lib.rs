@@ -37,7 +37,7 @@ pub enum Feed<Event> {
 /*----- */
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Deserialize, Serialize)]
 pub struct MarketMeta {
-    pub close: f64,
+    pub close: f64, // todo change to price
     pub time: DateTime<Utc>,
 }
 

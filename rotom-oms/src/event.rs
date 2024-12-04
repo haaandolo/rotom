@@ -1,6 +1,10 @@
 use crate::{
     execution::FillEvent,
-    model::{balance::Balance, order::OrderEvent},
+    model::{
+        account_data::{AccountDataBalance, AccountDataBalanceDelta, AccountDataOrder},
+        balance::Balance,
+        order::OrderEvent,
+    },
     portfolio::position::{Position, PositionExit, PositionUpdate},
 };
 use rotom_data::event_models::market_event::{DataKind, MarketEvent};
@@ -20,6 +24,10 @@ pub enum Event {
     PositionUpdate(PositionUpdate),
     PositionExit(PositionExit),
     Balance(Balance),
+    AccountDataOrder(AccountDataOrder),
+    AccountDataBalanceVec(Vec<AccountDataBalance>),
+    AccountDataBalance(AccountDataBalance),
+    AccountDataBalanceDelta(AccountDataBalanceDelta),
 }
 
 pub trait MessageTransmitter<Message> {

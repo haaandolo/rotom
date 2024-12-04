@@ -81,7 +81,7 @@ pub async fn main() {
         time: Utc::now(),
         exchange: ExchangeId::BinanceSpot,
         instrument: Instrument::new("op", "usdt"),
-        client_order_id: ClientOrderId(Uuid::new_v4()),
+        client_order_id: None,
         market_meta: MarketMeta {
             close: 1.0,
             time: Utc::now(),
@@ -89,7 +89,9 @@ pub async fn main() {
         decision: Decision::Long,
         quantity: 5.0,
         order_kind: rotom_oms::model::OrderKind::Limit,
+        order_status: None,
         state: rotom_oms::model::order::OrderState::InTransit,
+        filled_gross: 0.0,
     };
 
     // Test Binance Execution
@@ -430,6 +432,7 @@ async fn listen_to_engine_events(mut event_rx: mpsc::UnboundedReceiver<Event>) {
                 // Balance update Event occurred in Engine
                 // println!("{balance_update:?}");
             }
+            _ => (),
         }
     }
 }
@@ -455,6 +458,8 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
+// - maybe impl a trait called "spot arb exe" to limit buy/sell, transfer funds or taker buy/sell for the OrderEvent? and maybe even keeping a order at bba
+// - code to keep a limit order at bba
 // - start execution function to limit buy -> transfer -> taker sell, i think this should be a function
 // - figure out the balance +ve and -ve of quote and base asset for portfolio when the fill is updated
 // - make the above point more solid

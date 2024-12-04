@@ -14,7 +14,7 @@ use crate::{
     model::{
         balance::Balance,
         order::{OrderEvent, OrderState},
-        ClientOrderId, OrderKind, Side,
+        OrderKind, Side,
     },
     portfolio::{
         allocator::OrderAllocator,
@@ -312,12 +312,14 @@ where
             time: Utc::now(),
             exchange: signal.exchange,
             instrument: signal.instrument.clone(),
-            client_order_id: ClientOrderId(Uuid::new_v4()),
+            client_order_id: None,
             market_meta: signal.market_meta,
             decision: *signal_decision,
             quantity: 0.0,
             order_kind: OrderKind::Limit,
+            order_status: None,
             state: OrderState::InTransit,
+            filled_gross: 0.0,
         };
 
         self.allocation_manager

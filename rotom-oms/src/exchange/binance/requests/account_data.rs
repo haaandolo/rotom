@@ -36,7 +36,7 @@ pub struct BinanceAccountDataOrder {
     pub P: f64, // Stop price
     #[serde(deserialize_with = "de_str")]
     pub F: f64, // Iceberg quantity
-    pub g: i8,                 // OrderListId
+    pub g: i64,                // OrderListId
     pub C: String, // Original client order ID; This is the ID of the order being canceled
     pub x: OrderStatus, // Current execution type
     pub X: OrderStatus, // Current order status
@@ -53,7 +53,7 @@ pub struct BinanceAccountDataOrder {
     pub N: Option<String>, // Commission asset
     #[serde(deserialize_with = "de_u64_epoch_ms_as_datetime_utc")]
     pub T: DateTime<Utc>, // Transaction time
-    pub t: i8,     // Trade ID
+    pub t: i64,    // Trade ID
     pub v: Option<i8>, // Prevented Match Id; This is only visible if the order expired due to STP
     pub I: u64,    // Ignore
     pub w: bool,   // Is the order on the book?
@@ -75,6 +75,7 @@ impl From<BinanceAccountDataOrder> for AccountDataOrder {
     fn from(order: BinanceAccountDataOrder) -> Self {
         Self {
             exchange: ExchangeId::BinanceSpot,
+            client_order_id: order.c,
             asset: order.s,
             price: order.p, // todo!
             quantity: order.q,
@@ -82,6 +83,7 @@ impl From<BinanceAccountDataOrder> for AccountDataOrder {
             execution_time: order.T,
             side: order.S,
             fee: order.n,
+            filled_gross: order.Q,
         }
     }
 }
@@ -203,6 +205,83 @@ impl From<BinanceAccountEvents> for AccountData {
         }
     }
 }
+
+/*
+### Partial fill then full fill example ###
+"{
+    \"e\":\"executionReport\",
+    \"E\":1733290605972,
+    \"s\":\"OPUSDT\",
+    \"c\":\"web_51c5f50e3b6f476e859d38f2494e7807\",
+    \"S\":\"BUY\",
+    \"o\":\"LIMIT\",
+    \"f\":\"GTC\",
+    \"q\":\"5.00000000\",
+    \"p\":\"2.58000000\",
+    \"P\":\"0.00000000\",
+    \"F\":\"0.00000000\",
+    \"g\":-1,
+    \"C\":\"\",
+    \"x\":\"TRADE\",
+    \"X\":\"PARTIALLY_FILLED\",
+    \"r\":\"NONE\",
+    \"i\":1897337989,
+    \"l\":\"3.87000000\",
+    \"z\":\"3.87000000\",
+    \"L\":\"2.58000000\",
+    \"n\":\"0.00387000\",
+    \"N\":\"OP\",
+    \"T\":1733290605971,
+    \"t\":109831731,
+    \"I\":3914487009,
+    \"w\":false,
+    \"m\":true,
+    \"M\":true,
+    \"O\":1733290515358,
+    \"Z\":\"9.98460000\",
+    \"Y\":\"9.98460000\",
+    \"Q\":\"0.00000000\",
+    \"W\":1733290515358,
+    \"V\":\"EXPIRE_MAKER\"
+}",
+
+"{
+    \"e\":\"executionReport\",
+    \"E\":1733290800451,
+    \"s\":\"OPUSDT\",
+    \"c\":\"web_51c5f50e3b6f476e859d38f2494e7807\",
+    \"S\":\"BUY\",
+    \"o\":\"LIMIT\",
+    \"f\":\"GTC\",
+    \"q\":\"5.00000000\",
+    \"p\":\"2.58000000\",
+    \"P\":\"0.00000000\",
+    \"F\":\"0.00000000\",
+    \"g\":-1,
+    \"C\":\"\",
+    \"x\":\"TRADE\",
+    \"X\":\"FILLED\",
+    \"r\":\"NONE\",
+    \"i\":1897337989,
+    \"l\":\"1.13000000\",
+    \"z\":\"5.00000000\",
+    \"L\":\"2.58000000\",
+    \"n\":\"0.00113000\",
+    \"N\":\"OP\",
+    \"T\":1733290800450,
+    \"t\":109831899,
+    \"I\":3914497998,
+    \"w\":false,
+    \"m\":true,
+    \"M\":true,
+    \"O\":1733290515358,
+    \"Z\":\"12.90000000\",
+    \"Y\":\"2.91540000\",
+    \"Q\":\"0.00000000\",
+    \"W\":1733290515358,
+    \"V\":\"EXPIRE_MAKER\"
+}"
+*/
 
 #[cfg(test)]
 mod test {

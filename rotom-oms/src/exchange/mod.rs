@@ -144,6 +144,7 @@ where
         _backoff_ms *= 2;
 
         while let Some(msg) = stream.user_data_ws.next().await {
+            println!("accountData before: {:#?}", msg);
             match WebSocketParser::parse::<ExchangeAccountDataStream::AccountDataStreamResponse>(
                 msg,
             ) {

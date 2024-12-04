@@ -17,7 +17,7 @@ use crate::{
     model::{
         balance::{determine_balance_id, AssetBalance, SpotBalanceId},
         order::{OrderEvent, OrderState},
-        ClientOrderId, OrderKind, Side,
+        OrderKind, Side,
     },
     portfolio::{
         allocator::{spot_arb_allocator::SpotArbAllocator, OrderAllocator},
@@ -127,12 +127,14 @@ impl OrderGenerator for SpotPortfolio {
             time: Utc::now(),
             exchange: signal.exchange,
             instrument: signal.instrument.clone(),
-            client_order_id: ClientOrderId(Uuid::new_v4()),
+            client_order_id: None,
             market_meta: signal.market_meta,
             decision: *signal_decision,
             quantity: 0.0,
             order_kind: OrderKind::Limit,
+            order_status: None,
             state: OrderState::RequestOpen,
+            filled_gross: 0.0,
         };
 
         self.allocator
