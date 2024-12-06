@@ -176,44 +176,6 @@ where
                 Feed::Finished => break 'trading,
             }
 
-            // Check for account data event and break out trading loop if the
-            // rx disconnects
-            match self.order_update_rx.try_recv() {
-                Ok(account_data) => match account_data {
-                    AccountData::Order(order) => {
-                        println!("AccountData: {:#?}", order);
-                        self.event_queue.push_back(Event::AccountDataOrder(order))
-                    }
-                    AccountData::BalanceVec(balances) => {
-                        println!("AccountData: {:#?}", balances);
-                        self.event_queue
-                            .push_back(Event::AccountDataBalanceVec(balances));
-                    }
-
-                    AccountData::BalanceDelta(balance_delta) => {
-                        println!("AccountData: {:#?}", balance_delta);
-                        self.event_queue
-                            .push_back(Event::AccountDataBalanceDelta(balance_delta))
-                    }
-
-                    AccountData::Balance(balance) => {
-                        println!("AccountData: {:#?}", balance);
-                        self.event_queue
-                            .push_back(Event::AccountDataBalance(balance))
-                    }
-                },
-                Err(error) => {
-                    if error == mpsc::error::TryRecvError::Disconnected {
-                        warn!(
-                            message = "Order update rx for ArbTrader disconnected",
-                            asset_one  = %self.markets[0],
-                            asset_two  = %self.markets[1]
-                        );
-                        break 'trading;
-                    }
-                }
-            }
-
             // This while loop handles Events from the event_queue it will break if the event_queue
             // empty and requires another MarketEvent
             while let Some(event) = self.event_queue.pop_front() {
@@ -284,6 +246,45 @@ where
                     _ => {}
                 }
             }
+
+            // Check for account data event and break out trading loop if the
+            // rx disconnects
+            match self.order_update_rx.try_recv() {
+                Ok(account_data) => match account_data {
+                    AccountData::Order(order) => {
+                        println!("AccountData: {:#?}", order);
+                        self.event_queue.push_back(Event::AccountDataOrder(order))
+                    }
+                    AccountData::BalanceVec(balances) => {
+                        println!("AccountData: {:#?}", balances);
+                        self.event_queue
+                            .push_back(Event::AccountDataBalanceVec(balances));
+                    }
+
+                    AccountData::BalanceDelta(balance_delta) => {
+                        println!("AccountData: {:#?}", balance_delta);
+                        self.event_queue
+                            .push_back(Event::AccountDataBalanceDelta(balance_delta))
+                    }
+
+                    AccountData::Balance(balance) => {
+                        println!("AccountData: {:#?}", balance);
+                        self.event_queue
+                            .push_back(Event::AccountDataBalance(balance))
+                    }
+                },
+                Err(error) => {
+                    if error == mpsc::error::TryRecvError::Disconnected {
+                        warn!(
+                            message = "Order update rx for ArbTrader disconnected",
+                            asset_one  = %self.markets[0],
+                            asset_two  = %self.markets[1]
+                        );
+                        break 'trading;
+                    }
+                }
+            }
+
 
             debug!(
                 engine_id = &*self.engine_id.to_string(),
