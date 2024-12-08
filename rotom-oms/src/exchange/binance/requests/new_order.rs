@@ -8,7 +8,7 @@ use std::borrow::Cow;
 
 use crate::exchange::binance::request_builder::BinanceAuthParams;
 use crate::exchange::errors::RequestBuildError;
-use crate::model::order::OrderEvent;
+use crate::model::order::OpenOrder;
 use crate::model::OrderKind;
 use rotom_data::shared::de::de_str;
 
@@ -66,7 +66,7 @@ pub struct BinanceNewOrder {
 }
 
 impl BinanceNewOrder {
-    pub fn new(order_event: &OrderEvent) -> Result<Self, RequestBuildError> {
+    pub fn new(order_event: &OpenOrder) -> Result<Self, RequestBuildError> {
         match &order_event.order_kind {
             OrderKind::Limit => Self::limit_order(order_event),
             OrderKind::Market => Self::market_order(order_event),
@@ -74,9 +74,9 @@ impl BinanceNewOrder {
         }
     }
 
-    fn limit_order(order_event: &OrderEvent) -> Result<Self, RequestBuildError> {
+    fn limit_order(order_event: &OpenOrder) -> Result<Self, RequestBuildError> {
         BinanceNewOrderParamsBuilder::default()
-            .price(order_event.market_meta.close)
+            .price(order_event.price)
             .quantity(order_event.quantity)
             .side(BinanceSide::from(order_event.decision))
             .symbol(BinanceSymbol::from(&order_event.instrument).0)
@@ -86,7 +86,7 @@ impl BinanceNewOrder {
             .build()
     }
 
-    fn market_order(order_event: &OrderEvent) -> Result<Self, RequestBuildError> {
+    fn market_order(order_event: &OpenOrder) -> Result<Self, RequestBuildError> {
         BinanceNewOrderParamsBuilder::default()
             .quantity(order_event.quantity)
             .side(BinanceSide::from(order_event.decision))

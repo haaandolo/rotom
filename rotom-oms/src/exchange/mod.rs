@@ -19,7 +19,10 @@ use sha2::Sha256;
 use tokio::sync::mpsc;
 use tracing::{debug, error, info, warn};
 
-use crate::model::{account_data::AccountData, order::OrderEvent};
+use crate::model::{
+    account_data::AccountData,
+    order::{CancelOrder, OpenOrder, WalletTransfer},
+};
 
 /*----- */
 // Convenient types
@@ -75,29 +78,25 @@ pub trait ExecutionClient {
     // Open order for single asset
     async fn open_order(
         &self,
-        open_requests: OrderEvent,
+        open_request: OpenOrder,
     ) -> Result<Self::NewOrderResponse, SocketError>;
 
     // Cancel order for a single asset
     async fn cancel_order(
         &self,
-        order_id: String,
-        symbol: String,
+        cancel_request: CancelOrder,
     ) -> Result<Self::CancelResponse, SocketError>;
 
     // Cancel all orders for a single asset
     async fn cancel_order_all(
         &self,
-        symbol: String,
+        cancel_request: CancelOrder,
     ) -> Result<Self::CancelAllResponse, SocketError>;
 
     // Transfer to another wallet
     async fn wallet_transfer(
         &self,
-        coin: String,
-        wallet_address: String,
-        network: Option<String>,
-        amount: f64,
+        wallet_transfer_request: WalletTransfer,
     ) -> Result<Self::WalletTransferResponse, SocketError>;
 }
 

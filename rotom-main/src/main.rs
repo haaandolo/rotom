@@ -33,7 +33,7 @@ use rotom_oms::{
         Fees,
     },
     model::{
-        order::{AssetFormatted, OrderEvent},
+        order::{AssetFormatted, CancelOrder, OpenOrder, OrderEvent},
         ClientOrderId,
     },
     portfolio::{
@@ -81,7 +81,7 @@ pub async fn main() {
         time: Utc::now(),
         exchange: ExchangeId::BinanceSpot,
         instrument: Instrument::new("op", "usdt"),
-        client_order_id: None,
+        client_order_id: Some(ClientOrderId("9MHbFzZWbL4otb7tzQ5vkZ".to_string())),
         market_meta: MarketMeta {
             close: 1.0,
             time: Utc::now(),
@@ -94,8 +94,11 @@ pub async fn main() {
         filled_gross: 0.0,
     };
 
-    // Test Binance Execution
-    // let binance_exe = BinanceExecution::create_http_client().unwrap();
+    let open_order = OpenOrder::from(&order);
+    let cancel_order = CancelOrder::from(&order);
+
+    // // Test Binance Execution
+    // let binance_exe = BinanceExecution::new().unwrap();
     // let res = binance_exe.get_balance_all().await;
     // let res: Vec<AssetBalance> = res.unwrap().into();
     // let res = binance_exe
@@ -106,20 +109,19 @@ pub async fn main() {
     //         10.0,
     //     )
     //     .await;
-    // let res = binance_exe.open_order(order.clone()).await;
+    // let res = binance_exe.open_order(open_order).await;
     // let res = binance_exe
-    //     .cancel_order("hZTowVTt4U27pK32UQ5ma2".to_string(), "OPUSDT".to_string())
+    //     .cancel_order(cancel_order)
     //     .await;
-    // binance_exe.cancel_order_all("OPUSDT".to_string()).await;
+    // let res = binance_exe.cancel_order_all(cancel_order).await;
     // println!("{:#?}", res);
     // binance_exe.receive_responses().await;
 
     ////////////////////////////////////////////////////
     // Test Poloniex Execution
-    // let polo_exe = PoloniexExecution::create_http_client().unwrap();
-    // let res = polo_exe.open_order(order.clone()).await;
+    // let polo_exe = PoloniexExecution::new().unwrap();
+    // let res = polo_exe.open_order(open_order).await;
 
-    // order.market_meta.close = 0.90;
     // let res = polo_exe.open_order(order.clone()).await;
 
     // let res = polo_exe
@@ -142,7 +144,6 @@ pub async fn main() {
     // println!("---> {:#?}", res);
 
     ////////////////////////////////////////////////
-    //>>> UNCOMMENT FORM HERE ALL THE WAY DOWN <<<
     /*----- */
     // Trader builder
     /*----- */
@@ -236,7 +237,6 @@ pub async fn main() {
     //////////////
     // Arb trader
     //////////////
-
     let op = vec![
         Market::new(ExchangeId::BinanceSpot, Instrument::new("op", "usdt")),
         Market::new(ExchangeId::PoloniexSpot, Instrument::new("op", "usdt")),
@@ -252,7 +252,6 @@ pub async fn main() {
     let (excution_arena_order_event_tx, execution_arena_order_event_rx) = mpsc::unbounded_channel();
     let mut arb_traders = Vec::new();
     let mut trader_command_txs = HashMap::new();
-
     let mut order_update_txs = HashMap::new();
 
     for markets in market2.into_iter() {
@@ -300,6 +299,11 @@ pub async fn main() {
         BinanaceAccountDataStream,
         PoloniexAccountDataStream,
     >(order_update_txs));
+
+    let spot_arb =
+        SpotArbArena::<BinanceExecution, PoloniexExecution>::new(execution_arena_order_event_rx)
+            .await;
+    tokio::spawn(async move { spot_arb.testing().await });
 
     // Build engine TODO: (check the commands are doing what it is supposed to)
     // let trader_command_txs = markets

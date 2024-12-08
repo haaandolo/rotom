@@ -8,7 +8,7 @@ use rotom_data::{
 use rotom_oms::{
     event::{Event, EventTx, MessageTransmitter},
     execution::FillGenerator,
-    model::{account_data::AccountData, order::OrderEvent},
+    model::{account_data::AccountData, order::{ExecutionRequest, OpenOrder}},
     portfolio::portfolio_type::{FillUpdater, MarketUpdater, OrderGenerator},
 };
 use rotom_strategy::{SignalForceExit, SignalGenerator};
@@ -50,7 +50,7 @@ where
     pub data: Data,
     pub stategy: Strategy,
     pub execution: Execution,
-    pub send_order_tx: mpsc::UnboundedSender<OrderEvent>,
+    pub send_order_tx: mpsc::UnboundedSender<ExecutionRequest>,
     pub order_update_rx: mpsc::Receiver<AccountData>,
     pub porfolio: Arc<Mutex<Portfolio>>,
 }
@@ -73,7 +73,7 @@ where
     data: Data,
     stategy: Strategy,
     execution: Execution,
-    send_order_tx: mpsc::UnboundedSender<OrderEvent>, // todo: probs not required
+    send_order_tx: mpsc::UnboundedSender<ExecutionRequest>,
     order_update_rx: mpsc::Receiver<AccountData>,
     event_queue: VecDeque<Event>,
     portfolio: Arc<Mutex<Portfolio>>,
@@ -224,13 +224,15 @@ where
                         }
                     }
                     Event::OrderNew(order) => {
-                        let fill = self
-                            .execution
-                            .generate_fill(order)
-                            .expect("Failed to generate");
+                        // println!("order ==> {:#?}", order);
+                        let _ = self.send_order_tx.send(ExecutionRequest::Open(OpenOrder::from(&order)));
+                        // let fill = self
+                        //     .execution
+                        //     .generate_fill(order)
+                        //     .expect("Failed to generate");
 
-                        self.event_tx.send(Event::Fill(fill.clone()));
-                        self.event_queue.push_back(Event::Fill(fill));
+                        // self.event_tx.send(Event::Fill(fill.clone()));
+                        // self.event_queue.push_back(Event::Fill(fill));
                     }
                     Event::Fill(fill) => {
                         let fill_side_effect_events = self
@@ -285,7 +287,6 @@ where
                 }
             }
 
-
             debug!(
                 engine_id = &*self.engine_id.to_string(),
                 market = &*format!("{:?}", self.markets),
@@ -313,7 +314,7 @@ where
     pub data: Option<Data>,
     pub strategy: Option<Strategy>,
     pub execution: Option<Execution>,
-    pub send_order_tx: Option<mpsc::UnboundedSender<OrderEvent>>,
+    pub send_order_tx: Option<mpsc::UnboundedSender<ExecutionRequest>>,
     pub order_update_rx: Option<mpsc::Receiver<AccountData>>,
     pub portfolio: Option<Arc<Mutex<Portfolio>>>,
 }
@@ -390,7 +391,7 @@ where
         }
     }
 
-    pub fn send_order_tx(self, value: mpsc::UnboundedSender<OrderEvent>) -> Self {
+    pub fn send_order_tx(self, value: mpsc::UnboundedSender<ExecutionRequest>) -> Self {
         Self {
             send_order_tx: Some(value),
             ..self

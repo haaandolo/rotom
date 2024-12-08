@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::{
     exchange::errors::RequestBuildError,
-    model::{order::OrderEvent, OrderKind},
+    model::{order::OpenOrder, OrderKind},
 };
 use rotom_data::shared::de::de_str;
 
@@ -48,7 +48,7 @@ pub struct PoloniexNewOrder {
 }
 
 impl PoloniexNewOrder {
-    pub fn new(order_event: &OrderEvent) -> Result<Self, RequestBuildError> {
+    pub fn new(order_event: &OpenOrder) -> Result<Self, RequestBuildError> {
         match &order_event.order_kind {
             OrderKind::Limit => Self::limit_order(order_event),
             OrderKind::Market => Self::market_order(order_event),
@@ -56,7 +56,7 @@ impl PoloniexNewOrder {
         }
     }
 
-    pub fn limit_order(order_event: &OrderEvent) -> Result<Self, RequestBuildError> {
+    pub fn limit_order(order_event: &OpenOrder) -> Result<Self, RequestBuildError> {
         PoloniexNewOrderBuilder::new()
             .symbol(PoloniexSymbol::from(&order_event.instrument).0)
             .side(
@@ -66,13 +66,12 @@ impl PoloniexNewOrder {
             )
             .r#type(PoloniexOrderType::Limit) // TODO: limit_marker
             .quantity(order_event.quantity.to_string())
-            .price(order_event.market_meta.close.to_string())
+            .price(order_event.price.to_string())
             .time_in_force(PoloniexTimeInForce::GTC) // TODO
-            .client_order_id(Uuid::new_v4())
             .build()
     }
 
-    pub fn market_order(order_event: &OrderEvent) -> Result<Self, RequestBuildError> {
+    pub fn market_order(order_event: &OpenOrder) -> Result<Self, RequestBuildError> {
         PoloniexNewOrderBuilder::new()
             .symbol(PoloniexSymbol::from(&order_event.instrument).0)
             .side(

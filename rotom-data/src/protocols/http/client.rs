@@ -8,7 +8,9 @@ use crate::{
     metric::{Field, Metric, Tag},
 };
 
-use super::{request_builder::ExchangeRequestBuilder, http_parser::HttpParser, rest_request::RestRequest};
+use super::{
+    http_parser::HttpParser, request_builder::ExchangeRequestBuilder, rest_request::RestRequest,
+};
 
 #[derive(Debug)]
 pub struct RestClient<Parser, RequestBuilder> {

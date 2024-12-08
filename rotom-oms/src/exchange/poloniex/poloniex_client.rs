@@ -7,7 +7,7 @@ use serde::Deserialize;
 
 use crate::{
     exchange::{ExecutionClient, ExecutionId},
-    model::order::OrderEvent,
+    model::order::{CancelOrder, OpenOrder, WalletTransfer},
 };
 
 use super::{
@@ -53,7 +53,7 @@ impl ExecutionClient for PoloniexExecution {
 
     async fn open_order(
         &self,
-        open_request: OrderEvent,
+        open_request: OpenOrder,
     ) -> Result<Self::NewOrderResponse, SocketError> {
         let response = self
             .http_client
@@ -64,41 +64,37 @@ impl ExecutionClient for PoloniexExecution {
 
     async fn cancel_order(
         &self,
-        order_id: String,
-        _: String,
+        cancel_request: CancelOrder,
     ) -> Result<Self::CancelResponse, SocketError> {
         let response = self
             .http_client
-            .execute(PoloniexCancelOrder::new(order_id))
+            .execute(PoloniexCancelOrder::new(cancel_request.id))
             .await?;
         Ok(response.0)
     }
 
     async fn cancel_order_all(
         &self,
-        symbol: String,
+        cancel_request: CancelOrder,
     ) -> Result<Self::CancelAllResponse, SocketError> {
         let response = self
             .http_client
-            .execute(PoloniexCancelAllOrder::new(symbol))
+            .execute(PoloniexCancelAllOrder::new(cancel_request.symbol))
             .await?;
         Ok(response.0)
     }
 
     async fn wallet_transfer(
         &self,
-        coin: String,
-        wallet_address: String,
-        network: Option<String>,
-        amount: f64,
+        wallet_transfer_request: WalletTransfer,
     ) -> Result<Self::WalletTransferResponse, SocketError> {
         let response = self
             .http_client
             .execute(PoloniexWalletTransfer::new(
-                coin,
-                network,
-                amount,
-                wallet_address,
+                wallet_transfer_request.coin,
+                wallet_transfer_request.network,
+                wallet_transfer_request.amount,
+                wallet_transfer_request.wallet_address,
             ))
             .await?;
         Ok(response.0)

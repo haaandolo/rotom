@@ -8,7 +8,9 @@ use crate::exchange::binance::requests::new_order::BinanceNewOrder;
 use crate::exchange::binance::requests::wallet_transfer::BinanceWalletTransfer;
 use crate::exchange::ExecutionClient;
 use crate::exchange::ExecutionId;
-use crate::model::order::OrderEvent;
+use crate::model::order::CancelOrder;
+use crate::model::order::OpenOrder;
+use crate::model::order::WalletTransfer;
 
 use super::request_builder::BinanceRequestBuilder;
 use super::requests::balance::BinanceBalance;
@@ -46,7 +48,7 @@ impl ExecutionClient for BinanceExecution {
 
     async fn open_order(
         &self,
-        open_requests: OrderEvent,
+        open_requests: OpenOrder,
     ) -> Result<Self::NewOrderResponse, SocketError> {
         let response = self
             .http_client
@@ -57,41 +59,40 @@ impl ExecutionClient for BinanceExecution {
 
     async fn cancel_order(
         &self,
-        orig_client_order_id: String,
-        symbol: String,
+        cancel_request: CancelOrder,
     ) -> Result<Self::CancelResponse, SocketError> {
         let response = self
             .http_client
-            .execute(BinanceCancelOrder::new(orig_client_order_id, symbol)?)
+            .execute(BinanceCancelOrder::new(
+                cancel_request.id,
+                cancel_request.symbol,
+            )?)
             .await?;
         Ok(response.0)
     }
 
     async fn cancel_order_all(
         &self,
-        symbol: String,
+        cancel_request: CancelOrder,
     ) -> Result<Self::CancelAllResponse, SocketError> {
         let response = self
             .http_client
-            .execute(BinanceCancelAllOrder::new(symbol)?)
+            .execute(BinanceCancelAllOrder::new(cancel_request.symbol)?)
             .await?;
         Ok(response.0)
     }
 
     async fn wallet_transfer(
         &self,
-        coin: String,
-        wallet_address: String,
-        network: Option<String>,
-        amount: f64,
+        wallet_transfer_request: WalletTransfer,
     ) -> Result<Self::WalletTransferResponse, SocketError> {
         let response = self
             .http_client
             .execute(BinanceWalletTransfer::new(
-                coin,
-                wallet_address,
-                network,
-                amount,
+                wallet_transfer_request.coin,
+                wallet_transfer_request.wallet_address,
+                wallet_transfer_request.network,
+                wallet_transfer_request.amount,
             )?)
             .await?;
         Ok(response.0)
