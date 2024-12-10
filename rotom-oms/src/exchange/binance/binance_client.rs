@@ -1,11 +1,14 @@
 use async_trait::async_trait;
+use futures::StreamExt;
 use rotom_data::error::SocketError;
 use rotom_data::protocols::http::client::RestClient;
 use rotom_data::protocols::http::http_parser::StandardHttpParser;
+use rotom_data::protocols::ws::connect;
 
 use crate::exchange::binance::requests::cancel_order::BinanceCancelOrder;
 use crate::exchange::binance::requests::new_order::BinanceNewOrder;
 use crate::exchange::binance::requests::wallet_transfer::BinanceWalletTransfer;
+use crate::exchange::AccountDataWebsocket;
 use crate::exchange::ExecutionClient;
 use crate::exchange::ExecutionId;
 use crate::model::order::CancelOrder;
@@ -13,10 +16,12 @@ use crate::model::order::OpenOrder;
 use crate::model::order::WalletTransfer;
 
 use super::request_builder::BinanceRequestBuilder;
+use super::requests::account_data::BinanceAccountEvents;
 use super::requests::balance::BinanceBalance;
 use super::requests::balance::BinanceBalanceResponse;
 use super::requests::cancel_order::BinanceCancelAllOrder;
 use super::requests::cancel_order::BinanceCancelOrderResponse;
+use super::requests::listening_key::BinanceListeningKey;
 use super::requests::new_order::BinanceNewOrderResponses;
 use super::requests::wallet_transfer::BinanceWalletTransferResponse;
 
@@ -25,6 +30,7 @@ use super::requests::wallet_transfer::BinanceWalletTransferResponse;
 /*----- */
 pub type BinanceRestClient = RestClient<StandardHttpParser, BinanceRequestBuilder>;
 pub const BINANCE_BASE_URL: &str = "https://api.binance.com";
+const BINANCE_USER_DATA_WS: &str = "wss://stream.binance.com:9443/ws/";
 
 #[derive(Debug)]
 pub struct BinanceExecution {
@@ -39,11 +45,27 @@ impl ExecutionClient for BinanceExecution {
     type CancelAllResponse = Vec<BinanceCancelOrderResponse>;
     type NewOrderResponse = BinanceNewOrderResponses;
     type WalletTransferResponse = BinanceWalletTransferResponse;
+    type AccountDataStreamResponse = BinanceAccountEvents;
 
-    fn new() -> Result<Self, SocketError> {
+    async fn init() -> Result<AccountDataWebsocket, SocketError> {
         let http_client =
             BinanceRestClient::new(BINANCE_BASE_URL, StandardHttpParser, BinanceRequestBuilder);
-        Ok(BinanceExecution { http_client })
+
+        let (response, _) = http_client.execute(BinanceListeningKey).await?;
+        let listening_url = format!("{}{}", BINANCE_USER_DATA_WS, response.listen_key);
+        let ws = connect(listening_url).await?;
+        let (_, user_data_ws) = ws.split();
+
+        Ok(AccountDataWebsocket {
+            user_data_ws,
+            tasks: None,
+        })
+    }
+
+    fn new() -> Self {
+        let http_client =
+            BinanceRestClient::new(BINANCE_BASE_URL, StandardHttpParser, BinanceRequestBuilder);
+        BinanceExecution { http_client }
     }
 
     async fn open_order(

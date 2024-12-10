@@ -69,9 +69,12 @@ pub trait ExecutionClient {
     type CancelAllResponse;
     type NewOrderResponse;
     type WalletTransferResponse;
+    type AccountDataStreamResponse: Send + for<'de> Deserialize<'de> + Debug + Into<AccountData>;
+
+    async fn init() -> Result<AccountDataWebsocket, SocketError>;
 
     // Init exchange executor
-    fn new() -> Result<Self, SocketError>
+    fn new() -> Self
     where
         Self: Sized;
 
@@ -122,13 +125,13 @@ impl std::fmt::Display for ExecutionId {
 /*----- */
 // Account User Data Auto Reconnect
 /*----- */
-pub async fn consume_account_data_stream<ExchangeAccountDataStream>(
+pub async fn consume_account_data_stream<Exchange>(
     account_data_tx: mpsc::UnboundedSender<AccountData>,
 ) -> Result<(), SocketError>
 where
-    ExchangeAccountDataStream: AccountDataStream,
+    Exchange: ExecutionClient,
 {
-    let exchange_id = ExchangeAccountDataStream::CLIENT;
+    let exchange_id = Exchange::CLIENT;
     let mut connection_attempt: u32 = 0;
     let mut _backoff_ms: u64 = 125;
 
@@ -138,14 +141,12 @@ where
     );
 
     loop {
-        let mut stream = ExchangeAccountDataStream::init().await?;
+        let mut stream = Exchange::init().await?;
         connection_attempt += 1;
         _backoff_ms *= 2;
 
         while let Some(msg) = stream.user_data_ws.next().await {
-            match WebSocketParser::parse::<ExchangeAccountDataStream::AccountDataStreamResponse>(
-                msg,
-            ) {
+            match WebSocketParser::parse::<Exchange::AccountDataStreamResponse>(msg) {
                 Some(Ok(exchange_message)) => {
                     if let Err(error) = account_data_tx.send(exchange_message.into()) {
                         debug!(
@@ -188,8 +189,8 @@ where
 pub async fn combine_account_data_streams<StreamOne, StreamTwo>(
     arb_trader_tx: HashMap<String, mpsc::Sender<AccountData>>,
 ) where
-    StreamOne: AccountDataStream + 'static,
-    StreamTwo: AccountDataStream + 'static,
+    StreamOne: ExecutionClient + 'static,
+    StreamTwo: ExecutionClient + 'static,
 {
     // Convert first exchange ws to channel
     let (exchange_one_tx, mut exchange_one_rx) = mpsc::unbounded_channel();

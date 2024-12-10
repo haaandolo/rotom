@@ -18,17 +18,11 @@ use rotom_main::{
 use rotom_oms::{
     event::{Event, EventTx},
     exchange::{
-        binance::{
-            account_data_stream::BinanaceAccountDataStream, binance_client::BinanceExecution,
-        },
-        combine_account_data_streams,
-        poloniex::{
-            account_data_stream::PoloniexAccountDataStream, poloniex_client::PoloniexExecution,
-        },
-        ExecutionClient,
+        binance::binance_client::BinanceExecution, combine_account_data_streams,
+        poloniex::poloniex_client::PoloniexExecution, ExecutionClient,
     },
     execution::{
-        arena::spot_arb::{spot_arb_arena::SpotArbArena, spot_arb_executor::SpotArbExecutor},
+        arena::spot_arb::spot_arb_arena::SpotArbArena,
         simulated::{Config, SimulatedExecution},
         Fees,
     },
@@ -175,7 +169,6 @@ pub async fn main() {
         .unwrap(),
     ));
 
-    println!("{:#?}", arb_portfolio);
     ///////////////////////////////////////////////////
     // Market
     let markets = vec![
@@ -296,13 +289,15 @@ pub async fn main() {
 
     // Spawn acccount data ws
     tokio::spawn(combine_account_data_streams::<
-        BinanaceAccountDataStream,
-        PoloniexAccountDataStream,
+        BinanceExecution,
+        PoloniexExecution,
     >(order_update_txs));
 
-    let spot_arb =
-        SpotArbArena::<BinanceExecution, PoloniexExecution>::new(execution_arena_order_event_rx)
-            .await;
+    let spot_arb = SpotArbArena::new(
+        execution_arena_order_event_rx,
+        vec![ExchangeId::BinanceSpot, ExchangeId::PoloniexSpot],
+    )
+    .await;
     tokio::spawn(async move { spot_arb.testing().await });
 
     // Build engine TODO: (check the commands are doing what it is supposed to)
@@ -324,38 +319,6 @@ pub async fn main() {
         }))
         .build()
         .expect("failed to build engine");
-
-    /////////////////////////////////////////////////
-    // Arena
-    // let mut arb_exe = SpotArbArena::<BinanceExecution, PoloniexExecution>::new(
-    //     execution_arena_order_event_rx,
-    //     order_update_txs,
-    // )
-    // .await;
-
-    // tokio::spawn(async move {
-    //     arb_exe.testing().await;
-    // });
-
-    // let mut arb_exe = SpotArbExecutor::<BinanceExecution, PoloniexExecution>::init()
-    //     .await
-    //     .unwrap();
-
-    // while let Some(msg) = arb_exe.streams.recv().await {
-    //     println!("{:#?}", msg);
-    // }
-
-    // let arb_exe = ArbExecutor::<BinanceExecution, PoloniexExecution>::default();
-
-    // let mut polo_exe = PoloniexExecution::init().await.unwrap();
-    // while let Some(message) = polo_exe.rx.recv().await {
-    //     println!("--->>> {:#?}", message);
-    // }
-
-    // let mut bin_exe = BinanceExecution::init().await.unwrap();
-    // while let Some(message) = bin_exe.rx.recv().await {
-    //     println!("--->>> {:#?}", message);
-    // }
 
     ///////////////////////////////////////////////////
     // Run Engine trading & listen to Events it produces

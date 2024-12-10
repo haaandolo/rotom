@@ -8,7 +8,10 @@ use rotom_data::{
 use tokio::sync::mpsc::{self, error::TryRecvError};
 
 use crate::{
-    exchange::ExecutionClient,
+    exchange::{
+        binance::binance_client::BinanceExecution, poloniex::poloniex_client::PoloniexExecution,
+        ExecutionClient,
+    },
     execution::{error::ExecutionError, Fees, FillEvent, FillGenerator},
     model::{
         account_data::AccountData,
@@ -16,45 +19,40 @@ use crate::{
     },
 };
 
-use super::spot_arb_executor::SpotArbExecutor;
-
 /*----- */
 // Spot Arbitrage Arena
 /*----- */
-pub struct SpotArbArena<LiquidExchange, IlliquidExchange>
-where
-    LiquidExchange: ExecutionClient + 'static,
-    IlliquidExchange: ExecutionClient + 'static,
-{
-    pub executor: SpotArbExecutor<LiquidExchange, IlliquidExchange>,
+pub struct SpotArbArena {
+    // pub executor: HashMap<ExchangeId, Executors>,
     pub order_rx: mpsc::UnboundedReceiver<ExecutionRequest>,
     // pub trader_order_updater: HashMap<String, mpsc::Sender<AccountData>>,
-    pub orders: HashMap<Market, OrderEvent>,
 }
 
-impl<LiquidExchange, IlliquidExchange> SpotArbArena<LiquidExchange, IlliquidExchange>
-where
-    LiquidExchange: ExecutionClient + 'static,
-    IlliquidExchange: ExecutionClient + 'static,
-{
+impl SpotArbArena {
     pub async fn new(
         order_rx: mpsc::UnboundedReceiver<ExecutionRequest>,
-        // trader_order_updater: HashMap<String, mpsc::Sender<AccountData>>,
+        exchange_ids: Vec<ExchangeId>, // trader_order_updater: HashMap<String, mpsc::Sender<AccountData>>,
     ) -> Self {
-        let executor = SpotArbExecutor::<LiquidExchange, IlliquidExchange>::new()
-            .await
-            .unwrap(); // todo
+        // //
+        // let mut executors = HashMap::new();
+        // for exchange in exchange_ids.into_iter() {
+        //     match exchange {
+        //         ExchangeId::BinanceSpot => {
+        //             executors.insert(ExchangeId::BinanceSpot, BinanceExecution::new());
+        //         }
+        //         ExchangeId::PoloniexSpot => {
+        //             executors.insert(ExchangeId::PoloniexSpot, PoloniexExecution::new());
+        //         }
+        //     }
+        // }
+
+        //
+
         Self {
-            executor,
+            // executor,
             order_rx,
             // trader_order_updater,
-            orders: HashMap::new(),
         }
-    }
-
-    pub async fn long_exchange_transfer(&self, order: OrderEvent) {
-        // Post market order
-        // let _long = self.executor.liquid_exchange.open_order(order).await;
     }
 
     pub async fn testing(mut self) {
@@ -66,45 +64,12 @@ where
         //     }
         // }
 
-        while let Some(msg) = self.order_rx.recv().await {
-            println!("in arena -> {:#?}", msg);
-        }
+        // while let Some(msg) = self.order_rx.recv().await {
+        //     println!("in arena -> {:#?}", msg);
+        // }
 
         // while let Some(msg) = self.executor.streams.recv().await {
         //     println!("{:#?}", msg)
         // }
-    }
-}
-
-/*----- */
-// Impl FillGenerator for SpotArbArena
-/*----- */
-impl<LiquidExchange, IlliquidExchange> FillGenerator
-    for SpotArbArena<LiquidExchange, IlliquidExchange>
-where
-    LiquidExchange: ExecutionClient,
-    IlliquidExchange: ExecutionClient,
-{
-    fn generate_fill(&mut self, _order: OrderEvent) -> Result<FillEvent, ExecutionError> {
-        Ok(FillEvent {
-            time: Utc::now(),
-            exchange: ExchangeId::BinanceSpot,
-            instrument: Instrument {
-                base: "op".to_string(),
-                quote: "usdt".to_string(),
-            },
-            market_meta: MarketMeta {
-                time: Utc::now(),
-                close: 0.0,
-            },
-            decision: rotom_strategy::Decision::Long,
-            quantity: 0.0,
-            fill_value_gross: 0.0,
-            fees: Fees {
-                exchange: 0.0,
-                network: 0.0,
-                slippage: 0.0,
-            },
-        })
     }
 }
