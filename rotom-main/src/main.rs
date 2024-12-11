@@ -18,8 +18,8 @@ use rotom_main::{
 use rotom_oms::{
     event::{Event, EventTx},
     exchange::{
-        binance::binance_client::BinanceExecution, combine_account_data_streams,
-        poloniex::poloniex_client::PoloniexExecution, ExecutionClient,
+        binance::binance_client::BinanceExecution, poloniex::poloniex_client::PoloniexExecution,
+        ExecutionClient,
     },
     execution::{
         arena::spot_arb::spot_arb_arena::SpotArbArena,
@@ -287,18 +287,15 @@ pub async fn main() {
         arb_traders.push(arb_trader)
     }
 
-    // Spawn acccount data ws
-    tokio::spawn(combine_account_data_streams::<
-        BinanceExecution,
-        PoloniexExecution,
-    >(order_update_txs));
-
-    let spot_arb = SpotArbArena::new(
+    /////////////////////////////////////////////////////////////
+    // Arena
+    /////////////////////////////////////////////////////////////
+    let exchanges = vec![ExchangeId::BinanceSpot, ExchangeId::PoloniexSpot];
+    tokio::spawn(SpotArbArena::init(
         execution_arena_order_event_rx,
-        vec![ExchangeId::BinanceSpot, ExchangeId::PoloniexSpot],
-    )
-    .await;
-    tokio::spawn(async move { spot_arb.testing().await });
+        order_update_txs,
+        exchanges,
+    ));
 
     // Build engine TODO: (check the commands are doing what it is supposed to)
     // let trader_command_txs = markets
@@ -425,8 +422,11 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
+// - impl aggregated ws stream
 // - maybe impl a trait called "spot arb exe" to limit buy/sell, transfer funds or taker buy/sell for the OrderEvent? and maybe even keeping a order at bba
 // - code to keep a limit order at bba
+// - polo cid account data stream, see if we can set this when making a new order - for binance aswell
+// - move trader debug log after the infinite loop
 // - start execution function to limit buy -> transfer -> taker sell, i think this should be a function
 // - figure out the balance +ve and -ve of quote and base asset for portfolio when the fill is updated
 // - make the above point more solid

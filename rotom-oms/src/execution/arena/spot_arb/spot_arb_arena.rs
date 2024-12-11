@@ -9,7 +9,8 @@ use tokio::sync::mpsc::{self, error::TryRecvError};
 
 use crate::{
     exchange::{
-        binance::binance_client::BinanceExecution, poloniex::poloniex_client::PoloniexExecution,
+        binance::binance_client::BinanceExecution, consume_account_data_stream,
+        poloniex::poloniex_client::PoloniexExecution, send_account_data_to_traders,
         ExecutionClient,
     },
     execution::{error::ExecutionError, Fees, FillEvent, FillGenerator},
@@ -23,53 +24,55 @@ use crate::{
 // Spot Arbitrage Arena
 /*----- */
 pub struct SpotArbArena {
-    // pub executor: HashMap<ExchangeId, Executors>,
     pub order_rx: mpsc::UnboundedReceiver<ExecutionRequest>,
-    // pub trader_order_updater: HashMap<String, mpsc::Sender<AccountData>>,
 }
 
 impl SpotArbArena {
-    pub async fn new(
+    pub async fn init(
         order_rx: mpsc::UnboundedReceiver<ExecutionRequest>,
-        exchange_ids: Vec<ExchangeId>, // trader_order_updater: HashMap<String, mpsc::Sender<AccountData>>,
+        trader_order_updater: HashMap<String, mpsc::Sender<AccountData>>,
+        exchange_ids: Vec<ExchangeId>,
     ) -> Self {
-        // //
-        // let mut executors = HashMap::new();
-        // for exchange in exchange_ids.into_iter() {
-        //     match exchange {
-        //         ExchangeId::BinanceSpot => {
-        //             executors.insert(ExchangeId::BinanceSpot, BinanceExecution::new());
-        //         }
-        //         ExchangeId::PoloniexSpot => {
-        //             executors.insert(ExchangeId::PoloniexSpot, PoloniexExecution::new());
-        //         }
-        //     }
-        // }
-
-        //
-
-        Self {
-            // executor,
-            order_rx,
-            // trader_order_updater,
+        // Combine user data streams from different exchanges into one
+        let (account_data_tx, account_data_rx) = mpsc::unbounded_channel();
+        for exchange in exchange_ids.into_iter() {
+            match exchange {
+                ExchangeId::BinanceSpot => {
+                    tokio::spawn(consume_account_data_stream::<BinanceExecution>(
+                        account_data_tx.clone(),
+                    ));
+                }
+                ExchangeId::PoloniexSpot => {
+                    tokio::spawn(consume_account_data_stream::<PoloniexExecution>(
+                        account_data_tx.clone(),
+                    ));
+                }
+            }
         }
-    }
 
-    pub async fn testing(mut self) {
-        // loop {
-        //     match self.order_rx.try_recv() {
-        //         Ok(order) => self.long_exchange_transfer(order).await,
-        //         Err(TryRecvError::Empty) => tokio::task::yield_now().await,
-        //         Err(TryRecvError::Disconnected) => break,
-        //     }
-        // }
+        // Send order updates to corresponding trader pair for exchange
+        tokio::spawn(send_account_data_to_traders(
+            trader_order_updater,
+            account_data_rx,
+        ));
 
-        // while let Some(msg) = self.order_rx.recv().await {
-        //     println!("in arena -> {:#?}", msg);
-        // }
-
-        // while let Some(msg) = self.executor.streams.recv().await {
-        //     println!("{:#?}", msg)
-        // }
+        Self { order_rx }
     }
 }
+
+/////////
+// loop {
+//     match self.order_rx.try_recv() {
+//         Ok(order) => self.long_exchange_transfer(order).await,
+//         Err(TryRecvError::Empty) => tokio::task::yield_now().await,
+//         Err(TryRecvError::Disconnected) => break,
+//     }
+// }
+
+// while let Some(msg) = self.order_rx.recv().await {
+//     println!("in arena -> {:#?}", msg);
+// }
+
+// while let Some(msg) = self.executor.streams.recv().await {
+//     println!("{:#?}", msg)
+// }

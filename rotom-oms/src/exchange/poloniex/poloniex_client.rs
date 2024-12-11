@@ -11,11 +11,12 @@ use rotom_data::{
             WsMessage,
         },
     },
+    shared::subscription_models::ExchangeId,
 };
 use serde::Deserialize;
 
 use crate::{
-    exchange::{AccountDataWebsocket, ExecutionClient, ExecutionId},
+    exchange::{AccountDataWebsocket, ExecutionClient},
     model::order::{CancelOrder, OpenOrder, WalletTransfer},
 };
 
@@ -45,7 +46,7 @@ pub struct PoloniexExecution {
 
 #[async_trait]
 impl ExecutionClient for PoloniexExecution {
-    const CLIENT: ExecutionId = ExecutionId::Poloniex;
+    const CLIENT: ExchangeId = ExchangeId::PoloniexSpot;
 
     type CancelResponse = Vec<PoloniexCancelOrderResponse>;
     type CancelAllResponse = Vec<PoloniexCancelOrderResponse>;

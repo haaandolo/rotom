@@ -4,13 +4,13 @@ use rotom_data::error::SocketError;
 use rotom_data::protocols::http::client::RestClient;
 use rotom_data::protocols::http::http_parser::StandardHttpParser;
 use rotom_data::protocols::ws::connect;
+use rotom_data::shared::subscription_models::ExchangeId;
 
 use crate::exchange::binance::requests::cancel_order::BinanceCancelOrder;
 use crate::exchange::binance::requests::new_order::BinanceNewOrder;
 use crate::exchange::binance::requests::wallet_transfer::BinanceWalletTransfer;
 use crate::exchange::AccountDataWebsocket;
 use crate::exchange::ExecutionClient;
-use crate::exchange::ExecutionId;
 use crate::model::order::CancelOrder;
 use crate::model::order::OpenOrder;
 use crate::model::order::WalletTransfer;
@@ -39,7 +39,7 @@ pub struct BinanceExecution {
 
 #[async_trait]
 impl ExecutionClient for BinanceExecution {
-    const CLIENT: ExecutionId = ExecutionId::Binance;
+    const CLIENT: ExchangeId = ExchangeId::BinanceSpot;
 
     type CancelResponse = BinanceCancelOrderResponse;
     type CancelAllResponse = Vec<BinanceCancelOrderResponse>;

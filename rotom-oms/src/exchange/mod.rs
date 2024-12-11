@@ -13,8 +13,9 @@ use rotom_data::{
         ws_parser::{StreamParser, WebSocketParser},
         JoinHandle, WsRead,
     },
+    shared::subscription_models::ExchangeId,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use sha2::Sha256;
 use tokio::sync::mpsc;
 use tracing::{debug, error, info, warn};
@@ -48,22 +49,11 @@ impl AccountDataWebsocket {
 }
 
 /*----- */
-// Account Data Trait
-/*----- */
-#[async_trait]
-pub trait AccountDataStream {
-    const CLIENT: ExecutionId;
-    type AccountDataStreamResponse: Send + for<'de> Deserialize<'de> + Debug + Into<AccountData>;
-
-    async fn init() -> Result<AccountDataWebsocket, SocketError>;
-}
-
-/*----- */
 // Execution Client Trait
 /*----- */
 #[async_trait]
 pub trait ExecutionClient {
-    const CLIENT: ExecutionId;
+    const CLIENT: ExchangeId;
 
     type CancelResponse;
     type CancelAllResponse;
@@ -103,24 +93,24 @@ pub trait ExecutionClient {
     ) -> Result<Self::WalletTransferResponse, SocketError>;
 }
 
-/*----- */
-// Execution ID
-/*----- */
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]
-#[serde(rename = "execution", rename_all = "snake_case")]
-pub enum ExecutionId {
-    Poloniex,
-    Binance,
-}
+// /*----- */
+// // Execution ID
+// /*----- */
+// #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]
+// #[serde(rename = "execution", rename_all = "snake_case")]
+// pub enum ExecutionId {
+//     Poloniex,
+//     Binance,
+// }
 
-impl std::fmt::Display for ExecutionId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ExecutionId::Binance => write!(f, "binance"),
-            ExecutionId::Poloniex => write!(f, "poloniex"),
-        }
-    }
-}
+// impl std::fmt::Display for ExecutionId {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         match self {
+//             ExecutionId::Binance => write!(f, "binance"),
+//             ExecutionId::Poloniex => write!(f, "poloniex"),
+//         }
+//     }
+// }
 
 /*----- */
 // Account User Data Auto Reconnect
@@ -181,42 +171,6 @@ where
             reconnection_attempts = connection_attempt,
         );
     }
-}
-
-/*----- */
-// Account Data Stream - Combine Streams
-/*----- */
-pub async fn combine_account_data_streams<StreamOne, StreamTwo>(
-    arb_trader_tx: HashMap<String, mpsc::Sender<AccountData>>,
-) where
-    StreamOne: ExecutionClient + 'static,
-    StreamTwo: ExecutionClient + 'static,
-{
-    // Convert first exchange ws to channel
-    let (exchange_one_tx, mut exchange_one_rx) = mpsc::unbounded_channel();
-    tokio::spawn(consume_account_data_stream::<StreamOne>(exchange_one_tx));
-
-    // Convert second exchange ws to channel
-    let (exchange_two_tx, mut exchange_two_rx) = mpsc::unbounded_channel();
-    tokio::spawn(consume_account_data_stream::<StreamTwo>(exchange_two_tx));
-
-    // Combine channels into one
-    let (combined_tx, combined_rx) = mpsc::unbounded_channel();
-    let combined_tx_cloned = combined_tx.clone();
-    tokio::spawn(async move {
-        while let Some(message) = exchange_one_rx.recv().await {
-            let _ = combined_tx_cloned.send(message);
-        }
-    });
-
-    tokio::spawn(async move {
-        while let Some(message) = exchange_two_rx.recv().await {
-            let _ = combined_tx.send(message);
-        }
-    });
-
-    // Send data from Account stream to respective traders
-    tokio::spawn(send_account_data_to_traders(arb_trader_tx, combined_rx));
 }
 
 /*----- */
