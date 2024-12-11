@@ -1,11 +1,6 @@
+use rotom_data::shared::subscription_models::ExchangeId;
 use std::collections::HashMap;
-
-use chrono::Utc;
-use rotom_data::{
-    shared::subscription_models::{ExchangeId, Instrument},
-    Market, MarketMeta,
-};
-use tokio::sync::mpsc::{self, error::TryRecvError};
+use tokio::sync::mpsc;
 
 use crate::{
     exchange::{
@@ -13,18 +8,25 @@ use crate::{
         poloniex::poloniex_client::PoloniexExecution, send_account_data_to_traders,
         ExecutionClient,
     },
-    execution::{error::ExecutionError, Fees, FillEvent, FillGenerator},
-    model::{
-        account_data::AccountData,
-        order::{ExecutionRequest, OrderEvent},
-    },
+    model::{account_data::AccountData, order::ExecutionRequest},
 };
 
 /*----- */
-// Spot Arbitrage Arena
+// Spot Arb Executor
 /*----- */
+#[derive(Debug, Default)]
+pub struct SpotArbExecutor {
+    binance_spot: Option<BinanceExecution>,
+    poloniex_spot: Option<PoloniexExecution>,
+}
+
+/*----- */
+// Spot Arb Arena
+/*----- */
+#[derive(Debug)]
 pub struct SpotArbArena {
     pub order_rx: mpsc::UnboundedReceiver<ExecutionRequest>,
+    pub executor: SpotArbExecutor,
 }
 
 impl SpotArbArena {
@@ -34,6 +36,7 @@ impl SpotArbArena {
         exchange_ids: Vec<ExchangeId>,
     ) -> Self {
         // Combine user data streams from different exchanges into one
+        let mut executor = SpotArbExecutor::default();
         let (account_data_tx, account_data_rx) = mpsc::unbounded_channel();
         for exchange in exchange_ids.into_iter() {
             match exchange {
@@ -41,11 +44,13 @@ impl SpotArbArena {
                     tokio::spawn(consume_account_data_stream::<BinanceExecution>(
                         account_data_tx.clone(),
                     ));
+                    executor.binance_spot = Some(BinanceExecution::new());
                 }
                 ExchangeId::PoloniexSpot => {
                     tokio::spawn(consume_account_data_stream::<PoloniexExecution>(
                         account_data_tx.clone(),
                     ));
+                    executor.poloniex_spot = Some(PoloniexExecution::new());
                 }
             }
         }
@@ -56,7 +61,7 @@ impl SpotArbArena {
             account_data_rx,
         ));
 
-        Self { order_rx }
+        Self { order_rx, executor }
     }
 }
 

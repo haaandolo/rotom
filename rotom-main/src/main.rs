@@ -422,7 +422,6 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - impl aggregated ws stream
 // - maybe impl a trait called "spot arb exe" to limit buy/sell, transfer funds or taker buy/sell for the OrderEvent? and maybe even keeping a order at bba
 // - code to keep a limit order at bba
 // - polo cid account data stream, see if we can set this when making a new order - for binance aswell

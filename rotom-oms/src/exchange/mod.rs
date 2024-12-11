@@ -61,6 +61,7 @@ pub trait ExecutionClient {
     type WalletTransferResponse;
     type AccountDataStreamResponse: Send + for<'de> Deserialize<'de> + Debug + Into<AccountData>;
 
+    // Initialise a account data stream
     async fn init() -> Result<AccountDataWebsocket, SocketError>;
 
     // Init exchange executor
@@ -92,25 +93,6 @@ pub trait ExecutionClient {
         wallet_transfer_request: WalletTransfer,
     ) -> Result<Self::WalletTransferResponse, SocketError>;
 }
-
-// /*----- */
-// // Execution ID
-// /*----- */
-// #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]
-// #[serde(rename = "execution", rename_all = "snake_case")]
-// pub enum ExecutionId {
-//     Poloniex,
-//     Binance,
-// }
-
-// impl std::fmt::Display for ExecutionId {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         match self {
-//             ExecutionId::Binance => write!(f, "binance"),
-//             ExecutionId::Poloniex => write!(f, "poloniex"),
-//         }
-//     }
-// }
 
 /*----- */
 // Account User Data Auto Reconnect
