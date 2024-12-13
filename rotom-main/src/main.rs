@@ -18,11 +18,10 @@ use rotom_main::{
 use rotom_oms::{
     event::{Event, EventTx},
     exchange::{
-        binance::binance_client::BinanceExecution, poloniex::poloniex_client::PoloniexExecution,
-        ExecutionClient,
+        binance::binance_client::BinanceExecution, combine_account_data_stream,
+        poloniex::poloniex_client::PoloniexExecution, ExecutionClient,
     },
     execution::{
-        arena::spot_arb::spot_arb_arena::SpotArbArena,
         simulated::{Config, SimulatedExecution},
         Fees,
     },
@@ -272,13 +271,7 @@ pub async fn main() {
             .portfolio(Arc::clone(&arb_portfolio))
             .data(MarketFeed::new(stream_trades().await))
             .strategy(SpreadStategy::new())
-            .execution(SimulatedExecution::new(Config {
-                simulated_fees_pct: Fees {
-                    exchange: 0.01,
-                    slippage: 0.05,
-                    network: 0.0,
-                },
-            }))
+            .execution(PoloniexExecution::new())
             .send_order_tx(excution_arena_order_event_tx.clone())
             .order_update_rx(order_update_rx)
             .build()
@@ -291,11 +284,7 @@ pub async fn main() {
     // Arena
     /////////////////////////////////////////////////////////////
     let exchanges = vec![ExchangeId::BinanceSpot, ExchangeId::PoloniexSpot];
-    tokio::spawn(SpotArbArena::init(
-        execution_arena_order_event_rx,
-        order_update_txs,
-        exchanges,
-    ));
+    combine_account_data_stream(exchanges, order_update_txs).await;
 
     // Build engine TODO: (check the commands are doing what it is supposed to)
     // let trader_command_txs = markets
@@ -440,3 +429,20 @@ fn init_logging() {
 // - change level size to quantity (name change)
 // - change r#type to enum instead of string
 // - unify auto reconnect script?
+
+/*
+# Execution key points
+- 2 versions of execution, buy illiquid & sell illiquid
+- always taker buy and sell at the liquid exchange
+- always maker buy and sell at bba or deeper at the illiquid exchange
+
+# Buy illiquid
+- limit order at bba illiquid exchange
+- transfer funds to liquid exchange
+- taker out the position
+
+# Sell illiquid
+- taker order buy on the liquid exchange
+- transfer funds to illiquid exchange
+- sell out using limit order at bba in the illiquid exchange
+*/

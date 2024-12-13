@@ -1,4 +1,3 @@
-pub mod arena;
 pub mod error;
 pub mod simulated;
 

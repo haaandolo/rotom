@@ -1,5 +1,3 @@
-use std::{collections::VecDeque, sync::Arc};
-
 use async_trait::async_trait;
 use parking_lot::Mutex;
 use rotom_data::{
@@ -8,7 +6,7 @@ use rotom_data::{
 };
 use rotom_oms::{
     event::{Event, EventTx, MessageTransmitter},
-    execution::FillGenerator,
+    exchange::ExecutionClient,
     model::{
         account_data::AccountData,
         order::{ExecutionRequest, OpenOrder},
@@ -16,6 +14,7 @@ use rotom_oms::{
     portfolio::portfolio_type::{FillUpdater, MarketUpdater, OrderGenerator},
 };
 use rotom_strategy::{SignalForceExit, SignalGenerator};
+use std::{collections::VecDeque, sync::Arc};
 use tokio::sync::mpsc;
 use tracing::{debug, warn};
 use uuid::Uuid;
@@ -44,7 +43,7 @@ pub struct SpotArbTraderLego<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
-    Execution: FillGenerator,
+    Execution: ExecutionClient,
     Portfolio: MarketUpdater + OrderGenerator + FillUpdater,
 {
     pub engine_id: Uuid,
@@ -67,7 +66,7 @@ pub struct SpotArbTrader<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
-    Execution: FillGenerator,
+    Execution: ExecutionClient,
     Portfolio: MarketUpdater + OrderGenerator,
 {
     engine_id: Uuid,
@@ -87,7 +86,7 @@ impl<Data, Strategy, Execution, Portfolio> SpotArbTrader<Data, Strategy, Executi
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
-    Execution: FillGenerator,
+    Execution: ExecutionClient,
     Portfolio: MarketUpdater + OrderGenerator + FillUpdater,
 {
     pub fn new(lego: SpotArbTraderLego<Data, Strategy, Execution, Portfolio>) -> Self {
@@ -120,7 +119,7 @@ impl<Data, Strategy, Execution, Portfolio> TraderRun
 where
     Data: MarketGenerator<MarketEvent<DataKind>> + Send,
     Strategy: SignalGenerator + Send,
-    Execution: FillGenerator + Send,
+    Execution: ExecutionClient + Send,
     Portfolio: MarketUpdater + OrderGenerator + FillUpdater + Send,
 {
     fn receive_remote_command(&mut self) -> Option<Command> {
@@ -229,17 +228,12 @@ where
                         }
                     }
                     Event::OrderNew(order) => {
+                        let new_order = self.execution.open_order(OpenOrder::from(&order)).await;
                         // println!("order ==> {:#?}", order);
-                        let _ = self
-                            .send_order_tx
-                            .send(ExecutionRequest::Open(OpenOrder::from(&order)));
-                        // let fill = self
-                        //     .execution
-                        //     .generate_fill(order)
-                        //     .expect("Failed to generate");
+                        // let _ = self
+                        //     .send_order_tx
+                        //     .send(ExecutionRequest::Open(OpenOrder::from(&order)));
 
-                        // self.event_tx.send(Event::Fill(fill.clone()));
-                        // self.event_queue.push_back(Event::Fill(fill));
                     }
                     Event::Fill(fill) => {
                         let fill_side_effect_events = self
@@ -293,13 +287,13 @@ where
                     }
                 }
             }
-
-            debug!(
-                engine_id = &*self.engine_id.to_string(),
-                market = &*format!("{:?}", self.markets),
-                message = "Trader trading loop stopped"
-            )
         }
+
+        debug!(
+            engine_id = &*self.engine_id.to_string(),
+            market = &*format!("{:?}", self.markets),
+            message = "Trader trading loop stopped"
+        )
     }
 }
 
@@ -311,7 +305,7 @@ pub struct SpotArbTraderBuilder<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
-    Execution: FillGenerator,
+    Execution: ExecutionClient,
     Portfolio: MarketUpdater + OrderGenerator + FillUpdater,
 {
     pub engine_id: Option<Uuid>,
@@ -331,7 +325,7 @@ impl<Data, Strategy, Execution, Portfolio>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
-    Execution: FillGenerator,
+    Execution: ExecutionClient,
     Portfolio: MarketUpdater + OrderGenerator + FillUpdater,
 {
     pub fn new() -> Self {

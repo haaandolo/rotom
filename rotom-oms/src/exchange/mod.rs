@@ -5,8 +5,10 @@ pub mod poloniex;
 use std::{collections::HashMap, fmt::Debug};
 
 use async_trait::async_trait;
+use binance::binance_client::BinanceExecution;
 use futures::StreamExt;
 use hmac::Hmac;
+use poloniex::poloniex_client::PoloniexExecution;
 use rotom_data::{
     error::SocketError,
     protocols::ws::{
@@ -190,4 +192,35 @@ pub async fn send_account_data_to_traders(
             }
         }
     }
+}
+
+/*----- */
+// Account Data Stream - combine streams together
+/*----- */
+pub async fn combine_account_data_stream(
+    exchange_ids: Vec<ExchangeId>,
+    trader_order_updater: HashMap<String, mpsc::Sender<AccountData>>,
+) {
+    // Init account data channels and combine
+    let (account_data_tx, account_data_rx) = mpsc::unbounded_channel();
+    for exchange in exchange_ids.into_iter() {
+        match exchange {
+            ExchangeId::BinanceSpot => {
+                tokio::spawn(consume_account_data_stream::<BinanceExecution>(
+                    account_data_tx.clone(),
+                ));
+            }
+            ExchangeId::PoloniexSpot => {
+                tokio::spawn(consume_account_data_stream::<PoloniexExecution>(
+                    account_data_tx.clone(),
+                ));
+            }
+        }
+    }
+
+    // Send order updates to corresponding trader pair for exchange
+    tokio::spawn(send_account_data_to_traders(
+        trader_order_updater,
+        account_data_rx,
+    ));
 }
