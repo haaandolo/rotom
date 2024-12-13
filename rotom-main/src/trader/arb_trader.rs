@@ -1,5 +1,6 @@
 use std::{collections::VecDeque, sync::Arc};
 
+use async_trait::async_trait;
 use parking_lot::Mutex;
 use rotom_data::{
     event_models::market_event::{DataKind, MarketEvent},
@@ -8,7 +9,10 @@ use rotom_data::{
 use rotom_oms::{
     event::{Event, EventTx, MessageTransmitter},
     execution::FillGenerator,
-    model::{account_data::AccountData, order::{ExecutionRequest, OpenOrder}},
+    model::{
+        account_data::AccountData,
+        order::{ExecutionRequest, OpenOrder},
+    },
     portfolio::portfolio_type::{FillUpdater, MarketUpdater, OrderGenerator},
 };
 use rotom_strategy::{SignalForceExit, SignalGenerator};
@@ -110,13 +114,14 @@ where
 /*----- */
 // Impl Trader trait for Single Market Trader
 /*----- */
+#[async_trait]
 impl<Data, Strategy, Execution, Portfolio> TraderRun
     for SpotArbTrader<Data, Strategy, Execution, Portfolio>
 where
-    Data: MarketGenerator<MarketEvent<DataKind>>,
-    Strategy: SignalGenerator,
-    Execution: FillGenerator,
-    Portfolio: MarketUpdater + OrderGenerator + FillUpdater,
+    Data: MarketGenerator<MarketEvent<DataKind>> + Send,
+    Strategy: SignalGenerator + Send,
+    Execution: FillGenerator + Send,
+    Portfolio: MarketUpdater + OrderGenerator + FillUpdater + Send,
 {
     fn receive_remote_command(&mut self) -> Option<Command> {
         match self.command_rx.try_recv() {
@@ -144,7 +149,7 @@ where
         }
     }
 
-    fn run(mut self) {
+    async fn run(mut self) {
         'trading: loop {
             // Check for mew remote Commands
             while let Some(command) = self.receive_remote_command() {
@@ -225,7 +230,9 @@ where
                     }
                     Event::OrderNew(order) => {
                         // println!("order ==> {:#?}", order);
-                        let _ = self.send_order_tx.send(ExecutionRequest::Open(OpenOrder::from(&order)));
+                        let _ = self
+                            .send_order_tx
+                            .send(ExecutionRequest::Open(OpenOrder::from(&order)));
                         // let fill = self
                         //     .execution
                         //     .generate_fill(order)

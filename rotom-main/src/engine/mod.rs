@@ -14,7 +14,10 @@ use rotom_oms::{
 };
 use serde::Serialize;
 use std::{collections::HashMap, sync::Arc, thread};
-use tokio::sync::{mpsc, oneshot};
+use tokio::{
+    runtime::Handle,
+    sync::{mpsc, oneshot},
+};
 use tracing::{error, info, warn};
 use uuid::Uuid;
 
@@ -113,7 +116,19 @@ where
         // Run each Trader instance on it's own thread
         let mut thread_handles = Vec::with_capacity(traders.len());
         for trader in traders.into_iter() {
-            let handle = thread::spawn(move || trader.run());
+            let current_runtime_handle = Handle::current();
+            println!("$$$$$$$$$$$$$$$$$$$$$$");
+            println!("$$$$$$$ BEFORE $$$$$$$");
+            println!("$$$$$$$$$$$$$$$$$$$$$$");
+            let handle = thread::spawn(move || {
+                // let _guard = current_runtime_handle.enter();
+                // let handle2 = Handle::current();
+                // current_runtime_handle.spawn(async move { trader.run().await })
+                current_runtime_handle.block_on(async { trader.run().await });
+            });
+            println!("$$$$$$$$$$$$$$$$$$$$$$");
+            println!("$$$$$$$ AFTER $$$$$$$$");
+            println!("$$$$$$$$$$$$$$$$$$$$$$");
             thread_handles.push(handle);
         }
 
@@ -134,6 +149,9 @@ where
             let _ = notify_tx.send(true).await;
         });
 
+        println!("$$$$$$$$$$$$$$$$$$$$$$");
+        println!("$$$$$$$$ END $$$$$$$$$");
+        println!("$$$$$$$$$$$$$$$$$$$$$$");
         notify_rx
     }
 

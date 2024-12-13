@@ -158,5 +158,5 @@ pub enum ExecutionRequest {
     Open(OpenOrder),
     Cancel(CancelOrder),
     CancelAll(CancelOrder),
-    Transfer(WalletTransfer)
+    Transfer(WalletTransfer),
 }

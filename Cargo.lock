@@ -1187,6 +1187,7 @@ dependencies = [
 name = "rotom-main"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "chrono",
  "futures",
  "parking_lot",
