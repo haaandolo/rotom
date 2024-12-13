@@ -117,18 +117,9 @@ where
         let mut thread_handles = Vec::with_capacity(traders.len());
         for trader in traders.into_iter() {
             let current_runtime_handle = Handle::current();
-            println!("$$$$$$$$$$$$$$$$$$$$$$");
-            println!("$$$$$$$ BEFORE $$$$$$$");
-            println!("$$$$$$$$$$$$$$$$$$$$$$");
             let handle = thread::spawn(move || {
-                // let _guard = current_runtime_handle.enter();
-                // let handle2 = Handle::current();
-                // current_runtime_handle.spawn(async move { trader.run().await })
                 current_runtime_handle.block_on(async { trader.run().await });
             });
-            println!("$$$$$$$$$$$$$$$$$$$$$$");
-            println!("$$$$$$$ AFTER $$$$$$$$");
-            println!("$$$$$$$$$$$$$$$$$$$$$$");
             thread_handles.push(handle);
         }
 
@@ -149,9 +140,6 @@ where
             let _ = notify_tx.send(true).await;
         });
 
-        println!("$$$$$$$$$$$$$$$$$$$$$$");
-        println!("$$$$$$$$ END $$$$$$$$$");
-        println!("$$$$$$$$$$$$$$$$$$$$$$");
         notify_rx
     }
 

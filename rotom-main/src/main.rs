@@ -241,7 +241,6 @@ pub async fn main() {
 
     let market2 = vec![op, arb];
 
-    let (excution_arena_order_event_tx, execution_arena_order_event_rx) = mpsc::unbounded_channel();
     let mut arb_traders = Vec::new();
     let mut trader_command_txs = HashMap::new();
     let mut order_update_txs = HashMap::new();
@@ -271,8 +270,8 @@ pub async fn main() {
             .portfolio(Arc::clone(&arb_portfolio))
             .data(MarketFeed::new(stream_trades().await))
             .strategy(SpreadStategy::new())
-            .execution(PoloniexExecution::new())
-            .send_order_tx(excution_arena_order_event_tx.clone())
+            .liquid_exchange(BinanceExecution::new())
+            .illiquid_exchange(PoloniexExecution::new())
             .order_update_rx(order_update_rx)
             .build()
             .unwrap();
@@ -411,6 +410,8 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
+// - figure out execution logic for the arb_trader
+// - rate limit ring buffer
 // - maybe impl a trait called "spot arb exe" to limit buy/sell, transfer funds or taker buy/sell for the OrderEvent? and maybe even keeping a order at bba
 // - code to keep a limit order at bba
 // - polo cid account data stream, see if we can set this when making a new order - for binance aswell
@@ -420,7 +421,7 @@ fn init_logging() {
 // - make the above point more solid
 // - does the balance account data stream for poloniex need to be a Vec<T> or can it be T?
 // - update parse decision signal to not let short positions be open for spot trades
-// - make execution arena
+// - event ping respose for polo fix de error
 // - unify types like Side, OrderType etc into one
 // - standarise order types ie. limit, market etc
 // - rm todos

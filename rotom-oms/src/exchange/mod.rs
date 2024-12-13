@@ -57,10 +57,10 @@ impl AccountDataWebsocket {
 pub trait ExecutionClient {
     const CLIENT: ExchangeId;
 
-    type CancelResponse;
-    type CancelAllResponse;
-    type NewOrderResponse;
-    type WalletTransferResponse;
+    type CancelResponse: Send;
+    type CancelAllResponse: Send;
+    type NewOrderResponse: Send;
+    type WalletTransferResponse: Send;
     type AccountDataStreamResponse: Send + for<'de> Deserialize<'de> + Debug + Into<AccountData>;
 
     // Initialise a account data stream
