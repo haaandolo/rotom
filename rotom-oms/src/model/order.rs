@@ -58,9 +58,9 @@ impl OrderEvent {
 
     pub fn update_order_from_account_data_stream(&mut self, account_data_update: AccountDataOrder) {
         self.set_state(OrderState::Open);
-        self.set_client_id(&account_data_update);
         self.filled_gross = account_data_update.filled_gross;
         self.order_status = Some(account_data_update.status);
+        self.client_order_id = Some(ClientOrderId(account_data_update.client_order_id.clone()));
     }
 
     // If the state is not open or intransit, we can set a ClientOrderId

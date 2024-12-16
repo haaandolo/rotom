@@ -74,7 +74,7 @@ pub async fn main() {
         time: Utc::now(),
         exchange: ExchangeId::BinanceSpot,
         instrument: Instrument::new("op", "usdt"),
-        client_order_id: Some(ClientOrderId("9MHbFzZWbL4otb7tzQ5vkZ".to_string())),
+        client_order_id: Some(ClientOrderId("391776281638920193".to_string())),
         market_meta: MarketMeta {
             close: 1.0,
             time: Utc::now(),
@@ -112,17 +112,12 @@ pub async fn main() {
 
     ////////////////////////////////////////////////////
     // Test Poloniex Execution
-    // let polo_exe = PoloniexExecution::new().unwrap();
+    // let polo_exe = PoloniexExecution::new();
     // let res = polo_exe.open_order(open_order).await;
 
     // let res = polo_exe.open_order(order.clone()).await;
 
-    // let res = polo_exe
-    //     .cancel_order(
-    //         "6fa85248-3701-46f4-b1a5-63ae379d2dfe".to_string(),
-    //         "None".to_string(),
-    //     )
-    //     .await;
+    // let res = polo_exe.cancel_order(cancel_order).await;
 
     // let res= polo_exe.cancel_order_all("OP_USDT".to_string()).await;
 
@@ -415,7 +410,6 @@ fn init_logging() {
 // - rate limit ring buffer
 // - maybe impl a trait called "spot arb exe" to limit buy/sell, transfer funds or taker buy/sell for the OrderEvent? and maybe even keeping a order at bba
 // - code to keep a limit order at bba
-// - polo cid account data stream, see if we can set this when making a new order - for binance aswell
 // - move trader debug log after the infinite loop
 // - start execution function to limit buy -> transfer -> taker sell, i think this should be a function
 // - figure out the balance +ve and -ve of quote and base asset for portfolio when the fill is updated

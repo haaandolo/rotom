@@ -28,8 +28,7 @@ pub struct PoloniexAccountDataOrderParams {
     pub r#type: OrderKind,
     #[serde(deserialize_with = "de_str")]
     pub quantity: f64,
-    #[serde(deserialize_with = "de_str")]
-    pub order_id: u64,
+    pub order_id: String,
     #[serde(deserialize_with = "de_str")]
     pub trade_fee: f64,
     pub client_order_id: String,
@@ -67,7 +66,7 @@ impl From<PoloniexAccountDataOrder> for AccountDataOrder {
     fn from(mut order: PoloniexAccountDataOrder) -> Self {
         Self {
             exchange: ExchangeId::PoloniexSpot,
-            client_order_id: std::mem::take(&mut order.data[0].client_order_id),
+            client_order_id: std::mem::take(&mut order.data[0].order_id),
             asset: std::mem::take(&mut order.data[0].symbol),
             price: order.data[0].filled_amount, // todo
             quantity: order.data[0].quantity,

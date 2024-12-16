@@ -277,7 +277,7 @@ where
                             // Del
 
                             self.meta_data.order = Some(new_order);
-                            self.process_new_order().await;
+                            // self.process_new_order().await;
                         }
                     },
                     Event::Fill(fill) => {
