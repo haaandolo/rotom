@@ -48,6 +48,21 @@ impl OrderEvent {
         self.quantity * self.market_meta.close
     }
 
+    pub fn get_exchange(&self) -> ExchangeId {
+        self.exchange
+    }
+
+    pub fn set_state(&mut self, state: OrderState) {
+        self.state = state
+    }
+
+    pub fn update_order_from_account_data_stream(&mut self, account_data_update: AccountDataOrder) {
+        self.set_state(OrderState::Open);
+        self.set_client_id(&account_data_update);
+        self.filled_gross = account_data_update.filled_gross;
+        self.order_status = Some(account_data_update.status);
+    }
+
     // If the state is not open or intransit, we can set a ClientOrderId
     pub fn set_client_id(&mut self, order_update: &AccountDataOrder) {
         match self.state.is_order_open() {
@@ -56,10 +71,6 @@ impl OrderEvent {
             }
             true => (),
         }
-    }
-
-    pub fn update_order(&mut self, order_update: &AccountDataOrder) {
-        self.filled_gross = order_update.filled_gross
     }
 }
 
@@ -111,6 +122,18 @@ pub struct OpenOrder {
 
 impl From<&OrderEvent> for OpenOrder {
     fn from(order: &OrderEvent) -> Self {
+        Self {
+            price: order.market_meta.close,
+            quantity: order.quantity,
+            decision: order.decision,
+            order_kind: order.order_kind.clone(),
+            instrument: order.instrument.clone(),
+        }
+    }
+}
+
+impl From<&mut OrderEvent> for OpenOrder {
+    fn from(order: &mut OrderEvent) -> Self {
         Self {
             price: order.market_meta.close,
             quantity: order.quantity,

@@ -2,14 +2,16 @@ use async_trait::async_trait;
 use parking_lot::Mutex;
 use rotom_data::{
     event_models::market_event::{DataKind, MarketEvent},
+    protocols::ws::poll_next::ExchangeStream,
+    shared::subscription_models::ExchangeId,
     Feed, Market, MarketGenerator,
 };
 use rotom_oms::{
     event::{Event, EventTx, MessageTransmitter},
-    exchange::ExecutionClient,
+    exchange::{binance::requests::new_order, ExecutionClient},
     model::{
         account_data::AccountData,
-        order::{ExecutionRequest, OpenOrder, OrderEvent},
+        order::{ExecutionRequest, OpenOrder, OrderEvent, OrderState},
     },
     portfolio::portfolio_type::{FillUpdater, MarketUpdater, OrderGenerator},
 };
@@ -121,6 +123,23 @@ where
     ) -> SpotArbTraderBuilder<Data, Strategy, LiquidExchange, IlliquidExchange, Portfolio> {
         SpotArbTraderBuilder::new()
     }
+
+    pub async fn process_new_order(&mut self) {
+        if let Some(order) = &mut self.meta_data.order {
+            order.set_state(OrderState::InTransit);
+            if order.get_exchange() == LiquidExchange::CLIENT {
+                let _ = self
+                    .liquid_exchange
+                    .open_order(OpenOrder::from(order))
+                    .await;
+            } else {
+                let _ = self
+                    .illiquid_exchange
+                    .open_order(OpenOrder::from(order))
+                    .await;
+            }
+        }
+    }
 }
 
 /*----- */
@@ -130,11 +149,11 @@ where
 impl<Data, Strategy, LiquidExchange, IlliquidExchange, Portfolio> TraderRun
     for SpotArbTrader<Data, Strategy, LiquidExchange, IlliquidExchange, Portfolio>
 where
-    Data: MarketGenerator<MarketEvent<DataKind>> + Send,
-    Strategy: SignalGenerator + Send,
-    LiquidExchange: ExecutionClient + Send,
-    IlliquidExchange: ExecutionClient + Send,
-    Portfolio: MarketUpdater + OrderGenerator + FillUpdater + Send,
+    Data: MarketGenerator<MarketEvent<DataKind>> + Send + Sync,
+    Strategy: SignalGenerator + Send + Sync,
+    LiquidExchange: ExecutionClient + Send + Sync,
+    IlliquidExchange: ExecutionClient + Send + Sync,
+    Portfolio: MarketUpdater + OrderGenerator + FillUpdater + Send + Sync,
 {
     fn receive_remote_command(&mut self) -> Option<Command> {
         match self.command_rx.try_recv() {
@@ -205,7 +224,7 @@ where
                         if let Some(signal) = self.stategy.generate_signal(&market_event) {
                             // println!("##############################");
                             // println!("signal --> {:#?}", signal);
-                            self.event_tx.send(Event::Signal(signal.clone()));
+                            // self.event_tx.send(Event::Signal(signal.clone()));
                             self.event_queue.push_back(Event::Signal(signal))
                         }
 
@@ -229,7 +248,7 @@ where
                         {
                             // println!("##############################");
                             // println!("order --> {:#?}", order);
-                            self.event_tx.send(Event::OrderNew(order.clone()));
+                            // self.event_tx.send(Event::OrderNew(order.clone()));
                             self.event_queue.push_back(Event::OrderNew(order));
                         }
                     }
@@ -240,30 +259,33 @@ where
                             .generate_exit_order(signal_force_exit)
                             .expect("Failed to generate forced exit order")
                         {
-                            self.event_tx.send(Event::OrderNew(order.clone()));
+                            // self.event_tx.send(Event::OrderNew(order.clone()));
                             self.event_queue.push_back(Event::OrderNew(order));
                         }
                     }
-                    Event::OrderNew(order) => {
-                        // let new_order = self
-                        //     .illiquid_exchange
-                        //     .open_order(OpenOrder::from(&order))
-                        //     .await;
+                    Event::OrderNew(mut new_order) => match &self.meta_data.order {
+                        Some(_existing_order) => {
+                            // todo
+                        }
+                        None => {
+                            // Del
+                            new_order.exchange = ExchangeId::PoloniexSpot;
+                            new_order.quantity = 5.0;
+                            new_order.market_meta.close = 1.5;
+                            println!("##############################");
+                            println!("order --> {:#?}", new_order);
+                            // Del
 
-                        // let new_order2 = self
-                        //     .liquid_exchange
-                        //     .open_order(OpenOrder::from(&order))
-                        //     .await;
-                    }
+                            self.meta_data.order = Some(new_order);
+                            self.process_new_order().await;
+                        }
+                    },
                     Event::Fill(fill) => {
                         let fill_side_effect_events = self
                             .portfolio
                             .lock()
                             .update_from_fill(&fill)
                             .expect("Failed to update Portfolio from fill");
-
-                        println!("##############################");
-                        println!("fill event --> {:#?}", fill_side_effect_events);
                         self.event_tx.send_many(fill_side_effect_events);
                     }
                     _ => {}
@@ -273,11 +295,17 @@ where
             /*-------------------- 3.Process Account Data update ---------------- */
             // If we interacted with the exchange in anyway in the second step, we
             // will get the order update in this section.
+
+            // todo: turn this into a while let loop??
             match self.order_update_rx.try_recv() {
                 Ok(account_data) => match account_data {
-                    AccountData::Order(order) => {
-                        println!("AccountData: {:#?}", order);
-                        self.event_queue.push_back(Event::AccountDataOrder(order))
+                    AccountData::Order(order_update) => {
+                        println!("AccountData: {:#?}", order_update);
+                        if let Some(order) = &mut self.meta_data.order {
+                            order.update_order_from_account_data_stream(order_update);
+                            println!("####### ORDER UPDATED ##########");
+                            println!("{:#?}", order)
+                        }
                     }
                     AccountData::BalanceVec(balances) => {
                         println!("AccountData: {:#?}", balances);
