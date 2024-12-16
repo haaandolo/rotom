@@ -163,3 +163,23 @@ impl From<PoloniexAccountEvents> for AccountData {
         }
     }
 }
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_poloniex_user_data_response() {
+        let response = "{\"channel\":\"balances\",\"data\":[{\"id\":391789032125874177,\"accountId\":\"292264758130978818\",\"available\":\"1.34476247912\",\"accountType\":\"SPOT\",\"hold\":\"7.5\",\"changeTime\":1734376184347,\"userId\":1887604,\"currency\":\"USDT\",\"eventType\":\"PLACE_ORDER\",\"ts\":1734376184352}]}";
+        let response_de = serde_json::from_str::<PoloniexAccountEvents>(response);
+        let mut _result = false;
+
+        match response_de {
+            Ok(_) => _result = true,
+            Err(_) => _result = false,
+        }
+
+        assert!(_result)
+    }
+}

@@ -3,32 +3,6 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 /*----- */
-// AssetBalance
-/*----- */
-#[derive(Clone, PartialEq, PartialOrd, Debug, Serialize, Deserialize)]
-pub struct AssetBalance {
-    pub asset: String, // can be smolstr e.g btc
-    pub exchange: ExchangeId,
-    pub balance: Balance,
-}
-
-impl AssetBalance {
-    pub fn new(asset: String, exchange: ExchangeId, balance: Balance) -> Self {
-        Self {
-            asset,
-            exchange,
-            balance,
-        }
-    }
-}
-
-impl From<&AssetBalance> for SpotBalanceId {
-    fn from(asset_balance: &AssetBalance) -> Self {
-        SpotBalanceId(format!("{}_{}", asset_balance.asset, asset_balance.exchange).to_lowercase())
-    }
-}
-
-/*----- */
 // Balance
 /*----- */
 pub type BalanceId = String;

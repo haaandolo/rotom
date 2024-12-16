@@ -277,7 +277,7 @@ where
                             // Del
 
                             self.meta_data.order = Some(new_order);
-                            // self.process_new_order().await;
+                            self.process_new_order().await;
                         }
                     },
                     Event::Fill(fill) => {
@@ -297,43 +297,46 @@ where
             // will get the order update in this section.
 
             // todo: turn this into a while let loop??
-            match self.order_update_rx.try_recv() {
-                Ok(account_data) => match account_data {
-                    AccountData::Order(order_update) => {
-                        println!("AccountData: {:#?}", order_update);
-                        if let Some(order) = &mut self.meta_data.order {
-                            order.update_order_from_account_data_stream(order_update);
-                            println!("####### ORDER UPDATED ##########");
-                            println!("{:#?}", order)
+            'account_data_loop: loop {
+                match self.order_update_rx.try_recv() {
+                    Ok(account_data) => match account_data {
+                        AccountData::Order(order_update) => {
+                            println!("AccountData: {:#?}", order_update);
+                            if let Some(order) = &mut self.meta_data.order {
+                                order.update_order_from_account_data_stream(order_update);
+                                println!("####### ORDER UPDATED ##########");
+                                println!("{:#?}", order)
+                            }
                         }
-                    }
-                    AccountData::BalanceVec(balances) => {
-                        println!("AccountData: {:#?}", balances);
-                        self.event_queue
-                            .push_back(Event::AccountDataBalanceVec(balances));
-                    }
+                        AccountData::BalanceVec(balances) => {
+                            println!("AccountData: {:#?}", balances);
+                            self.event_queue
+                                .push_back(Event::AccountDataBalanceVec(balances));
+                        }
 
-                    AccountData::BalanceDelta(balance_delta) => {
-                        println!("AccountData: {:#?}", balance_delta);
-                        self.event_queue
-                            .push_back(Event::AccountDataBalanceDelta(balance_delta))
-                    }
+                        AccountData::BalanceDelta(balance_delta) => {
+                            println!("AccountData: {:#?}", balance_delta);
+                            self.event_queue
+                                .push_back(Event::AccountDataBalanceDelta(balance_delta))
+                        }
 
-                    AccountData::Balance(balance) => {
-                        println!("AccountData: {:#?}", balance);
-                        self.event_queue
-                            .push_back(Event::AccountDataBalance(balance))
-                    }
-                },
-                Err(error) => {
-                    if error == mpsc::error::TryRecvError::Disconnected {
-                        warn!(
-                            message = "Order update rx for ArbTrader disconnected",
-                            asset_one  = %self.markets[0],
-                            asset_two  = %self.markets[1]
-                        );
-                        break 'trading;
-                    }
+                        AccountData::Balance(balance) => {
+                            println!("AccountData: {:#?}", balance);
+                            self.event_queue
+                                .push_back(Event::AccountDataBalance(balance))
+                        }
+                    },
+                    Err(error) => match error {
+                        mpsc::error::TryRecvError::Empty => break 'account_data_loop,
+                        mpsc::error::TryRecvError::Disconnected => {
+                            warn!(
+                                message = "Order update rx for ArbTrader disconnected",
+                                asset_one  = %self.markets[0],
+                                asset_two  = %self.markets[1]
+                            );
+                            break 'trading;
+                        }
+                    },
                 }
             }
         }

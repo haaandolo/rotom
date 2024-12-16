@@ -15,7 +15,8 @@ use crate::{
     },
     execution::FillEvent,
     model::{
-        balance::{determine_balance_id, AssetBalance, SpotBalanceId},
+        account_data::AccountDataBalance,
+        balance::{determine_balance_id, SpotBalanceId},
         order::{OrderEvent, OrderState},
         OrderKind, Side,
     },
@@ -60,12 +61,12 @@ impl SpotPortfolio {
             let exchange_balance = match exchange {
                 ExchangeId::BinanceSpot => {
                     let balance = BinancePrivateData::new().get_balance_all().await?;
-                    let asset_balance: Vec<AssetBalance> = balance.into();
+                    let asset_balance: Vec<AccountDataBalance> = balance.into();
                     asset_balance
                 }
                 ExchangeId::PoloniexSpot => {
                     let balance = PoloniexPrivateData::new().get_balance_all().await?;
-                    let asset_balance: Vec<AssetBalance> = balance.into();
+                    let asset_balance: Vec<AccountDataBalance> = balance.into();
                     asset_balance
                 }
             };

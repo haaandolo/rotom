@@ -163,6 +163,7 @@ pub async fn main() {
         .unwrap(),
     ));
 
+    println!("arb portfolio: {:#?}", arb_portfolio);
     ///////////////////////////////////////////////////
     // Market
     let markets = vec![
@@ -408,6 +409,7 @@ fn init_logging() {
 /*----- */
 // - what to do with new order and an existing order exists?
 // - rate limit ring buffer
+// - AccountDataBalance not working for polo and bin as the keys are wrong, balance comes in as op but we have our trader update key as op_usdt
 // - maybe impl a trait called "spot arb exe" to limit buy/sell, transfer funds or taker buy/sell for the OrderEvent? and maybe even keeping a order at bba
 // - code to keep a limit order at bba
 // - move trader debug log after the infinite loop

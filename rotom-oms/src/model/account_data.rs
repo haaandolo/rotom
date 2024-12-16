@@ -2,7 +2,10 @@ use chrono::{DateTime, Utc};
 use rotom_data::shared::subscription_models::ExchangeId;
 use serde::Deserialize;
 
-use super::{balance::Balance, Side};
+use super::{
+    balance::{Balance, SpotBalanceId},
+    Side,
+};
 
 /*----- */
 // State
@@ -43,6 +46,22 @@ pub struct AccountDataBalance {
     pub asset: String, // can be smolstr e.g. btc
     pub exchange: ExchangeId,
     pub balance: Balance,
+}
+
+impl AccountDataBalance {
+    pub fn new(asset: String, exchange: ExchangeId, balance: Balance) -> Self {
+        Self {
+            asset,
+            exchange,
+            balance,
+        }
+    }
+}
+
+impl From<&AccountDataBalance> for SpotBalanceId {
+    fn from(asset_balance: &AccountDataBalance) -> Self {
+        SpotBalanceId(format!("{}_{}", asset_balance.asset, asset_balance.exchange).to_lowercase())
+    }
 }
 
 #[derive(Debug)]
