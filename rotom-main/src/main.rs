@@ -11,7 +11,7 @@ use rotom_data::{
 use rotom_main::{
     engine::{self, Engine},
     trader::{
-        arb_trader::{self, SpotArbTrader},
+        arb_trader::{self, SpotArbTrader, SpotArbTraderMetaData},
         single_trader::SingleMarketTrader,
     },
 };
@@ -273,6 +273,7 @@ pub async fn main() {
             .liquid_exchange(BinanceExecution::new())
             .illiquid_exchange(PoloniexExecution::new())
             .order_update_rx(order_update_rx)
+            .meta_data(SpotArbTraderMetaData::default())
             .build()
             .unwrap();
 

@@ -9,7 +9,7 @@ use rotom_oms::{
     exchange::ExecutionClient,
     model::{
         account_data::AccountData,
-        order::{ExecutionRequest, OpenOrder},
+        order::{ExecutionRequest, OpenOrder, OrderEvent},
     },
     portfolio::portfolio_type::{FillUpdater, MarketUpdater, OrderGenerator},
 };
@@ -26,13 +26,15 @@ use super::TraderRun;
 /*----- */
 // Spot Arb Trader - Metadata info
 /*----- */
-pub struct ArbTraderMetaData {
+#[derive(Debug, Default)]
+pub struct SpotArbTraderMetaData {
     pub taker_buy_liquid: bool,
     pub taker_sell_liquid: bool,
     pub transfering_to_illiquid: bool,
     pub maker_buy_illiquid: bool,
     pub maker_sell_illiquid: bool,
     pub transfering_to_liquid: bool,
+    pub order: Option<OrderEvent>,
 }
 
 /*----- */
@@ -58,6 +60,7 @@ where
     pub send_order_tx: mpsc::UnboundedSender<ExecutionRequest>,
     pub order_update_rx: mpsc::Receiver<AccountData>,
     pub porfolio: Arc<Mutex<Portfolio>>,
+    pub meta_data: SpotArbTraderMetaData,
 }
 
 /*----- */
@@ -83,6 +86,7 @@ where
     order_update_rx: mpsc::Receiver<AccountData>,
     event_queue: VecDeque<Event>,
     portfolio: Arc<Mutex<Portfolio>>,
+    meta_data: SpotArbTraderMetaData,
 }
 
 impl<Data, Strategy, LiquidExchange, IlliquidExchange, Portfolio>
@@ -109,6 +113,7 @@ where
             order_update_rx: lego.order_update_rx,
             event_queue: VecDeque::with_capacity(4),
             portfolio: lego.porfolio,
+            meta_data: lego.meta_data,
         }
     }
 
@@ -159,7 +164,7 @@ where
 
     async fn run(mut self) {
         'trading: loop {
-            // Check for mew remote Commands
+            /*---------------------- 0.Check for remote cmd --------------------- */
             while let Some(command) = self.receive_remote_command() {
                 match command {
                     Command::Terminate(_) => break 'trading,
@@ -171,10 +176,9 @@ where
                 }
             }
 
-            // If the Feed<MarketEvent> yields, populate the event queue with the next MarketEvent
+            /*-------------------- 1.Get Market Event Update -------------------- */
             match self.data.next() {
                 Feed::Next(market) => {
-                    // self.event_tx.send(Event::Market(market.clone()));
                     self.event_queue.push_back(Event::Market(market));
                 }
                 Feed::UnHealthy => {
@@ -189,8 +193,12 @@ where
                 Feed::Finished => break 'trading,
             }
 
-            // This while loop handles Events from the event_queue it will break if the event_queue
-            // empty and requires another MarketEvent
+            /*--------------------- 2.Process Event Loop ------------------------ */
+            // The event loop is a while loop that will break if there are no more
+            // events in the queue. If we send an order in the  event loop, we will
+            // receieve the update in step 3. Note, since we are awaiting for a
+            // response in this loop, we should get the update corresponding to the
+            // order next up.
             while let Some(event) = self.event_queue.pop_front() {
                 match event {
                     Event::Market(market_event) => {
@@ -262,8 +270,9 @@ where
                 }
             }
 
-            // Check for account data event and break out trading loop if the
-            // rx disconnects
+            /*-------------------- 3.Process Account Data update ---------------- */
+            // If we interacted with the exchange in anyway in the second step, we
+            // will get the order update in this section.
             match self.order_update_rx.try_recv() {
                 Ok(account_data) => match account_data {
                     AccountData::Order(order) => {
@@ -332,6 +341,7 @@ where
     pub send_order_tx: Option<mpsc::UnboundedSender<ExecutionRequest>>,
     pub order_update_rx: Option<mpsc::Receiver<AccountData>>,
     pub portfolio: Option<Arc<Mutex<Portfolio>>>,
+    pub meta_data: Option<SpotArbTraderMetaData>,
 }
 
 impl<Data, Strategy, LiquidExchange, IlliquidExchange, Portfolio>
@@ -356,6 +366,7 @@ where
             send_order_tx: None,
             order_update_rx: None,
             portfolio: None,
+            meta_data: None,
         }
     }
 
@@ -436,6 +447,13 @@ where
         }
     }
 
+    pub fn meta_data(self, value: SpotArbTraderMetaData) -> Self {
+        Self {
+            meta_data: Some(value),
+            ..self
+        }
+    }
+
     pub fn build(
         self,
     ) -> Result<
@@ -472,6 +490,9 @@ where
             portfolio: self
                 .portfolio
                 .ok_or(EngineError::BuilderIncomplete("portfolio"))?,
+            meta_data: self
+                .meta_data
+                .ok_or(EngineError::BuilderIncomplete("meta_data"))?,
         })
     }
 }
