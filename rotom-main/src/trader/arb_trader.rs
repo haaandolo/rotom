@@ -2,16 +2,16 @@ use async_trait::async_trait;
 use parking_lot::Mutex;
 use rotom_data::{
     event_models::market_event::{DataKind, MarketEvent},
-    protocols::ws::poll_next::ExchangeStream,
     shared::subscription_models::ExchangeId,
     Feed, Market, MarketGenerator,
 };
 use rotom_oms::{
     event::{Event, EventTx, MessageTransmitter},
-    exchange::{binance::requests::new_order, ExecutionClient},
+    exchange::ExecutionClient,
     model::{
         account_data::AccountData,
         order::{ExecutionRequest, OpenOrder, OrderEvent, OrderState},
+        OrderKind,
     },
     portfolio::portfolio_type::{FillUpdater, MarketUpdater, OrderGenerator},
 };
@@ -269,9 +269,10 @@ where
                         }
                         None => {
                             // Del
-                            new_order.exchange = ExchangeId::PoloniexSpot;
-                            new_order.quantity = 5.0;
+                            new_order.exchange = ExchangeId::BinanceSpot;
+                            new_order.quantity = 3.0;
                             new_order.market_meta.close = 1.5;
+                            new_order.order_kind = OrderKind::Market;
                             println!("##############################");
                             println!("order --> {:#?}", new_order);
                             // Del

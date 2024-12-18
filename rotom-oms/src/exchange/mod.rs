@@ -16,6 +16,7 @@ use rotom_data::{
         JoinHandle, WsRead,
     },
     shared::subscription_models::ExchangeId,
+    ExchangeAssetId,
 };
 use serde::Deserialize;
 use sha2::Sha256;
@@ -23,7 +24,7 @@ use tokio::sync::mpsc;
 use tracing::{debug, error, info, warn};
 
 use crate::model::{
-    account_data::AccountData,
+    account_data::{AccountData, AccountDataBalance},
     order::{CancelOrder, OpenOrder, WalletTransfer},
 };
 
@@ -162,32 +163,36 @@ where
 /*----- */
 pub async fn send_account_data_to_traders(
     trader_tx: HashMap<String, mpsc::Sender<AccountData>>,
+    porfolio_balance_tx: mpsc::UnboundedSender<AccountDataBalance>,
     mut account_data_stream: mpsc::UnboundedReceiver<AccountData>,
 ) {
     while let Some(message) = account_data_stream.recv().await {
+        println!("ws raw --> {:#?}", message);
         match message {
             AccountData::Order(order) => {
-                if let Some(trader_tx) = trader_tx.get(&order.asset) {
+                if let Some(trader_tx) = trader_tx.get(&ExchangeAssetId::from(&order).0) {
                     let _ = trader_tx.send(AccountData::Order(order)).await;
                 }
             }
             AccountData::BalanceVec(balances) => {
                 for balance in balances.into_iter() {
-                    if let Some(trader_tx) = trader_tx.get(&balance.asset) {
-                        let _ = trader_tx.send(AccountData::Balance(balance)).await;
-                    }
-                }
-            }
-            AccountData::BalanceDelta(balance_delta) => {
-                if let Some(trader_tx) = trader_tx.get(&balance_delta.asset) {
-                    let _ = trader_tx
-                        .send(AccountData::BalanceDelta(balance_delta))
-                        .await;
+                    let _ = porfolio_balance_tx.send(balance);
+                    // if let Some(trader_tx) = trader_tx.get(&balance.asset) {
+                    //     let _ = trader_tx.send(AccountData::Balance(balance)).await;
+                    // }
                 }
             }
             AccountData::Balance(balance) => {
-                if let Some(trader_tx) = trader_tx.get(&balance.asset) {
-                    let _ = trader_tx.send(AccountData::Balance(balance)).await;
+                let _ = porfolio_balance_tx.send(balance);
+                // if let Some(trader_tx) = trader_tx.get(&balance.asset) {
+                //     let _ = trader_tx.send(AccountData::Balance(balance)).await;
+                // }
+            }
+            AccountData::BalanceDelta(balance_delta) => {
+                if let Some(trader_tx) = trader_tx.get(&ExchangeAssetId::from(&balance_delta).0) {
+                    let _ = trader_tx
+                        .send(AccountData::BalanceDelta(balance_delta))
+                        .await;
                 }
             }
         }
@@ -200,6 +205,7 @@ pub async fn send_account_data_to_traders(
 pub async fn combine_account_data_stream(
     exchange_ids: Vec<ExchangeId>,
     trader_order_updater: HashMap<String, mpsc::Sender<AccountData>>,
+    porfolio_balance_tx: mpsc::UnboundedSender<AccountDataBalance>,
 ) {
     // Init account data channels and combine
     let (account_data_tx, account_data_rx) = mpsc::unbounded_channel();
@@ -221,6 +227,7 @@ pub async fn combine_account_data_stream(
     // Send order updates to corresponding trader pair for exchange
     tokio::spawn(send_account_data_to_traders(
         trader_order_updater,
+        porfolio_balance_tx,
         account_data_rx,
     ));
 }

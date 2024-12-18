@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use rotom_data::{
     shared::subscription_models::{ExchangeId, Instrument},
-    MarketMeta,
+    AssetFormatted, MarketMeta,
 };
 use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
@@ -16,9 +16,6 @@ pub enum OrderFill {
     Full,
     Partial,
 }
-
-#[derive(Debug)]
-pub struct AssetFormatted(pub String);
 
 /*----- */
 // OrderEvent
@@ -70,19 +67,6 @@ impl OrderEvent {
                 self.client_order_id = Some(ClientOrderId(order_update.client_order_id.clone()))
             }
             true => (),
-        }
-    }
-}
-
-impl From<(&ExchangeId, &Instrument)> for AssetFormatted {
-    fn from((exchange, instrument): (&ExchangeId, &Instrument)) -> Self {
-        match exchange {
-            ExchangeId::BinanceSpot => {
-                AssetFormatted(format!("{}{}", instrument.base, instrument.quote).to_uppercase())
-            }
-            ExchangeId::PoloniexSpot => {
-                AssetFormatted(format!("{}_{}", instrument.base, instrument.quote).to_uppercase())
-            }
         }
     }
 }

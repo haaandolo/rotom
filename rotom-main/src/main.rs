@@ -6,7 +6,7 @@ use rotom_data::{
     protocols::ws::ws_parser::{StreamParser, WebSocketParser},
     shared::subscription_models::{ExchangeId, Instrument, StreamKind},
     streams::builder::dynamic,
-    Market, MarketFeed, MarketMeta,
+    AssetFormatted, ExchangeAssetId, Market, MarketFeed, MarketMeta,
 };
 use rotom_main::{
     engine::{self, Engine},
@@ -26,7 +26,7 @@ use rotom_oms::{
         Fees,
     },
     model::{
-        order::{AssetFormatted, CancelOrder, OpenOrder, OrderEvent},
+        order::{CancelOrder, OpenOrder, OrderEvent},
         ClientOrderId,
     },
     portfolio::{
@@ -149,21 +149,6 @@ pub async fn main() {
     // Engine id
     let engine_id = Uuid::new_v4();
 
-    ////////////////////////////////////////////////////
-    // Portfolio
-    let arb_portfolio = Arc::new(Mutex::new(
-        SpotPortfolio::new(
-            engine_id,
-            vec![ExchangeId::BinanceSpot, ExchangeId::PoloniexSpot],
-            InMemoryRepository2::default(),
-            SpotArbAllocator,
-        )
-        .init()
-        .await
-        .unwrap(),
-    ));
-
-    println!("arb portfolio: {:#?}", arb_portfolio);
     ///////////////////////////////////////////////////
     // Market
     let markets = vec![
@@ -222,6 +207,24 @@ pub async fn main() {
     //     .unwrap();
     // let single_traders = vec![single_market_trader];
 
+    ////////////////////////////////////////////////////
+    // Portfolio
+    let (portfolio_balance_tx, portfolio_balance_rx) = mpsc::unbounded_channel();
+    let arb_portfolio = Arc::new(Mutex::new(
+        SpotPortfolio::new(
+            engine_id,
+            vec![ExchangeId::BinanceSpot, ExchangeId::PoloniexSpot],
+            InMemoryRepository2::default(),
+            SpotArbAllocator,
+            portfolio_balance_rx,
+        )
+        .init()
+        .await
+        .unwrap(),
+    ));
+
+    println!("arb portfolio: {:#?}", arb_portfolio);
+
     //////////////
     // Arb trader
     //////////////
@@ -254,7 +257,7 @@ pub async fn main() {
         // have the same asset format it would not matter as the key will just be replaced
         let (order_update_tx, order_update_rx) = mpsc::channel(10);
         for market in markets.clone().into_iter() {
-            let asset_formatted = AssetFormatted::from((&market.exchange, &market.instrument));
+            let asset_formatted = ExchangeAssetId::from((&market.exchange, &market.instrument));
             order_update_txs.insert(asset_formatted.0, order_update_tx.clone());
         }
 
@@ -280,7 +283,7 @@ pub async fn main() {
     // Arena
     /////////////////////////////////////////////////////////////
     let exchanges = vec![ExchangeId::BinanceSpot, ExchangeId::PoloniexSpot];
-    combine_account_data_stream(exchanges, order_update_txs).await;
+    combine_account_data_stream(exchanges, order_update_txs, portfolio_balance_tx).await;
 
     // Build engine TODO: (check the commands are doing what it is supposed to)
     // let trader_command_txs = markets
@@ -407,11 +410,14 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
+// - make a channel to portfolio? also see if we stil need accountDataLoop in arb trader
 // - what to do with new order and an existing order exists?
 // - rate limit ring buffer
+// - polo market order not working
 // - AccountDataBalance not working for polo and bin as the keys are wrong, balance comes in as op but we have our trader update key as op_usdt
 // - maybe impl a trait called "spot arb exe" to limit buy/sell, transfer funds or taker buy/sell for the OrderEvent? and maybe even keeping a order at bba
 // - code to keep a limit order at bba
+// - make binance account stream get keys automatically every hour
 // - move trader debug log after the infinite loop
 // - start execution function to limit buy -> transfer -> taker sell, i think this should be a function
 // - figure out the balance +ve and -ve of quote and base asset for portfolio when the fill is updated

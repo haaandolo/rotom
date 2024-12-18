@@ -6,6 +6,7 @@ use rotom_data::{
 };
 use rotom_strategy::{Decision, Signal, SignalForceExit, SignalStrength};
 use std::collections::HashMap;
+use tokio::sync::mpsc;
 use uuid::Uuid;
 
 use crate::{
@@ -39,6 +40,7 @@ pub struct SpotPortfolio {
     pub exchanges: Vec<ExchangeId>,
     pub repository: InMemoryRepository2,
     pub allocator: SpotArbAllocator,
+    pub balance_rx: mpsc::UnboundedReceiver<AccountDataBalance>,
 }
 
 impl SpotPortfolio {
@@ -47,12 +49,14 @@ impl SpotPortfolio {
         exchanges: Vec<ExchangeId>,
         repository: InMemoryRepository2,
         allocator: SpotArbAllocator,
+        balance_rx: mpsc::UnboundedReceiver<AccountDataBalance>,
     ) -> Self {
         Self {
             engine_id,
             exchanges,
             repository,
             allocator,
+            balance_rx,
         }
     }
 

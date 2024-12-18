@@ -11,6 +11,7 @@ pub mod transformer;
 use std::fmt::Display;
 
 use chrono::{DateTime, Utc};
+use exchange::Identifier;
 use serde::{Deserialize, Serialize};
 use shared::subscription_models::{ExchangeId, Instrument};
 use tokio::sync::mpsc::{self, UnboundedReceiver};
@@ -51,6 +52,56 @@ impl Default for MarketMeta {
 }
 
 /*----- */
+// Asset Formatted - asset formatted corresponding to exchange
+/*----- */
+#[derive(Debug)]
+pub struct AssetFormatted(pub String); // smol str
+
+impl From<(&ExchangeId, &Instrument)> for AssetFormatted {
+    fn from((exchange, instrument): (&ExchangeId, &Instrument)) -> Self {
+        match exchange {
+            ExchangeId::BinanceSpot => {
+                AssetFormatted(format!("{}{}", instrument.base, instrument.quote).to_uppercase())
+            }
+            ExchangeId::PoloniexSpot => {
+                AssetFormatted(format!("{}_{}", instrument.base, instrument.quote).to_uppercase())
+            }
+        }
+    }
+}
+
+/*----- */
+// Asset & Exchange formatted - usually used for keys of hashmaps e.g BINANCESPOT_OPUSDT
+/*----- */
+#[derive(Debug)]
+pub struct ExchangeAssetId(pub String); // smol str
+
+impl From<(&ExchangeId, &Instrument)> for ExchangeAssetId {
+    fn from((exchange, instrument): (&ExchangeId, &Instrument)) -> Self {
+        match exchange {
+            ExchangeId::BinanceSpot => ExchangeAssetId(
+                format!(
+                    "{}_{}{}",
+                    exchange.as_str(),
+                    instrument.base,
+                    instrument.quote
+                )
+                .to_uppercase(),
+            ),
+            ExchangeId::PoloniexSpot => ExchangeAssetId(
+                format!(
+                    "{}_{}_{}",
+                    exchange.as_str(),
+                    instrument.base,
+                    instrument.quote
+                )
+                .to_uppercase(),
+            ),
+        }
+    }
+}
+
+/*----- */
 // Markets
 /*----- */
 #[derive(Debug, Clone, Eq, Hash, PartialEq)]
@@ -65,6 +116,12 @@ impl Market {
             exchange,
             instrument,
         }
+    }
+}
+
+impl Identifier<AssetFormatted> for Market {
+    fn id(&self) -> AssetFormatted {
+        AssetFormatted::from((&self.exchange, &self.instrument))
     }
 }
 

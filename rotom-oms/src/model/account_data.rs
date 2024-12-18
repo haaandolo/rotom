@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use rotom_data::shared::subscription_models::ExchangeId;
+use rotom_data::{shared::subscription_models::ExchangeId, ExchangeAssetId};
 use serde::Deserialize;
 
 use super::{
@@ -27,11 +27,14 @@ pub enum OrderStatus {
     Failed,
 }
 
+/*----- */
+// Account Data - Order
+/*----- */
 #[derive(Debug)]
 pub struct AccountDataOrder {
     pub exchange: ExchangeId,
     pub client_order_id: String,
-    pub asset: String,
+    pub asset: String, // smol
     pub price: f64,    // todo: check if absolute or incremental
     pub quantity: f64, // todo: check if absolute or incremental
     pub status: OrderStatus,
@@ -41,6 +44,15 @@ pub struct AccountDataOrder {
     pub filled_gross: f64,
 }
 
+impl From<&AccountDataOrder> for ExchangeAssetId {
+    fn from(order: &AccountDataOrder) -> Self {
+        ExchangeAssetId(format!("{}_{}", order.exchange.as_str(), order.asset).to_uppercase())
+    }
+}
+
+/*----- */
+// Account Data - Balance
+/*----- */
 #[derive(Debug)]
 pub struct AccountDataBalance {
     pub asset: String, // can be smolstr e.g. btc
@@ -64,12 +76,27 @@ impl From<&AccountDataBalance> for SpotBalanceId {
     }
 }
 
+impl From<&AccountDataBalance> for ExchangeAssetId {
+    fn from(balance: &AccountDataBalance) -> Self {
+        ExchangeAssetId(format!("{}_{}", balance.exchange.as_str(), balance.asset).to_uppercase())
+    }
+}
+
+/*----- */
+// Account Data - Balance Delta
+/*----- */
 #[derive(Debug)]
 pub struct AccountDataBalanceDelta {
-    pub asset: String,
+    pub asset: String, // smol
     pub exchange: ExchangeId,
     pub total: f64,
     pub available: f64, // only used for margin will be zero if spot
+}
+
+impl From<&AccountDataBalanceDelta> for ExchangeAssetId {
+    fn from(balance: &AccountDataBalanceDelta) -> Self {
+        ExchangeAssetId(format!("{}_{}", balance.exchange.as_str(), balance.asset).to_uppercase())
+    }
 }
 
 #[derive(Debug)]
