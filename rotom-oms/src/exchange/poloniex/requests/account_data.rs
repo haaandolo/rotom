@@ -115,16 +115,16 @@ pub struct PoloniexAccountDataBalanceParams {
     pub ts: u64,
 }
 
-impl From<PoloniexAccountDataBalance> for Vec<AccountDataBalance> {
-    fn from(mut account_balance: PoloniexAccountDataBalance) -> Vec<AccountDataBalance> {
-        vec![AccountDataBalance {
+impl From<PoloniexAccountDataBalance> for AccountDataBalance {
+    fn from(mut account_balance: PoloniexAccountDataBalance) -> AccountDataBalance {
+        AccountDataBalance {
             asset: std::mem::take(&mut account_balance.data[0].currency), // when changed to small string, can rm std::mem::take
             exchange: ExchangeId::PoloniexSpot,
             balance: Balance {
                 total: account_balance.data[0].available,
                 available: 0.0,
             },
-        }]
+        }
     }
 }
 
@@ -157,13 +157,11 @@ impl From<PoloniexAccountEvents> for AccountData {
                 AccountData::Order(AccountDataOrder::from(order))
             }
             PoloniexAccountEvents::Balance(balance) => {
-                // todo: maybe poloniex one does not need a vec
-                AccountData::BalanceVec(Vec::<AccountDataBalance>::from(balance))
+                AccountData::Balance(AccountDataBalance::from(balance))
             }
         }
     }
 }
-
 
 #[cfg(test)]
 mod test {

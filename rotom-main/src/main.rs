@@ -422,7 +422,6 @@ fn init_logging() {
 // - start execution function to limit buy -> transfer -> taker sell, i think this should be a function
 // - figure out the balance +ve and -ve of quote and base asset for portfolio when the fill is updated
 // - make the above point more solid
-// - does the balance account data stream for poloniex need to be a Vec<T> or can it be T?
 // - update parse decision signal to not let short positions be open for spot trades
 // - event ping respose for polo fix de error
 // - unify types like Side, OrderType etc into one
