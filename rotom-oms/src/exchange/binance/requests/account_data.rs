@@ -144,7 +144,7 @@ pub struct BinanceAccountDataDelta {
 impl From<BinanceAccountDataDelta> for AccountDataBalanceDelta {
     fn from(delta: BinanceAccountDataDelta) -> Self {
         AccountDataBalanceDelta {
-            asset: delta.e,
+            asset: delta.a,
             exchange: ExchangeId::BinanceSpot,
             total: delta.d,
             available: 0.0,

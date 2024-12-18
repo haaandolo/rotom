@@ -6,7 +6,6 @@ use rotom_data::{
 };
 use rotom_strategy::{Decision, Signal, SignalForceExit, SignalStrength};
 use std::collections::HashMap;
-use tokio::sync::mpsc;
 use uuid::Uuid;
 
 use crate::{
@@ -16,7 +15,7 @@ use crate::{
     },
     execution::FillEvent,
     model::{
-        account_data::AccountDataBalance,
+        account_data::{AccountDataBalance, AccountDataBalanceDelta},
         balance::{determine_balance_id, SpotBalanceId},
         order::{OrderEvent, OrderState},
         OrderKind, Side,
@@ -24,7 +23,7 @@ use crate::{
     portfolio::{
         allocator::{spot_arb_allocator::SpotArbAllocator, OrderAllocator},
         error::PortfolioError,
-        persistence::in_memory2::InMemoryRepository2,
+        persistence::in_memory2::SpotInMemoryRepository,
         position::{
             determine_position_id, Position, PositionEnterer, PositionExiter, PositionUpdate,
             PositionUpdater,
@@ -38,25 +37,22 @@ use super::{FillUpdater, MarketUpdater, OrderGenerator};
 pub struct SpotPortfolio {
     pub engine_id: Uuid,
     pub exchanges: Vec<ExchangeId>,
-    pub repository: InMemoryRepository2,
+    pub repository: SpotInMemoryRepository,
     pub allocator: SpotArbAllocator,
-    pub balance_rx: mpsc::UnboundedReceiver<AccountDataBalance>,
 }
 
 impl SpotPortfolio {
     pub fn new(
         engine_id: Uuid,
         exchanges: Vec<ExchangeId>,
-        repository: InMemoryRepository2,
+        repository: SpotInMemoryRepository,
         allocator: SpotArbAllocator,
-        balance_rx: mpsc::UnboundedReceiver<AccountDataBalance>,
     ) -> Self {
         Self {
             engine_id,
             exchanges,
             repository,
             allocator,
-            balance_rx,
         }
     }
 
@@ -85,8 +81,12 @@ impl SpotPortfolio {
         Ok(self)
     }
 
-    pub fn update_balance(&mut self, balance_update: AccountDataBalance) {
+    pub fn update_balance(&mut self, balance_update: &AccountDataBalance) {
         self.repository.update_balance(balance_update)
+    }
+
+    pub fn update_balance_delta(&mut self, balance_update: &AccountDataBalanceDelta) {
+        self.repository.update_balance_delta(balance_update)
     }
 
     // todo: adjust buffer?

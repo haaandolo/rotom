@@ -31,7 +31,7 @@ use rotom_oms::{
     },
     portfolio::{
         allocator::{default_allocator::DefaultAllocator, spot_arb_allocator::SpotArbAllocator},
-        persistence::{in_memory::InMemoryRepository, in_memory2::InMemoryRepository2},
+        persistence::{in_memory::InMemoryRepository, in_memory2::SpotInMemoryRepository},
         portfolio_type::{default_portfolio::MetaPortfolio, spot_portfolio::SpotPortfolio},
         risk_manager::default_risk_manager::DefaultRisk,
     },
@@ -209,27 +209,19 @@ pub async fn main() {
 
     ////////////////////////////////////////////////////
     // Portfolio
-    let (balance_update_tx, balance_update_rx) = mpsc::unbounded_channel();
     let arb_portfolio = Arc::new(Mutex::new(
         SpotPortfolio::new(
             engine_id,
             vec![ExchangeId::BinanceSpot, ExchangeId::PoloniexSpot],
-            InMemoryRepository2::default(),
+            SpotInMemoryRepository::default(),
             SpotArbAllocator,
-            balance_update_rx,
         )
         .init()
         .await
         .unwrap(),
     ));
 
-    // let test = arb_portfolio.in
-
-    println!("did it pass this point???");
-    println!("did it pass this point???");
-    println!("did it pass this point???");
-
-    // println!("arb portfolio: {:#?}", arb_portfolio);
+    println!("arb portfolio: {:#?}", arb_portfolio);
     //////////////
     // Arb trader
     //////////////
@@ -421,13 +413,9 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - see if ArcMutex portfolio lock works to update order 
-// - make a channel to portfolio? also see if we stil need accountDataLoop in arb trader
 // - what to do with new order and an existing order exists?
 // - rate limit ring buffer
 // - polo market order not working
-// - AccountDataBalance not working for polo and bin as the keys are wrong, balance comes in as op but we have our trader update key as op_usdt
-// - maybe impl a trait called "spot arb exe" to limit buy/sell, transfer funds or taker buy/sell for the OrderEvent? and maybe even keeping a order at bba
 // - code to keep a limit order at bba
 // - make binance account stream get keys automatically every hour
 // - move trader debug log after the infinite loop
@@ -461,4 +449,113 @@ fn init_logging() {
 - taker order buy on the liquid exchange
 - transfer funds to illiquid exchange
 - sell out using limit order at bba in the illiquid exchange
+*/
+
+/*
+do we still need binance delta update if this is happening?
+SpotBalanceId(
+    "binancespot_op",
+)
+>>>>>>> before delta update >>>>>>>>>>
+InMemoryRepository2 {
+    open_positions: {},
+    closed_positions: {},
+    current_balance: {
+        SpotBalanceId(
+            "poloniexspot_op",
+        ): Balance {
+            total: 0.4132594,
+            available: 0.0,
+        },
+        SpotBalanceId(
+            "binancespot_op",
+        ): Balance {
+            total: 1.9,
+            available: 0.0,
+        },
+        SpotBalanceId(
+            "binancespot_usdce",
+        ): Balance {
+            total: 1.0,
+            available: 0.0,
+        },
+        SpotBalanceId(
+            "binancespot_usdt",
+        ): Balance {
+            total: 5.05022655,
+            available: 0.0,
+        },
+        SpotBalanceId(
+            "binancespot_arb",
+        ): Balance {
+            total: 0.0894,
+            available: 0.0,
+        },
+        SpotBalanceId(
+            "poloniexspot_usdt",
+        ): Balance {
+            total: 10.57642853676,
+            available: 0.0,
+        },
+    },
+}
+balance: 1.9
+balance delta: 0.2
+>>>>>>> after delta update >>>>>>>>>>
+InMemoryRepository2 {
+    open_positions: {},
+    closed_positions: {},
+    current_balance: {
+        SpotBalanceId(
+            "poloniexspot_op",
+        ): Balance {
+            total: 0.4132594,
+            available: 0.0,
+        },
+        SpotBalanceId(
+            "binancespot_op",
+        ): Balance {
+            total: 2.1,
+            available: 0.0,
+        },
+        SpotBalanceId(
+            "binancespot_usdce",
+        ): Balance {
+            total: 1.0,
+            available: 0.0,
+        },
+        SpotBalanceId(
+            "binancespot_usdt",
+        ): Balance {
+            total: 5.05022655,
+            available: 0.0,
+        },
+        SpotBalanceId(
+            "binancespot_arb",
+        ): Balance {
+            total: 0.0894,
+            available: 0.0,
+        },
+        SpotBalanceId(
+            "poloniexspot_usdt",
+        ): Balance {
+            total: 10.57642853676,
+            available: 0.0,
+        },
+    },
+}
+AccountData: AccountDataBalanceDelta {
+    asset: "OP",
+    exchange: BinanceSpot,
+    total: 0.2,
+    available: 0.0,
+}
+AccountData: AccountDataBalance {
+    asset: "OP",
+    exchange: BinanceSpot,
+    balance: Balance {
+        total: 2.1,
+        available: 0.0,
+    },
+}
 */

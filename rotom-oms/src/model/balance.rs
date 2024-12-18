@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use rotom_data::shared::subscription_models::ExchangeId;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -52,6 +54,12 @@ pub struct BalanceDelta {
 #[derive(Debug, Eq, PartialEq, Hash)]
 pub struct SpotBalanceId(pub String);
 
+impl Display for SpotBalanceId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 pub fn determine_balance_id(asset: &String, exchange: &ExchangeId) -> SpotBalanceId {
-    SpotBalanceId(format!("{}_{}", asset, exchange))
+    SpotBalanceId(format!("{}_{}", exchange, asset))
 }

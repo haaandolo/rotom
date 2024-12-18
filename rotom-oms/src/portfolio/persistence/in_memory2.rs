@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
 use rotom_data::Market;
+use tracing::error;
 use uuid::Uuid;
 
 use crate::{
     model::{
-        account_data::AccountDataBalance,
+        account_data::{AccountDataBalance, AccountDataBalanceDelta},
         balance::{Balance, SpotBalanceId},
     },
     portfolio::position::{determine_position_id, Position, PositionId},
@@ -17,7 +18,7 @@ use super::{determine_exited_positions_id, error::RepositoryError};
 // InMemoryRepository
 /*----- */
 #[derive(Debug, Default)]
-pub struct InMemoryRepository2 {
+pub struct SpotInMemoryRepository {
     open_positions: HashMap<PositionId, Position>,
     closed_positions: HashMap<String, Vec<Position>>,
     current_balance: HashMap<SpotBalanceId, Balance>,
@@ -26,7 +27,7 @@ pub struct InMemoryRepository2 {
 // /*----- */
 // // Impl BalanceHandler for InMemoryRepository
 // /*----- */
-impl InMemoryRepository2 {
+impl SpotInMemoryRepository {
     // Balance Hanlder
     pub fn set_balance(
         &mut self,
@@ -37,11 +38,13 @@ impl InMemoryRepository2 {
         Ok(())
     }
 
-    pub fn update_balance(&mut self, balance_update: AccountDataBalance) {
-        let balance_id = SpotBalanceId::from(&balance_update);
+    pub fn update_balance(&mut self, balance_update: &AccountDataBalance) {
+        let balance_id = SpotBalanceId::from(balance_update);
         match self.current_balance.get_mut(&balance_id) {
             Some(balance) => {
-                balance.available = balance_update.balance.available;
+                if balance.total != balance_update.balance.total {
+                    balance.total = balance_update.balance.total;
+                }
             }
             None => {
                 let _ = self
@@ -49,9 +52,20 @@ impl InMemoryRepository2 {
                     .insert(balance_id, balance_update.balance);
             }
         }
+    }
 
-        println!(">>>>> in portfolio <<<<<<<<<");
-        println!("{:#?}", self);
+    pub fn update_balance_delta(&mut self, balance_delta: &AccountDataBalanceDelta) {
+        let balance_id = SpotBalanceId::from(balance_delta);
+        match self.current_balance.get_mut(&balance_id) {
+            Some(balance) => {
+                balance.total += balance_delta.total;
+            }
+
+            None => error!(
+                message = "SpotInMemoryRepository receieved a balance delta not in portfolio",
+                balance_id  = %balance_id
+            ),
+        }
     }
 
     pub fn get_balance(&mut self, balance_id: &SpotBalanceId) -> Result<Balance, RepositoryError> {

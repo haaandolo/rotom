@@ -73,7 +73,7 @@ impl AccountDataBalance {
 
 impl From<&AccountDataBalance> for SpotBalanceId {
     fn from(asset_balance: &AccountDataBalance) -> Self {
-        SpotBalanceId(format!("{}_{}", asset_balance.asset, asset_balance.exchange).to_lowercase())
+        SpotBalanceId(format!("{}_{}", asset_balance.exchange, asset_balance.asset,).to_lowercase())
     }
 }
 
@@ -93,6 +93,12 @@ pub struct AccountDataBalanceDelta {
     pub exchange: ExchangeId,
     pub total: f64,
     pub available: f64, // only used for margin will be zero if spot
+}
+
+impl From<&AccountDataBalanceDelta> for SpotBalanceId {
+    fn from(asset_balance: &AccountDataBalanceDelta) -> Self {
+        SpotBalanceId(format!("{}_{}", asset_balance.exchange, asset_balance.asset,).to_lowercase())
+    }
 }
 
 impl From<&AccountDataBalanceDelta> for ExchangeAssetId {

@@ -26,7 +26,7 @@ use tracing::{debug, error, info, warn};
 
 use crate::{
     model::{
-        account_data::{AccountData, AccountDataBalance},
+        account_data::AccountData,
         order::{CancelOrder, OpenOrder, WalletTransfer},
     },
     portfolio::portfolio_type::spot_portfolio::SpotPortfolio,
@@ -171,17 +171,18 @@ pub async fn send_account_data_to_traders_and_portfolio(
     portfolio: Arc<Mutex<SpotPortfolio>>,
 ) {
     while let Some(message) = account_data_stream.recv().await {
-        // println!("wss raw --> {:#?}", message);
         match message {
+            // Order updates don't require portfolio update, so send straigt to trader
             AccountData::Order(order) => {
                 if let Some(trader_tx) = trader_order_update_tx.get(&ExchangeAssetId::from(&order))
                 {
                     let _ = trader_tx.send(AccountData::Order(order)).await;
                 }
             }
+            // Balance updates require portfolio update, so update then send to trader
             AccountData::BalanceVec(balances) => {
                 for balance in balances.into_iter() {
-                    portfolio.lock().update_balance(balance.clone());
+                    portfolio.lock().update_balance(&balance);
                     if let Some(trader_tx) =
                         trader_order_update_tx.get(&ExchangeAssetId::from(&balance))
                     {
@@ -189,15 +190,18 @@ pub async fn send_account_data_to_traders_and_portfolio(
                     }
                 }
             }
+            // Balance updates require portfolio update, so update then send to trader
             AccountData::Balance(balance) => {
-                portfolio.lock().update_balance(balance.clone());
+                portfolio.lock().update_balance(&balance);
                 if let Some(trader_tx) =
                     trader_order_update_tx.get(&ExchangeAssetId::from(&balance))
                 {
                     let _ = trader_tx.send(AccountData::Balance(balance)).await;
                 }
             }
+            // Balance updates require portfolio update, so update then send to trader
             AccountData::BalanceDelta(balance_delta) => {
+                portfolio.lock().update_balance_delta(&balance_delta);
                 if let Some(trader_tx) =
                     trader_order_update_tx.get(&ExchangeAssetId::from(&balance_delta))
                 {

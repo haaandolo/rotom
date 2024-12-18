@@ -2,7 +2,6 @@ use async_trait::async_trait;
 use parking_lot::Mutex;
 use rotom_data::{
     event_models::market_event::{DataKind, MarketEvent},
-    shared::subscription_models::ExchangeId,
     Feed, Market, MarketGenerator,
 };
 use rotom_oms::{
@@ -11,7 +10,6 @@ use rotom_oms::{
     model::{
         account_data::AccountData,
         order::{ExecutionRequest, OpenOrder, OrderEvent, OrderState},
-        OrderKind,
     },
     portfolio::portfolio_type::{FillUpdater, MarketUpdater, OrderGenerator},
 };
