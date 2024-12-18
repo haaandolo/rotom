@@ -269,16 +269,16 @@ where
                         }
                         None => {
                             // Del
-                            new_order.exchange = ExchangeId::BinanceSpot;
-                            new_order.quantity = 3.0;
-                            new_order.market_meta.close = 1.5;
-                            new_order.order_kind = OrderKind::Market;
-                            println!("##############################");
-                            println!("order --> {:#?}", new_order);
+                            // new_order.exchange = ExchangeId::BinanceSpot;
+                            // new_order.quantity = 3.0;
+                            // new_order.market_meta.close = 1.5;
+                            // new_order.order_kind = OrderKind::Market;
+                            // println!("##############################");
+                            // println!("order --> {:#?}", new_order);
                             // Del
 
                             self.meta_data.order = Some(new_order);
-                            self.process_new_order().await;
+                            // self.process_new_order().await;
                         }
                     },
                     Event::Fill(fill) => {
@@ -305,8 +305,8 @@ where
                             println!("AccountData: {:#?}", order_update);
                             if let Some(order) = &mut self.meta_data.order {
                                 order.update_order_from_account_data_stream(order_update);
-                                println!("####### ORDER UPDATED ##########");
-                                println!("{:#?}", order)
+                                // println!("####### ORDER UPDATED ##########");
+                                // println!("{:#?}", order)
                             }
                         }
                         AccountData::BalanceVec(balances) => {

@@ -2,12 +2,13 @@ pub mod binance;
 pub mod errors;
 pub mod poloniex;
 
-use std::{collections::HashMap, fmt::Debug};
+use std::{collections::HashMap, fmt::Debug, sync::Arc};
 
 use async_trait::async_trait;
 use binance::binance_client::BinanceExecution;
 use futures::StreamExt;
 use hmac::Hmac;
+use parking_lot::Mutex;
 use poloniex::poloniex_client::PoloniexExecution;
 use rotom_data::{
     error::SocketError,
@@ -23,9 +24,12 @@ use sha2::Sha256;
 use tokio::sync::mpsc;
 use tracing::{debug, error, info, warn};
 
-use crate::model::{
-    account_data::{AccountData, AccountDataBalance},
-    order::{CancelOrder, OpenOrder, WalletTransfer},
+use crate::{
+    model::{
+        account_data::{AccountData, AccountDataBalance},
+        order::{CancelOrder, OpenOrder, WalletTransfer},
+    },
+    portfolio::portfolio_type::spot_portfolio::SpotPortfolio,
 };
 
 /*----- */
@@ -159,37 +163,44 @@ where
 }
 
 /*----- */
-// Account Data Stream - Send to corresponding trader
+// Account Data Stream - Send to corresponding trader and portfolio
 /*----- */
-pub async fn send_account_data_to_traders(
-    trader_tx: HashMap<String, mpsc::Sender<AccountData>>,
-    porfolio_balance_tx: mpsc::UnboundedSender<AccountDataBalance>,
+pub async fn send_account_data_to_traders_and_portfolio(
+    trader_order_update_tx: HashMap<ExchangeAssetId, mpsc::Sender<AccountData>>,
     mut account_data_stream: mpsc::UnboundedReceiver<AccountData>,
+    portfolio: Arc<Mutex<SpotPortfolio>>,
 ) {
     while let Some(message) = account_data_stream.recv().await {
-        println!("ws raw --> {:#?}", message);
+        // println!("wss raw --> {:#?}", message);
         match message {
             AccountData::Order(order) => {
-                if let Some(trader_tx) = trader_tx.get(&ExchangeAssetId::from(&order).0) {
+                if let Some(trader_tx) = trader_order_update_tx.get(&ExchangeAssetId::from(&order))
+                {
                     let _ = trader_tx.send(AccountData::Order(order)).await;
                 }
             }
             AccountData::BalanceVec(balances) => {
                 for balance in balances.into_iter() {
-                    let _ = porfolio_balance_tx.send(balance);
-                    // if let Some(trader_tx) = trader_tx.get(&balance.asset) {
-                    //     let _ = trader_tx.send(AccountData::Balance(balance)).await;
-                    // }
+                    portfolio.lock().update_balance(balance.clone());
+                    if let Some(trader_tx) =
+                        trader_order_update_tx.get(&ExchangeAssetId::from(&balance))
+                    {
+                        let _ = trader_tx.send(AccountData::Balance(balance)).await;
+                    }
                 }
             }
             AccountData::Balance(balance) => {
-                let _ = porfolio_balance_tx.send(balance);
-                // if let Some(trader_tx) = trader_tx.get(&balance.asset) {
-                //     let _ = trader_tx.send(AccountData::Balance(balance)).await;
-                // }
+                portfolio.lock().update_balance(balance.clone());
+                if let Some(trader_tx) =
+                    trader_order_update_tx.get(&ExchangeAssetId::from(&balance))
+                {
+                    let _ = trader_tx.send(AccountData::Balance(balance)).await;
+                }
             }
             AccountData::BalanceDelta(balance_delta) => {
-                if let Some(trader_tx) = trader_tx.get(&ExchangeAssetId::from(&balance_delta).0) {
+                if let Some(trader_tx) =
+                    trader_order_update_tx.get(&ExchangeAssetId::from(&balance_delta))
+                {
                     let _ = trader_tx
                         .send(AccountData::BalanceDelta(balance_delta))
                         .await;
@@ -204,30 +215,30 @@ pub async fn send_account_data_to_traders(
 /*----- */
 pub async fn combine_account_data_stream(
     exchange_ids: Vec<ExchangeId>,
-    trader_order_updater: HashMap<String, mpsc::Sender<AccountData>>,
-    porfolio_balance_tx: mpsc::UnboundedSender<AccountDataBalance>,
+    trader_order_update_tx: HashMap<ExchangeAssetId, mpsc::Sender<AccountData>>,
+    portfolio: Arc<Mutex<SpotPortfolio>>,
 ) {
     // Init account data channels and combine
-    let (account_data_tx, account_data_rx) = mpsc::unbounded_channel();
+    let (account_data_stream_tx, account_data_stream_rx) = mpsc::unbounded_channel();
     for exchange in exchange_ids.into_iter() {
         match exchange {
             ExchangeId::BinanceSpot => {
                 tokio::spawn(consume_account_data_stream::<BinanceExecution>(
-                    account_data_tx.clone(),
+                    account_data_stream_tx.clone(),
                 ));
             }
             ExchangeId::PoloniexSpot => {
                 tokio::spawn(consume_account_data_stream::<PoloniexExecution>(
-                    account_data_tx.clone(),
+                    account_data_stream_tx.clone(),
                 ));
             }
         }
     }
 
     // Send order updates to corresponding trader pair for exchange
-    tokio::spawn(send_account_data_to_traders(
-        trader_order_updater,
-        porfolio_balance_tx,
-        account_data_rx,
+    tokio::spawn(send_account_data_to_traders_and_portfolio(
+        trader_order_update_tx,
+        account_data_stream_rx,
+        portfolio,
     ));
 }

@@ -1214,6 +1214,7 @@ dependencies = [
  "futures",
  "hex",
  "hmac",
+ "parking_lot",
  "prettytable-rs",
  "redis",
  "reqwest",

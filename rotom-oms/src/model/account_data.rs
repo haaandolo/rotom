@@ -53,9 +53,10 @@ impl From<&AccountDataOrder> for ExchangeAssetId {
 /*----- */
 // Account Data - Balance
 /*----- */
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AccountDataBalance {
-    pub asset: String, // can be smolstr e.g. btc
+    // note asset is a single currency and not a pair e.g OP not OP_USDT
+    pub asset: String, // can be smolstr
     pub exchange: ExchangeId,
     pub balance: Balance,
 }
@@ -85,8 +86,9 @@ impl From<&AccountDataBalance> for ExchangeAssetId {
 /*----- */
 // Account Data - Balance Delta
 /*----- */
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AccountDataBalanceDelta {
+    // note asset is a single currency and not a pair e.g OP not OP_USDT
     pub asset: String, // smol
     pub exchange: ExchangeId,
     pub total: f64,

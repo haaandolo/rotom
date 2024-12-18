@@ -31,6 +31,7 @@ thiserror = { workspace = true }
 chrono = { workspace = true, features = ["serde"]}
 prettytable-rs = { workspace = true }
 uuid = { workspace = true, features = ["v4", "serde"]}
+parking_lot = { workspace = true }
 
 # SerDe
 serde_json = { workspace = true }

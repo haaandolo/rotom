@@ -209,22 +209,27 @@ pub async fn main() {
 
     ////////////////////////////////////////////////////
     // Portfolio
-    let (portfolio_balance_tx, portfolio_balance_rx) = mpsc::unbounded_channel();
+    let (balance_update_tx, balance_update_rx) = mpsc::unbounded_channel();
     let arb_portfolio = Arc::new(Mutex::new(
         SpotPortfolio::new(
             engine_id,
             vec![ExchangeId::BinanceSpot, ExchangeId::PoloniexSpot],
             InMemoryRepository2::default(),
             SpotArbAllocator,
-            portfolio_balance_rx,
+            balance_update_rx,
         )
         .init()
         .await
         .unwrap(),
     ));
 
-    println!("arb portfolio: {:#?}", arb_portfolio);
+    // let test = arb_portfolio.in
 
+    println!("did it pass this point???");
+    println!("did it pass this point???");
+    println!("did it pass this point???");
+
+    // println!("arb portfolio: {:#?}", arb_portfolio);
     //////////////
     // Arb trader
     //////////////
@@ -233,13 +238,12 @@ pub async fn main() {
         Market::new(ExchangeId::PoloniexSpot, Instrument::new("op", "usdt")),
     ];
 
-    let arb = vec![
-        Market::new(ExchangeId::BinanceSpot, Instrument::new("arb", "usdt")),
-        Market::new(ExchangeId::PoloniexSpot, Instrument::new("arb", "usdt")),
-    ];
+    // let arb = vec![
+    //     Market::new(ExchangeId::BinanceSpot, Instrument::new("arb", "usdt")),
+    //     Market::new(ExchangeId::PoloniexSpot, Instrument::new("arb", "usdt")),
+    // ];
 
-    let market2 = vec![op, arb];
-
+    let market2 = vec![op];
     let mut arb_traders = Vec::new();
     let mut trader_command_txs = HashMap::new();
     let mut order_update_txs = HashMap::new();
@@ -257,8 +261,15 @@ pub async fn main() {
         // have the same asset format it would not matter as the key will just be replaced
         let (order_update_tx, order_update_rx) = mpsc::channel(10);
         for market in markets.clone().into_iter() {
-            let asset_formatted = ExchangeAssetId::from((&market.exchange, &market.instrument));
-            order_update_txs.insert(asset_formatted.0, order_update_tx.clone());
+            // Key to update order
+            let order_update_key = ExchangeAssetId::from((&market.exchange, &market.instrument));
+            order_update_txs.insert(order_update_key, order_update_tx.clone());
+
+            // Key to update balances
+            let balance_update_key = ExchangeAssetId(
+                format!("{}_{}", &market.exchange.as_str(), &market.instrument.base).to_uppercase(),
+            );
+            order_update_txs.insert(balance_update_key, order_update_tx.clone());
         }
 
         let arb_trader = SpotArbTrader::builder()
@@ -283,7 +294,7 @@ pub async fn main() {
     // Arena
     /////////////////////////////////////////////////////////////
     let exchanges = vec![ExchangeId::BinanceSpot, ExchangeId::PoloniexSpot];
-    combine_account_data_stream(exchanges, order_update_txs, portfolio_balance_tx).await;
+    combine_account_data_stream(exchanges, order_update_txs, Arc::clone(&arb_portfolio)).await;
 
     // Build engine TODO: (check the commands are doing what it is supposed to)
     // let trader_command_txs = markets
@@ -410,6 +421,7 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
+// - see if ArcMutex portfolio lock works to update order 
 // - make a channel to portfolio? also see if we stil need accountDataLoop in arb trader
 // - what to do with new order and an existing order exists?
 // - rate limit ring buffer

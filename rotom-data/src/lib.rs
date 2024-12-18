@@ -73,7 +73,7 @@ impl From<(&ExchangeId, &Instrument)> for AssetFormatted {
 /*----- */
 // Asset & Exchange formatted - usually used for keys of hashmaps e.g BINANCESPOT_OPUSDT
 /*----- */
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq, Hash)]
 pub struct ExchangeAssetId(pub String); // smol str
 
 impl From<(&ExchangeId, &Instrument)> for ExchangeAssetId {

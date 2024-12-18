@@ -4,13 +4,14 @@ use rotom_data::Market;
 use uuid::Uuid;
 
 use crate::{
-    model::balance::{Balance, SpotBalanceId},
+    model::{
+        account_data::AccountDataBalance,
+        balance::{Balance, SpotBalanceId},
+    },
     portfolio::position::{determine_position_id, Position, PositionId},
 };
 
-use super::{
-    determine_exited_positions_id, error::RepositoryError,
-};
+use super::{determine_exited_positions_id, error::RepositoryError};
 
 /*----- */
 // InMemoryRepository
@@ -34,6 +35,23 @@ impl InMemoryRepository2 {
     ) -> Result<(), RepositoryError> {
         self.current_balance.insert(balance_id, balance);
         Ok(())
+    }
+
+    pub fn update_balance(&mut self, balance_update: AccountDataBalance) {
+        let balance_id = SpotBalanceId::from(&balance_update);
+        match self.current_balance.get_mut(&balance_id) {
+            Some(balance) => {
+                balance.available = balance_update.balance.available;
+            }
+            None => {
+                let _ = self
+                    .current_balance
+                    .insert(balance_id, balance_update.balance);
+            }
+        }
+
+        println!(">>>>> in portfolio <<<<<<<<<");
+        println!("{:#?}", self);
     }
 
     pub fn get_balance(&mut self, balance_id: &SpotBalanceId) -> Result<Balance, RepositoryError> {

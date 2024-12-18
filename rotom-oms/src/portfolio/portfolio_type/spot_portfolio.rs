@@ -85,6 +85,10 @@ impl SpotPortfolio {
         Ok(self)
     }
 
+    pub fn update_balance(&mut self, balance_update: AccountDataBalance) {
+        self.repository.update_balance(balance_update)
+    }
+
     // todo: adjust buffer?
     pub fn no_cash_to_enter_new_position(
         &mut self,
