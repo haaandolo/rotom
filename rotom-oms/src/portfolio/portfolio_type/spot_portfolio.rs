@@ -23,7 +23,7 @@ use crate::{
     portfolio::{
         allocator::{spot_arb_allocator::SpotArbAllocator, OrderAllocator},
         error::PortfolioError,
-        persistence::in_memory2::SpotInMemoryRepository,
+        persistence::spot_in_memory::SpotInMemoryRepository,
         position::{
             determine_position_id, Position, PositionEnterer, PositionExiter, PositionUpdate,
             PositionUpdater,

@@ -1,6 +1,6 @@
 pub mod error;
 pub mod in_memory;
-pub mod in_memory2;
+pub mod spot_in_memory;
 pub mod redis;
 
 use crate::model::balance::Balance;

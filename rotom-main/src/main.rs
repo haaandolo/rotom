@@ -31,7 +31,7 @@ use rotom_oms::{
     },
     portfolio::{
         allocator::{default_allocator::DefaultAllocator, spot_arb_allocator::SpotArbAllocator},
-        persistence::{in_memory::InMemoryRepository, in_memory2::SpotInMemoryRepository},
+        persistence::{in_memory::InMemoryRepository, spot_in_memory::SpotInMemoryRepository},
         portfolio_type::{default_portfolio::MetaPortfolio, spot_portfolio::SpotPortfolio},
         risk_manager::default_risk_manager::DefaultRisk,
     },
