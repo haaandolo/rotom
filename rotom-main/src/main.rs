@@ -423,7 +423,6 @@ fn init_logging() {
 // - figure out the balance +ve and -ve of quote and base asset for portfolio when the fill is updated
 // - make the above point more solid
 // - update parse decision signal to not let short positions be open for spot trades
-// - event ping respose for polo fix de error
 // - unify types like Side, OrderType etc into one
 // - standarise order types ie. limit, market etc
 // - rm todos

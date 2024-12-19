@@ -5,7 +5,7 @@ use tokio::sync::mpsc::UnboundedSender;
 use tokio::{time::sleep, time::Duration};
 use tracing::{debug, error, info, warn};
 
-use crate::error::SocketError;
+use crate::error::{SocketError, ACCEPTABLE_DE_ERROR_MESSAGES};
 use crate::exchange::Identifier;
 use crate::protocols::ws::WebSocketClient;
 use crate::shared::subscription_models::Subscription;
@@ -93,6 +93,20 @@ where
                 Err(error) => match error {
                     // This error is harmless so dont log and continue
                     SocketError::TransformerNone => continue,
+                    // Some de errors are harmless so we dont want to log e.g poloniex exchange pings
+                    SocketError::Deserialise { error, payload } => {
+                        if ACCEPTABLE_DE_ERROR_MESSAGES.contains(&payload.as_str()) {
+                            continue;
+                        } else {
+                            warn!(
+                                exchange = %exchange_id,
+                                error = %error,
+                                action = "Continuing...",
+                                message = "Encountered a non-terminal error",
+                            );
+                            continue;
+                        }
+                    }
                     // However other errors need logging
                     _ => {
                         warn!(

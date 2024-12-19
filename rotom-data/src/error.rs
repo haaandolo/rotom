@@ -3,6 +3,8 @@ use thiserror::Error;
 
 use super::{protocols::ws::WsError, shared::subscription_models::ExchangeId};
 
+pub const ACCEPTABLE_DE_ERROR_MESSAGES: [&str; 1] = ["{\"event\":\"pong\"}"];
+
 /*----- */
 // WebSocketError
 /*----- */
