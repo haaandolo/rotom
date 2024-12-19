@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use parking_lot::Mutex;
 use rotom_data::{
     event_models::market_event::{DataKind, MarketEvent},
+    shared::subscription_models::ExchangeId,
     Feed, Market, MarketGenerator,
 };
 use rotom_oms::{
@@ -10,6 +11,7 @@ use rotom_oms::{
     model::{
         account_data::AccountData,
         order::{ExecutionRequest, OpenOrder, OrderEvent, OrderState},
+        OrderKind,
     },
     portfolio::portfolio_type::{FillUpdater, MarketUpdater, OrderGenerator},
 };
@@ -244,8 +246,8 @@ where
                             .generate_order(&signal)
                             .expect("Failed to generate order")
                         {
-                            // println!("##############################");
-                            // println!("order --> {:#?}", order);
+                            println!("##############################");
+                            println!("order --> {:#?}", order);
                             // self.event_tx.send(Event::OrderNew(order.clone()));
                             self.event_queue.push_back(Event::OrderNew(order));
                         }
@@ -267,16 +269,16 @@ where
                         }
                         None => {
                             // Del
-                            // new_order.exchange = ExchangeId::BinanceSpot;
-                            // new_order.quantity = 3.0;
-                            // new_order.market_meta.close = 1.5;
-                            // new_order.order_kind = OrderKind::Market;
-                            // println!("##############################");
-                            // println!("order --> {:#?}", new_order);
+                            new_order.exchange = ExchangeId::PoloniexSpot;
+                            new_order.quantity = 2.0;
+                            new_order.market_meta.close = 1.5;
+                            new_order.order_kind = OrderKind::Market;
+                            println!("##############################");
+                            println!("order --> {:#?}", new_order);
                             // Del
 
                             self.meta_data.order = Some(new_order);
-                            // self.process_new_order().await;
+                            self.process_new_order().await;
                         }
                     },
                     Event::Fill(fill) => {
@@ -300,30 +302,26 @@ where
                 match self.order_update_rx.try_recv() {
                     Ok(account_data) => match account_data {
                         AccountData::Order(order_update) => {
-                            println!("AccountData: {:#?}", order_update);
+                            println!("AccountDataOrder: {:#?}", order_update);
                             if let Some(order) = &mut self.meta_data.order {
                                 order.update_order_from_account_data_stream(order_update);
                                 // println!("####### ORDER UPDATED ##########");
                                 // println!("{:#?}", order)
                             }
                         }
-                        AccountData::BalanceVec(balances) => {
-                            println!("AccountData: {:#?}", balances);
-                            self.event_queue
-                                .push_back(Event::AccountDataBalanceVec(balances));
-                        }
-
                         AccountData::BalanceDelta(balance_delta) => {
-                            println!("AccountData: {:#?}", balance_delta);
+                            println!("AccountDataBalanceDelta: {:#?}", balance_delta);
                             self.event_queue
                                 .push_back(Event::AccountDataBalanceDelta(balance_delta))
                         }
-
                         AccountData::Balance(balance) => {
-                            println!("AccountData: {:#?}", balance);
+                            println!("AccountDataBalance: {:#?}", balance);
                             self.event_queue
                                 .push_back(Event::AccountDataBalance(balance))
                         }
+                        // AccountData::BalanceVec get split into individual balances
+                        // and gets sent to corresponding trader so this one is not needed
+                        _ => {}
                     },
                     Err(error) => match error {
                         mpsc::error::TryRecvError::Empty => break 'account_data_loop,

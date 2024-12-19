@@ -79,7 +79,7 @@ impl PoloniexNewOrder {
                     .as_ref()
                     .to_lowercase(),
             )
-            .quantity(order_event.quantity.to_string())
+            .amount(order_event.quantity.to_string())
             .build()
     }
 }

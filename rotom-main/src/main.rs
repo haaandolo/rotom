@@ -54,8 +54,6 @@ use uuid::Uuid;
 
 const ENGINE_RUN_TIMEOUT: Duration = Duration::from_secs(5000);
 
-// client_order_id: "O5eBTHcWHo2vFtrmB9rE7k", <-- THIS for cancel an order
-
 /*----- */
 // Main
 /*----- */
@@ -415,10 +413,8 @@ fn init_logging() {
 /*----- */
 // - what to do with new order and an existing order exists?
 // - rate limit ring buffer
-// - polo market order not working
 // - code to keep a limit order at bba
 // - make binance account stream get keys automatically every hour
-// - move trader debug log after the infinite loop
 // - start execution function to limit buy -> transfer -> taker sell, i think this should be a function
 // - figure out the balance +ve and -ve of quote and base asset for portfolio when the fill is updated
 // - make the above point more solid

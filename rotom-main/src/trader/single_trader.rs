@@ -1,4 +1,3 @@
-use std::{collections::VecDeque, sync::Arc};
 use async_trait::async_trait;
 use parking_lot::Mutex;
 use rotom_data::{
@@ -11,6 +10,7 @@ use rotom_oms::{
     portfolio::portfolio_type::{FillUpdater, MarketUpdater, OrderGenerator},
 };
 use rotom_strategy::{SignalForceExit, SignalGenerator};
+use std::{collections::VecDeque, sync::Arc};
 use tokio::sync::mpsc;
 use tracing::{debug, warn};
 use uuid::Uuid;
@@ -219,13 +219,13 @@ where
                     _ => {}
                 }
             }
-
-            debug!(
-                engine_id = &*self.engine_id.to_string(),
-                market = &*format!("{:?}", self.markets),
-                message = "Trader trading loop stopped"
-            )
         }
+
+        debug!(
+            engine_id = &*self.engine_id.to_string(),
+            market = &*format!("{:?}", self.markets),
+            message = "Trader trading loop stopped"
+        )
     }
 }
 
