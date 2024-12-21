@@ -22,7 +22,7 @@ pub enum OrderFill {
 /*----- */
 #[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize)]
 pub struct OrderEvent {
-    pub time: DateTime<Utc>,
+    pub order_request_time: DateTime<Utc>,
     pub exchange: ExchangeId,
     pub client_order_id: Option<ClientOrderId>,
     pub instrument: Instrument,

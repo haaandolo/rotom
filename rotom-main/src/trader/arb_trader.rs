@@ -13,7 +13,9 @@ use rotom_oms::{
         order::{ExecutionRequest, OpenOrder, OrderEvent, OrderState},
         OrderKind,
     },
-    portfolio::portfolio_type::{FillUpdater, MarketUpdater, OrderGenerator},
+    portfolio::portfolio_type::{
+        spot_portfolio::SpotPortfolio, FillUpdater, MarketUpdater, OrderGenerator,
+    },
 };
 use rotom_strategy::{SignalForceExit, SignalGenerator};
 use std::{collections::VecDeque, sync::Arc};
@@ -43,13 +45,12 @@ pub struct SpotArbTraderMetaData {
 // Spot Arb Trader Lego
 /*----- */
 #[derive(Debug)]
-pub struct SpotArbTraderLego<Data, Strategy, LiquidExchange, IlliquidExchange, Portfolio>
+pub struct SpotArbTraderLego<Data, Strategy, LiquidExchange, IlliquidExchange>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
     LiquidExchange: ExecutionClient,
     IlliquidExchange: ExecutionClient,
-    Portfolio: MarketUpdater + OrderGenerator + FillUpdater,
 {
     pub engine_id: Uuid,
     pub command_rx: mpsc::Receiver<Command>,
@@ -61,7 +62,7 @@ where
     pub illiquid_exchange: IlliquidExchange,
     pub send_order_tx: mpsc::UnboundedSender<ExecutionRequest>,
     pub order_update_rx: mpsc::Receiver<AccountData>,
-    pub porfolio: Arc<Mutex<Portfolio>>,
+    pub porfolio: Arc<Mutex<SpotPortfolio>>,
     pub meta_data: SpotArbTraderMetaData,
 }
 
@@ -69,13 +70,12 @@ where
 // Spot Arb Trader
 /*----- */
 #[derive(Debug)]
-pub struct SpotArbTrader<Data, Strategy, LiquidExchange, IlliquidExchange, Portfolio>
+pub struct SpotArbTrader<Data, Strategy, LiquidExchange, IlliquidExchange>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
     LiquidExchange: ExecutionClient,
     IlliquidExchange: ExecutionClient,
-    Portfolio: MarketUpdater + OrderGenerator,
 {
     engine_id: Uuid,
     command_rx: mpsc::Receiver<Command>,
@@ -87,22 +87,19 @@ where
     illiquid_exchange: IlliquidExchange,
     order_update_rx: mpsc::Receiver<AccountData>,
     event_queue: VecDeque<Event>,
-    portfolio: Arc<Mutex<Portfolio>>,
+    portfolio: Arc<Mutex<SpotPortfolio>>,
     meta_data: SpotArbTraderMetaData,
 }
 
-impl<Data, Strategy, LiquidExchange, IlliquidExchange, Portfolio>
-    SpotArbTrader<Data, Strategy, LiquidExchange, IlliquidExchange, Portfolio>
+impl<Data, Strategy, LiquidExchange, IlliquidExchange>
+    SpotArbTrader<Data, Strategy, LiquidExchange, IlliquidExchange>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
     LiquidExchange: ExecutionClient,
     IlliquidExchange: ExecutionClient,
-    Portfolio: MarketUpdater + OrderGenerator + FillUpdater,
 {
-    pub fn new(
-        lego: SpotArbTraderLego<Data, Strategy, LiquidExchange, IlliquidExchange, Portfolio>,
-    ) -> Self {
+    pub fn new(lego: SpotArbTraderLego<Data, Strategy, LiquidExchange, IlliquidExchange>) -> Self {
         Self {
             engine_id: lego.engine_id,
             command_rx: lego.command_rx,
@@ -119,8 +116,7 @@ where
         }
     }
 
-    pub fn builder(
-    ) -> SpotArbTraderBuilder<Data, Strategy, LiquidExchange, IlliquidExchange, Portfolio> {
+    pub fn builder() -> SpotArbTraderBuilder<Data, Strategy, LiquidExchange, IlliquidExchange> {
         SpotArbTraderBuilder::new()
     }
 
@@ -140,20 +136,23 @@ where
             }
         }
     }
+
+    pub async fn process_existing_order(&mut self) {
+        unimplemented!()
+    }
 }
 
 /*----- */
 // Impl Trader trait for Single Market Trader
 /*----- */
 #[async_trait]
-impl<Data, Strategy, LiquidExchange, IlliquidExchange, Portfolio> TraderRun
-    for SpotArbTrader<Data, Strategy, LiquidExchange, IlliquidExchange, Portfolio>
+impl<Data, Strategy, LiquidExchange, IlliquidExchange> TraderRun
+    for SpotArbTrader<Data, Strategy, LiquidExchange, IlliquidExchange>
 where
     Data: MarketGenerator<MarketEvent<DataKind>> + Send + Sync,
     Strategy: SignalGenerator + Send + Sync,
     LiquidExchange: ExecutionClient + Send + Sync,
     IlliquidExchange: ExecutionClient + Send + Sync,
-    Portfolio: MarketUpdater + OrderGenerator + FillUpdater + Send + Sync,
 {
     fn receive_remote_command(&mut self) -> Option<Command> {
         match self.command_rx.try_recv() {
@@ -246,8 +245,8 @@ where
                             .generate_order(&signal)
                             .expect("Failed to generate order")
                         {
-                            println!("##############################");
-                            println!("order --> {:#?}", order);
+                            // println!("##############################");
+                            // println!("order --> {:#?}", order);
                             // self.event_tx.send(Event::OrderNew(order.clone()));
                             self.event_queue.push_back(Event::OrderNew(order));
                         }
@@ -264,18 +263,16 @@ where
                         }
                     }
                     Event::OrderNew(mut new_order) => match &self.meta_data.order {
-                        Some(_existing_order) => {
-                            // todo
-                        }
+                        Some(_) => self.process_existing_order().await,
                         None => {
-                            // Del
-                            new_order.exchange = ExchangeId::PoloniexSpot;
-                            new_order.quantity = 2.0;
-                            new_order.market_meta.close = 1.5;
-                            new_order.order_kind = OrderKind::Market;
-                            println!("##############################");
-                            println!("order --> {:#?}", new_order);
-                            // Del
+                            // // Del
+                            // new_order.exchange = ExchangeId::PoloniexSpot;
+                            // new_order.quantity = 2.0;
+                            // new_order.market_meta.close = 1.5;
+                            // new_order.order_kind = OrderKind::Market;
+                            // println!("##############################");
+                            // println!("order --> {:#?}", new_order);
+                            // // Del
 
                             self.meta_data.order = Some(new_order);
                             self.process_new_order().await;
@@ -350,13 +347,12 @@ where
 // Single Market Trader builder
 /*----- */
 #[derive(Debug, Default)]
-pub struct SpotArbTraderBuilder<Data, Strategy, LiquidExchange, IlliquidExchange, Portfolio>
+pub struct SpotArbTraderBuilder<Data, Strategy, LiquidExchange, IlliquidExchange>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
     LiquidExchange: ExecutionClient,
     IlliquidExchange: ExecutionClient,
-    Portfolio: MarketUpdater + OrderGenerator + FillUpdater,
 {
     pub engine_id: Option<Uuid>,
     pub command_rx: Option<mpsc::Receiver<Command>>,
@@ -368,18 +364,17 @@ where
     pub illiquid_exchange: Option<IlliquidExchange>,
     pub send_order_tx: Option<mpsc::UnboundedSender<ExecutionRequest>>,
     pub order_update_rx: Option<mpsc::Receiver<AccountData>>,
-    pub portfolio: Option<Arc<Mutex<Portfolio>>>,
+    pub portfolio: Option<Arc<Mutex<SpotPortfolio>>>,
     pub meta_data: Option<SpotArbTraderMetaData>,
 }
 
-impl<Data, Strategy, LiquidExchange, IlliquidExchange, Portfolio>
-    SpotArbTraderBuilder<Data, Strategy, LiquidExchange, IlliquidExchange, Portfolio>
+impl<Data, Strategy, LiquidExchange, IlliquidExchange>
+    SpotArbTraderBuilder<Data, Strategy, LiquidExchange, IlliquidExchange>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
     Strategy: SignalGenerator,
     LiquidExchange: ExecutionClient,
     IlliquidExchange: ExecutionClient,
-    Portfolio: MarketUpdater + OrderGenerator + FillUpdater,
 {
     pub fn new() -> Self {
         Self {
@@ -468,7 +463,7 @@ where
         }
     }
 
-    pub fn portfolio(self, value: Arc<Mutex<Portfolio>>) -> Self {
+    pub fn portfolio(self, value: Arc<Mutex<SpotPortfolio>>) -> Self {
         Self {
             portfolio: Some(value),
             ..self
@@ -484,10 +479,7 @@ where
 
     pub fn build(
         self,
-    ) -> Result<
-        SpotArbTrader<Data, Strategy, LiquidExchange, IlliquidExchange, Portfolio>,
-        EngineError,
-    > {
+    ) -> Result<SpotArbTrader<Data, Strategy, LiquidExchange, IlliquidExchange>, EngineError> {
         Ok(SpotArbTrader {
             engine_id: self
                 .engine_id

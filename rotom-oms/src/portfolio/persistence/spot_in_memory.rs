@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use rotom_data::Market;
+use rotom_data::{ExchangeAssetId, Market};
 use tracing::error;
 use uuid::Uuid;
 
@@ -9,7 +9,10 @@ use crate::{
         account_data::{AccountDataBalance, AccountDataBalanceDelta},
         balance::{Balance, SpotBalanceId},
     },
-    portfolio::position::{determine_position_id, Position, PositionId},
+    portfolio::{
+        position::{determine_position_id, Position, PositionId},
+        position2::Position2,
+    },
 };
 
 use super::{determine_exited_positions_id, error::RepositoryError};
@@ -19,14 +22,14 @@ use super::{determine_exited_positions_id, error::RepositoryError};
 /*----- */
 #[derive(Debug, Default)]
 pub struct SpotInMemoryRepository {
-    open_positions: HashMap<PositionId, Position>,
+    open_positions: HashMap<ExchangeAssetId, Position2>,
     closed_positions: HashMap<String, Vec<Position>>,
     current_balance: HashMap<SpotBalanceId, Balance>,
 }
 
-// /*----- */
-// // Impl BalanceHandler for InMemoryRepository
-// /*----- */
+/*----- */
+// Impl BalanceHandler for InMemoryRepository
+/*----- */
 impl SpotInMemoryRepository {
     // Balance Hanlder
     pub fn set_balance(
@@ -76,7 +79,7 @@ impl SpotInMemoryRepository {
     }
 
     // Position Handler
-    pub fn set_open_position(&mut self, position: Position) -> Result<(), RepositoryError> {
+    pub fn set_open_position(&mut self, position: Position2) -> Result<(), RepositoryError> {
         self.open_positions
             .insert(position.position_id.clone(), position);
         Ok(())
@@ -84,40 +87,41 @@ impl SpotInMemoryRepository {
 
     pub fn get_open_position_mut(
         &mut self,
-        position_id: &PositionId,
-    ) -> Result<Option<&mut Position>, RepositoryError> {
+        position_id: &ExchangeAssetId,
+    ) -> Result<Option<&mut Position2>, RepositoryError> {
         Ok(self.open_positions.get_mut(position_id))
     }
 
     pub fn get_open_position(
         &self,
-        position_id: &PositionId,
-    ) -> Result<Option<&Position>, RepositoryError> {
+        position_id: &ExchangeAssetId,
+    ) -> Result<Option<&Position2>, RepositoryError> {
         Ok(self.open_positions.get(position_id))
     }
 
-    pub fn get_open_positions<'a, Markets: Iterator<Item = &'a Market>>(
-        &mut self,
-        engine_id: Uuid,
-        markets: Markets,
-    ) -> Result<Vec<Position>, RepositoryError> {
-        Ok(markets
-            .filter_map(|market| {
-                self.open_positions
-                    .get(&determine_position_id(
-                        engine_id,
-                        &market.exchange,
-                        &market.instrument,
-                    ))
-                    .cloned()
-            })
-            .collect())
-    }
+    // todo:
+    // pub fn get_open_positions<'a, Markets: Iterator<Item = &'a Market>>(
+    //     &mut self,
+    //     engine_id: Uuid,
+    //     markets: Markets,
+    // ) -> Result<Vec<Position>, RepositoryError> {
+    //     Ok(markets
+    //         .filter_map(|market| {
+    //             self.open_positions
+    //                 .get(&determine_position_id(
+    //                     engine_id,
+    //                     &market.exchange,
+    //                     &market.instrument,
+    //                 ))
+    //                 .cloned()
+    //         })
+    //         .collect())
+    // }
 
     pub fn remove_position(
         &mut self,
-        position_id: &PositionId,
-    ) -> Result<Option<Position>, RepositoryError> {
+        position_id: &ExchangeAssetId,
+    ) -> Result<Option<Position2>, RepositoryError> {
         Ok(self.open_positions.remove(position_id))
     }
 

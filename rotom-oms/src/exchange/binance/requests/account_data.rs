@@ -77,13 +77,13 @@ impl From<BinanceAccountDataOrder> for AccountDataOrder {
             exchange: ExchangeId::BinanceSpot,
             client_order_id: order.c,
             asset: order.s,
-            price: order.p, // todo!
-            quantity: order.q,
+            price: order.L,
+            quantity: order.l,
             status: order.X,
             execution_time: order.T,
             side: order.S,
             fee: order.n,
-            filled_gross: order.Q,
+            filled_gross: order.Z,
         }
     }
 }
@@ -206,8 +206,66 @@ impl From<BinanceAccountEvents> for AccountData {
     }
 }
 
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_binance_user_data_response() {
+        let response = r#"{
+            "e":"executionReport",
+            "E":1726401153470,
+            "s":"OPUSDT",
+            "c":"vDxU1T4TnOFLNvMRkjofsM",
+            "S":"BUY",
+            "o":"LIMIT",
+            "f":"GTC",
+            "q":"5.00000000",
+            "p":"1.42000000",
+            "P":"0.00000000",
+            "F":"0.00000000",
+            "g":-1,
+            "C":"",
+            "x":"NEW",
+            "X":"NEW",
+            "r":"NONE",
+            "i":1593430628,
+            "l":"0.00000000",
+            "z":"0.00000000",
+            "L":"0.00000000",
+            "n":"0",
+            "N":null,
+            "T":1726401153469,
+            "t":-1,
+            "I":3278287247,
+            "w":true,
+            "m":false,
+            "M":false,
+            "O":1726401153469,
+            "Z":"0.00000000",
+            "Y":"0.00000000",
+            "Q":"0.00000000",
+            "W":1726401153469,
+            "V":"EXPIRE_MAKER"
+        }"#;
+
+        let response_de = serde_json::from_str::<BinanceAccountEvents>(response);
+        let mut _result = false;
+
+        match response_de {
+            Ok(_) => _result = true,
+            Err(_) => _result = false,
+        }
+
+        assert!(_result)
+    }
+}
+
+/*----- */
+// Examples
+/*----- */
 /*
-### Partial fill then full fill example ###
+### Limit buy partial fill ###
 "{
     \"e\":\"executionReport\",
     \"E\":1733290605972,
@@ -281,59 +339,92 @@ impl From<BinanceAccountEvents> for AccountData {
     \"W\":1733290515358,
     \"V\":\"EXPIRE_MAKER\"
 }"
-*/
 
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_binance_user_data_response() {
-        let response = r#"{
-            "e":"executionReport",
-            "E":1726401153470,
-            "s":"OPUSDT",
-            "c":"vDxU1T4TnOFLNvMRkjofsM",
-            "S":"BUY",
-            "o":"LIMIT",
-            "f":"GTC",
-            "q":"5.00000000",
-            "p":"1.42000000",
-            "P":"0.00000000",
-            "F":"0.00000000",
-            "g":-1,
-            "C":"",
-            "x":"NEW",
-            "X":"NEW",
-            "r":"NONE",
-            "i":1593430628,
-            "l":"0.00000000",
-            "z":"0.00000000",
-            "L":"0.00000000",
-            "n":"0",
-            "N":null,
-            "T":1726401153469,
-            "t":-1,
-            "I":3278287247,
-            "w":true,
-            "m":false,
-            "M":false,
-            "O":1726401153469,
-            "Z":"0.00000000",
-            "Y":"0.00000000",
-            "Q":"0.00000000",
-            "W":1726401153469,
-            "V":"EXPIRE_MAKER"
-        }"#;
-
-        let response_de = serde_json::from_str::<BinanceAccountEvents>(response);
-        let mut _result = false;
-
-        match response_de {
-            Ok(_) => _result = true,
-            Err(_) => _result = false,
-        }
-
-        assert!(_result)
-    }
+### Limit sell ###
+"{\"e\":\"executionReport\",\"E\":1734745890682,\"s\":\"OPUSDT\",\"c\":\"web_5fd0965995964e7d8d7890b500bc1f5d\",\"S\":\"SELL\",\"o\":\"LIMIT\",\"f\":\"GTC\",\"q\":\"4.96000000\",\"p\":\"1.91000000\",\"P\":\"0.00000000\",\"F\":\"0.00000000\",\"g\":-1,\"C\":\"\",\"x\":\"NEW\",\"X\":\"NEW\",\"r\":\"NONE\",\"i\":1985639387,\"l\":\"0.00000000\",\"z\":\"0.00000000\",\"L\":\"0.00000000\",\"n\":\"0\",\"N\":null,\"T\":1734745890681,\"t\":-1,\"I\":4096624429,\"w\":true,\"m\":false,\"M\":false,\"O\":1734745890681,\"Z\":\"0.00000000\",\"Y\":\"0.00000000\",\"Q\":\"0.00000000\",\"W\":1734745890681,\"V\":\"EXPIRE_MAKER\"}",
+AccountDataOrder: AccountDataOrder {
+    exchange: BinanceSpot,
+    client_order_id: "web_5fd0965995964e7d8d7890b500bc1f5d",
+    asset: "OPUSDT",
+    price: 0.0,
+    quantity: 0.0,
+    status: New,
+    execution_time: 2024-12-21T01:51:30.681Z,
+    side: Sell,
+    fee: 0.0,
+    filled_gross: 0.0,
 }
+
+"{\"e\":\"executionReport\",\"E\":1734745936793,\"s\":\"OPUSDT\",\"c\":\"web_5fd0965995964e7d8d7890b500bc1f5d\",\"S\":\"SELL\",\"o\":\"LIMIT\",\"f\":\"GTC\",\"q\":\"4.96000000\",\"p\":\"1.91000000\",\"P\":\"0.00000000\",\"F\":\"0.00000000\",\"g\":-1,\"C\":\"\",\"x\":\"TRADE\",\"X\":\"FILLED\",\"r\":\"NONE\",\"i\":1985639387,\"l\":\"4.96000000\",\"z\":\"4.96000000\",\"L\":\"1.91000000\",\"n\":\"0.00947360\",\"N\":\"USDT\",\"T\":1734745936793,\"t\":114330470,\"I\":4096630531,\"w\":false,\"m\":true,\"M\":true,\"O\":1734745890681,\"Z\":\"9.47360000\",\"Y\":\"9.47360000\",\"Q\":\"0.00000000\",\"W\":1734745890681,\"V\":\"EXPIRE_MAKER\"}",
+AccountDataOrder: AccountDataOrder {
+    exchange: BinanceSpot,
+    client_order_id: "web_5fd0965995964e7d8d7890b500bc1f5d",
+    asset: "OPUSDT",
+    price: 1.91,
+    quantity: 4.96,
+    status: Filled,
+    execution_time: 2024-12-21T01:52:16.793Z,
+    side: Sell,
+    fee: 0.0094736,
+    filled_gross: 9.4736,
+}
+
+### Market order buy ###
+"{\"e\":\"executionReport\",\"E\":1734745597750,\"s\":\"OPUSDT\",\"c\":\"web_ec703d3d0e82439ca696363f4f0c681c\",\"S\":\"BUY\",\"o\":\"MARKET\",\"f\":\"GTC\",\"q\":\"4.99000000\",\"p\":\"0.00000000\",\"P\":\"0.00000000\",\"F\":\"0.00000000\",\"g\":-1,\"C\":\"\",\"x\":\"NEW\",\"X\":\"NEW\",\"r\":\"NONE\",\"i\":1985620466,\"l\":\"0.00000000\",\"z\":\"0.00000000\",\"L\":\"0.00000000\",\"n\":\"0\",\"N\":null,\"T\":1734745597750,\"t\":-1,\"I\":4096586101,\"w\":true,\"m\":false,\"M\":false,\"O\":1734745597750,\"Z\":\"0.00000000\",\"Y\":\"0.00000000\",\"Q\":\"9.51812000\",\"W\":1734745597750,\"V\":\"EXPIRE_MAKER\"}",
+"{\"e\":\"executionReport\",\"E\":1734745597750,\"s\":\"OPUSDT\",\"c\":\"web_ec703d3d0e82439ca696363f4f0c681c\",\"S\":\"BUY\",\"o\":\"MARKET\",\"f\":\"GTC\",\"q\":\"4.99000000\",\"p\":\"0.00000000\",\"P\":\"0.00000000\",\"F\":\"0.00000000\",\"g\":-1,\"C\":\"\",\"x\":\"TRADE\",\"X\":\"FILLED\",\"r\":\"NONE\",\"i\":1985620466,\"l\":\"4.99000000\",\"z\":\"4.99000000\",\"L\":\"1.90700000\",\"n\":\"0.00499000\",\"N\":\"OP\",\"T\":1734745597750,\"t\":114329975,\"I\":4096586102,\"w\":false,\"m\":false,\"M\":true,\"O\":1734745597750,\"Z\":\"9.51593000\",\"Y\":\"9.51593000\",\"Q\":\"9.51812000\",\"W\":1734745597750,\"V\":\"EXPIRE_MAKER\"}",
+
+AccountDataOrder: AccountDataOrder {
+    exchange: BinanceSpot,
+    client_order_id: "web_ec703d3d0e82439ca696363f4f0c681c",
+    asset: "OPUSDT",
+    price: 0.0,
+    quantity: 0.0,
+    status: New,
+    execution_time: 2024-12-21T01:46:37.750Z,
+    side: Buy,
+    fee: 0.0,
+    filled_gross: 0.0,
+}
+AccountDataOrder: AccountDataOrder {
+    exchange: BinanceSpot,
+    client_order_id: "web_ec703d3d0e82439ca696363f4f0c681c",
+    asset: "OPUSDT",
+    price: 1.907,
+    quantity: 4.99,
+    status: Filled,
+    execution_time: 2024-12-21T01:46:37.750Z,
+    side: Buy,
+    fee: 0.00499,
+    filled_gross: 9.51593,
+}
+
+
+### Market order sell ###
+"{\"e\":\"executionReport\",\"E\":1734745618076,\"s\":\"OPUSDT\",\"c\":\"web_7c4fcae94537497fb41b87a13927fd0f\",\"S\":\"SELL\",\"o\":\"MARKET\",\"f\":\"GTC\",\"q\":\"4.99000000\",\"p\":\"0.00000000\",\"P\":\"0.00000000\",\"F\":\"0.00000000\",\"g\":-1,\"C\":\"\",\"x\":\"NEW\",\"X\":\"NEW\",\"r\":\"NONE\",\"i\":1985621169,\"l\":\"0.00000000\",\"z\":\"0.00000000\",\"L\":\"0.00000000\",\"n\":\"0\",\"N\":null,\"T\":1734745618075,\"t\":-1,\"I\":4096587500,\"w\":true,\"m\":false,\"M\":false,\"O\":1734745618075,\"Z\":\"0.00000000\",\"Y\":\"0.00000000\",\"Q\":\"0.00000000\",\"W\":1734745618075,\"V\":\"EXPIRE_MAKER\"}",
+"{\"e\":\"executionReport\",\"E\":1734745618076,\"s\":\"OPUSDT\",\"c\":\"web_7c4fcae94537497fb41b87a13927fd0f\",\"S\":\"SELL\",\"o\":\"MARKET\",\"f\":\"GTC\",\"q\":\"4.99000000\",\"p\":\"0.00000000\",\"P\":\"0.00000000\",\"F\":\"0.00000000\",\"g\":-1,\"C\":\"\",\"x\":\"TRADE\",\"X\":\"FILLED\",\"r\":\"NONE\",\"i\":1985621169,\"l\":\"4.99000000\",\"z\":\"4.99000000\",\"L\":\"1.90700000\",\"n\":\"0.00951593\",\"N\":\"USDT\",\"T\":1734745618075,\"t\":114329985,\"I\":4096587501,\"w\":false,\"m\":false,\"M\":true,\"O\":1734745618075,\"Z\":\"9.51593000\",\"Y\":\"9.51593000\",\"Q\":\"0.00000000\",\"W\":1734745618075,\"V\":\"EXPIRE_MAKER\"}",
+
+AccountDataOrder: AccountDataOrder {
+    exchange: BinanceSpot,
+    client_order_id: "web_7c4fcae94537497fb41b87a13927fd0f",
+    asset: "OPUSDT",
+    price: 0.0,
+    quantity: 0.0,
+    status: New,
+    execution_time: 2024-12-21T01:46:58.075Z,
+    side: Sell,
+    fee: 0.0,
+    filled_gross: 0.0,
+}
+AccountDataOrder: AccountDataOrder {
+    exchange: BinanceSpot,
+    client_order_id: "web_7c4fcae94537497fb41b87a13927fd0f",
+    asset: "OPUSDT",
+    price: 1.907,
+    quantity: 4.99,
+    status: Filled,
+    execution_time: 2024-12-21T01:46:58.075Z,
+    side: Sell,
+    fee: 0.00951593,
+    filled_gross: 9.51593,
+}
+*/

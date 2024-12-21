@@ -12,6 +12,7 @@ use crate::{
     event::Event,
     execution::FillEvent,
     model::{
+        account_data::AccountDataOrder,
         balance::Balance,
         order::{OrderEvent, OrderState},
         OrderKind, Side,
@@ -309,7 +310,7 @@ where
             };
 
         let mut order = OrderEvent {
-            time: Utc::now(),
+            order_request_time: Utc::now(),
             exchange: signal.exchange,
             instrument: signal.instrument.clone(),
             client_order_id: None,

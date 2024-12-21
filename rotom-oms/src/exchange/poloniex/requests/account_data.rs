@@ -68,8 +68,8 @@ impl From<PoloniexAccountDataOrder> for AccountDataOrder {
             exchange: ExchangeId::PoloniexSpot,
             client_order_id: std::mem::take(&mut order.data[0].order_id),
             asset: std::mem::take(&mut order.data[0].symbol),
-            price: order.data[0].filled_amount, // todo
-            quantity: order.data[0].quantity,
+            price: order.data[0].trade_price,
+            quantity: order.data[0].trade_qty,
             status: order.data[0].state,
             execution_time: order.data[0].create_time,
             side: order.data[0].side,
@@ -181,3 +181,140 @@ mod test {
         assert!(_result)
     }
 }
+
+/*----- */
+// Examples
+/*----- */
+/*
+### Note ###
+Asset & price field of AccountDataOrder is wrong, example copied before field was updated
+
+### Limit buy ###
+"{\"channel\":\"orders\",\"data\":[{\"orderId\":\"393344737152782336\",\"tradeId\":\"0\",\"clientOrderId\":\"\",\"accountType\":\"SPOT\",\"eventType\":\"place\",\"symbol\":\"OP_USDT\",\"side\":\"BUY\",\"type\":\"LIMIT\",\"price\":\"1.9\",\"quantity\":\"5\",\"state\":\"NEW\",\"createTime\":1734747093330,\"tradeTime\":0,\"tradePrice\":\"0\",\"tradeQty\":\"0\",\"feeCurrency\":\"\",\"tradeFee\":\"0\",\"tradeAmount\":\"0\",\"filledQuantity\":\"0\",\"filledAmount\":\"0\",\"ts\":1734747093363,\"source\":\"WEB\",\"orderAmount\":\"0\",\"matchRole\":\"\"}]}",
+AccountDataOrder: AccountDataOrder {
+    exchange: PoloniexSpot,
+    client_order_id: "393344737152782336",
+    asset: "OP_USDT",
+    price: 0.0,
+    quantity: 5.0,
+    status: New,
+    execution_time: 2024-12-21T02:11:33.330Z,
+    side: Buy,
+    fee: 0.0,
+    filled_gross: 0.0,
+}
+
+"{\"channel\":\"orders\",\"data\":[{\"orderId\":\"393344737152782336\",\"tradeId\":\"106864093\",\"clientOrderId\":\"\",\"accountType\":\"SPOT\",\"eventType\":\"trade\",\"symbol\":\"OP_USDT\",\"side\":\"BUY\",\"type\":\"LIMIT\",\"price\":\"1.9\",\"quantity\":\"5\",\"state\":\"FILLED\",\"createTime\":1734747093330,\"tradeTime\":1734747093356,\"tradePrice\":\"1.8995\",\"tradeQty\":\"5\",\"feeCurrency\":\"OP\",\"tradeFee\":\"0.01\",\"tradeAmount\":\"9.4975\",\"filledQuantity\":\"5\",\"filledAmount\":\"9.4975\",\"ts\":1734747093403,\"source\":\"WEB\",\"orderAmount\":\"0\",\"matchRole\":\"TAKER\"}]}",
+AccountDataOrder: AccountDataOrder {
+    exchange: PoloniexSpot,
+    client_order_id: "393344737152782336",
+    asset: "OP_USDT",
+    price: 9.4975,
+    quantity: 5.0,
+    status: Filled,
+    execution_time: 2024-12-21T02:11:33.330Z,
+    side: Buy,
+    fee: 0.01,
+    filled_gross: 9.4975,
+}
+
+### Limit sell ###
+"{\"channel\":\"orders\",\"data\":[{\"orderId\":\"393345318000967680\",\"tradeId\":\"0\",\"clientOrderId\":\"\",\"accountType\":\"SPOT\",\"eventType\":\"place\",\"symbol\":\"OP_USDT\",\"side\":\"SELL\",\"type\":\"LIMIT\",\"price\":\"1.888\",\"quantity\":\"4.99\",\"state\":\"NEW\",\"createTime\":1734747231814,\"tradeTime\":0,\"tradePrice\":\"0\",\"tradeQty\":\"0\",\"feeCurrency\":\"\",\"tradeFee\":\"0\",\"tradeAmount\":\"0\",\"filledQuantity\":\"0\",\"filledAmount\":\"0\",\"ts\":1734747231846,\"source\":\"WEB\",\"orderAmount\":\"0\",\"matchRole\":\"\"}]}",
+AccountDataOrder: AccountDataOrder {
+    exchange: PoloniexSpot,
+    client_order_id: "393345318000967680",
+    asset: "OP_USDT",
+    price: 0.0,
+    quantity: 4.99,
+    status: New,
+    execution_time: 2024-12-21T02:13:51.814Z,
+    side: Sell,
+    fee: 0.0,
+    filled_gross: 0.0,
+}
+
+"{\"channel\":\"orders\",\"data\":[{\"orderId\":\"393345318000967680\",\"tradeId\":\"106865010\",\"clientOrderId\":\"\",\"accountType\":\"SPOT\",\"eventType\":\"trade\",\"symbol\":\"OP_USDT\",\"side\":\"SELL\",\"type\":\"LIMIT\",\"price\":\"1.888\",\"quantity\":\"4.99\",\"state\":\"PARTIALLY_FILLED\",\"createTime\":1734747231814,\"tradeTime\":1734747232148,\"tradePrice\":\"1.888\",\"tradeQty\":\"3.3059\",\"feeCurrency\":\"USDT\",\"tradeFee\":\"0.0124830784\",\"tradeAmount\":\"6.2415392\",\"filledQuantity\":\"3.3059\",\"filledAmount\":\"6.2415392\",\"ts\":1734747232192,\"source\":\"WEB\",\"orderAmount\":\"0\",\"matchRole\":\"MAKER\"}]}",
+"{\"channel\":\"orders\",\"data\":[{\"orderId\":\"393345318000967680\",\"tradeId\":\"106865011\",\"clientOrderId\":\"\",\"accountType\":\"SPOT\",\"eventType\":\"trade\",\"symbol\":\"OP_USDT\",\"side\":\"SELL\",\"type\":\"LIMIT\",\"price\":\"1.888\",\"quantity\":\"4.99\",\"state\":\"FILLED\",\"createTime\":1734747231814,\"tradeTime\":1734747232150,\"tradePrice\":\"1.888\",\"tradeQty\":\"1.6841\",\"feeCurrency\":\"USDT\",\"tradeFee\":\"0.0063591616\",\"tradeAmount\":\"3.1795808\",\"filledQuantity\":\"4.99\",\"filledAmount\":\"9.42112\",\"ts\":1734747232202,\"source\":\"WEB\",\"orderAmount\":\"0\",\"matchRole\":\"MAKER\"}]}",
+AccountDataOrder: AccountDataOrder {
+    exchange: PoloniexSpot,
+    client_order_id: "393345318000967680",
+    asset: "OP_USDT",
+    price: 6.2415392,
+    quantity: 4.99,
+    status: PartiallyFilled,
+    execution_time: 2024-12-21T02:13:51.814Z,
+    side: Sell,
+    fee: 0.0124830784,
+    filled_gross: 6.2415392,
+}
+
+AccountDataOrder: AccountDataOrder {
+    exchange: PoloniexSpot,
+    client_order_id: "393345318000967680",
+    asset: "OP_USDT",
+    price: 9.42112,
+    quantity: 4.99,
+    status: Filled,
+    execution_time: 2024-12-21T02:13:51.814Z,
+    side: Sell,
+    fee: 0.0063591616,
+    filled_gross: 9.42112,
+}
+
+### Market buy ###
+"{\"channel\":\"orders\",\"data\":[{\"orderId\":\"393345433256243200\",\"tradeId\":\"0\",\"clientOrderId\":\"\",\"accountType\":\"SPOT\",\"eventType\":\"place\",\"symbol\":\"OP_USDT\",\"side\":\"BUY\",\"type\":\"MARKET\",\"price\":\"0\",\"quantity\":\"0\",\"state\":\"NEW\",\"createTime\":1734747259293,\"tradeTime\":0,\"tradePrice\":\"0\",\"tradeQty\":\"0\",\"feeCurrency\":\"\",\"tradeFee\":\"0\",\"tradeAmount\":\"0\",\"filledQuantity\":\"0\",\"filledAmount\":\"0\",\"ts\":1734747259322,\"source\":\"WEB\",\"orderAmount\":\"3\",\"matchRole\":\"\"}]}",
+"{\"channel\":\"orders\",\"data\":[{\"orderId\":\"393345433256243200\",\"tradeId\":\"106865178\",\"clientOrderId\":\"\",\"accountType\":\"SPOT\",\"eventType\":\"trade\",\"symbol\":\"OP_USDT\",\"side\":\"BUY\",\"type\":\"MARKET\",\"price\":\"0\",\"quantity\":\"0\",\"state\":\"FILLED\",\"createTime\":1734747259293,\"tradeTime\":1734747259317,\"tradePrice\":\"1.8925\",\"tradeQty\":\"1.5852\",\"feeCurrency\":\"OP\",\"tradeFee\":\"0.0031704\",\"tradeAmount\":\"2.999991\",\"filledQuantity\":\"1.5852\",\"filledAmount\":\"2.999991\",\"ts\":1734747259358,\"source\":\"WEB\",\"orderAmount\":\"3\",\"matchRole\":\"TAKER\"}]}",
+AccountDataOrder: AccountDataOrder {
+    exchange: PoloniexSpot,
+    client_order_id: "393345433256243200",
+    asset: "OP_USDT",
+    price: 0.0,
+    quantity: 0.0,
+    status: New,
+    execution_time: 2024-12-21T02:14:19.293Z,
+    side: Buy,
+    fee: 0.0,
+    filled_gross: 0.0,
+}
+AccountDataOrder: AccountDataOrder {
+    exchange: PoloniexSpot,
+    client_order_id: "393345433256243200",
+    asset: "OP_USDT",
+    price: 2.999991,
+    quantity: 0.0,
+    status: Filled,
+    execution_time: 2024-12-21T02:14:19.293Z,
+    side: Buy,
+    fee: 0.0031704,
+    filled_gross: 2.999991,
+}
+
+### Market sell ###
+"{\"channel\":\"orders\",\"data\":[{\"orderId\":\"393345503405989889\",\"tradeId\":\"0\",\"clientOrderId\":\"\",\"accountType\":\"SPOT\",\"eventType\":\"place\",\"symbol\":\"OP_USDT\",\"side\":\"SELL\",\"type\":\"MARKET\",\"price\":\"0\",\"quantity\":\"1.582\",\"state\":\"NEW\",\"createTime\":1734747276018,\"tradeTime\":0,\"tradePrice\":\"0\",\"tradeQty\":\"0\",\"feeCurrency\":\"\",\"tradeFee\":\"0\",\"tradeAmount\":\"0\",\"filledQuantity\":\"0\",\"filledAmount\":\"0\",\"ts\":1734747276049,\"source\":\"WEB\",\"orderAmount\":\"0\",\"matchRole\":\"\"}]}",
+AccountDataOrder: AccountDataOrder {
+    exchange: PoloniexSpot,
+    client_order_id: "393345503405989889",
+    asset: "OP_USDT",
+    price: 0.0,
+    quantity: 1.582,
+    status: New,
+    execution_time: 2024-12-21T02:14:36.018Z,
+    side: Sell,
+    fee: 0.0,
+    filled_gross: 0.0,
+}
+
+"{\"channel\":\"orders\",\"data\":[{\"orderId\":\"393345503405989889\",\"tradeId\":\"106865270\",\"clientOrderId\":\"\",\"accountType\":\"SPOT\",\"eventType\":\"trade\",\"symbol\":\"OP_USDT\",\"side\":\"SELL\",\"type\":\"MARKET\",\"price\":\"0\",\"quantity\":\"1.582\",\"state\":\"FILLED\",\"createTime\":1734747276018,\"tradeTime\":1734747276039,\"tradePrice\":\"1.8864\",\"tradeQty\":\"1.582\",\"feeCurrency\":\"USDT\",\"tradeFee\":\"0.0059685696\",\"tradeAmount\":\"2.9842848\",\"filledQuantity\":\"1.582\",\"filledAmount\":\"2.9842848\",\"ts\":1734747276079,\"source\":\"WEB\",\"orderAmount\":\"0\",\"matchRole\":\"TAKER\"}]}",
+AccountDataOrder: AccountDataOrder {
+    exchange: PoloniexSpot,
+    client_order_id: "393345503405989889",
+    asset: "OP_USDT",
+    price: 2.9842848,
+    quantity: 1.582,
+    status: Filled,
+    execution_time: 2024-12-21T02:14:36.018Z,
+    side: Sell,
+    fee: 0.0059685696,
+    filled_gross: 2.9842848,
+}
+*/

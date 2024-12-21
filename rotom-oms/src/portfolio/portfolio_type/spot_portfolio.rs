@@ -3,6 +3,7 @@ use rotom_data::{
     error::SocketError,
     event_models::market_event::{DataKind, MarketEvent},
     shared::subscription_models::ExchangeId,
+    ExchangeAssetId,
 };
 use rotom_strategy::{Decision, Signal, SignalForceExit, SignalStrength};
 use std::collections::HashMap;
@@ -15,7 +16,7 @@ use crate::{
     },
     execution::FillEvent,
     model::{
-        account_data::{AccountDataBalance, AccountDataBalanceDelta},
+        account_data::{AccountDataBalance, AccountDataBalanceDelta, AccountDataOrder},
         balance::{determine_balance_id, SpotBalanceId},
         order::{OrderEvent, OrderState},
         OrderKind, Side,
@@ -25,9 +26,10 @@ use crate::{
         error::PortfolioError,
         persistence::spot_in_memory::SpotInMemoryRepository,
         position::{
-            determine_position_id, Position, PositionEnterer, PositionExiter, PositionUpdate,
+            self, determine_position_id, Position, PositionEnterer, PositionExiter, PositionUpdate,
             PositionUpdater,
         },
+        position2::Position2,
     },
 };
 
@@ -100,40 +102,28 @@ impl SpotPortfolio {
             .map(|balance| balance.total * 0.98 < buy_sell_amount) // give 2% buffer to account for fee
             .map_err(PortfolioError::RepositoryInteraction)
     }
-}
 
-impl MarketUpdater for SpotPortfolio {
-    fn update_from_market(
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // OrderGenerator trait
+    pub fn generate_order(
         &mut self,
-        market: &MarketEvent<DataKind>,
-    ) -> Result<Option<PositionUpdate>, PortfolioError> {
-        let position_id =
-            determine_position_id(self.engine_id, &market.exchange, &market.instrument);
-
-        if let Some(position) = self.repository.get_open_position_mut(&position_id)? {
-            if let Some(position_update) = position.update(market) {
-                return Ok(Some(position_update));
-            }
-        }
-
-        Ok(None)
-    }
-}
-
-impl OrderGenerator for SpotPortfolio {
-    fn generate_order(&mut self, signal: &Signal) -> Result<Option<OrderEvent>, PortfolioError> {
-        let position_id =
-            determine_position_id(self.engine_id, &signal.exchange, &signal.instrument);
-        let position = self.repository.get_open_position(&position_id)?;
+        signal: &Signal,
+    ) -> Result<Option<OrderEvent>, PortfolioError> {
+        let position = self.repository.get_open_position(&ExchangeAssetId::from((
+            &signal.exchange,
+            &signal.instrument,
+        )))?;
 
         let (signal_decision, signal_strength) =
-            match parse_signal_decision(&position, &signal.signals) {
+            match parse_signal_decision2(&position, &signal.signals) {
                 None => return Ok(None),
                 Some(net_signal) => net_signal,
             };
 
         let mut order = OrderEvent {
-            time: Utc::now(),
+            order_request_time: Utc::now(),
             exchange: signal.exchange,
             instrument: signal.instrument.clone(),
             client_order_id: None,
@@ -147,7 +137,7 @@ impl OrderGenerator for SpotPortfolio {
         };
 
         self.allocator
-            .allocate_order(&mut order, position, *signal_strength);
+            .allocate_order2(&mut order, position, *signal_strength);
 
         let balance_id = determine_balance_id(&signal.instrument.quote, &signal.exchange);
 
@@ -160,6 +150,101 @@ impl OrderGenerator for SpotPortfolio {
         Ok(Some(order))
     }
 
+    pub fn generate_exit_order2(
+        &mut self,
+        _signal: SignalForceExit,
+    ) -> Result<Option<OrderEvent>, PortfolioError> {
+        unimplemented!()
+    }
+
+    // MarketUpdater trait
+    pub fn update_from_market2(&mut self) {
+        unimplemented!()
+    }
+
+    // FillUpdater trait
+    pub fn update_from_fill2(
+        &mut self,
+        account_data: &AccountDataOrder,
+        order: &OrderEvent,
+    ) -> Result<(), PortfolioError> {
+        // self.repository.remove_posisition removes a position if it is open
+        let position_id = ExchangeAssetId::from((&order.exchange, &order.instrument));
+        match self.repository.remove_position(&position_id)? {
+            Some(mut position) => {}
+            // If no position is open for the current Exchange & asset combo, we should enter a position
+            None => {
+                let position = Position2::enter(self.engine_id, account_data, order);
+                self.repository.set_open_position(position)?;
+            }
+        }
+        Ok(())
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Traits for Spot Portfolio - Update later
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+impl MarketUpdater for SpotPortfolio {
+    fn update_from_market(
+        &mut self,
+        market: &MarketEvent<DataKind>,
+    ) -> Result<Option<PositionUpdate>, PortfolioError> {
+        unimplemented!()
+        // let position_id =
+        //     determine_position_id(self.engine_id, &market.exchange, &market.instrument);
+
+        // if let Some(position) = self.repository.get_open_position_mut(&position_id)? {
+        //     if let Some(position_update) = position.update(market) {
+        //         return Ok(Some(position_update));
+        //     }
+        // }
+
+        // Ok(None)
+    }
+}
+
+impl OrderGenerator for SpotPortfolio {
+    fn generate_order(&mut self, signal: &Signal) -> Result<Option<OrderEvent>, PortfolioError> {
+        unimplemented!()
+        // let position_id =
+        //     determine_position_id(self.engine_id, &signal.exchange, &signal.instrument);
+        // let position = self.repository.get_open_position(&position_id)?;
+
+        // let (signal_decision, signal_strength) =
+        //     match parse_signal_decision(&position, &signal.signals) {
+        //         None => return Ok(None),
+        //         Some(net_signal) => net_signal,
+        //     };
+
+        // let mut order = OrderEvent {
+        //     order_request_time: Utc::now(),
+        //     exchange: signal.exchange,
+        //     instrument: signal.instrument.clone(),
+        //     client_order_id: None,
+        //     market_meta: signal.market_meta,
+        //     decision: *signal_decision,
+        //     quantity: 0.0,
+        //     order_kind: OrderKind::Limit,
+        //     order_status: None,
+        //     state: OrderState::RequestOpen,
+        //     filled_gross: 0.0,
+        // };
+
+        // self.allocator
+        //     .allocate_order(&mut order, position, *signal_strength);
+
+        // let balance_id = determine_balance_id(&signal.instrument.quote, &signal.exchange);
+
+        // if position.is_none()
+        //     && self.no_cash_to_enter_new_position(balance_id, order.get_dollar_value())?
+        // {
+        //     return Ok(None);
+        // }
+
+        // Ok(Some(order))
+    }
+
     fn generate_exit_order(
         &mut self,
         _signal: SignalForceExit,
@@ -170,60 +255,63 @@ impl OrderGenerator for SpotPortfolio {
 
 impl FillUpdater for SpotPortfolio {
     fn update_from_fill(&mut self, fill: &FillEvent) -> Result<Vec<Event>, PortfolioError> {
-        let mut generate_events = Vec::with_capacity(2);
+        unimplemented!()
+        // let mut generate_events = Vec::with_capacity(2);
 
-        // Get required balance and position ids
-        let base_asset_balance_id = determine_balance_id(&fill.instrument.base, &fill.exchange);
-        let quote_asset_balance_id = determine_balance_id(&fill.instrument.quote, &fill.exchange);
+        // // Get required balance and position ids
+        // let base_asset_balance_id = determine_balance_id(&fill.instrument.base, &fill.exchange);
+        // let quote_asset_balance_id = determine_balance_id(&fill.instrument.quote, &fill.exchange);
 
-        // Get balances of base and quote asset
-        let mut base_asset_balance = self.repository.get_balance(&base_asset_balance_id)?;
-        let mut quote_asset_balance = self.repository.get_balance(&quote_asset_balance_id)?;
+        // // Get balances of base and quote asset
+        // let mut base_asset_balance = self.repository.get_balance(&base_asset_balance_id)?;
+        // let mut quote_asset_balance = self.repository.get_balance(&quote_asset_balance_id)?;
 
-        let position_id = determine_position_id(self.engine_id, &fill.exchange, &fill.instrument);
+        // let position_id = determine_position_id(self.engine_id, &fill.exchange, &fill.instrument);
 
-        match self.repository.remove_position(&position_id)? {
-            // Exit scenario
-            Some(mut position) => {
-                println!("########## REMOVE POSITION ##########");
-                let position_exit =
-                    position.exit_spot(&mut base_asset_balance, &mut quote_asset_balance, fill)?;
-                generate_events.push(Event::PositionExit(position_exit));
-            }
-            // Enter scenario
-            None => {
-                println!("######### REMOVE POSITION NONE ##########");
-                let position = Position::enter(self.engine_id, fill)?;
-                generate_events.push(Event::PositionNew(position.clone()));
+        // match self.repository.remove_position(&position_id)? {
+        //     // Exit scenario
+        //     Some(mut position) => {
+        //         println!("########## REMOVE POSITION ##########");
+        //         let position_exit =
+        //             position.exit_spot(&mut base_asset_balance, &mut quote_asset_balance, fill)?;
+        //         generate_events.push(Event::PositionExit(position_exit));
+        //     }
+        //     // Enter scenario
+        //     None => {
+        //         println!("######### REMOVE POSITION NONE ##########");
+        //         let position = Position::enter(self.engine_id, fill)?;
+        //         generate_events.push(Event::PositionNew(position.clone()));
 
-                // Update quote asset balance
-                quote_asset_balance.total += position.calculate_quote_asset_enter_price();
+        //         // Update quote asset balance
+        //         quote_asset_balance.total += position.calculate_quote_asset_enter_price();
 
-                // Update base asset balance
-                base_asset_balance.total += fill.quantity;
+        //         // Update base asset balance
+        //         base_asset_balance.total += fill.quantity;
 
-                self.repository.set_open_position(position)?;
-            }
-        }
+        //         self.repository.set_open_position(position)?;
+        //     }
+        // }
 
-        self.repository
-            .set_balance(quote_asset_balance_id, quote_asset_balance)?;
+        // // todo: do we need this still? probs not
+        // self.repository
+        //     .set_balance(quote_asset_balance_id, quote_asset_balance)?;
 
-        self.repository
-            .set_balance(base_asset_balance_id, base_asset_balance)?;
+        // self.repository
+        //     .set_balance(base_asset_balance_id, base_asset_balance)?;
 
-        println!(">>>>> SELF.PORTFOLIO <<<<<<");
-        println!("{:#?}", self);
+        // println!(">>>>> SELF.PORTFOLIO <<<<<<");
+        // println!("{:#?}", self);
 
-        Ok(generate_events)
+        // Ok(generate_events)
     }
 }
 
 /*----- */
 // Parse Signal Decision
 /*----- */
-pub fn parse_signal_decision<'a>(
-    position: &'a Option<&Position>,
+
+pub fn parse_signal_decision2<'a>(
+    position: &'a Option<&Position2>,
     signals: &'a HashMap<Decision, SignalStrength>,
 ) -> Option<(&'a Decision, &'a SignalStrength)> {
     // Determine the presence of signals in the provided signals HashMap

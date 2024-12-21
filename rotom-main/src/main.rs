@@ -69,7 +69,7 @@ pub async fn main() {
     ////////////////////////////////////////////////////
     // Order
     let mut order = OrderEvent {
-        time: Utc::now(),
+        order_request_time: Utc::now(),
         exchange: ExchangeId::BinanceSpot,
         instrument: Instrument::new("op", "usdt"),
         client_order_id: Some(ClientOrderId("391776281638920193".to_string())),
@@ -411,6 +411,9 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
+// - finish position2, what fields are required for this
+// - funcitons to convert orderEvent to OpenOrder, CancelOrder, TransferOrder etc
+// - do we still need balance update in fill updater? for spot portfolio
 // - what to do with new order and an existing order exists?
 // - rate limit ring buffer
 // - code to keep a limit order at bba
@@ -419,8 +422,6 @@ fn init_logging() {
 // - figure out the balance +ve and -ve of quote and base asset for portfolio when the fill is updated
 // - make the above point more solid
 // - update parse decision signal to not let short positions be open for spot trades
-// - unify types like Side, OrderType etc into one
-// - standarise order types ie. limit, market etc
 // - rm todos
 // - mv binance auth to http client
 // - impl other user related data methods for execution client

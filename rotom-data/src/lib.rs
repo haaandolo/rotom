@@ -54,7 +54,7 @@ impl Default for MarketMeta {
 /*----- */
 // Asset Formatted - asset formatted corresponding to exchange
 /*----- */
-#[derive(Debug)]
+#[derive(Clone, PartialEq, PartialOrd, Debug, Serialize, Deserialize)]
 pub struct AssetFormatted(pub String); // smol str
 
 impl From<(&ExchangeId, &Instrument)> for AssetFormatted {
@@ -73,8 +73,16 @@ impl From<(&ExchangeId, &Instrument)> for AssetFormatted {
 /*----- */
 // Asset & Exchange formatted - usually used for keys of hashmaps e.g BINANCESPOT_OPUSDT
 /*----- */
-#[derive(Debug, Eq, PartialEq, Hash)]
+#[derive(Debug, Eq, PartialEq, PartialOrd, Hash, Serialize, Deserialize, Clone)]
 pub struct ExchangeAssetId(pub String); // smol str
+
+// Below from is usually used to get the exchange & asset id when the asset is already formatted.
+// For example, when asset is received straight out of the websocket
+impl From<(&ExchangeId, &AssetFormatted)> for ExchangeAssetId {
+    fn from((exchange, asset_formatted): (&ExchangeId, &AssetFormatted)) -> Self {
+        ExchangeAssetId(format!("{}_{}", exchange.as_str(), asset_formatted.0).to_uppercase())
+    }
+}
 
 impl From<(&ExchangeId, &Instrument)> for ExchangeAssetId {
     fn from((exchange, instrument): (&ExchangeId, &Instrument)) -> Self {
