@@ -34,7 +34,7 @@ pub struct OrderEvent {
     pub quantity: f64,
     // MARKET, LIMIT etc
     pub order_kind: OrderKind,
-    pub order_status: Option<OrderStatus>,
+    pub order_status: OrderStatus,
     pub state: OrderState,
     // Filled gross of quote currency
     pub filled_gross: f64,
@@ -56,7 +56,7 @@ impl OrderEvent {
     pub fn update_order_from_account_data_stream(&mut self, account_data_update: AccountDataOrder) {
         self.set_state(OrderState::Open);
         self.filled_gross = account_data_update.filled_gross;
-        self.order_status = Some(account_data_update.status);
+        self.order_status = account_data_update.status;
         self.client_order_id = Some(ClientOrderId(account_data_update.client_order_id.clone()));
     }
 

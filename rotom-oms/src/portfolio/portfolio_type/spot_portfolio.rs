@@ -16,7 +16,9 @@ use crate::{
     },
     execution::FillEvent,
     model::{
-        account_data::{AccountDataBalance, AccountDataBalanceDelta, AccountDataOrder},
+        account_data::{
+            AccountDataBalance, AccountDataBalanceDelta, AccountDataOrder, OrderStatus,
+        },
         balance::{determine_balance_id, SpotBalanceId},
         order::{OrderEvent, OrderState},
         OrderKind, Side,
@@ -131,7 +133,7 @@ impl SpotPortfolio {
             decision: *signal_decision,
             quantity: 0.0,
             order_kind: OrderKind::Limit,
-            order_status: None,
+            order_status: OrderStatus::New,
             state: OrderState::RequestOpen,
             filled_gross: 0.0,
         };

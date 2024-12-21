@@ -26,6 +26,7 @@ use rotom_oms::{
         Fees,
     },
     model::{
+        account_data::OrderStatus,
         order::{CancelOrder, OpenOrder, OrderEvent},
         ClientOrderId,
     },
@@ -80,7 +81,7 @@ pub async fn main() {
         decision: Decision::Long,
         quantity: 5.0,
         order_kind: rotom_oms::model::OrderKind::Limit,
-        order_status: None,
+        order_status: OrderStatus::New,
         state: rotom_oms::model::order::OrderState::InTransit,
         filled_gross: 0.0,
     };

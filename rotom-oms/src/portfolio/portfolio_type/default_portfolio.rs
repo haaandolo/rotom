@@ -12,7 +12,7 @@ use crate::{
     event::Event,
     execution::FillEvent,
     model::{
-        account_data::AccountDataOrder,
+        account_data::{AccountDataOrder, OrderStatus},
         balance::Balance,
         order::{OrderEvent, OrderState},
         OrderKind, Side,
@@ -318,7 +318,7 @@ where
             decision: *signal_decision,
             quantity: 0.0,
             order_kind: OrderKind::Limit,
-            order_status: None,
+            order_status: OrderStatus::New,
             state: OrderState::InTransit,
             filled_gross: 0.0,
         };
