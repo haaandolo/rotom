@@ -125,8 +125,6 @@ where
         _backoff_ms *= 2;
 
         while let Some(msg) = stream.user_data_ws.next().await {
-            println!("############# RAW #############");
-            println!("{:#?}", msg);
             match WebSocketParser::parse::<Exchange::AccountDataStreamResponse>(msg) {
                 Some(Ok(exchange_message)) => {
                     if let Err(error) = account_data_tx.send(exchange_message.into()) {
@@ -167,6 +165,7 @@ where
 /*----- */
 // Account Data Stream - Send to corresponding trader and portfolio
 /*----- */
+// Note: only balance updates are done here, order updates are don't in the corresponding SpotArbTrader
 pub async fn send_account_data_to_traders_and_portfolio(
     trader_order_update_tx: HashMap<ExchangeAssetId, mpsc::Sender<AccountData>>,
     mut account_data_stream: mpsc::UnboundedReceiver<AccountData>,
@@ -174,9 +173,8 @@ pub async fn send_account_data_to_traders_and_portfolio(
 ) {
     while let Some(message) = account_data_stream.recv().await {
         match message {
-            // Order updates requires position portfolio update, so update then send to trader
+            // Order updates does not require portfolio update, so send update straight to trader
             AccountData::Order(order) => {
-                portfolio.lock().update_from_order(&order);
                 if let Some(trader_tx) = trader_order_update_tx.get(&ExchangeAssetId::from(&order))
                 {
                     let _ = trader_tx.send(AccountData::Order(order)).await;

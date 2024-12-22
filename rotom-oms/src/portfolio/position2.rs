@@ -135,11 +135,11 @@ impl Position2 {
         Some(PositionUpdate2::from(self))
     }
 
-    pub fn order_update(&mut self, account_update: &AccountDataOrder) {
-        self.last_execution_time = account_update.execution_time;
-        self.quantity += account_update.quantity;
-        self.filled_gross = account_update.filled_gross;
-        self.fees += account_update.fee;
+    pub fn order_update(&mut self, order: &OrderEvent) {
+        self.last_execution_time = order.last_execution_time.unwrap_or_default(); // todo?
+        self.quantity = order.cumulative_quantity;
+        self.filled_gross = order.filled_gross;
+        self.fees = order.fees;
         self.enter_avg_price = self.calculate_avg_price();
         self.unrealised_profit_loss = self.calculate_unrealised_profit_loss();
     }

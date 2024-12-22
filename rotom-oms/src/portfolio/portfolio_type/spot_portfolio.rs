@@ -179,35 +179,13 @@ impl SpotPortfolio {
         Ok(None)
     }
 
-    pub fn update_from_order(
-        &mut self,
-        account_update: &AccountDataOrder,
-    ) -> Result<(), PortfolioError> {
-        let position_id = ExchangeAssetId::from((
-            &account_update.exchange,
-            &AssetFormatted(account_update.asset.clone()),
-        ));
-
-        if let Some(position) = self.repository.get_open_position_mut(&position_id)? {
-            position.order_update(account_update);
-        }
-
-        Ok(())
-    }
-
     // FillUpdater trait
     pub fn update_from_fill2(&mut self, order: &OrderEvent) -> Result<(), PortfolioError> {
-        // self.repository.remove_posisition removes a position if it is open
         let position_id = ExchangeAssetId::from((&order.exchange, &order.instrument));
-        match self.repository.remove_position(&position_id)? {
-            // If position is open, adjust position depending on the state of the OrderEvent
-            Some(mut position) => match order.internal_order_state {
-                // If complete, generate exit order
-                OrderState::Complete => {}
-                // If open, update exiting position
-                OrderState::Open => {}
-                _ => {}
-            },
+
+        match self.repository.get_open_position_mut(&position_id)? {
+            // If position is open update the position
+            Some(position) => position.order_update(order),
             // If no position is open for the current Exchange & asset combo, we should enter a position
             None => {
                 let position = Position2::enter(self.engine_id, order);

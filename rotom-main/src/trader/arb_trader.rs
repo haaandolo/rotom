@@ -285,14 +285,6 @@ where
                             // self.process_new_order().await;
                         }
                     },
-                    Event::Fill(fill) => {
-                        let fill_side_effect_events = self
-                            .portfolio
-                            .lock()
-                            .update_from_fill(&fill)
-                            .expect("Failed to update Portfolio from fill");
-                        self.event_tx.send_many(fill_side_effect_events);
-                    }
                     _ => {}
                 }
             }
@@ -305,10 +297,17 @@ where
             'account_data_loop: loop {
                 match self.order_update_rx.try_recv() {
                     Ok(account_data) => match account_data {
-                        AccountData::Order(order_update) => {
-                            println!("AccountDataOrder: {:#?}", order_update);
+                        AccountData::Order(account_data_order_update) => {
+                            println!("AccountDataOrder: {:#?}", account_data_order_update);
                             if let Some(order) = &mut self.meta_data.order {
-                                order.update_order_from_account_data_stream(order_update);
+                                // When account data order update comes, update OrderEvent state first
+                                order.update_order_from_account_data_stream(
+                                    account_data_order_update,
+                                );
+
+                                // Then update the portfolio position state with updated OrderEvent
+                                let _ = self.portfolio.lock().update_from_fill2(order);
+
                                 // println!("####### ORDER UPDATED ##########");
                                 // println!("{:#?}", order)
                             }
@@ -523,3 +522,922 @@ where
         })
     }
 }
+
+/*
+### Binance ###
+arb portfolio: Mutex {
+    data: SpotPortfolio {
+        engine_id: 37fd5e92-a909-4638-a539-f40262c761a7,
+        exchanges: [
+            BinanceSpot,
+            PoloniexSpot,
+        ],
+        repository: SpotInMemoryRepository {
+            open_positions: {},
+            closed_positions: {},
+            current_balance: {
+                SpotBalanceId(
+                    "binancespot_usdt",
+                ): Balance {
+                    total: 9.39136955,
+                    available: 0.0,
+                },
+                SpotBalanceId(
+                    "binancespot_arb",
+                ): Balance {
+                    total: 0.0894,
+                    available: 0.0,
+                },
+                SpotBalanceId(
+                    "poloniexspot_usdt",
+                ): Balance {
+                    total: 11.06022807796,
+                    available: 0.0,
+                },
+                SpotBalanceId(
+                    "poloniexspot_op",
+                ): Balance {
+                    total: 8.04e-5,
+                    available: 0.0,
+                },
+                SpotBalanceId(
+                    "binancespot_op",
+                ): Balance {
+                    total: 0.00011,
+                    available: 0.0,
+                },
+                SpotBalanceId(
+                    "binancespot_usdce",
+                ): Balance {
+                    total: 1.0,
+                    available: 0.0,
+                },
+            },
+        },
+        allocator: SpotArbAllocator,
+    },
+}
+
+AccountDataOrder: AccountDataOrder {
+    exchange: BinanceSpot,
+    client_order_id: "T01L6y9R4FvUKe15X8Si4n",
+    asset: "OPUSDT",
+    price: 0.0,
+    quantity: 0.0,
+    status: New,
+    execution_time: 2024-12-22T02:55:33.273Z,
+    side: Buy,
+    fee: 0.0,
+    filled_gross: 0.0,
+}
+####### ORDER BEFORE UPDATE ##########
+OrderEvent {
+    order_request_time: 2024-12-22T02:55:32.950258Z,
+    exchange: BinanceSpot,
+    client_order_id: None,
+    instrument: Instrument {
+        base: "op",
+        quote: "usdt",
+    },
+    market_meta: MarketMeta {
+        close: 1.746,
+        time: 2024-12-22T02:55:32.950255Z,
+    },
+    decision: Long,
+    original_quantity: 4.0,
+    cumulative_quantity: 0.0,
+    order_kind: Limit,
+    exchange_order_status: None,
+    internal_order_state: InTransit,
+    filled_gross: 0.0,
+    enter_avg_price: 0.0,
+    fees: 0.0,
+    last_execution_time: None,
+}
+############ IN NONE ############
+############ UPDATE FROM FILL 2 ############
+SpotPortfolio {
+    engine_id: 37fd5e92-a909-4638-a539-f40262c761a7,
+    exchanges: [
+        BinanceSpot,
+        PoloniexSpot,
+    ],
+    repository: SpotInMemoryRepository {
+        open_positions: {
+            ExchangeAssetId(
+                "BINANCESPOT_OPUSDT",
+            ): Position2 {
+                order_request_time: 2024-12-22T02:55:32.950258Z,
+                last_execution_time: 2024-12-22T02:55:33.273Z,
+                position_id: ExchangeAssetId(
+                    "BINANCESPOT_OPUSDT",
+                ),
+                exchange: BinanceSpot,
+                asset: AssetFormatted(
+                    "OPUSDT",
+                ),
+                side: Buy,
+                quantity: 0.0,
+                fees: 0.0,
+                current_symbol_price: 0.0,
+                current_value_gross: 0.0,
+                filled_gross: 0.0,
+                enter_avg_price: 0.0,
+                enter_value_gross: 0.0,
+                unrealised_profit_loss: -0.0,
+                realised_profit_loss: 0.0,
+            },
+        },
+        closed_positions: {},
+        current_balance: {
+            SpotBalanceId(
+                "binancespot_usdt",
+            ): Balance {
+                total: 2.40736955,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "binancespot_arb",
+            ): Balance {
+                total: 0.0894,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "poloniexspot_usdt",
+            ): Balance {
+                total: 11.06022807796,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "poloniexspot_op",
+            ): Balance {
+                total: 8.04e-5,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "binancespot_bnb",
+            ): Balance {
+                total: 0.0,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "binancespot_op",
+            ): Balance {
+                total: 0.00011,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "binancespot_usdce",
+            ): Balance {
+                total: 1.0,
+                available: 0.0,
+            },
+        },
+    },
+    allocator: SpotArbAllocator,
+}
+####### ORDER UPDATED ##########
+OrderEvent {
+    order_request_time: 2024-12-22T02:55:32.950258Z,
+    exchange: BinanceSpot,
+    client_order_id: Some(
+        ClientOrderId(
+            "T01L6y9R4FvUKe15X8Si4n",
+        ),
+    ),
+    instrument: Instrument {
+        base: "op",
+        quote: "usdt",
+    },
+    market_meta: MarketMeta {
+        close: 1.746,
+        time: 2024-12-22T02:55:32.950255Z,
+    },
+    decision: Long,
+    original_quantity: 4.0,
+    cumulative_quantity: 0.0,
+    order_kind: Limit,
+    exchange_order_status: Some(
+        New,
+    ),
+    internal_order_state: Open,
+    filled_gross: 0.0,
+    enter_avg_price: NaN,
+    fees: 0.0,
+    last_execution_time: Some(
+        2024-12-22T02:55:33.273Z,
+    ),
+}
+AccountDataBalance: AccountDataBalance {
+    asset: "OP",
+    exchange: BinanceSpot,
+    balance: Balance {
+        total: 0.00011,
+        available: 0.0,
+    },
+}
+
+AccountDataOrder: AccountDataOrder {
+    exchange: BinanceSpot,
+    client_order_id: "T01L6y9R4FvUKe15X8Si4n",
+    asset: "OPUSDT",
+    price: 1.746,
+    quantity: 4.0,
+    status: Filled,
+    execution_time: 2024-12-22T02:55:50.400Z,
+    side: Buy,
+    fee: 0.004,
+    filled_gross: 6.984,
+}
+####### ORDER BEFORE UPDATE ##########
+OrderEvent {
+    order_request_time: 2024-12-22T02:55:32.950258Z,
+    exchange: BinanceSpot,
+    client_order_id: Some(
+        ClientOrderId(
+            "T01L6y9R4FvUKe15X8Si4n",
+        ),
+    ),
+    instrument: Instrument {
+        base: "op",
+        quote: "usdt",
+    },
+    market_meta: MarketMeta {
+        close: 1.746,
+        time: 2024-12-22T02:55:32.950255Z,
+    },
+    decision: Long,
+    original_quantity: 4.0,
+    cumulative_quantity: 0.0,
+    order_kind: Limit,
+    exchange_order_status: Some(
+        New,
+    ),
+    internal_order_state: Open,
+    filled_gross: 0.0,
+    enter_avg_price: NaN,
+    fees: 0.0,
+    last_execution_time: Some(
+        2024-12-22T02:55:33.273Z,
+    ),
+}
+############ IN SOME ############
+############ UPDATE FROM FILL 2 ############
+SpotPortfolio {
+    engine_id: 37fd5e92-a909-4638-a539-f40262c761a7,
+    exchanges: [
+        BinanceSpot,
+        PoloniexSpot,
+    ],
+    repository: SpotInMemoryRepository {
+        open_positions: {
+            ExchangeAssetId(
+                "BINANCESPOT_OPUSDT",
+            ): Position2 {
+                order_request_time: 2024-12-22T02:55:32.950258Z,
+                last_execution_time: 2024-12-22T02:55:50.400Z,
+                position_id: ExchangeAssetId(
+                    "BINANCESPOT_OPUSDT",
+                ),
+                exchange: BinanceSpot,
+                asset: AssetFormatted(
+                    "OPUSDT",
+                ),
+                side: Buy,
+                quantity: 4.0,
+                fees: 0.004,
+                current_symbol_price: 1.7460927367897454,
+                current_value_gross: 0.0,
+                filled_gross: 6.984,
+                enter_avg_price: 1.746,
+                enter_value_gross: 0.0,
+                unrealised_profit_loss: -0.004,
+                realised_profit_loss: 0.0,
+            },
+        },
+        closed_positions: {},
+        current_balance: {
+            SpotBalanceId(
+                "binancespot_usdt",
+            ): Balance {
+                total: 2.40736955,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "binancespot_arb",
+            ): Balance {
+                total: 0.0894,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "poloniexspot_usdt",
+            ): Balance {
+                total: 11.06022807796,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "poloniexspot_op",
+            ): Balance {
+                total: 8.04e-5,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "binancespot_bnb",
+            ): Balance {
+                total: 0.0,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "binancespot_op",
+            ): Balance {
+                total: 3.99611,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "binancespot_usdce",
+            ): Balance {
+                total: 1.0,
+                available: 0.0,
+            },
+        },
+    },
+    allocator: SpotArbAllocator,
+}
+####### ORDER UPDATED ##########
+OrderEvent {
+    order_request_time: 2024-12-22T02:55:32.950258Z,
+    exchange: BinanceSpot,
+    client_order_id: Some(
+        ClientOrderId(
+            "T01L6y9R4FvUKe15X8Si4n",
+        ),
+    ),
+    instrument: Instrument {
+        base: "op",
+        quote: "usdt",
+    },
+    market_meta: MarketMeta {
+        close: 1.746,
+        time: 2024-12-22T02:55:32.950255Z,
+    },
+    decision: Long,
+    original_quantity: 4.0,
+    cumulative_quantity: 4.0,
+    order_kind: Limit,
+    exchange_order_status: Some(
+        Filled,
+    ),
+    internal_order_state: Open,
+    filled_gross: 6.984,
+    enter_avg_price: 1.746,
+    fees: 0.004,
+    last_execution_time: Some(
+        2024-12-22T02:55:50.400Z,
+    ),
+}
+AccountDataBalance: AccountDataBalance {
+    asset: "OP",
+    exchange: BinanceSpot,
+    balance: Balance {
+        total: 3.99611,
+        available: 0.0,
+    },
+}
+
+########################################################################
+########################################################################
+
+### Poloniex ###
+arb portfolio: Mutex {
+    data: SpotPortfolio {
+        engine_id: a5ee10a3-198d-4aed-a8b2-c7cd592a5028,
+        exchanges: [
+            BinanceSpot,
+            PoloniexSpot,
+        ],
+        repository: SpotInMemoryRepository {
+            open_positions: {},
+            closed_positions: {},
+            current_balance: {
+                SpotBalanceId(
+                    "poloniexspot_usdt",
+                ): Balance {
+                    total: 11.06022807796,
+                    available: 0.0,
+                },
+                SpotBalanceId(
+                    "poloniexspot_op",
+                ): Balance {
+                    total: 8.04e-5,
+                    available: 0.0,
+                },
+                SpotBalanceId(
+                    "binancespot_arb",
+                ): Balance {
+                    total: 0.0894,
+                    available: 0.0,
+                },
+                SpotBalanceId(
+                    "binancespot_usdce",
+                ): Balance {
+                    total: 1.0,
+                    available: 0.0,
+                },
+                SpotBalanceId(
+                    "binancespot_op",
+                ): Balance {
+                    total: 3.99611,
+                    available: 0.0,
+                },
+                SpotBalanceId(
+                    "binancespot_usdt",
+                ): Balance {
+                    total: 2.40736955,
+                    available: 0.0,
+                },
+            },
+        },
+        allocator: SpotArbAllocator,
+    },
+}
+AccountDataOrder: AccountDataOrder {
+    exchange: PoloniexSpot,
+    client_order_id: "393725213122150400",
+    asset: "OP_USDT",
+    price: 0.0,
+    quantity: 0.0,
+    status: New,
+    execution_time: 2024-12-22T03:23:25.869Z,
+    side: Buy,
+    fee: 0.0,
+    filled_gross: 0.0,
+}
+####### ORDER BEFORE UPDATE ##########
+OrderEvent {
+    order_request_time: 2024-12-22T03:23:25.526579Z,
+    exchange: PoloniexSpot,
+    client_order_id: None,
+    instrument: Instrument {
+        base: "op",
+        quote: "usdt",
+    },
+    market_meta: MarketMeta {
+        close: 1.759,
+        time: 2024-12-22T03:23:25.526569Z,
+    },
+    decision: Long,
+    original_quantity: 3.0,
+    cumulative_quantity: 0.0,
+    order_kind: Limit,
+    exchange_order_status: None,
+    internal_order_state: InTransit,
+    filled_gross: 0.0,
+    enter_avg_price: 0.0,
+    fees: 0.0,
+    last_execution_time: None,
+}
+############ IN NONE ############
+############ UPDATE FROM FILL 2 ############
+SpotPortfolio {
+    engine_id: a5ee10a3-198d-4aed-a8b2-c7cd592a5028,
+    exchanges: [
+        BinanceSpot,
+        PoloniexSpot,
+    ],
+    repository: SpotInMemoryRepository {
+        open_positions: {
+            ExchangeAssetId(
+                "POLONIEXSPOT_OP_USDT",
+            ): Position2 {
+                order_request_time: 2024-12-22T03:23:25.526579Z,
+                last_execution_time: 2024-12-22T03:23:25.869Z,
+                position_id: ExchangeAssetId(
+                    "POLONIEXSPOT_OP_USDT",
+                ),
+                exchange: PoloniexSpot,
+                asset: AssetFormatted(
+                    "OP_USDT",
+                ),
+                side: Buy,
+                quantity: 0.0,
+                fees: 0.0,
+                current_symbol_price: 0.0,
+                current_value_gross: 0.0,
+                filled_gross: 0.0,
+                enter_avg_price: 0.0,
+                enter_value_gross: 0.0,
+                unrealised_profit_loss: -0.0,
+                realised_profit_loss: 0.0,
+            },
+        },
+        closed_positions: {},
+        current_balance: {
+            SpotBalanceId(
+                "poloniexspot_usdt",
+            ): Balance {
+                total: 5.78322807796,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "poloniexspot_op",
+            ): Balance {
+                total: 8.04e-5,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "binancespot_arb",
+            ): Balance {
+                total: 0.0894,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "binancespot_usdce",
+            ): Balance {
+                total: 1.0,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "binancespot_op",
+            ): Balance {
+                total: 3.99611,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "binancespot_usdt",
+            ): Balance {
+                total: 2.40736955,
+                available: 0.0,
+            },
+        },
+    },
+    allocator: SpotArbAllocator,
+}
+####### ORDER UPDATED ##########
+OrderEvent {
+    order_request_time: 2024-12-22T03:23:25.526579Z,
+    exchange: PoloniexSpot,
+    client_order_id: Some(
+        ClientOrderId(
+            "393725213122150400",
+        ),
+    ),
+    instrument: Instrument {
+        base: "op",
+        quote: "usdt",
+    },
+    market_meta: MarketMeta {
+        close: 1.759,
+        time: 2024-12-22T03:23:25.526569Z,
+    },
+    decision: Long,
+    original_quantity: 3.0,
+    cumulative_quantity: 0.0,
+    order_kind: Limit,
+    exchange_order_status: Some(
+        New,
+    ),
+    internal_order_state: Open,
+    filled_gross: 0.0,
+    enter_avg_price: NaN,
+    fees: 0.0,
+    last_execution_time: Some(
+        2024-12-22T03:23:25.869Z,
+    ),
+}
+AccountDataBalance: AccountDataBalance {
+    asset: "OP",
+    exchange: PoloniexSpot,
+    balance: Balance {
+        total: 2.0000804,
+        available: 0.0,
+    },
+}
+AccountDataBalance: AccountDataBalance {
+    asset: "OP",
+    exchange: PoloniexSpot,
+    balance: Balance {
+        total: 1.9960804,
+        available: 0.0,
+    },
+}
+AccountDataOrder: AccountDataOrder {
+    exchange: PoloniexSpot,
+    client_order_id: "393725213122150400",
+    asset: "OP_USDT",
+    price: 1.759,
+    quantity: 2.0,
+    status: PartiallyFilled,
+    execution_time: 2024-12-22T03:23:25.869Z,
+    side: Buy,
+    fee: 0.004,
+    filled_gross: 3.518,
+}
+####### ORDER BEFORE UPDATE ##########
+OrderEvent {
+    order_request_time: 2024-12-22T03:23:25.526579Z,
+    exchange: PoloniexSpot,
+    client_order_id: Some(
+        ClientOrderId(
+            "393725213122150400",
+        ),
+    ),
+    instrument: Instrument {
+        base: "op",
+        quote: "usdt",
+    },
+    market_meta: MarketMeta {
+        close: 1.759,
+        time: 2024-12-22T03:23:25.526569Z,
+    },
+    decision: Long,
+    original_quantity: 3.0,
+    cumulative_quantity: 0.0,
+    order_kind: Limit,
+    exchange_order_status: Some(
+        New,
+    ),
+    internal_order_state: Open,
+    filled_gross: 0.0,
+    enter_avg_price: NaN,
+    fees: 0.0,
+    last_execution_time: Some(
+        2024-12-22T03:23:25.869Z,
+    ),
+}
+############ IN SOME ############
+############ UPDATE FROM FILL 2 ############
+SpotPortfolio {
+    engine_id: a5ee10a3-198d-4aed-a8b2-c7cd592a5028,
+    exchanges: [
+        BinanceSpot,
+        PoloniexSpot,
+    ],
+    repository: SpotInMemoryRepository {
+        open_positions: {
+            ExchangeAssetId(
+                "POLONIEXSPOT_OP_USDT",
+            ): Position2 {
+                order_request_time: 2024-12-22T03:23:25.526579Z,
+                last_execution_time: 2024-12-22T03:23:25.869Z,
+                position_id: ExchangeAssetId(
+                    "POLONIEXSPOT_OP_USDT",
+                ),
+                exchange: PoloniexSpot,
+                asset: AssetFormatted(
+                    "OP_USDT",
+                ),
+                side: Buy,
+                quantity: 2.0,
+                fees: 0.004,
+                current_symbol_price: 1.7614,
+                current_value_gross: 0.0,
+                filled_gross: 3.518,
+                enter_avg_price: 1.759,
+                enter_value_gross: 0.0,
+                unrealised_profit_loss: -0.004,
+                realised_profit_loss: 0.0,
+            },
+        },
+        closed_positions: {},
+        current_balance: {
+            SpotBalanceId(
+                "poloniexspot_usdt",
+            ): Balance {
+                total: 5.78322807796,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "poloniexspot_op",
+            ): Balance {
+                total: 1.9960804,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "binancespot_arb",
+            ): Balance {
+                total: 0.0894,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "binancespot_usdce",
+            ): Balance {
+                total: 1.0,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "binancespot_op",
+            ): Balance {
+                total: 3.99611,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "binancespot_usdt",
+            ): Balance {
+                total: 2.40736955,
+                available: 0.0,
+            },
+        },
+    },
+    allocator: SpotArbAllocator,
+}
+####### ORDER UPDATED ##########
+OrderEvent {
+    order_request_time: 2024-12-22T03:23:25.526579Z,
+    exchange: PoloniexSpot,
+    client_order_id: Some(
+        ClientOrderId(
+            "393725213122150400",
+        ),
+    ),
+    instrument: Instrument {
+        base: "op",
+        quote: "usdt",
+    },
+    market_meta: MarketMeta {
+        close: 1.759,
+        time: 2024-12-22T03:23:25.526569Z,
+    },
+    decision: Long,
+    original_quantity: 3.0,
+    cumulative_quantity: 2.0,
+    order_kind: Limit,
+    exchange_order_status: Some(
+        PartiallyFilled,
+    ),
+    internal_order_state: Open,
+    filled_gross: 3.518,
+    enter_avg_price: 1.759,
+    fees: 0.004,
+    last_execution_time: Some(
+        2024-12-22T03:23:25.869Z,
+    ),
+}
+AccountDataBalance: AccountDataBalance {
+    asset: "OP",
+    exchange: PoloniexSpot,
+    balance: Balance {
+        total: 2.9960804,
+        available: 0.0,
+    },
+}
+AccountDataBalance: AccountDataBalance {
+    asset: "OP",
+    exchange: PoloniexSpot,
+    balance: Balance {
+        total: 2.9940804,
+        available: 0.0,
+    },
+}
+AccountDataOrder: AccountDataOrder {
+    exchange: PoloniexSpot,
+    client_order_id: "393725213122150400",
+    asset: "OP_USDT",
+    price: 1.759,
+    quantity: 1.0,
+    status: Filled,
+    execution_time: 2024-12-22T03:23:25.869Z,
+    side: Buy,
+    fee: 0.002,
+    filled_gross: 5.277,
+}
+####### ORDER BEFORE UPDATE ##########
+OrderEvent {
+    order_request_time: 2024-12-22T03:23:25.526579Z,
+    exchange: PoloniexSpot,
+    client_order_id: Some(
+        ClientOrderId(
+            "393725213122150400",
+        ),
+    ),
+    instrument: Instrument {
+        base: "op",
+        quote: "usdt",
+    },
+    market_meta: MarketMeta {
+        close: 1.759,
+        time: 2024-12-22T03:23:25.526569Z,
+    },
+    decision: Long,
+    original_quantity: 3.0,
+    cumulative_quantity: 2.0,
+    order_kind: Limit,
+    exchange_order_status: Some(
+        PartiallyFilled,
+    ),
+    internal_order_state: Open,
+    filled_gross: 3.518,
+    enter_avg_price: 1.759,
+    fees: 0.004,
+    last_execution_time: Some(
+        2024-12-22T03:23:25.869Z,
+    ),
+}
+############ IN SOME ############
+############ UPDATE FROM FILL 2 ############
+SpotPortfolio {
+    engine_id: a5ee10a3-198d-4aed-a8b2-c7cd592a5028,
+    exchanges: [
+        BinanceSpot,
+        PoloniexSpot,
+    ],
+    repository: SpotInMemoryRepository {
+        open_positions: {
+            ExchangeAssetId(
+                "POLONIEXSPOT_OP_USDT",
+            ): Position2 {
+                order_request_time: 2024-12-22T03:23:25.526579Z,
+                last_execution_time: 2024-12-22T03:23:25.869Z,
+                position_id: ExchangeAssetId(
+                    "POLONIEXSPOT_OP_USDT",
+                ),
+                exchange: PoloniexSpot,
+                asset: AssetFormatted(
+                    "OP_USDT",
+                ),
+                side: Buy,
+                quantity: 3.0,
+                fees: 0.006,
+                current_symbol_price: 1.7541214923126545,
+                current_value_gross: 3.508242984625309,
+                filled_gross: 5.277,
+                enter_avg_price: 1.7590000000000001,
+                enter_value_gross: 0.0,
+                unrealised_profit_loss: 3.502242984625309,
+                realised_profit_loss: 0.0,
+            },
+        },
+        closed_positions: {},
+        current_balance: {
+            SpotBalanceId(
+                "poloniexspot_usdt",
+            ): Balance {
+                total: 5.78322807796,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "poloniexspot_op",
+            ): Balance {
+                total: 2.9940804,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "binancespot_arb",
+            ): Balance {
+                total: 0.0894,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "binancespot_usdce",
+            ): Balance {
+                total: 1.0,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "binancespot_op",
+            ): Balance {
+                total: 3.99611,
+                available: 0.0,
+            },
+            SpotBalanceId(
+                "binancespot_usdt",
+            ): Balance {
+                total: 2.40736955,
+                available: 0.0,
+            },
+        },
+    },
+    allocator: SpotArbAllocator,
+}
+####### ORDER UPDATED ##########
+OrderEvent {
+    order_request_time: 2024-12-22T03:23:25.526579Z,
+    exchange: PoloniexSpot,
+    client_order_id: Some(
+        ClientOrderId(
+            "393725213122150400",
+        ),
+    ),
+    instrument: Instrument {
+        base: "op",
+        quote: "usdt",
+    },
+    market_meta: MarketMeta {
+        close: 1.759,
+        time: 2024-12-22T03:23:25.526569Z,
+    },
+    decision: Long,
+    original_quantity: 3.0,
+    cumulative_quantity: 3.0,
+    order_kind: Limit,
+    exchange_order_status: Some(
+        Filled,
+    ),
+    internal_order_state: Open,
+    filled_gross: 5.277,
+    enter_avg_price: 1.7590000000000001,
+    fees: 0.006,
+    last_execution_time: Some(
+        2024-12-22T03:23:25.869Z,
+    ),
+}
+*/
