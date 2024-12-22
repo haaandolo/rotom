@@ -14,6 +14,7 @@ pub struct BinanceWalletTransfer {
     pub amount: f64,
     pub timestamp: i64,
     pub address: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub network: Option<String>,
     pub signature: String,
 }

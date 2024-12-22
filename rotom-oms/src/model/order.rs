@@ -65,6 +65,10 @@ impl OrderEvent {
         self.internal_order_state = state
     }
 
+    pub fn is_order_filled(&self) -> bool {
+        self.original_quantity == self.cumulative_quantity
+    }
+
     pub fn update_order_from_account_data_stream(&mut self, account_data_update: AccountDataOrder) {
         self.set_state(OrderState::Open);
         self.exchange_order_status = Some(account_data_update.status);
@@ -198,6 +202,17 @@ pub struct WalletTransfer {
     pub wallet_address: String,
     pub network: Option<String>,
     pub amount: f64,
+}
+
+impl WalletTransfer {
+    pub fn new(order: &OrderEvent, wallet_address: &str) -> Self {
+        Self {
+            coin: order.instrument.base.clone(),
+            wallet_address: wallet_address.to_string(),
+            network: Some(order.instrument.base.clone()),
+            amount: order.cumulative_quantity,
+        }
+    }
 }
 
 /*----- */

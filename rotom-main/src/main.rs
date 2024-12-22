@@ -18,8 +18,10 @@ use rotom_main::{
 use rotom_oms::{
     event::{Event, EventTx},
     exchange::{
-        binance::binance_client::BinanceExecution, combine_account_data_stream,
-        poloniex::poloniex_client::PoloniexExecution, ExecutionClient,
+        binance::{binance_client::BinanceExecution, requests::wallet_transfer},
+        combine_account_data_stream,
+        poloniex::poloniex_client::PoloniexExecution,
+        ExecutionClient,
     },
     execution::{
         simulated::{Config, SimulatedExecution},
@@ -27,7 +29,7 @@ use rotom_oms::{
     },
     model::{
         account_data::OrderStatus,
-        order::{CancelOrder, OpenOrder, OrderEvent},
+        order::{CancelOrder, OpenOrder, OrderEvent, WalletTransfer},
         ClientOrderId,
     },
     portfolio::{
@@ -80,7 +82,7 @@ pub async fn main() {
         },
         decision: Decision::Long,
         original_quantity: 5.0,
-        cumulative_quantity: 0.0,
+        cumulative_quantity: 6.0,
         order_kind: rotom_oms::model::OrderKind::Limit,
         exchange_order_status: None,
         internal_order_state: rotom_oms::model::order::OrderState::InTransit,
@@ -92,19 +94,16 @@ pub async fn main() {
 
     let open_order = OpenOrder::from(&order);
     let cancel_order = CancelOrder::from(&order);
+    let polo_wallet_transfer =
+        WalletTransfer::new(&order, "0x1b7c39f6669cee023caff84e06001b03a76f829f");
+    let bin_wallet_transfer =
+        WalletTransfer::new(&order, "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f");
 
     // // Test Binance Execution
-    // let binance_exe = BinanceExecution::new().unwrap();
+    // let binance_exe = BinanceExecution::new();
     // let res = binance_exe.get_balance_all().await;
     // let res: Vec<AssetBalance> = res.unwrap().into();
-    // let res = binance_exe
-    //     .wallet_transfer(
-    //         "USDT".to_string(),
-    //         "TBw5BWoS97tWrVr7PSuBtUQeBXU6eJZpyg".to_string(),
-    //         Some("TRX".to_string()),
-    //         10.0,
-    //     )
-    //     .await;
+    // let res = binance_exe.wallet_transfer(bin_wallet_transfer).await;
     // let res = binance_exe.open_order(open_order).await;
     // let res = binance_exe
     //     .cancel_order(cancel_order)
@@ -117,37 +116,17 @@ pub async fn main() {
     // Test Poloniex Execution
     // let polo_exe = PoloniexExecution::new();
     // let res = polo_exe.open_order(open_order).await;
-
     // let res = polo_exe.open_order(order.clone()).await;
-
     // let res = polo_exe.cancel_order(cancel_order).await;
-
     // let res= polo_exe.cancel_order_all("OP_USDT".to_string()).await;
-
     // polo_exe.receive_responses().await;
-
-    // let res = polo_exe.wallet_transfer(
-    //     "USDT".to_string(),
-    //     "TLHWcKwg5gdTXsv6Bko9srkiKZomRBYCr2".to_string(),
-    //     Some("TRX".to_string()),
-    //     5.0
-    // ).await;
+    // let res = polo_exe.wallet_transfer(polo_wallet_transfer).await;
     // println!("---> {:#?}", res);
 
     ////////////////////////////////////////////////
     /*----- */
     // Trader builder
     /*----- */
-    // // Testing
-    // let res = reqwest::get("https://api.binance.us/api/v3/depth?symbol=LTCBTC")
-    //     .await
-    //     .unwrap()
-    //     .text()
-    //     .await
-    //     .unwrap();
-
-    // println!("{:#?}", res);
-
     /////////////////////////////////////////////////
     // Engine id
     let engine_id = Uuid::new_v4();
@@ -278,7 +257,12 @@ pub async fn main() {
             .liquid_exchange(BinanceExecution::new())
             .illiquid_exchange(PoloniexExecution::new())
             .order_update_rx(order_update_rx)
-            .meta_data(SpotArbTraderMetaData::default())
+            .meta_data(SpotArbTraderMetaData {
+                order: None,
+                execution_step: None,
+                liquid_deposit_address: "0x1b7c39f6669cee023caff84e06001b03a76f829f".to_string(),
+                illiquid_deposit_address: "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string(),
+            })
             .build()
             .unwrap();
 
@@ -416,6 +400,7 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
+// - whats happening with wallet transfers?
 // - finish position2, what fields are required for this
 // - funcitons to convert orderEvent to OpenOrder, CancelOrder, TransferOrder etc
 // - do we still need balance update in fill updater? for spot portfolio

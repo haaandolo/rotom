@@ -113,7 +113,7 @@ impl ExecutionClient for BinanceExecution {
             .execute(BinanceWalletTransfer::new(
                 wallet_transfer_request.coin,
                 wallet_transfer_request.wallet_address,
-                wallet_transfer_request.network,
+                None, // todo
                 wallet_transfer_request.amount,
             )?)
             .await?;

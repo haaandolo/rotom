@@ -10,7 +10,7 @@ use rotom_oms::{
     exchange::ExecutionClient,
     model::{
         account_data::AccountData,
-        order::{ExecutionRequest, OpenOrder, OrderEvent, OrderState},
+        order::{ExecutionRequest, OpenOrder, OrderEvent, OrderState, WalletTransfer},
         OrderKind,
     },
     portfolio::portfolio_type::{
@@ -34,7 +34,7 @@ use super::TraderRun;
 pub enum SpotArbTraderExecutionSteps {
     TakerBuyLiquid,
     TakerSellLiquid,
-    TransferToLiqid,
+    TransferToLiquid,
     MakerBuyIlliquid,
     MakerSellIlliquid,
     TransferToIlliquid,
@@ -44,6 +44,8 @@ pub enum SpotArbTraderExecutionSteps {
 pub struct SpotArbTraderMetaData {
     pub order: Option<OrderEvent>,
     pub execution_step: Option<SpotArbTraderExecutionSteps>,
+    pub liquid_deposit_address: String,
+    pub illiquid_deposit_address: String,
 }
 
 /*----- */
@@ -127,17 +129,20 @@ where
 
     pub async fn process_new_order(&mut self) {
         if let Some(order) = &mut self.meta_data.order {
-            order.set_state(OrderState::InTransit);
             if order.get_exchange() == LiquidExchange::CLIENT {
+                order.order_kind = OrderKind::Market;
                 let _ = self
                     .liquid_exchange
                     .open_order(OpenOrder::from(order))
                     .await;
+                self.meta_data.execution_step = Some(SpotArbTraderExecutionSteps::TakerBuyLiquid)
             } else {
+                order.order_kind = OrderKind::Limit;
                 let _ = self
                     .illiquid_exchange
                     .open_order(OpenOrder::from(order))
                     .await;
+                self.meta_data.execution_step = Some(SpotArbTraderExecutionSteps::MakerBuyIlliquid)
             }
         }
     }
@@ -273,16 +278,14 @@ where
                         }
                         None => {
                             // // Del
-                            // new_order.exchange = ExchangeId::PoloniexSpot;
-                            // new_order.quantity = 2.0;
-                            // new_order.market_meta.close = 1.5;
-                            // new_order.order_kind = OrderKind::Market;
-                            // println!("##############################");
-                            // println!("order --> {:#?}", new_order);
+                            new_order.exchange = ExchangeId::BinanceSpot;
+                            new_order.original_quantity = 4.0;
+                            new_order.market_meta.close = 1.5;
+                            new_order.order_kind = OrderKind::Market;
                             // // Del
 
                             self.meta_data.order = Some(new_order);
-                            // self.process_new_order().await;
+                            self.process_new_order().await;
                         }
                     },
                     _ => {}
@@ -307,6 +310,17 @@ where
 
                                 // Then update the portfolio position state with updated OrderEvent
                                 let _ = self.portfolio.lock().update_from_fill2(order);
+
+                                // Check if order is filled
+                                if order.is_order_filled() {
+                                    let _ = self
+                                        .liquid_exchange
+                                        .wallet_transfer(WalletTransfer::new(
+                                            &self.meta_data.order.clone().unwrap(),
+                                            &self.meta_data.illiquid_deposit_address,
+                                        ))
+                                        .await;
+                                }
 
                                 // println!("####### ORDER UPDATED ##########");
                                 // println!("{:#?}", order)

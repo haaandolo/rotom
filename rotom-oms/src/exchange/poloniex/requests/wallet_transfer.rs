@@ -8,27 +8,22 @@ use serde::{Deserialize, Serialize};
 /*----- */
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PoloniexWalletTransfer {
-    pub coin: String,
-    pub network: Option<String>,
+    pub currency: String,
     pub amount: f64,
     pub address: String,
-    #[serde(rename(serialize = "addressTag"))]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub address_tag: Option<String>,
-    #[serde(rename(serialize = "allowBorrow"))]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub allow_borrow: Option<bool>,
 }
 
 impl PoloniexWalletTransfer {
-    pub fn new(coin: String, network: Option<String>, amount: f64, address: String) -> Self {
+    pub fn new(mut coin: String, network: Option<String>, amount: f64, address: String) -> Self {
+        // If network is provided push onto coin field: https://api-docs.poloniex.com/spot/api/private/wallet
+        if let Some(network) = network {
+            coin.push_str(&network);
+        }
+
         Self {
-            coin,
-            network,
+            currency: coin.to_uppercase(),
             amount,
             address,
-            address_tag: None,
-            allow_borrow: None,
         }
     }
 }
@@ -39,7 +34,7 @@ impl RestRequest for PoloniexWalletTransfer {
     type Body = Self;
 
     fn path(&self) -> Cow<'static, str> {
-        Cow::Borrowed("/v2/wallets/withdraw")
+        Cow::Borrowed("/wallets/withdraw")
     }
 
     fn method() -> reqwest::Method {
@@ -57,5 +52,5 @@ impl RestRequest for PoloniexWalletTransfer {
 #[derive(Debug, Deserialize)]
 pub struct PoloniexWalletTransferResponse {
     #[serde(alias = "withdrawalRequestsId")]
-    pub withdrawal_request_id: u64
+    pub withdrawal_request_id: u64,
 }
