@@ -79,11 +79,15 @@ pub async fn main() {
             time: Utc::now(),
         },
         decision: Decision::Long,
-        quantity: 5.0,
+        original_quantity: 5.0,
+        cumulative_quantity: 0.0,
         order_kind: rotom_oms::model::OrderKind::Limit,
-        order_status: OrderStatus::New,
-        state: rotom_oms::model::order::OrderState::InTransit,
+        exchange_order_status: None,
+        internal_order_state: rotom_oms::model::order::OrderState::InTransit,
         filled_gross: 0.0,
+        enter_avg_price: 0.0,
+        fees: 0.0,
+        last_execution_time: None,
     };
 
     let open_order = OpenOrder::from(&order);

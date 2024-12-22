@@ -316,11 +316,15 @@ where
             client_order_id: None,
             market_meta: signal.market_meta,
             decision: *signal_decision,
-            quantity: 0.0,
+            original_quantity: 0.0,
+            cumulative_quantity: 0.0,
             order_kind: OrderKind::Limit,
-            order_status: OrderStatus::New,
-            state: OrderState::InTransit,
+            exchange_order_status: None,
+            internal_order_state: OrderState::RequestOpen,
             filled_gross: 0.0,
+            enter_avg_price: 0.0,
+            fees: 0.0,
+            last_execution_time: None,
         };
 
         self.allocation_manager

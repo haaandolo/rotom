@@ -27,7 +27,7 @@ impl SimulatedExecution {
     }
 
     fn calculate_fill_value_gross(order: &OrderEvent) -> f64 {
-        order.quantity.abs() * order.market_meta.close
+        order.original_quantity.abs() * order.market_meta.close
     }
 
     fn calculate_fees(&self, fill_value_gross: &f64) -> Fees {
@@ -55,7 +55,7 @@ impl FillGenerator for SimulatedExecution {
                 time: Utc::now(),
             },
             decision: order.decision,
-            quantity: order.quantity,
+            quantity: order.original_quantity,
             fill_value_gross,
             fees: self.calculate_fees(&fill_value_gross),
         })

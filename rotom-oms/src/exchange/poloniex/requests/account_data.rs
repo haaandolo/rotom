@@ -239,8 +239,8 @@ AccountDataOrder: AccountDataOrder {
     exchange: PoloniexSpot,
     client_order_id: "393345318000967680",
     asset: "OP_USDT",
-    price: 6.2415392,
-    quantity: 4.99,
+    price: 6.2415392, // 1.888
+    quantity: 4.99, // 3.3059
     status: PartiallyFilled,
     execution_time: 2024-12-21T02:13:51.814Z,
     side: Sell,
@@ -252,8 +252,8 @@ AccountDataOrder: AccountDataOrder {
     exchange: PoloniexSpot,
     client_order_id: "393345318000967680",
     asset: "OP_USDT",
-    price: 9.42112,
-    quantity: 4.99,
+    price: 9.42112, // 1.888
+    quantity: 4.99, // 1.6841
     status: Filled,
     execution_time: 2024-12-21T02:13:51.814Z,
     side: Sell,

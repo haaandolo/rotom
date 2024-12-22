@@ -174,8 +174,9 @@ pub async fn send_account_data_to_traders_and_portfolio(
 ) {
     while let Some(message) = account_data_stream.recv().await {
         match message {
-            // Order updates don't require portfolio update, so send straigt to trader
+            // Order updates requires position portfolio update, so update then send to trader
             AccountData::Order(order) => {
+                portfolio.lock().update_from_order(&order);
                 if let Some(trader_tx) = trader_order_update_tx.get(&ExchangeAssetId::from(&order))
                 {
                     let _ = trader_tx.send(AccountData::Order(order)).await;

@@ -25,13 +25,13 @@ impl SpotArbAllocator {
 
         match order.decision {
             // Entry
-            Decision::Long => order.quantity = order_size,
+            Decision::Long => order.original_quantity = order_size,
 
             // Entry
-            Decision::Short => order.quantity = -order_size,
+            Decision::Short => order.original_quantity = -order_size,
 
             // Exit
-            _ => order.quantity = 0.0 - position.as_ref().unwrap().quantity,
+            _ => order.original_quantity = 0.0 - position.as_ref().unwrap().quantity,
         }
     }
 }
@@ -49,13 +49,13 @@ impl OrderAllocator for SpotArbAllocator {
 
         match order.decision {
             // Entry
-            Decision::Long => order.quantity = order_size,
+            Decision::Long => order.original_quantity = order_size,
 
             // Entry
-            Decision::Short => order.quantity = -order_size,
+            Decision::Short => order.original_quantity = -order_size,
 
             // Exit
-            _ => order.quantity = 0.0 - position.as_ref().unwrap().quantity,
+            _ => order.original_quantity = 0.0 - position.as_ref().unwrap().quantity,
         }
     }
 }

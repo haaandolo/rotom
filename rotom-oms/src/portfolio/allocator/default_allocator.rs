@@ -24,13 +24,13 @@ impl OrderAllocator for DefaultAllocator {
 
         match order.decision {
             // Entry
-            Decision::Long => order.quantity = default_order_size * signal_strength.0,
+            Decision::Long => order.original_quantity = default_order_size * signal_strength.0,
 
             // Entry
-            Decision::Short => order.quantity = -default_order_size * signal_strength.0,
+            Decision::Short => order.original_quantity = -default_order_size * signal_strength.0,
 
             // Exit
-            _ => order.quantity = 0.0 - position.as_ref().unwrap().quantity,
+            _ => order.original_quantity = 0.0 - position.as_ref().unwrap().quantity,
         }
     }
 }

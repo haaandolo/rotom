@@ -30,15 +30,20 @@ use super::TraderRun;
 /*----- */
 // Spot Arb Trader - Metadata info
 /*----- */
+#[derive(Debug)]
+pub enum SpotArbTraderExecutionSteps {
+    TakerBuyLiquid,
+    TakerSellLiquid,
+    TransferToLiqid,
+    MakerBuyIlliquid,
+    MakerSellIlliquid,
+    TransferToIlliquid,
+}
+
 #[derive(Debug, Default)]
 pub struct SpotArbTraderMetaData {
-    pub taker_buy_liquid: bool,
-    pub taker_sell_liquid: bool,
-    pub transfering_to_illiquid: bool,
-    pub maker_buy_illiquid: bool,
-    pub maker_sell_illiquid: bool,
-    pub transfering_to_liquid: bool,
     pub order: Option<OrderEvent>,
+    pub execution_step: Option<SpotArbTraderExecutionSteps>,
 }
 
 /*----- */
@@ -230,19 +235,19 @@ where
                         if let Some(position_update) = self
                             .portfolio
                             .lock()
-                            .update_from_market(&market_event)
+                            .update_from_market2(&market_event)
                             .expect("Failed to update Portfolio from MarketEvent")
                         {
                             // println!("##############################");
                             // println!("position update --> {:#?}", position_update);
-                            self.event_tx.send(Event::PositionUpdate(position_update));
+                            // self.event_tx.send(Event::PositionUpdate(position_update));
                         }
                     }
                     Event::Signal(signal) => {
                         if let Some(order) = self
                             .portfolio
                             .lock()
-                            .generate_order(&signal)
+                            .generate_order2(&signal)
                             .expect("Failed to generate order")
                         {
                             // println!("##############################");
@@ -263,7 +268,9 @@ where
                         }
                     }
                     Event::OrderNew(mut new_order) => match &self.meta_data.order {
-                        Some(_) => self.process_existing_order().await,
+                        Some(_) => {
+                            //  self.process_existing_order().await;
+                        }
                         None => {
                             // // Del
                             // new_order.exchange = ExchangeId::PoloniexSpot;
@@ -275,7 +282,7 @@ where
                             // // Del
 
                             self.meta_data.order = Some(new_order);
-                            self.process_new_order().await;
+                            // self.process_new_order().await;
                         }
                     },
                     Event::Fill(fill) => {
