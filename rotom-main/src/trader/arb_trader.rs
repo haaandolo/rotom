@@ -130,19 +130,23 @@ where
     pub async fn process_new_order(&mut self) {
         if let Some(order) = &mut self.meta_data.order {
             if order.get_exchange() == LiquidExchange::CLIENT {
-                order.order_kind = OrderKind::Market;
-                let _ = self
+                // order.order_kind = OrderKind::Market;
+                let liquid_new_order = self
                     .liquid_exchange
                     .open_order(OpenOrder::from(order))
                     .await;
-                self.meta_data.execution_step = Some(SpotArbTraderExecutionSteps::TakerBuyLiquid)
+                self.meta_data.execution_step = Some(SpotArbTraderExecutionSteps::TakerBuyLiquid);
+                println!("### Liquid new order ###");
+                println!("{:#?}", liquid_new_order);
             } else {
-                order.order_kind = OrderKind::Limit;
-                let _ = self
+                // order.order_kind = OrderKind::Limit;
+                let illiquid_new_order = self
                     .illiquid_exchange
                     .open_order(OpenOrder::from(order))
                     .await;
-                self.meta_data.execution_step = Some(SpotArbTraderExecutionSteps::MakerBuyIlliquid)
+                self.meta_data.execution_step = Some(SpotArbTraderExecutionSteps::MakerBuyIlliquid);
+                println!("### Liquid new order ###");
+                println!("{:#?}", illiquid_new_order);
             }
         }
     }
@@ -278,8 +282,8 @@ where
                         }
                         None => {
                             // // Del
-                            new_order.exchange = ExchangeId::BinanceSpot;
-                            new_order.original_quantity = 4.0;
+                            new_order.exchange = ExchangeId::PoloniexSpot;
+                            new_order.original_quantity = 9.5;
                             new_order.market_meta.close = 1.5;
                             new_order.order_kind = OrderKind::Market;
                             // // Del
@@ -305,22 +309,60 @@ where
                             if let Some(order) = &mut self.meta_data.order {
                                 // When account data order update comes, update OrderEvent state first
                                 order.update_order_from_account_data_stream(
-                                    account_data_order_update,
+                                    &account_data_order_update,
                                 );
+
+                                println!("### Order event ###");
+                                println!("{:#?}", order);
 
                                 // Then update the portfolio position state with updated OrderEvent
                                 let _ = self.portfolio.lock().update_from_fill2(order);
 
+                                /*----- for illiquid ----- */
                                 // Check if order is filled
                                 if order.is_order_filled() {
-                                    let _ = self
-                                        .liquid_exchange
-                                        .wallet_transfer(WalletTransfer::new(
-                                            &self.meta_data.order.clone().unwrap(),
-                                            &self.meta_data.illiquid_deposit_address,
-                                        ))
+                                    // std::thread::sleep(std::time::Duration::from_millis(1000));
+
+                                    let wallet_transfer_request = WalletTransfer::new(
+                                        order.instrument.base.clone(),
+                                        self.meta_data.liquid_deposit_address.clone(),
+                                        None,
+                                        order.cumulative_quantity - order.fees,
+                                    );
+                                    println!("### Wallet transfer request ###");
+                                    println!("{:#?}", wallet_transfer_request);
+
+                                    let illiquid_transfer = self
+                                        .illiquid_exchange
+                                        .wallet_transfer(wallet_transfer_request)
                                         .await;
+
+                                    println!("### Illiquid transfer ###");
+                                    println!("{:#?}", illiquid_transfer);
                                 }
+
+                                // /*----- for liquid ----- */
+                                // // Check if order is filled
+                                // if order.is_order_filled() {
+                                //     std::thread::sleep(std::time::Duration::from_millis(1000));
+
+                                //     let wallet_transfer_request = WalletTransfer::new(
+                                //         order.instrument.base.clone(),
+                                //         self.meta_data.illiquid_deposit_address.clone(),
+                                //         None,
+                                //         order.cumulative_quantity - order.fees,
+                                //     );
+                                //     println!("### Wallet transfer request ###");
+                                //     println!("{:#?}", wallet_transfer_request);
+
+                                //     let liquid_transfer = self
+                                //         .liquid_exchange
+                                //         .wallet_transfer(wallet_transfer_request)
+                                //         .await;
+
+                                //     println!("### Liquid transfer ###");
+                                //     println!("{:#?}", liquid_transfer);
+                                // }
 
                                 // println!("####### ORDER UPDATED ##########");
                                 // println!("{:#?}", order)
@@ -331,10 +373,30 @@ where
                             self.event_queue
                                 .push_back(Event::AccountDataBalanceDelta(balance_delta))
                         }
-                        AccountData::Balance(balance) => {
-                            println!("AccountDataBalance: {:#?}", balance);
-                            self.event_queue
-                                .push_back(Event::AccountDataBalance(balance))
+                        AccountData::Balance(balance_update) => {
+                            println!("AccountDataBalance: {:#?}", balance_update);
+
+                            // // Check if order is filled
+                            // if let Some(order) = &self.meta_data.order {
+                            //     if order.is_order_filled() {
+                            //         let wallet_transfer_request = WalletTransfer::new(
+                            //             order.instrument.base.clone(),
+                            //             self.meta_data.illiquid_deposit_address.clone(),
+                            //             None,
+                            //             balance_update.balance.total * 0.9,
+                            //         );
+                            //         println!("### Wallet transfer request ###");
+                            //         println!("{:#?}", wallet_transfer_request);
+
+                            //         let liquid_transfer = self
+                            //             .liquid_exchange
+                            //             .wallet_transfer(wallet_transfer_request)
+                            //             .await;
+
+                            //         println!("### Liquid transfer ###");
+                            //         println!("{:#?}", liquid_transfer);
+                            //     }
+                            // }
                         }
                         // AccountData::BalanceVec get split into individual balances
                         // and gets sent to corresponding trader so this one is not needed

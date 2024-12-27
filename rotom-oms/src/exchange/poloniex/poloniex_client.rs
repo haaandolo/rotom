@@ -177,7 +177,7 @@ impl ExecutionClient for PoloniexExecution {
             .http_client
             .execute(PoloniexWalletTransfer::new(
                 wallet_transfer_request.coin,
-                None, // todo
+                wallet_transfer_request.network,
                 wallet_transfer_request.amount,
                 wallet_transfer_request.wallet_address,
             ))

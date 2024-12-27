@@ -42,7 +42,7 @@ pub struct OrderEvent {
     pub filled_gross: f64, // after
     // Enter average price excluding fees. Position.filled_gross / Position.quantity
     pub enter_avg_price: f64, // after
-    // Cumulative value
+    // Cumulative value: todo is it base or quote asset?
     pub fees: f64, // after
     // Orders last executed time
     pub last_execution_time: Option<DateTime<Utc>>,
@@ -69,7 +69,10 @@ impl OrderEvent {
         self.original_quantity == self.cumulative_quantity
     }
 
-    pub fn update_order_from_account_data_stream(&mut self, account_data_update: AccountDataOrder) {
+    pub fn update_order_from_account_data_stream(
+        &mut self,
+        account_data_update: &AccountDataOrder,
+    ) {
         self.set_state(OrderState::Open);
         self.exchange_order_status = Some(account_data_update.status);
         self.filled_gross = account_data_update.filled_gross; // Filled_gross field in AccountDataOrder is cumulative so we can just set it each time
@@ -151,6 +154,12 @@ pub struct OpenOrder {
     pub instrument: Instrument,
 }
 
+impl OpenOrder {
+    pub fn get_quote_currency_value(&self) -> f64 {
+        self.price * self.quantity
+    }
+}
+
 impl From<&OrderEvent> for OpenOrder {
     fn from(order: &OrderEvent) -> Self {
         Self {
@@ -198,19 +207,19 @@ impl From<&OrderEvent> for CancelOrder {
 /*----- */
 #[derive(Debug)]
 pub struct WalletTransfer {
-    pub coin: String,
-    pub wallet_address: String,
-    pub network: Option<String>,
+    pub coin: String,            // smol
+    pub wallet_address: String,  // can be static str
+    pub network: Option<String>, // smol, probs can be static str
     pub amount: f64,
 }
 
 impl WalletTransfer {
-    pub fn new(order: &OrderEvent, wallet_address: &str) -> Self {
+    pub fn new(coin: String, wallet_address: String, network: Option<String>, amount: f64) -> Self {
         Self {
-            coin: order.instrument.base.clone(),
-            wallet_address: wallet_address.to_string(),
-            network: Some(order.instrument.base.clone()),
-            amount: order.cumulative_quantity,
+            coin,
+            wallet_address,
+            network,
+            amount,
         }
     }
 }

@@ -41,8 +41,8 @@ impl AsRef<str> for PoloniexSide {
     }
 }
 
-impl From<Decision> for PoloniexSide {
-    fn from(decision: Decision) -> Self {
+impl From<&Decision> for PoloniexSide {
+    fn from(decision: &Decision) -> Self {
         match decision {
             Decision::Long => PoloniexSide::BUY,
             Decision::CloseLong => PoloniexSide::SELL,

@@ -62,10 +62,10 @@ impl AccountDataWebsocket {
 pub trait ExecutionClient {
     const CLIENT: ExchangeId;
 
-    type CancelResponse: Send;
-    type CancelAllResponse: Send;
-    type NewOrderResponse: Send;
-    type WalletTransferResponse: Send;
+    type CancelResponse: Send + Debug;
+    type CancelAllResponse: Send + Debug;
+    type NewOrderResponse: Send + Debug;
+    type WalletTransferResponse: Send + Debug;
     type AccountDataStreamResponse: Send + for<'de> Deserialize<'de> + Debug + Into<AccountData>;
 
     // Initialise a account data stream
@@ -125,6 +125,8 @@ where
         _backoff_ms *= 2;
 
         while let Some(msg) = stream.user_data_ws.next().await {
+            println!("### Raw ###");
+            println!("{:#?}", msg);
             match WebSocketParser::parse::<Exchange::AccountDataStreamResponse>(msg) {
                 Some(Ok(exchange_message)) => {
                     if let Err(error) = account_data_tx.send(exchange_message.into()) {

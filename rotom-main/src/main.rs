@@ -77,11 +77,11 @@ pub async fn main() {
         instrument: Instrument::new("op", "usdt"),
         client_order_id: Some(ClientOrderId("391776281638920193".to_string())),
         market_meta: MarketMeta {
-            close: 1.0,
+            close: 1.97,
             time: Utc::now(),
         },
-        decision: Decision::Long,
-        original_quantity: 5.0,
+        decision: Decision::Short,
+        original_quantity: 2.0,
         cumulative_quantity: 6.0,
         order_kind: rotom_oms::model::OrderKind::Limit,
         exchange_order_status: None,
@@ -92,12 +92,25 @@ pub async fn main() {
         last_execution_time: None,
     };
 
+    // Requests
     let open_order = OpenOrder::from(&order);
     let cancel_order = CancelOrder::from(&order);
-    let polo_wallet_transfer =
-        WalletTransfer::new(&order, "0x1b7c39f6669cee023caff84e06001b03a76f829f");
-    let bin_wallet_transfer =
-        WalletTransfer::new(&order, "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f");
+    let polo_wallet_transfer = WalletTransfer::new(
+        order.instrument.base.clone(),
+        "0x1b7c39f6669cee023caff84e06001b03a76f829f".to_string(),
+        None,
+        4.74,
+    );
+    let polo_usdt_tron_network = "TBw5BWoS97tWrVr7PSuBtUQeBXU6eJZpyg".to_string();
+    let bin_wallet_transfer = WalletTransfer::new(
+        order.instrument.base.clone(),
+        // "usdt".to_string(),
+        polo_usdt_tron_network,
+        // "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string(),
+        None,
+        // Some("TRX".to_string()),
+        15.0,
+    );
 
     // // Test Binance Execution
     // let binance_exe = BinanceExecution::new();
@@ -115,6 +128,7 @@ pub async fn main() {
     ////////////////////////////////////////////////////
     // Test Poloniex Execution
     // let polo_exe = PoloniexExecution::new();
+    // println!("---> open order res: {:#?}", open_order);
     // let res = polo_exe.open_order(open_order).await;
     // let res = polo_exe.open_order(order.clone()).await;
     // let res = polo_exe.cancel_order(cancel_order).await;
@@ -400,7 +414,7 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - whats happening with wallet transfers?
+// - need to sort out new order for poloniex
 // - finish position2, what fields are required for this
 // - funcitons to convert orderEvent to OpenOrder, CancelOrder, TransferOrder etc
 // - do we still need balance update in fill updater? for spot portfolio

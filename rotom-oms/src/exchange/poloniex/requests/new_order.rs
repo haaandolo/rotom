@@ -49,18 +49,24 @@ pub struct PoloniexNewOrder {
 
 impl PoloniexNewOrder {
     pub fn new(order_event: &OpenOrder) -> Result<Self, RequestBuildError> {
-        match &order_event.order_kind {
-            OrderKind::Limit => Self::limit_order(order_event),
-            OrderKind::Market => Self::market_order(order_event),
+        // Poloniex has a weird create new order api where, market buy needs a 
+        // amount field, which is price x quantity aka quote asset value. While other
+        // ones like limit buy / sell and market sell requires a quantity field
+        // https://api-docs.poloniex.com/spot/api/private/order
+        match (&order_event.order_kind, PoloniexSide::from(&order_event.decision)) {
+            (OrderKind::Market, PoloniexSide::BUY) => Self::market_buy(order_event),
+            (OrderKind::Market, PoloniexSide::SELL) => Self::limit_order_and_market_sell(order_event),
+            (OrderKind::Limit, PoloniexSide::BUY) => Self::limit_order_and_market_sell(order_event),
+            (OrderKind::Limit, PoloniexSide::SELL) => Self::limit_order_and_market_sell(order_event),
             _ => unimplemented!(), // todo
         }
     }
 
-    pub fn limit_order(order_event: &OpenOrder) -> Result<Self, RequestBuildError> {
+    pub fn limit_order_and_market_sell(order_event: &OpenOrder) -> Result<Self, RequestBuildError> {
         PoloniexNewOrderBuilder::new()
             .symbol(PoloniexSymbol::from(&order_event.instrument).0)
             .side(
-                PoloniexSide::from(order_event.decision)
+                PoloniexSide::from(&order_event.decision)
                     .as_ref()
                     .to_lowercase(),
             )
@@ -71,15 +77,15 @@ impl PoloniexNewOrder {
             .build()
     }
 
-    pub fn market_order(order_event: &OpenOrder) -> Result<Self, RequestBuildError> {
+    pub fn market_buy(order_event: &OpenOrder) -> Result<Self, RequestBuildError> {
         PoloniexNewOrderBuilder::new()
             .symbol(PoloniexSymbol::from(&order_event.instrument).0)
             .side(
-                PoloniexSide::from(order_event.decision)
+                PoloniexSide::from(&order_event.decision)
                     .as_ref()
                     .to_lowercase(),
             )
-            .amount(order_event.quantity.to_string())
+            .amount(order_event.get_quote_currency_value().to_string())
             .build()
     }
 }
