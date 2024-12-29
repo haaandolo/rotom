@@ -66,7 +66,11 @@ impl OrderEvent {
     }
 
     pub fn is_order_filled(&self) -> bool {
-        self.original_quantity == self.cumulative_quantity
+        if let Some(order_status) = self.exchange_order_status {
+            order_status == OrderStatus::Filled
+        } else {
+            false
+        }
     }
 
     pub fn update_order_from_account_data_stream(
@@ -205,7 +209,7 @@ impl From<&OrderEvent> for CancelOrder {
 /*----- */
 // Wallet transfer
 /*----- */
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct WalletTransfer {
     pub coin: String,            // smol
     pub wallet_address: String,  // can be static str

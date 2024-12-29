@@ -144,7 +144,7 @@ impl SpreadStategy {
         let mut signals = HashMap::with_capacity(4);
 
         if current_spread * -1.0 > 0.0 {
-            signals.insert(Decision::Long, SignalStrength(5.0));
+            signals.insert(Decision::Long, SignalStrength(1.0));
         } else {
             signals.insert(Decision::CloseLong, SignalStrength(1.0));
         }
