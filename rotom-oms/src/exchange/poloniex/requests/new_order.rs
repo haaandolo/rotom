@@ -55,7 +55,7 @@ impl PoloniexNewOrder {
         // https://api-docs.poloniex.com/spot/api/private/order
         match (&order_event.order_kind, PoloniexSide::from(&order_event.decision)) {
             (OrderKind::Market, PoloniexSide::BUY) => Self::market_buy(order_event),
-            (OrderKind::Market, PoloniexSide::SELL) => Self::limit_order_and_market_sell(order_event),
+            (OrderKind::Market, PoloniexSide::SELL) => Self::market_sell(order_event),
             (OrderKind::Limit, PoloniexSide::BUY) => Self::limit_order_and_market_sell(order_event),
             (OrderKind::Limit, PoloniexSide::SELL) => Self::limit_order_and_market_sell(order_event),
             _ => unimplemented!(), // todo
@@ -86,6 +86,18 @@ impl PoloniexNewOrder {
                     .to_lowercase(),
             )
             .amount(order_event.get_quote_currency_value().to_string())
+            .build()
+    }
+
+    pub fn market_sell(order_event: &OpenOrder) -> Result<Self, RequestBuildError> {
+        PoloniexNewOrderBuilder::new()
+            .symbol(PoloniexSymbol::from(&order_event.instrument).0)
+            .side(
+                PoloniexSide::from(&order_event.decision)
+                    .as_ref()
+                    .to_lowercase(),
+            )
+            .quantity(order_event.quantity.to_string())
             .build()
     }
 }
