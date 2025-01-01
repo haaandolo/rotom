@@ -306,8 +306,8 @@ where
                             new_order.order_kind = OrderKind::Market;
                             // // Del
 
-                            self.meta_data.order = Some(new_order);
-                            self.process_new_order().await;
+                            // self.meta_data.order = Some(new_order);
+                            // self.process_new_order().await;
                         }
                     },
                     _ => {}

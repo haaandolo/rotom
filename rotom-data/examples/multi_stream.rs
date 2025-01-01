@@ -6,7 +6,7 @@ use rotom_data::{
         event_trade::Trades,
         market_event::{DataKind, MarketEvent},
     },
-    exchange::{binance::BinanceSpot, poloniex::PoloniexSpot},
+    exchange::{binance::public_ws_stream::BinanceSpot, poloniex::public_ws_stream::PoloniexSpot},
     streams::builder::Streams,
 };
 

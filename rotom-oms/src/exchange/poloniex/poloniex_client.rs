@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use futures::{SinkExt, StreamExt};
 use rotom_data::{
     error::SocketError,
-    exchange::{poloniex::PoloniexSpot, Connector},
+    exchange::{poloniex::public_ws_stream::PoloniexSpot, Connector},
     protocols::{
         http::{client::RestClient, http_parser::StandardHttpParser},
         ws::{

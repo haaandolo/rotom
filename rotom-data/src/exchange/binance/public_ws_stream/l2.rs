@@ -1,11 +1,12 @@
 use async_trait::async_trait;
 use chrono::Utc;
 
-use super::model::{BinanceSpotTickerInfo, Filter};
-use super::model::{BinanceSpotBookUpdate, BinanceSpotSnapshot};
+use super::model::BinanceSpotBookUpdate;
 use crate::assets::orderbook::OrderBook;
 use crate::error::SocketError;
 use crate::event_models::event_book::EventOrderBook;
+use crate::exchange::binance::public_http::binance_public_http_client::BinancePublicData;
+use crate::exchange::binance::public_http::requests::ticker_info::Filter;
 use crate::shared::subscription_models::ExchangeId;
 use crate::shared::subscription_models::Instrument;
 use crate::transformer::book::{InstrumentOrderBook, OrderBookUpdater};
@@ -67,33 +68,8 @@ impl OrderBookUpdater for BinanceSpotBookUpdater {
     type UpdateEvent = BinanceSpotBookUpdate;
 
     async fn init(instrument: &Instrument) -> Result<InstrumentOrderBook<Self>, SocketError> {
-        let snapshot_url = format!(
-            "{}?symbol={}{}&limit=100",
-            HTTP_BOOK_L2_SNAPSHOT_URL_BINANCE_SPOT,
-            instrument.base.to_uppercase(),
-            instrument.quote.to_uppercase()
-        );
-
-        let snapshot = reqwest::get(snapshot_url)
-            .await
-            .map_err(SocketError::Http)?
-            .json::<BinanceSpotSnapshot>()
-            .await
-            .map_err(SocketError::Http)?;
-
-        let ticker_info_url = format!(
-            "{}{}{}",
-            HTTP_TICKER_INFO_URL_BINANCE_SPOT,
-            instrument.base.to_uppercase(),
-            instrument.quote.to_uppercase()
-        );
-
-        let ticker_info = reqwest::get(ticker_info_url)
-            .await
-            .map_err(SocketError::Http)?
-            .json::<BinanceSpotTickerInfo>()
-            .await
-            .map_err(SocketError::Http)?;
+        let snapshot = BinancePublicData::get_book_snapshot(instrument).await?;
+        let ticker_info = BinancePublicData::get_ticker_info(instrument).await?;
 
         let tick_size = ticker_info.symbols[0].filters.iter().find_map(|filter| {
             if let Filter::PriceFilter {
@@ -150,7 +126,6 @@ impl OrderBookUpdater for BinanceSpotBookUpdater {
         self.last_update_id = update.last_update_id;
 
         Ok(Some(book.book_snapshot()))
-
     }
 }
 

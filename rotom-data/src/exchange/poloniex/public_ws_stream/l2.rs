@@ -2,11 +2,12 @@ use async_trait::async_trait;
 use chrono::Utc;
 use std::mem;
 
-use super::model::{PoloniexSpotBookData, PoloniexSpotBookUpdate, PoloniexSpotTickerInfo};
+use super::model::{PoloniexSpotBookData, PoloniexSpotBookUpdate};
 use crate::{
     assets::orderbook::OrderBook,
     error::SocketError,
     event_models::event_book::EventOrderBook,
+    exchange::poloniex::public_http::poloniex_public_http_client::PoloniexPublicData,
     shared::{subscription_models::Instrument, utils::decimal_places_to_number},
     transformer::book::{InstrumentOrderBook, OrderBookUpdater},
 };
@@ -39,20 +40,7 @@ impl OrderBookUpdater for PoloniexSpotBookUpdater {
     type UpdateEvent = PoloniexSpotBookUpdate;
 
     async fn init(instrument: &Instrument) -> Result<InstrumentOrderBook<Self>, SocketError> {
-        let ticker_info_url = format!(
-            "{}{}_{}",
-            HTTP_TICKER_INFO_URL_POLONIEX_SPOT,
-            instrument.base.to_uppercase(),
-            instrument.quote.to_uppercase()
-        );
-
-        let ticker_info = reqwest::get(ticker_info_url)
-            .await
-            .map_err(SocketError::Http)?
-            .json::<Vec<PoloniexSpotTickerInfo>>()
-            .await
-            .map_err(SocketError::Http)?;
-
+        let ticker_info = PoloniexPublicData::get_ticker_info(instrument).await?;
         let price_scale = ticker_info[0].symbol_trade_limit.quantity_scale;
         let tick_size = decimal_places_to_number(price_scale);
         let orderbook_init = OrderBook::new(tick_size);
