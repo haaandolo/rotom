@@ -49,15 +49,20 @@ pub struct PoloniexNewOrder {
 
 impl PoloniexNewOrder {
     pub fn new(order_event: &OpenOrder) -> Result<Self, RequestBuildError> {
-        // Poloniex has a weird create new order api where, market buy needs a 
+        // Poloniex has a weird create new order api where, market buy needs a
         // amount field, which is price x quantity aka quote asset value. While other
         // ones like limit buy / sell and market sell requires a quantity field
         // https://api-docs.poloniex.com/spot/api/private/order
-        match (&order_event.order_kind, PoloniexSide::from(&order_event.decision)) {
+        match (
+            &order_event.order_kind,
+            PoloniexSide::from(&order_event.decision),
+        ) {
             (OrderKind::Market, PoloniexSide::BUY) => Self::market_buy(order_event),
             (OrderKind::Market, PoloniexSide::SELL) => Self::market_sell(order_event),
             (OrderKind::Limit, PoloniexSide::BUY) => Self::limit_order_and_market_sell(order_event),
-            (OrderKind::Limit, PoloniexSide::SELL) => Self::limit_order_and_market_sell(order_event),
+            (OrderKind::Limit, PoloniexSide::SELL) => {
+                Self::limit_order_and_market_sell(order_event)
+            }
             _ => unimplemented!(), // todo
         }
     }
@@ -85,7 +90,8 @@ impl PoloniexNewOrder {
                     .as_ref()
                     .to_lowercase(),
             )
-            .amount(order_event.get_quote_currency_value().to_string())
+            .amount(format!("{:.4}", order_event.get_quote_currency_value())) // todo
+            // .amount(order_event.get_quote_currency_value().to_string())
             .build()
     }
 

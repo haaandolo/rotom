@@ -17,7 +17,7 @@ use rotom_oms::{
         spot_portfolio::SpotPortfolio, FillUpdater, MarketUpdater, OrderGenerator,
     },
 };
-use rotom_strategy::{SignalForceExit, SignalGenerator};
+use rotom_strategy::{Decision, SignalForceExit, SignalGenerator};
 use std::{collections::VecDeque, sync::Arc};
 use tokio::sync::mpsc;
 use tracing::{debug, error, warn};
@@ -30,8 +30,10 @@ use super::TraderRun;
 /*----- */
 // Spot Arb Trader - Metadata info
 /*----- */
-#[derive(Debug)]
-pub enum SpotArbTraderExecutionSteps {
+#[derive(Debug, PartialEq, Clone, Default)]
+pub enum SpotArbTraderExecutionState {
+    #[default]
+    NoPosition,
     TakerBuyLiquid,
     TakerSellLiquid,
     TransferToLiquid,
@@ -43,7 +45,7 @@ pub enum SpotArbTraderExecutionSteps {
 #[derive(Debug, Default)]
 pub struct SpotArbTraderMetaData {
     pub order: Option<OrderEvent>,
-    pub execution_step: Option<SpotArbTraderExecutionSteps>, // todo: change steps to state
+    pub execution_state: SpotArbTraderExecutionState,
     pub liquid_deposit_address: String,
     pub illiquid_deposit_address: String,
 }
@@ -135,8 +137,10 @@ where
                     .liquid_exchange
                     .open_order(OpenOrder::from(order))
                     .await;
-                self.meta_data.execution_step = Some(SpotArbTraderExecutionSteps::TakerBuyLiquid);
+                self.meta_data.execution_state = SpotArbTraderExecutionState::TakerBuyLiquid;
+                println!("########################");
                 println!("### Liquid new order ###");
+                println!("########################");
                 println!("{:#?}", liquid_new_order);
             } else {
                 // order.order_kind = OrderKind::Limit;
@@ -144,23 +148,24 @@ where
                     .illiquid_exchange
                     .open_order(OpenOrder::from(order))
                     .await;
-                self.meta_data.execution_step = Some(SpotArbTraderExecutionSteps::MakerBuyIlliquid);
-                println!("### Liquid new order ###");
+                self.meta_data.execution_state = SpotArbTraderExecutionState::MakerBuyIlliquid;
+                println!("########################");
+                println!("### Illiquid new order ###");
+                println!("########################");
                 println!("{:#?}", illiquid_new_order);
             }
         }
     }
 
     fn get_execution_state(&self) {
-        if let Some(execution_state) = &self.meta_data.execution_step {
-            match execution_state {
-                SpotArbTraderExecutionSteps::MakerBuyIlliquid => {}
-                SpotArbTraderExecutionSteps::MakerSellIlliquid => {}
-                SpotArbTraderExecutionSteps::TransferToIlliquid => {}
-                SpotArbTraderExecutionSteps::TakerBuyLiquid => {}
-                SpotArbTraderExecutionSteps::TakerSellLiquid => {}
-                SpotArbTraderExecutionSteps::TransferToLiquid => {}
-            }
+        match self.meta_data.execution_state {
+            SpotArbTraderExecutionState::NoPosition => {}
+            SpotArbTraderExecutionState::MakerBuyIlliquid => {}
+            SpotArbTraderExecutionState::MakerSellIlliquid => {}
+            SpotArbTraderExecutionState::TransferToIlliquid => {}
+            SpotArbTraderExecutionState::TakerBuyLiquid => {}
+            SpotArbTraderExecutionState::TakerSellLiquid => {}
+            SpotArbTraderExecutionState::TransferToLiquid => {}
         }
     }
 
@@ -295,9 +300,9 @@ where
                         }
                         None => {
                             // // Del
-                            new_order.exchange = ExchangeId::BinanceSpot;
-                            new_order.original_quantity = 4.3;
-                            new_order.market_meta.close = 1.89;
+                            new_order.exchange = ExchangeId::PoloniexSpot;
+                            new_order.original_quantity = 5.0;
+                            new_order.market_meta.close = 1.8300;
                             new_order.order_kind = OrderKind::Market;
                             // // Del
 
@@ -335,7 +340,10 @@ where
                                 // Check if order is filled
                                 if order.is_order_filled() {
                                     /*----- transfer to illiquid ----- */
-                                    if order.exchange == LiquidExchange::CLIENT {
+                                    if order.exchange == LiquidExchange::CLIENT
+                                        && self.meta_data.execution_state
+                                            == SpotArbTraderExecutionState::TakerBuyLiquid
+                                    {
                                         'transfer_to_illiquid: loop {
                                             let wallet_transfer_request = WalletTransfer::new(
                                                 order.instrument.base.clone(),
@@ -344,9 +352,11 @@ where
                                                 order.cumulative_quantity - order.fees,
                                             );
 
+                                            println!("########################");
                                             println!(
                                                 "### Wallet transfer request - to illiquid ###"
                                             );
+                                            println!("########################");
                                             println!("{:#?}", wallet_transfer_request);
 
                                             match self
@@ -365,10 +375,15 @@ where
                                             }
                                         }
 
-                                        self.meta_data.execution_step =
-                                            Some(SpotArbTraderExecutionSteps::TransferToIlliquid);
-                                    } else {
-                                        /*----- transfer to liquid ----- */
+                                        self.meta_data.execution_state =
+                                            SpotArbTraderExecutionState::TransferToIlliquid;
+                                    }
+
+                                    /*----- transfer to liquid ----- */
+                                    if order.exchange == IlliquidExchange::CLIENT
+                                        && self.meta_data.execution_state
+                                            == SpotArbTraderExecutionState::MakerBuyIlliquid
+                                    {
                                         'transfer_to_liquid: loop {
                                             let wallet_transfer_request = WalletTransfer::new(
                                                 order.instrument.base.clone(),
@@ -376,7 +391,9 @@ where
                                                 None,
                                                 order.cumulative_quantity - order.fees,
                                             );
+                                            println!("########################");
                                             println!("### Wallet transfer request - to liquid ###");
+                                            println!("########################");
                                             println!("{:#?}", wallet_transfer_request);
 
                                             match self
@@ -387,7 +404,7 @@ where
                                                 Ok(_) => break 'transfer_to_liquid,
                                                 Err(error) => {
                                                     error!(
-                                                        message = "error when sending request to excchange",
+                                                        message = "error when sending request to exchange",
                                                         error = %error
                                                     );
                                                     continue;
@@ -395,23 +412,73 @@ where
                                             }
                                         }
 
-                                        self.meta_data.execution_step =
-                                            Some(SpotArbTraderExecutionSteps::TransferToLiquid);
+                                        self.meta_data.execution_state =
+                                            SpotArbTraderExecutionState::TransferToLiquid;
                                     }
                                 }
-
                                 // println!("####### ORDER UPDATED ##########");
                                 // println!("{:#?}", order)
                             }
                         }
-                        AccountData::BalanceDelta(balance_delta) => {
-                            println!("AccountDataBalanceDelta: {:#?}", balance_delta);
-                            self.event_queue
-                                .push_back(Event::AccountDataBalanceDelta(balance_delta))
-                        }
                         AccountData::Balance(balance_update) => {
                             println!("AccountDataBalance: {:#?}", balance_update);
+                            if let Some(ref order) = self.meta_data.order {
+                                if order.is_order_filled() {
+                                    /*----- coin has been transfered to liquid exchange ----- */
+                                    if balance_update.exchange == LiquidExchange::CLIENT
+                                        && self.meta_data.execution_state
+                                            == SpotArbTraderExecutionState::TransferToLiquid
+                                    {
+                                        let mut testing_sell_req = OpenOrder::from(order);
+                                        testing_sell_req.decision = Decision::Short;
+                                        testing_sell_req.order_kind = OrderKind::Market;
+                                        testing_sell_req.quantity = balance_update.balance.total;
 
+                                        println!("########################");
+                                        println!(
+                                            "#### testing sell after transfer to liquid ###"
+                                        );
+                                        println!("########################");
+                                        println!("req --> {:#?}", testing_sell_req);
+
+                                        let res = self
+                                            .liquid_exchange
+                                            .open_order(testing_sell_req)
+                                            .await;
+
+                                        println!("res ---> {:#?}", res);
+                                    }
+
+                                    /*----- coin has been transfered to illiquid exchange ----- */
+                                    if balance_update.exchange == IlliquidExchange::CLIENT
+                                        && self.meta_data.execution_state
+                                            == SpotArbTraderExecutionState::TransferToIlliquid
+                                    {
+                                        let mut testing_sell_req = OpenOrder::from(order);
+                                        testing_sell_req.decision = Decision::Short;
+                                        testing_sell_req.order_kind = OrderKind::Market;
+                                        testing_sell_req.price = 1.80;
+                                        testing_sell_req.quantity = balance_update.balance.total;
+
+                                        println!("########################");
+                                        println!(
+                                            "#### testing sell after transfer to illiquid ###"
+                                        );
+                                        println!("########################");
+                                        println!("req --> {:#?}", testing_sell_req);
+
+                                        let res = self
+                                            .illiquid_exchange
+                                            .open_order(testing_sell_req)
+                                            .await;
+
+                                        println!("res ---> {:#?}", res);
+                                    }
+                                }
+                            }
+                        }
+                        AccountData::BalanceDelta(balance_delta) => {
+                            println!("AccountDataBalanceDelta: {:#?}", balance_delta);
                         }
                         // AccountData::BalanceVec get split into individual balances
                         // and gets sent to corresponding trader so this one is not needed

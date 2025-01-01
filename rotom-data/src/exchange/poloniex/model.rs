@@ -76,6 +76,7 @@ pub struct PoloniexTrade {
     pub data: [PoloniexTradeData; 1],
 }
 
+// todo: change from string to struct()
 impl Identifier<String> for PoloniexTrade {
     fn id(&self) -> String {
         self.data[0].symbol.clone()

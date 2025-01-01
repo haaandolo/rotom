@@ -77,12 +77,12 @@ pub async fn main() {
         instrument: Instrument::new("op", "usdt"),
         client_order_id: Some(ClientOrderId("391776281638920193".to_string())),
         market_meta: MarketMeta {
-            close: 1.97,
+            close: 1.81,
             time: Utc::now(),
         },
         decision: Decision::Short,
-        original_quantity: 2.0,
-        cumulative_quantity: 6.0,
+        original_quantity: 5.0198988,
+        cumulative_quantity: 5.0198988,
         order_kind: rotom_oms::model::OrderKind::Limit,
         exchange_order_status: None,
         internal_order_state: rotom_oms::model::order::OrderState::InTransit,
@@ -112,30 +112,50 @@ pub async fn main() {
         15.0,
     );
 
+    /*
+    req --> OpenOrder {
+    price: 1.83,
+    quantity: 7.0572256,
+    decision: Short,
+    order_kind: Market,
+    instrument: Instrument {
+        base: "op",
+        quote: "usdt",
+    },
+
+
+    res ---> Err(
+    HttpResponse(
+        400,
+        "{\"code\":-1013,\"msg\":\"Filter failure: LOT_SIZE\"}",
+    ),
+    )
+     */
+
     // // Test Binance Execution
-    // let binance_exe = BinanceExecution::new();
+    let binance_exe = BinanceExecution::new();
     // let res = binance_exe.get_balance_all().await;
     // let res: Vec<AssetBalance> = res.unwrap().into();
     // let res = binance_exe.wallet_transfer(bin_wallet_transfer).await;
-    // let res = binance_exe.open_order(open_order).await;
+    let res = binance_exe.open_order(open_order).await;
     // let res = binance_exe
     //     .cancel_order(cancel_order)
     //     .await;
     // let res = binance_exe.cancel_order_all(cancel_order).await;
-    // println!("{:#?}", res);
+    println!("{:#?}", res);
     // binance_exe.receive_responses().await;
 
     ////////////////////////////////////////////////////
     // Test Poloniex Execution
-    let polo_exe = PoloniexExecution::new();
+    // let polo_exe = PoloniexExecution::new();
     // println!("---> open order res: {:#?}", open_order);
     // let res = polo_exe.open_order(open_order).await;
     // let res = polo_exe.open_order(order.clone()).await;
     // let res = polo_exe.cancel_order(cancel_order).await;
     // let res= polo_exe.cancel_order_all("OP_USDT".to_string()).await;
     // polo_exe.receive_responses().await;
-    let res = polo_exe.wallet_transfer(polo_wallet_transfer).await;
-    println!("---> {:#?}", res);
+    // let res = polo_exe.wallet_transfer(polo_wallet_transfer).await;
+    // println!("---> {:#?}", res);
 
     // ////////////////////////////////////////////////
     // /*----- */
@@ -273,7 +293,7 @@ pub async fn main() {
     //         .order_update_rx(order_update_rx)
     //         .meta_data(SpotArbTraderMetaData {
     //             order: None,
-    //             execution_step: None,
+    //             execution_state: arb_trader::SpotArbTraderExecutionState::NoPosition,
     //             liquid_deposit_address: "0x1b7c39f6669cee023caff84e06001b03a76f829f".to_string(),
     //             illiquid_deposit_address: "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string(),
     //         })
@@ -414,6 +434,10 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
+// - have a dollar value amount for order in OpenOrder for exe. this is required by market orders for polo
+// - figure out polo -> bin transfer
+// - if sending order request for poloniex, it requires the precision to be the same a the coin
+// - cancel and replace exe
 // - make separate functions for all execution enum steps in arb trader
 // - finish position2, what fields are required for this
 // - funcitons to convert orderEvent to OpenOrder, CancelOrder, TransferOrder etc
