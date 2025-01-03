@@ -1,7 +1,7 @@
 use super::PoloniexSpot;
 use crate::{
     exchange::Identifier,
-    event_models::{event_book::OrderBookL2, event_trade::Trades}, shared::subscription_models::Subscription, 
+    model::{event_book::OrderBookL2, event_trade::Trades}, shared::subscription_models::Subscription, 
 };
 
 #[derive(Debug)]

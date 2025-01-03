@@ -11,7 +11,7 @@ use vecmap::VecMap;
 use super::single::ExchangeChannel;
 use crate::{
     error::SocketError,
-    event_models::{
+    model::{
         event_book::{EventOrderBook, OrderBookL2},
         event_trade::{AggTrades, EventTrade, Trades},
         market_event::MarketEvent,

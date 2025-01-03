@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::exchange::TickerInfo;
+use crate::{model::ticker_info::TickerInfo, shared::utils::decimal_places_to_number};
 
 /*----- */
 // Ticker info
@@ -55,13 +55,14 @@ pub struct CrossMargin {
     max_leverage: u8,
 }
 
-impl TickerInfo for PoloniexSpotTickerInfo {
-    fn get_asset_price_precision(&self) -> f64 {
-        unimplemented!()
-    }
-
-    fn get_asset_quantity_precision(&self) -> f64 {
-        unimplemented!()
+impl From<PoloniexSpotTickerInfo> for TickerInfo {
+    fn from(info: PoloniexSpotTickerInfo) -> Self {
+        let price_precision = decimal_places_to_number(info.symbol_trade_limit.price_scale);
+        let quantity_precision = decimal_places_to_number(info.symbol_trade_limit.quantity_scale);
+        Self {
+            price_precision,
+            quantity_precision,
+        }
     }
 }
 
@@ -69,29 +70,29 @@ impl TickerInfo for PoloniexSpotTickerInfo {
 // Example
 /*----- */
 /*
-    [
-        PoloniexSpotTickerInfo {
-            symbol: "OP_USDT",
-            base_currency_name: "OP",
-            quote_currency_name: "USDT",
-            display_name: "OP/USDT",
-            state: "NORMAL",
-            visible_start_time: 1666940408044,
-            tradable_start_time: 1666940408040,
-            symbol_trade_limit: SymbolTradeLimit {
-                symbol: "OP_USDT",
-                price_scale: 4,
-                quantity_scale: 4,
-                amount_scale: 4,
-                min_quantity: "0.0001",
-                min_amount: "1",
-                highest_bid: "0",
-                lowest_ask: "0",
-            },
-            cross_margin: CrossMargin {
-                support_cross_margin: false,
-                max_leverage: 1,
-            },
-        },
-    ],
- */
+   [
+       PoloniexSpotTickerInfo {
+           symbol: "OP_USDT",
+           base_currency_name: "OP",
+           quote_currency_name: "USDT",
+           display_name: "OP/USDT",
+           state: "NORMAL",
+           visible_start_time: 1666940408044,
+           tradable_start_time: 1666940408040,
+           symbol_trade_limit: SymbolTradeLimit {
+               symbol: "OP_USDT",
+               price_scale: 4,
+               quantity_scale: 4,
+               amount_scale: 4,
+               min_quantity: "0.0001",
+               min_amount: "1",
+               highest_bid: "0",
+               lowest_ask: "0",
+           },
+           cross_margin: CrossMargin {
+               support_cross_margin: false,
+               max_leverage: 1,
+           },
+       },
+   ],
+*/

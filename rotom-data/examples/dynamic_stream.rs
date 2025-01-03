@@ -1,7 +1,7 @@
 use futures::StreamExt;
 
 use rotom_data::{
-    event_models::market_event::{DataKind, MarketEvent},
+    model::market_event::{DataKind, MarketEvent},
     shared::subscription_models::{ExchangeId, StreamKind},
     streams::builder::dynamic::DynamicStreams,
 };

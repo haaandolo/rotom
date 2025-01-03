@@ -4,7 +4,7 @@ use tokio::sync::mpsc::{self};
 
 use super::Streams;
 use crate::{
-    error::SocketError, event_models::{market_event::MarketEvent, SubKind}, exchange::{Connector, Identifier, StreamSelector}, shared::subscription_models::{ExchangeId, Subscription}, streams::consumer::consume, transformer::ExchangeTransformer
+    error::SocketError, model::{market_event::MarketEvent, SubKind}, exchange::{Connector, Identifier, StreamSelector}, shared::subscription_models::{ExchangeId, Subscription}, streams::consumer::consume, transformer::ExchangeTransformer
 };
 
 pub type SubscribeFuture = Pin<Box<dyn Future<Output = Result<(), SocketError>>>>;

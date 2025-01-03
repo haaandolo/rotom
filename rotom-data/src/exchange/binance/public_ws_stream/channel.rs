@@ -1,6 +1,6 @@
 use super::BinanceSpot;
 use crate::{
-    event_models::{
+    model::{
         event_book::OrderBookL2,
         event_trade::{AggTrades, Trades},
     },

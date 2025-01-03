@@ -15,7 +15,7 @@ use tracing::{debug, info};
 
 use crate::{
     error::SocketError,
-    event_models::SubKind,
+    model::SubKind,
     exchange::{Connector, Identifier, StreamSelector},
     shared::subscription_models::{ExchangeSubscription, Subscription},
     streams::validator::{SubscriptionValidator, WebSocketValidator},

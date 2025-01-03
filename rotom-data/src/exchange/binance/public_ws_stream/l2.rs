@@ -4,9 +4,9 @@ use chrono::Utc;
 use super::model::BinanceSpotBookUpdate;
 use crate::assets::orderbook::OrderBook;
 use crate::error::SocketError;
-use crate::event_models::event_book::EventOrderBook;
 use crate::exchange::binance::public_http::binance_public_http_client::BinancePublicData;
 use crate::exchange::binance::public_http::requests::ticker_info::Filter;
+use crate::model::event_book::EventOrderBook;
 use crate::shared::subscription_models::ExchangeId;
 use crate::shared::subscription_models::Instrument;
 use crate::transformer::book::{InstrumentOrderBook, OrderBookUpdater};
@@ -72,12 +72,7 @@ impl OrderBookUpdater for BinanceSpotBookUpdater {
         let ticker_info = BinancePublicData::get_ticker_info(instrument).await?;
 
         let tick_size = ticker_info.symbols[0].filters.iter().find_map(|filter| {
-            if let Filter::PriceFilter {
-                min_price: _,
-                max_price: _,
-                tick_size,
-            } = filter
-            {
+            if let Filter::PriceFilter { tick_size, .. } = filter {
                 Some(tick_size.to_owned())
             } else {
                 None

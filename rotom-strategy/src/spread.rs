@@ -3,7 +3,7 @@ use std::collections::{HashMap, VecDeque};
 use chrono::{DateTime, Duration, Utc};
 use rotom_data::{
     assets::level::Level,
-    event_models::market_event::{DataKind, MarketEvent},
+    model::market_event::{DataKind, MarketEvent},
     shared::subscription_models::ExchangeId,
     MarketMeta,
 };

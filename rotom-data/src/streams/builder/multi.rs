@@ -3,7 +3,7 @@ use std::{collections::HashMap, pin::Pin};
 
 use crate::{
     error::SocketError,
-    event_models::{market_event::MarketEvent,  SubKind}, shared::subscription_models::ExchangeId,
+    model::{market_event::MarketEvent,  SubKind}, shared::subscription_models::ExchangeId,
 };
 
 use super::{

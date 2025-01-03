@@ -8,7 +8,7 @@ use crate::{exchange::Connector, shared::subscription_models::ExchangeSubscripti
 
 use super::{
     error::SocketError,
-    event_models::{market_event::MarketEvent, SubKind},
+    model::{market_event::MarketEvent, SubKind},
 };
 
 /*----- */

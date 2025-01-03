@@ -1,5 +1,5 @@
 use rotom_data::{
-    event_models::event_book::OrderBookL2,
+    model::event_book::OrderBookL2,
     exchange::{binance::public_ws_stream::BinanceSpot, poloniex::public_ws_stream::PoloniexSpot},
     shared::subscription_models::ExchangeId,
     streams::builder::Streams,

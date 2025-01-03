@@ -6,7 +6,7 @@ use super::model::{PoloniexSpotBookData, PoloniexSpotBookUpdate};
 use crate::{
     assets::orderbook::OrderBook,
     error::SocketError,
-    event_models::event_book::EventOrderBook,
+    model::event_book::EventOrderBook,
     exchange::poloniex::public_http::poloniex_public_http_client::PoloniexPublicData,
     shared::{subscription_models::Instrument, utils::decimal_places_to_number},
     transformer::book::{InstrumentOrderBook, OrderBookUpdater},

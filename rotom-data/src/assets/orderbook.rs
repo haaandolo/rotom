@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 
-use crate::event_models::event_book::EventOrderBook;
+use crate::model::event_book::EventOrderBook;
 use std::collections::BTreeMap;
 
 use super::level::Level;

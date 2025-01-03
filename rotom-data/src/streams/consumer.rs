@@ -11,7 +11,7 @@ use crate::protocols::ws::WebSocketClient;
 use crate::shared::subscription_models::Subscription;
 use crate::transformer::ExchangeTransformer;
 use crate::{
-    event_models::{market_event::MarketEvent, SubKind},
+    model::{market_event::MarketEvent, SubKind},
     exchange::{Connector, StreamSelector},
 };
 

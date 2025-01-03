@@ -1,7 +1,7 @@
 pub mod default_portfolio;
 pub mod spot_portfolio;
 
-use rotom_data::event_models::market_event::{DataKind, MarketEvent};
+use rotom_data::model::market_event::{DataKind, MarketEvent};
 use rotom_strategy::{Signal, SignalForceExit};
 
 use crate::{event::Event, execution::FillEvent, model::order::OrderEvent};

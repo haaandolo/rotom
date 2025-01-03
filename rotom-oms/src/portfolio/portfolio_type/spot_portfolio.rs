@@ -1,7 +1,7 @@
 use chrono::Utc;
 use rotom_data::{
     error::SocketError,
-    event_models::market_event::{DataKind, MarketEvent},
+    model::market_event::{DataKind, MarketEvent},
     shared::subscription_models::ExchangeId,
     AssetFormatted, ExchangeAssetId,
 };

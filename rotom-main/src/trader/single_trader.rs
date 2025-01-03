@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use parking_lot::Mutex;
 use rotom_data::{
-    event_models::market_event::{DataKind, MarketEvent},
+    model::market_event::{DataKind, MarketEvent},
     Feed, Market, MarketGenerator,
 };
 use rotom_oms::{

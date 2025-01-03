@@ -6,7 +6,7 @@ use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 use crate::{
     assets::orderbook::OrderBook,
     error::SocketError,
-    event_models::{event_book::EventOrderBook, market_event::MarketEvent, SubKind},
+    model::{event_book::EventOrderBook, market_event::MarketEvent, SubKind},
     exchange::{Connector, Identifier},
     shared::subscription_models::{ExchangeSubscription, Instrument},
 };

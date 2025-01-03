@@ -2,7 +2,7 @@ use chrono::Utc;
 use futures::StreamExt;
 use parking_lot::Mutex;
 use rotom_data::{
-    event_models::market_event::{DataKind, MarketEvent},
+    model::market_event::{DataKind, MarketEvent},
     protocols::ws::ws_parser::{StreamParser, WebSocketParser},
     shared::subscription_models::{ExchangeId, Instrument, StreamKind},
     streams::builder::dynamic,

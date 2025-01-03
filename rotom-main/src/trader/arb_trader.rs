@@ -4,7 +4,7 @@ use rotom_data::exchange::binance::public_http::binance_public_http_client::Bina
 use rotom_data::exchange::poloniex::public_http::poloniex_public_http_client::PoloniexPublicData;
 use rotom_data::shared::subscription_models::Instrument;
 use rotom_data::{
-    event_models::market_event::{DataKind, MarketEvent},
+    model::market_event::{DataKind, MarketEvent},
     shared::subscription_models::ExchangeId,
     Feed, Market, MarketGenerator,
 };

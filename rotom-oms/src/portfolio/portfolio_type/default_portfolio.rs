@@ -2,7 +2,7 @@ use std::{collections::HashMap, marker::PhantomData};
 
 use chrono::Utc;
 use rotom_data::{
-    event_models::market_event::{DataKind, MarketEvent},
+    model::market_event::{DataKind, MarketEvent},
     Market, MarketId,
 };
 use rotom_strategy::{Decision, Signal, SignalForceExit, SignalStrength};

@@ -36,7 +36,7 @@ pub mod test_util {
     use chrono::Utc;
     use rotom_data::{
         assets::level::Level,
-        event_models::{
+        model::{
             event_trade::EventTrade,
             market_event::{DataKind, MarketEvent},
         },

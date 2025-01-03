@@ -9,7 +9,7 @@ use tokio_stream::{wrappers::UnboundedReceiverStream, StreamMap};
 
 use multi::MultiStreamBuilder;
 
-use crate::{event_models::SubKind, shared::subscription_models::ExchangeId};
+use crate::{model::SubKind, shared::subscription_models::ExchangeId};
 
 pub struct Streams<T> {
     pub streams: HashMap<ExchangeId, UnboundedReceiver<T>>,

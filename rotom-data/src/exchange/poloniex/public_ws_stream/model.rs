@@ -5,7 +5,7 @@ use std::mem;
 use crate::{
     assets::level::Level,
     error::SocketError,
-    event_models::{event_trade::EventTrade, market_event::MarketEvent},
+    model::{event_trade::EventTrade, market_event::MarketEvent},
     exchange::Identifier,
     shared::{
         de::{de_str, de_u64_epoch_ms_as_datetime_utc, deserialize_non_empty_vec},

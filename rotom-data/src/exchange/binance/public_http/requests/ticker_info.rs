@@ -1,7 +1,6 @@
 use serde::Deserialize;
 
-use crate::exchange::TickerInfo;
-use crate::shared::de::de_str;
+use crate::{model::ticker_info::TickerInfo, shared::de::de_str};
 
 /*----- */
 // Ticker info
@@ -160,27 +159,28 @@ pub enum Filter {
     },
 }
 
-impl TickerInfo for BinanceSpotTickerInfo {
-    // todo: remove looping of filter list everytime this function is called
-    fn get_asset_quantity_precision(&self) -> f64 {
-        for filter in self.symbols[0].filters.iter() {
-            if let Filter::LotSize { step_size, .. } = filter {
-                return *step_size;
-            }
-        }
-        // Should never fail
-        panic!("LotSize filter not found! This function should never fail");
-    }
-
-    // todo: remove looping of filter list everytime this function is called
-    fn get_asset_price_precision(&self) -> f64 {
-        for filter in self.symbols[0].filters.iter() {
+impl From<BinanceSpotTickerInfo> for TickerInfo {
+    fn from(info: BinanceSpotTickerInfo) -> Self {
+        let price_precision = info.symbols[0].filters.iter().find_map(|filter| {
             if let Filter::PriceFilter { tick_size, .. } = filter {
-                return *tick_size;
+                Some(tick_size.to_owned())
+            } else {
+                None
             }
+        });
+
+        let quantity_precision = info.symbols[0].filters.iter().find_map(|filter| {
+            if let Filter::LotSize { step_size, .. } = filter {
+                Some(step_size.to_owned())
+            } else {
+                None
+            }
+        });
+        // unwrap_or_else(|| panic!("Price precision for Binance should never fail. This failed for this ticker: {:#?}", info))`
+        Self {
+            price_precision: price_precision.unwrap_or_else(|| panic!("Price precision for Binance should never panic. This failed for this ticker: {:#?}", info)),
+            quantity_precision: quantity_precision.unwrap_or_else(|| panic!("Quantity precision for Binance should never panic. This failed for this ticker: {:#?}", info)),
         }
-        // Should never fail
-        panic!("PriceFilter filter not found! This function should never fail");
     }
 }
 

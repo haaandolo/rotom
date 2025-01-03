@@ -1,7 +1,7 @@
 use futures::StreamExt;
 
 use rotom_data::{
-    event_models::{
+    model::{
         event_book::OrderBookL2,
         event_trade::Trades,
         market_event::{DataKind, MarketEvent},

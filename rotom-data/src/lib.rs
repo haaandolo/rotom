@@ -1,6 +1,6 @@
 pub mod assets;
 pub mod error;
-pub mod event_models;
+pub mod model;
 pub mod exchange;
 pub mod metric;
 pub mod protocols;

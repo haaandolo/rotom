@@ -2,7 +2,7 @@ pub mod spread;
 
 use chrono::{DateTime, Utc};
 use rotom_data::{
-    event_models::market_event::{DataKind, MarketEvent},
+    model::market_event::{DataKind, MarketEvent},
     shared::subscription_models::{ExchangeId, Instrument},
     Market, MarketMeta,
 };

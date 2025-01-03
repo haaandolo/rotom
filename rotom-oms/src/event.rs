@@ -7,7 +7,7 @@ use crate::{
     },
     portfolio::position::{Position, PositionExit, PositionUpdate},
 };
-use rotom_data::event_models::market_event::{DataKind, MarketEvent};
+use rotom_data::model::market_event::{DataKind, MarketEvent};
 use rotom_strategy::{Signal, SignalForceExit};
 use tokio::sync::mpsc;
 use tracing::warn;

@@ -7,8 +7,8 @@ use l2::PoloniexSpotBookUpdater;
 use market::PoloniexMarket;
 use serde_json::json;
 
-use crate::event_models::event_book::OrderBookL2;
-use crate::event_models::event_trade::Trades;
+use crate::model::event_book::OrderBookL2;
+use crate::model::event_trade::Trades;
 use crate::exchange::{Connector, StreamSelector};
 use crate::protocols::ws::{PingInterval, WsMessage};
 use crate::shared::subscription_models::{ExchangeId, ExchangeSubscription};
