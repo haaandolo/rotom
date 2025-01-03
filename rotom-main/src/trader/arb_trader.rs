@@ -1,5 +1,8 @@
 use async_trait::async_trait;
 use parking_lot::Mutex;
+use rotom_data::exchange::binance::public_http::binance_public_http_client::BinancePublicData;
+use rotom_data::exchange::poloniex::public_http::poloniex_public_http_client::PoloniexPublicData;
+use rotom_data::shared::subscription_models::Instrument;
 use rotom_data::{
     event_models::market_event::{DataKind, MarketEvent},
     shared::subscription_models::ExchangeId,
@@ -306,6 +309,19 @@ where
                             new_order.order_kind = OrderKind::Market;
                             // // Del
 
+                            // let ticker_info =
+                            //     BinancePublicData::get_ticker_info(&Instrument::new("op", "usdt"))
+                            //         .await;
+
+                            let ticker_info =
+                                PoloniexPublicData::get_ticker_info(&Instrument::new("op", "usdt"))
+                                    .await;
+
+                            println!("#################");
+                            println!("Ticker info");
+                            println!("#################");
+                            println!("{:#?}", ticker_info);
+
                             // self.meta_data.order = Some(new_order);
                             // self.process_new_order().await;
                         }
@@ -435,16 +451,12 @@ where
                                         testing_sell_req.quantity = balance_update.balance.total;
 
                                         println!("########################");
-                                        println!(
-                                            "#### testing sell after transfer to liquid ###"
-                                        );
+                                        println!("#### testing sell after transfer to liquid ###");
                                         println!("########################");
                                         println!("req --> {:#?}", testing_sell_req);
 
-                                        let res = self
-                                            .liquid_exchange
-                                            .open_order(testing_sell_req)
-                                            .await;
+                                        let res =
+                                            self.liquid_exchange.open_order(testing_sell_req).await;
 
                                         println!("res ---> {:#?}", res);
                                     }

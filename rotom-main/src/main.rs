@@ -81,8 +81,8 @@ pub async fn main() {
             time: Utc::now(),
         },
         decision: Decision::Short,
-        original_quantity: 5.0198988,
-        cumulative_quantity: 5.0198988,
+        original_quantity: 5.01,
+        cumulative_quantity: 5.01,
         order_kind: rotom_oms::model::OrderKind::Limit,
         exchange_order_status: None,
         internal_order_state: rotom_oms::model::order::OrderState::InTransit,
@@ -133,16 +133,16 @@ pub async fn main() {
      */
 
     // // Test Binance Execution
-    let binance_exe = BinanceExecution::new();
+    // let binance_exe = BinanceExecution::new();
     // let res = binance_exe.get_balance_all().await;
     // let res: Vec<AssetBalance> = res.unwrap().into();
     // let res = binance_exe.wallet_transfer(bin_wallet_transfer).await;
-    let res = binance_exe.open_order(open_order).await;
+    // let res = binance_exe.open_order(open_order).await;
     // let res = binance_exe
     //     .cancel_order(cancel_order)
     //     .await;
     // let res = binance_exe.cancel_order_all(cancel_order).await;
-    println!("{:#?}", res);
+    // println!("{:#?}", res);
     // binance_exe.receive_responses().await;
 
     ////////////////////////////////////////////////////
@@ -342,9 +342,9 @@ pub async fn main() {
 async fn stream_trades() -> UnboundedReceiver<MarketEvent<DataKind>> {
     let streams = dynamic::DynamicStreams::init([vec![
         (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::L2),
-        // (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::L2),
-        // (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::AggTrades),
-        // (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::Trades),
+        (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::L2),
+        (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::AggTrades),
+        (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::Trades),
     ]])
     .await
     .unwrap();
@@ -354,7 +354,7 @@ async fn stream_trades() -> UnboundedReceiver<MarketEvent<DataKind>> {
     let (tx, rx) = mpsc::unbounded_channel();
     tokio::spawn(async move {
         while let Some(event) = data.next().await {
-            println!("{:?}", event);
+            // println!("{:?}", event);
             let _ = tx.send(event);
         }
     });
@@ -434,6 +434,7 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
+// - precision tick size for quantity and price or limit and market orders
 // - have a dollar value amount for order in OpenOrder for exe. this is required by market orders for polo
 // - figure out polo -> bin transfer
 // - if sending order request for poloniex, it requires the precision to be the same a the coin
