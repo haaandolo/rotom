@@ -11,6 +11,9 @@ pub const HTTP_TICKER_INFO_URL_POLONIEX_SPOT: &str = "https://api.poloniex.com/m
 pub struct PoloniexPublicData;
 
 impl PoloniexPublicData {
+    // This function returns a Vec<PoloniexSpotTickerInfo> but the function only
+    // takes in a single instrument, we should only get a Vec of len == 1. So
+    // here we can index by 0 i.e. info[0] to get the res.
     pub async fn get_ticker_info(
         instrument: &Instrument,
     ) -> Result<Vec<PoloniexSpotTickerInfo>, SocketError> {

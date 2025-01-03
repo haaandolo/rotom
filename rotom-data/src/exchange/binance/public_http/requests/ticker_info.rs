@@ -1,6 +1,9 @@
 use serde::Deserialize;
 
-use crate::{model::ticker_info::TickerInfo, shared::de::de_str};
+use crate::{
+    model::ticker_info::{TickerInfo, TickerPrecision},
+    shared::de::de_str,
+};
 
 /*----- */
 // Ticker info
@@ -176,10 +179,13 @@ impl From<BinanceSpotTickerInfo> for TickerInfo {
                 None
             }
         });
-        // unwrap_or_else(|| panic!("Price precision for Binance should never fail. This failed for this ticker: {:#?}", info))`
+
         Self {
-            price_precision: price_precision.unwrap_or_else(|| panic!("Price precision for Binance should never panic. This failed for this ticker: {:#?}", info)),
-            quantity_precision: quantity_precision.unwrap_or_else(|| panic!("Quantity precision for Binance should never panic. This failed for this ticker: {:#?}", info)),
+            precision: TickerPrecision {
+                price_precision: price_precision.unwrap_or_else(|| panic!("Price precision for Binance should never panic. This failed for this ticker: {:#?}", info)),
+                quantity_precision: quantity_precision.unwrap_or_else(|| panic!("Quantity precision for Binance should never panic. This failed for this ticker: {:#?}", info)),
+                notional_precision: None
+            }
         }
     }
 }

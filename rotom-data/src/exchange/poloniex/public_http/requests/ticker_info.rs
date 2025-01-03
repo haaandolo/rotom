@@ -1,6 +1,9 @@
 use serde::Deserialize;
 
-use crate::{model::ticker_info::TickerInfo, shared::utils::decimal_places_to_number};
+use crate::{
+    model::ticker_info::{TickerInfo, TickerPrecision},
+    shared::utils::decimal_places_to_number,
+};
 
 /*----- */
 // Ticker info
@@ -59,9 +62,13 @@ impl From<PoloniexSpotTickerInfo> for TickerInfo {
     fn from(info: PoloniexSpotTickerInfo) -> Self {
         let price_precision = decimal_places_to_number(info.symbol_trade_limit.price_scale);
         let quantity_precision = decimal_places_to_number(info.symbol_trade_limit.quantity_scale);
+        let notional_precision = decimal_places_to_number(info.symbol_trade_limit.amount_scale);
         Self {
-            price_precision,
-            quantity_precision,
+            precision: TickerPrecision {
+                quantity_precision,
+                price_precision,
+                notional_precision: Some(notional_precision),
+            },
         }
     }
 }

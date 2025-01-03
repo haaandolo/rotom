@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use parking_lot::Mutex;
 use rotom_data::exchange::binance::public_http::binance_public_http_client::BinancePublicData;
 use rotom_data::exchange::poloniex::public_http::poloniex_public_http_client::PoloniexPublicData;
+use rotom_data::model::ticker_info::TickerInfo;
 use rotom_data::shared::subscription_models::Instrument;
 use rotom_data::{
     model::market_event::{DataKind, MarketEvent},
@@ -51,6 +52,8 @@ pub struct SpotArbTraderMetaData {
     pub execution_state: SpotArbTraderExecutionState,
     pub liquid_deposit_address: String,
     pub illiquid_deposit_address: String,
+    pub liquid_ticker_info: TickerInfo,
+    pub illiquid_ticker_info: TickerInfo,
 }
 
 /*----- */
@@ -309,20 +312,7 @@ where
                             new_order.order_kind = OrderKind::Market;
                             // // Del
 
-                            // let ticker_info =
-                            //     BinancePublicData::get_ticker_info(&Instrument::new("op", "usdt"))
-                            //         .await;
-
-                            let ticker_info =
-                                PoloniexPublicData::get_ticker_info(&Instrument::new("op", "usdt"))
-                                    .await;
-
-                            println!("#################");
-                            println!("Ticker info");
-                            println!("#################");
-                            println!("{:#?}", ticker_info);
-
-                            // self.meta_data.order = Some(new_order);
+                            self.meta_data.order = Some(new_order);
                             // self.process_new_order().await;
                         }
                     },

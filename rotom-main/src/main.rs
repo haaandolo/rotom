@@ -2,7 +2,14 @@ use chrono::Utc;
 use futures::StreamExt;
 use parking_lot::Mutex;
 use rotom_data::{
-    model::market_event::{DataKind, MarketEvent},
+    exchange::{
+        binance::public_http::binance_public_http_client::BinancePublicData,
+        poloniex::public_http::poloniex_public_http_client::PoloniexPublicData,
+    },
+    model::{
+        market_event::{DataKind, MarketEvent},
+        ticker_info::TickerInfo,
+    },
     protocols::ws::ws_parser::{StreamParser, WebSocketParser},
     shared::subscription_models::{ExchangeId, Instrument, StreamKind},
     streams::builder::dynamic,
@@ -268,6 +275,7 @@ pub async fn main() {
         // will have a OPUSDT (binance) and OP_USDT (poloniex). Even if 2 exchange
         // have the same asset format it would not matter as the key will just be replaced
         let (order_update_tx, order_update_rx) = mpsc::channel(10);
+        let mut spot_arb_meta_data = SpotArbTraderMetaData::default();
         for market in markets.clone().into_iter() {
             // Key to update order
             let order_update_key = ExchangeAssetId::from((&market.exchange, &market.instrument));
@@ -278,6 +286,24 @@ pub async fn main() {
                 format!("{}_{}", &market.exchange.as_str(), &market.instrument.base).to_uppercase(),
             );
             order_update_txs.insert(balance_update_key, order_update_tx.clone());
+
+            // Get ticker precision
+            let liquid_ticker_info = BinancePublicData::get_ticker_info(&market.instrument)
+                .await
+                .unwrap();
+            spot_arb_meta_data.liquid_ticker_info = TickerInfo::from(liquid_ticker_info);
+
+            let mut illiquid_ticker_info = PoloniexPublicData::get_ticker_info(&market.instrument)
+                .await
+                .unwrap();
+            spot_arb_meta_data.illiquid_ticker_info =
+                TickerInfo::from(illiquid_ticker_info.remove(0));
+
+            // todo: get wallet addresses http requests?
+            spot_arb_meta_data.liquid_deposit_address =
+                "0x1b7c39f6669cee023caff84e06001b03a76f829f".to_string();
+            spot_arb_meta_data.illiquid_deposit_address =
+                "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string();
         }
 
         let arb_trader = SpotArbTrader::builder()
@@ -291,12 +317,7 @@ pub async fn main() {
             .liquid_exchange(BinanceExecution::new())
             .illiquid_exchange(PoloniexExecution::new())
             .order_update_rx(order_update_rx)
-            .meta_data(SpotArbTraderMetaData {
-                order: None,
-                execution_state: arb_trader::SpotArbTraderExecutionState::NoPosition,
-                liquid_deposit_address: "0x1b7c39f6669cee023caff84e06001b03a76f829f".to_string(),
-                illiquid_deposit_address: "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string(),
-            })
+            .meta_data(spot_arb_meta_data)
             .build()
             .unwrap();
 
