@@ -1,6 +1,10 @@
 use chrono::{DateTime, Utc};
 use rotom_data::{
-    shared::subscription_models::{ExchangeId, Instrument},
+    model::ticker_info::TickerPrecision,
+    shared::{
+        subscription_models::{ExchangeId, Instrument},
+        utils::round_float_to_precision,
+    },
     AssetFormatted, MarketMeta,
 };
 use rotom_strategy::Decision;
@@ -40,7 +44,7 @@ pub struct OrderEvent {
     pub internal_order_state: OrderState,           // before
     // Filled gross amount of quote currency
     pub filled_gross: f64, // after
-    // Enter average price excluding fees. Position.filled_gross / Position.quantity
+    // Enter average price excluding fees. Position.filled_gross / Position.cumulative_quantity
     pub enter_avg_price: f64, // after
     // Cumulative value: todo is it base or quote asset?
     pub fees: f64, // after
@@ -153,40 +157,57 @@ impl From<OrderStatus> for OrderState {
 pub struct OpenOrder {
     pub price: f64,
     pub quantity: f64,
+    pub notional_amount: f64,
     pub decision: Decision,
     pub order_kind: OrderKind,
     pub instrument: Instrument,
 }
 
-impl OpenOrder {
-    pub fn get_quote_currency_value(&self) -> f64 {
-        self.price * self.quantity
-    }
-}
+// impl From<(&TickerPrecision, &OrderEvent)> for OpenOrder {
+//     fn from((precision, order): (&TickerPrecision, &OrderEvent)) -> Self {
+//         Self {
+//             price: round_float_to_precision(order.market_meta.close, precision.price_precision),
+//             quantity: round_float_to_precision(
+//                 order.original_quantity,
+//                 precision.quantity_precision,
+//             ),
+//             // todo: cum quantity * avg price?
+//             notional_amount: round_float_to_precision(
+//                 order.cumulative_quantity * order.enter_avg_price,
+//                 precision.notional_precision,
+//             ),
+//             decision: order.decision,
+//             order_kind: order.order_kind.clone(),
+//             instrument: order.instrument.clone(),
+//         }
+//     }
+// }
 
-impl From<&OrderEvent> for OpenOrder {
-    fn from(order: &OrderEvent) -> Self {
-        Self {
-            price: order.market_meta.close,
-            quantity: order.original_quantity,
-            decision: order.decision,
-            order_kind: order.order_kind.clone(),
-            instrument: order.instrument.clone(),
-        }
-    }
-}
+// impl From<&OrderEvent> for OpenOrder {
+//     fn from(order: &OrderEvent) -> Self {
+//         Self {
+//             price: order.market_meta.close,
+//             quantity: order.original_quantity,
+//             notional_amount: order.cumulative_quantity * order.enter_avg_price,
+//             decision: order.decision,
+//             order_kind: order.order_kind.clone(),
+//             instrument: order.instrument.clone(),
+//         }
+//     }
+// }
 
-impl From<&mut OrderEvent> for OpenOrder {
-    fn from(order: &mut OrderEvent) -> Self {
-        Self {
-            price: order.market_meta.close,
-            quantity: order.original_quantity,
-            decision: order.decision,
-            order_kind: order.order_kind.clone(),
-            instrument: order.instrument.clone(),
-        }
-    }
-}
+// impl From<&mut OrderEvent> for OpenOrder {
+//     fn from(order: &mut OrderEvent) -> Self {
+//         Self {
+//             price: order.market_meta.close,
+//             quantity: order.original_quantity,
+//             notional_amount: order.cumulative_quantity * order.enter_avg_price,
+//             decision: order.decision,
+//             order_kind: order.order_kind.clone(),
+//             instrument: order.instrument.clone(),
+//         }
+//     }
+// }
 
 /*----- */
 // Cancel Order
@@ -212,20 +233,9 @@ impl From<&OrderEvent> for CancelOrder {
 #[derive(Debug, Clone)]
 pub struct WalletTransfer {
     pub coin: String,            // smol
-    pub wallet_address: String,  // can be static str
+    pub wallet_address: String,  // can be static str todo: change to deposit address
     pub network: Option<String>, // smol, probs can be static str
     pub amount: f64,
-}
-
-impl WalletTransfer {
-    pub fn new(coin: String, wallet_address: String, network: Option<String>, amount: f64) -> Self {
-        Self {
-            coin,
-            wallet_address,
-            network,
-            amount,
-        }
-    }
 }
 
 /*----- */

@@ -67,7 +67,7 @@ impl From<PoloniexSpotTickerInfo> for TickerInfo {
             precision: TickerPrecision {
                 quantity_precision,
                 price_precision,
-                notional_precision: Some(notional_precision),
+                notional_precision,
             },
         }
     }

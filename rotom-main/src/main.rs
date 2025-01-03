@@ -100,24 +100,24 @@ pub async fn main() {
     };
 
     // Requests
-    let open_order = OpenOrder::from(&order);
+    // let open_order = OpenOrder::from(&order);
     let cancel_order = CancelOrder::from(&order);
-    let polo_wallet_transfer = WalletTransfer::new(
-        order.instrument.base.clone(),
-        "0x1b7c39f6669cee023caff84e06001b03a76f829f".to_string(),
-        None,
-        4.25,
-    );
+    let polo_wallet_transfer = WalletTransfer {
+        coin: order.instrument.base.clone(),
+        wallet_address: "0x1b7c39f6669cee023caff84e06001b03a76f829f".to_string(),
+        network: None,
+        amount: 4.25,
+    };
     let polo_usdt_tron_network = "TBw5BWoS97tWrVr7PSuBtUQeBXU6eJZpyg".to_string();
-    let bin_wallet_transfer = WalletTransfer::new(
-        order.instrument.base.clone(),
+    let bin_wallet_transfer = WalletTransfer {
+        coin: order.instrument.base.clone(),
         // "usdt".to_string(),
-        polo_usdt_tron_network,
+        wallet_address: polo_usdt_tron_network,
         // "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string(),
-        None,
+        network: None,
         // Some("TRX".to_string()),
-        15.0,
-    );
+        amount: 15.0,
+    };
 
     /*
     req --> OpenOrder {
@@ -455,7 +455,7 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - precision tick size for quantity and price or limit and market orders
+// - what price value to use in OpenOrder - might need a current price for the OrderEvent
 // - have a dollar value amount for order in OpenOrder for exe. this is required by market orders for polo
 // - figure out polo -> bin transfer
 // - if sending order request for poloniex, it requires the precision to be the same a the coin

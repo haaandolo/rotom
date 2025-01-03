@@ -90,8 +90,7 @@ impl PoloniexNewOrder {
                     .as_ref()
                     .to_lowercase(),
             )
-            .amount(format!("{:.4}", order_event.get_quote_currency_value())) // todo
-            // .amount(order_event.get_quote_currency_value().to_string())
+            .amount(order_event.notional_amount.to_string())
             .build()
     }
 

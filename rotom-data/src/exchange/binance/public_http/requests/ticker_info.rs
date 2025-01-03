@@ -170,7 +170,7 @@ impl From<BinanceSpotTickerInfo> for TickerInfo {
             } else {
                 None
             }
-        });
+        }).unwrap_or_else(|| panic!("Price precision for Binance should never panic. This failed for this ticker: {:#?}", info));
 
         let quantity_precision = info.symbols[0].filters.iter().find_map(|filter| {
             if let Filter::LotSize { step_size, .. } = filter {
@@ -178,14 +178,14 @@ impl From<BinanceSpotTickerInfo> for TickerInfo {
             } else {
                 None
             }
-        });
+        }).unwrap_or_else(|| panic!("Quantity precision for Binance should never panic. This failed for this ticker: {:#?}", info));
 
         Self {
             precision: TickerPrecision {
-                price_precision: price_precision.unwrap_or_else(|| panic!("Price precision for Binance should never panic. This failed for this ticker: {:#?}", info)),
-                quantity_precision: quantity_precision.unwrap_or_else(|| panic!("Quantity precision for Binance should never panic. This failed for this ticker: {:#?}", info)),
-                notional_precision: None
-            }
+                price_precision,
+                quantity_precision,
+                notional_precision: price_precision,
+            },
         }
     }
 }

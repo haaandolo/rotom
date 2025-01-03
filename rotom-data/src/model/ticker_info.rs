@@ -21,8 +21,9 @@ pub struct TickerPrecision {
     // required coversions
     pub price_precision: f64,
     // Sometimes exchanges have a notional amount precision. This is the notional
-    // value of the order i.e., price * quantity. For example poloniex requires this
-    // for Market buys. Calling unwrap on this should never fail as this will happen
-    // when the TickerInfo struct is gettting initalised.
-    pub notional_precision: Option<f64>,
+    // value of the order i.e., price * quantity. For example, poloniex requires this
+    // for Market buys. This value will be the same as the price_precision field 
+    // for exchanges without a specific notional precision value. I dont want to 
+    // use options here as the logic downstream becomes tedious. 
+    pub notional_precision: f64,
 }
