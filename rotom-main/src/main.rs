@@ -119,26 +119,6 @@ pub async fn main() {
         amount: 15.0,
     };
 
-    /*
-    req --> OpenOrder {
-    price: 1.83,
-    quantity: 7.0572256,
-    decision: Short,
-    order_kind: Market,
-    instrument: Instrument {
-        base: "op",
-        quote: "usdt",
-    },
-
-
-    res ---> Err(
-    HttpResponse(
-        400,
-        "{\"code\":-1013,\"msg\":\"Filter failure: LOT_SIZE\"}",
-    ),
-    )
-     */
-
     // // Test Binance Execution
     // let binance_exe = BinanceExecution::new();
     // let res = binance_exe.get_balance_all().await;
@@ -455,10 +435,7 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - what price value to use in OpenOrder - might need a current price for the OrderEvent
-// - have a dollar value amount for order in OpenOrder for exe. this is required by market orders for polo
-// - figure out polo -> bin transfer
-// - if sending order request for poloniex, it requires the precision to be the same a the coin
+// - figure out limit order exe for polo cos rn its market
 // - cancel and replace exe
 // - make separate functions for all execution enum steps in arb trader
 // - finish position2, what fields are required for this

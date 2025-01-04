@@ -1,10 +1,6 @@
 use chrono::{DateTime, Utc};
 use rotom_data::{
-    model::ticker_info::TickerPrecision,
-    shared::{
-        subscription_models::{ExchangeId, Instrument},
-        utils::round_float_to_precision,
-    },
+    shared::subscription_models::{ExchangeId, Instrument},
     AssetFormatted, MarketMeta,
 };
 use rotom_strategy::Decision;

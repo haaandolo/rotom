@@ -17,7 +17,8 @@ pub fn round_float_to_precision(value: f64, precision: f64) -> f64 {
         return value;
     }
 
-    (value / precision).floor() * precision
+    let scaling_factor = 1.0 / precision;
+    (value * scaling_factor).floor() / scaling_factor
 }
 
 #[cfg(test)]

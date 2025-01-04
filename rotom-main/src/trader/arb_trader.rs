@@ -366,9 +366,9 @@ where
                         }
                         None => {
                             // Del
-                            new_order.exchange = ExchangeId::BinanceSpot;
-                            new_order.original_quantity = 6.4;
-                            new_order.market_meta.close = 1.840;
+                            new_order.exchange = ExchangeId::PoloniexSpot;
+                            new_order.original_quantity = 5.7;
+                            new_order.market_meta.close = 2.01;
                             new_order.order_kind = OrderKind::Market;
                             // Del
 
@@ -402,8 +402,10 @@ where
                                     &account_data_order_update,
                                 );
 
-                                println!("### Order event ###");
-                                println!("{:#?}", order);
+                                // println!("###################");
+                                // println!("Order event");
+                                // println!("###################");
+                                // println!("{:#?}", order);
 
                                 // Then update the portfolio position state with updated OrderEvent
                                 let _ = self.portfolio.lock().update_from_fill2(order);
@@ -436,6 +438,17 @@ where
                                             println!("########################");
                                             println!("Wallet transfer request - to illiquid");
                                             println!("########################");
+
+                                            println!("cumsum: {:#?}", order.cumulative_quantity);
+                                            println!("order fee: {:#?}", order.fees);
+                                            println!(
+                                                "quantity precision: {:#?}",
+                                                self.meta_data
+                                                    .liquid_ticker_info
+                                                    .precision
+                                                    .quantity_precision
+                                            );
+
                                             println!("{:#?}", wallet_transfer_request);
 
                                             // Execute request
@@ -474,13 +487,14 @@ where
                                                     .clone(),
                                                 network: None,
                                                 amount: round_float_to_precision(
-                                                    order.cumulative_quantity - order.fees,
+                                                    order.cumulative_quantity - order.fees, // todo do we sub fees?
                                                     self.meta_data
                                                         .illiquid_ticker_info
                                                         .precision
                                                         .quantity_precision,
                                                 ),
                                             };
+
                                             println!("########################");
                                             println!("Wallet transfer request - to liquid");
                                             println!("########################");
@@ -646,225 +660,6 @@ where
         )
     }
 }
-
-// Del
-/*
-arb portfolio: Mutex {
-    data: SpotPortfolio {
-        engine_id: 350e3831-1137-45ce-b435-f4fd7af49247,
-        exchanges: [
-            BinanceSpot,
-            PoloniexSpot,
-        ],
-        repository: SpotInMemoryRepository {
-            open_positions: {},
-            closed_positions: {},
-            current_balance: {
-                SpotBalanceId(
-                    "binancespot_usdt",
-                ): Balance {
-                    total: 11.97096934,
-                    available: 0.0,
-                },
-                SpotBalanceId(
-                    "binancespot_op",
-                ): Balance {
-                    total: 0.0037856,
-                    available: 0.0,
-                },
-                SpotBalanceId(
-                    "poloniexspot_usdt",
-                ): Balance {
-                    total: 0.14853155638,
-                    available: 0.0,
-                },
-                SpotBalanceId(
-                    "binancespot_arb",
-                ): Balance {
-                    total: 0.0894,
-                    available: 0.0,
-                },
-                SpotBalanceId(
-                    "poloniexspot_op",
-                ): Balance {
-                    total: 0.0001426,
-                    available: 0.0,
-                },
-                SpotBalanceId(
-                    "binancespot_usdce",
-                ): Balance {
-                    total: 1.0,
-                    available: 0.0,
-                },
-            },
-        },
-        allocator: SpotArbAllocator,
-    },
-}
-{"timestamp":"2025-01-03T08:55:41.772849Z","level":"INFO","fields":{"exchange":"binancespot","exchange_sub":"[Subscription { exchange: BinanceSpot, instrument: Instrument { base: \"op\", quote: \"usdt\" }, stream_kind: OrderBookL2 }]","action":"Attempting to subscribe to websocket"},"target":"rotom_data::streams::consumer"}
-{"timestamp":"2025-01-03T08:55:41.772945Z","level":"INFO","fields":{"exchange":"binancespot","exchange_sub":"[Subscription { exchange: BinanceSpot, instrument: Instrument { base: \"op\", quote: \"usdt\" }, stream_kind: AggTrades }]","action":"Attempting to subscribe to websocket"},"target":"rotom_data::streams::consumer"}
-{"timestamp":"2025-01-03T08:55:41.772859Z","level":"INFO","fields":{"exchange":"poloniexspot","exchange_sub":"[Subscription { exchange: PoloniexSpot, instrument: Instrument { base: \"op\", quote: \"usdt\" }, stream_kind: Trades }]","action":"Attempting to subscribe to websocket"},"target":"rotom_data::streams::consumer"}
-{"timestamp":"2025-01-03T08:55:41.773076Z","level":"INFO","fields":{"exchange":"poloniexspot","exchange_sub":"[Subscription { exchange: PoloniexSpot, instrument: Instrument { base: \"op\", quote: \"usdt\" }, stream_kind: OrderBookL2 }]","action":"Attempting to subscribe to websocket"},"target":"rotom_data::streams::consumer"}
-{"timestamp":"2025-01-03T08:55:41.774178Z","level":"INFO","fields":{"exchange":"binancespot","action":"Connecting to private user websocket stream"},"target":"rotom_oms::exchange"}
-{"timestamp":"2025-01-03T08:55:41.774274Z","level":"INFO","fields":{"exchange":"poloniexspot","action":"Connecting to private user websocket stream"},"target":"rotom_oms::exchange"}
-{"timestamp":"2025-01-03T08:55:43.165668Z","level":"INFO","fields":{"exchange":"binancespot","message":"Subscribed to WebSocket","instruments":"[Instrument { base: \"op\", quote: \"usdt\" }]"},"target":"rotom_data::protocols::ws"}
-{"timestamp":"2025-01-03T08:55:43.165699Z","level":"INFO","fields":{"exchange":"poloniexspot","message":"Subscribed to WebSocket","instruments":"[Instrument { base: \"op\", quote: \"usdt\" }]"},"target":"rotom_data::protocols::ws"}
-{"timestamp":"2025-01-03T08:55:43.415117Z","level":"INFO","fields":{"exchange":"poloniexspot","message":"Subscribed to WebSocket","instruments":"[Instrument { base: \"op\", quote: \"usdt\" }]"},"target":"rotom_data::protocols::ws"}
-######################
-Meta Data
-######################
-SpotArbTraderMetaData {
-    order: None,
-    execution_state: NoPosition,
-    liquid_deposit_address: "0x1b7c39f6669cee023caff84e06001b03a76f829f",
-    illiquid_deposit_address: "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f",
-    liquid_ticker_info: TickerInfo {
-        precision: TickerPrecision {
-            quantity_precision: 0.01,
-            price_precision: 0.001,
-            notional_precision: 0.001,
-        },
-    },
-    illiquid_ticker_info: TickerInfo {
-        precision: TickerPrecision {
-            quantity_precision: 0.0001,
-            price_precision: 0.0001,
-            notional_precision: 0.0001,
-        },
-    },
-}
-########################
-Liquid new order
-########################
-Ok(
-    Full(
-        BinanceNewOrderResponseFull {
-            symbol: "OPUSDT",
-            order_id: 2038467868,
-            order_list_id: -1,
-            client_order_id: "XPdLCJfR5Yaji5C64Nlsn8",
-            transact_time: 1735894543620,
-            price: 0.0,
-            orig_qty: 6.4,
-            executed_qty: 6.4,
-            cummulative_quote_qty: 11.8656,
-            status: Filled,
-            time_in_force: GTC,
-            type: "MARKET",
-            side: "BUY",
-            working_time: 1735894543620,
-            fills: [
-                BinanceFill {
-                    price: 1.854,
-                    qty: 6.4,
-                    commission: 0.0064,
-                    commission_asset: "OP",
-                    trade_id: 115502702,
-                },
-            ],
-        },
-    ),
-)
-AccountDataOrder: AccountDataOrder {
-    exchange: BinanceSpot,
-    client_order_id: "XPdLCJfR5Yaji5C64Nlsn8",
-    asset: "OPUSDT",
-    price: 0.0,
-    quantity: 0.0,
-    status: New,
-    execution_time: 2025-01-03T08:55:43.620Z,
-    side: Buy,
-    fee: 0.0,
-    filled_gross: 0.0,
-}
-### Order event ###
-OrderEvent {
-    order_request_time: 2025-01-03T08:55:43.415939Z,
-    exchange: BinanceSpot,
-    client_order_id: Some(
-        ClientOrderId(
-            "XPdLCJfR5Yaji5C64Nlsn8",
-        ),
-    ),
-    instrument: Instrument {
-        base: "op",
-        quote: "usdt",
-    },
-    market_meta: MarketMeta {
-        close: 1.84,
-        time: 2025-01-03T08:55:43.415925Z,
-    },
-    decision: Long,
-    original_quantity: 6.4,
-    cumulative_quantity: 0.0,
-    order_kind: Market,
-    exchange_order_status: Some(
-        New,
-    ),
-    internal_order_state: Open,
-    filled_gross: 0.0,
-    enter_avg_price: NaN,
-    fees: 0.0,
-    last_execution_time: Some(
-        2025-01-03T08:55:43.620Z,
-    ),
-}
-AccountDataOrder: AccountDataOrder {
-    exchange: BinanceSpot,
-    client_order_id: "XPdLCJfR5Yaji5C64Nlsn8",
-    asset: "OPUSDT",
-    price: 1.854,
-    quantity: 6.4,
-    status: Filled,
-    execution_time: 2025-01-03T08:55:43.620Z,
-    side: Buy,
-    fee: 0.0064,
-    filled_gross: 11.8656,
-}
-### Order event ###
-OrderEvent {
-    order_request_time: 2025-01-03T08:55:43.415939Z,
-    exchange: BinanceSpot,
-    client_order_id: Some(
-        ClientOrderId(
-            "XPdLCJfR5Yaji5C64Nlsn8",
-        ),
-    ),
-    instrument: Instrument {
-        base: "op",
-        quote: "usdt",
-    },
-    market_meta: MarketMeta {
-        close: 1.84,
-        time: 2025-01-03T08:55:43.415925Z,
-    },
-    decision: Long,
-    original_quantity: 6.4,
-    cumulative_quantity: 6.4,
-    order_kind: Market,
-    exchange_order_status: Some(
-        Filled,
-    ),
-    internal_order_state: Open,
-    filled_gross: 11.8656,
-    enter_avg_price: 1.854,
-    fees: 0.0064,
-    last_execution_time: Some(
-        2025-01-03T08:55:43.620Z,
-    ),
-}
-########################
-### Wallet transfer request - to illiquid ###
-########################
-WalletTransfer {
-    coin: "op",
-    wallet_address: "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f",
-    network: None,
-    amount: 6.390000000000001,
-}
-{"timestamp":"2025-01-03T08:55:44.498957Z","level":"ERROR","fields":{"message":"error when sending request to exchange","error":"HTTP response (status=400 Bad Request) error: {\"code\":-4021,\"msg\":\"Withdrawal amount OP must be an integer of 0.00000001.\"}"},"target":"rotom_main::trader::arb_trader"}
-*/
-// Del
 
 /*----- */
 // Single Market Trader builder
