@@ -17,6 +17,7 @@ pub enum Event {
     Market(MarketEvent<DataKind>),
     Signal(Signal),
     SignalForceExit(SignalForceExit),
+    OrderEvaluate(OrderEvent),
     OrderNew(OrderEvent),
     OrderUpdate,
     Fill(FillEvent),

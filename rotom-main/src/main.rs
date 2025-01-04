@@ -18,8 +18,8 @@ use rotom_data::{
 use rotom_main::{
     engine::{self, Engine},
     trader::{
-        arb_trader::{self, SpotArbTrader, SpotArbTraderMetaData},
         single_trader::SingleMarketTrader,
+        spot_arb_trader::{self, SpotArbTrader, SpotArbTraderMetaData},
     },
 };
 use rotom_oms::{
@@ -293,7 +293,6 @@ pub async fn main() {
             .event_tx(event_tx.clone())
             .portfolio(Arc::clone(&arb_portfolio))
             .data(MarketFeed::new(stream_trades().await))
-            .strategy(SpreadStategy::new())
             .liquid_exchange(BinanceExecution::new())
             .illiquid_exchange(PoloniexExecution::new())
             .order_update_rx(order_update_rx)
@@ -435,8 +434,10 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
+// - finish removing signals
 // - figure out limit order exe for polo cos rn its market
 // - cancel and replace exe
+// - delete strategy class?
 // - make separate functions for all execution enum steps in arb trader
 // - finish position2, what fields are required for this
 // - funcitons to convert orderEvent to OpenOrder, CancelOrder, TransferOrder etc

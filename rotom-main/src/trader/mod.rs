@@ -1,9 +1,9 @@
+pub mod single_trader;
+pub mod spot_arb_trader;
+
 use async_trait::async_trait;
 
 use crate::engine::Command;
-
-pub mod arb_trader;
-pub mod single_trader;
 
 /*----- */
 // Trader trait

@@ -1,4 +1,7 @@
+pub mod generate_decision;
+
 use async_trait::async_trait;
+use generate_decision::process_market_event;
 use parking_lot::Mutex;
 use rotom_data::exchange::binance::public_http::binance_public_http_client::BinancePublicData;
 use rotom_data::exchange::poloniex::public_http::poloniex_public_http_client::PoloniexPublicData;
@@ -10,6 +13,7 @@ use rotom_data::{
     shared::subscription_models::ExchangeId,
     Feed, Market, MarketGenerator,
 };
+use rotom_oms::exchange::binance::requests::new_order;
 use rotom_oms::{
     event::{Event, EventTx, MessageTransmitter},
     exchange::ExecutionClient,
@@ -84,10 +88,9 @@ SpotArbTraderMetaData {
 // Spot Arb Trader Lego
 /*----- */
 #[derive(Debug)]
-pub struct SpotArbTraderLego<Data, Strategy, LiquidExchange, IlliquidExchange>
+pub struct SpotArbTraderLego<Data, LiquidExchange, IlliquidExchange>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
-    Strategy: SignalGenerator,
     LiquidExchange: ExecutionClient,
     IlliquidExchange: ExecutionClient,
 {
@@ -96,7 +99,6 @@ where
     pub event_tx: EventTx,
     pub markets: Vec<Market>,
     pub data: Data,
-    pub stategy: Strategy,
     pub liquid_exchange: LiquidExchange,
     pub illiquid_exchange: IlliquidExchange,
     pub send_order_tx: mpsc::UnboundedSender<ExecutionRequest>,
@@ -109,10 +111,9 @@ where
 // Spot Arb Trader
 /*----- */
 #[derive(Debug)]
-pub struct SpotArbTrader<Data, Strategy, LiquidExchange, IlliquidExchange>
+pub struct SpotArbTrader<Data, LiquidExchange, IlliquidExchange>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
-    Strategy: SignalGenerator,
     LiquidExchange: ExecutionClient,
     IlliquidExchange: ExecutionClient,
 {
@@ -121,7 +122,6 @@ where
     event_tx: EventTx,
     markets: Vec<Market>,
     data: Data,
-    stategy: Strategy,
     liquid_exchange: LiquidExchange,
     illiquid_exchange: IlliquidExchange,
     order_update_rx: mpsc::Receiver<AccountData>,
@@ -130,22 +130,19 @@ where
     meta_data: SpotArbTraderMetaData,
 }
 
-impl<Data, Strategy, LiquidExchange, IlliquidExchange>
-    SpotArbTrader<Data, Strategy, LiquidExchange, IlliquidExchange>
+impl<Data, LiquidExchange, IlliquidExchange> SpotArbTrader<Data, LiquidExchange, IlliquidExchange>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
-    Strategy: SignalGenerator,
     LiquidExchange: ExecutionClient,
     IlliquidExchange: ExecutionClient,
 {
-    pub fn new(lego: SpotArbTraderLego<Data, Strategy, LiquidExchange, IlliquidExchange>) -> Self {
+    pub fn new(lego: SpotArbTraderLego<Data, LiquidExchange, IlliquidExchange>) -> Self {
         Self {
             engine_id: lego.engine_id,
             command_rx: lego.command_rx,
             event_tx: lego.event_tx,
             markets: lego.markets,
             data: lego.data,
-            stategy: lego.stategy,
             liquid_exchange: lego.liquid_exchange,
             illiquid_exchange: lego.illiquid_exchange,
             order_update_rx: lego.order_update_rx,
@@ -155,7 +152,7 @@ where
         }
     }
 
-    pub fn builder() -> SpotArbTraderBuilder<Data, Strategy, LiquidExchange, IlliquidExchange> {
+    pub fn builder() -> SpotArbTraderBuilder<Data, LiquidExchange, IlliquidExchange> {
         SpotArbTraderBuilder::new()
     }
 
@@ -244,11 +241,10 @@ where
 // Impl Trader trait for Single Market Trader
 /*----- */
 #[async_trait]
-impl<Data, Strategy, LiquidExchange, IlliquidExchange> TraderRun
-    for SpotArbTrader<Data, Strategy, LiquidExchange, IlliquidExchange>
+impl<Data, LiquidExchange, IlliquidExchange> TraderRun
+    for SpotArbTrader<Data, LiquidExchange, IlliquidExchange>
 where
     Data: MarketGenerator<MarketEvent<DataKind>> + Send + Sync,
-    Strategy: SignalGenerator + Send + Sync,
     LiquidExchange: ExecutionClient + Send + Sync,
     IlliquidExchange: ExecutionClient + Send + Sync,
 {
@@ -318,14 +314,19 @@ where
             while let Some(event) = self.event_queue.pop_front() {
                 match event {
                     Event::Market(market_event) => {
-                        if let Some(signal) = self.stategy.generate_signal(&market_event) {
-                            // println!("##############################");
-                            // println!("signal --> {:#?}", signal);
-                            // self.event_tx.send(Event::Signal(signal.clone()));
-                            self.event_queue.push_back(Event::Signal(signal))
+                        // Process latest market event and generate order if applicable
+                        if let Some(mut new_order) = process_market_event(&market_event) {
+                            // Del
+                            new_order.exchange = ExchangeId::PoloniexSpot;
+                            new_order.original_quantity = 4.7;
+                            new_order.market_meta.close = 2.0;
+                            new_order.order_kind = OrderKind::Market;
+                            // Del
+
+                            self.event_queue.push_back(Event::OrderEvaluate(new_order));
                         }
 
-                        if let Some(position_update) = self
+                        if let Some(_position_update) = self
                             .portfolio
                             .lock()
                             .update_from_market2(&market_event)
@@ -336,17 +337,15 @@ where
                             // self.event_tx.send(Event::PositionUpdate(position_update));
                         }
                     }
-                    Event::Signal(signal) => {
-                        if let Some(order) = self
-                            .portfolio
-                            .lock()
-                            .generate_order2(&signal)
-                            .expect("Failed to generate order")
+                    Event::OrderEvaluate(mut new_order) => {
+                        // Evaluate the new order to check for risk i.e, set allocation and
+                        // check there is enough balance in our portfolio
+                        if let Ok(order_passed_evaluation) =
+                            self.portfolio.lock().evaluate_order(&mut new_order)
                         {
-                            // println!("##############################");
-                            // println!("order --> {:#?}", order);
-                            // self.event_tx.send(Event::OrderNew(order.clone()));
-                            self.event_queue.push_back(Event::OrderNew(order));
+                            if order_passed_evaluation {
+                                self.event_queue.push_back(Event::OrderNew(new_order))
+                            }
                         }
                     }
                     Event::SignalForceExit(signal_force_exit) => {
@@ -360,27 +359,22 @@ where
                             self.event_queue.push_back(Event::OrderNew(order));
                         }
                     }
-                    Event::OrderNew(mut new_order) => match &self.meta_data.order {
-                        Some(_) => {
-                            //  self.process_existing_order().await;
-                        }
-                        None => {
-                            // Del
-                            new_order.exchange = ExchangeId::PoloniexSpot;
-                            new_order.original_quantity = 5.7;
-                            new_order.market_meta.close = 2.01;
-                            new_order.order_kind = OrderKind::Market;
-                            // Del
+                    Event::OrderNew(new_order) => {
+                        match &self.meta_data.order {
+                            Some(_) => {
+                                //  self.process_existing_order().await;
+                            }
+                            None => {
+                                println!("######################");
+                                println!("Meta Data");
+                                println!("######################");
+                                println!("{:#?}", self.meta_data);
 
-                            println!("######################");
-                            println!("Meta Data");
-                            println!("######################");
-                            println!("{:#?}", self.meta_data);
-
-                            self.meta_data.order = Some(new_order);
-                            self.process_new_order().await;
+                                self.meta_data.order = Some(new_order);
+                                self.process_new_order().await;
+                            }
                         }
-                    },
+                    }
                     _ => {}
                 }
             }
@@ -631,6 +625,7 @@ where
                                 }
                             }
                         }
+                        // todo: is this required?
                         AccountData::BalanceDelta(balance_delta) => {
                             println!("AccountDataBalanceDelta: {:#?}", balance_delta);
                         }
@@ -665,10 +660,9 @@ where
 // Single Market Trader builder
 /*----- */
 #[derive(Debug, Default)]
-pub struct SpotArbTraderBuilder<Data, Strategy, LiquidExchange, IlliquidExchange>
+pub struct SpotArbTraderBuilder<Data, LiquidExchange, IlliquidExchange>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
-    Strategy: SignalGenerator,
     LiquidExchange: ExecutionClient,
     IlliquidExchange: ExecutionClient,
 {
@@ -677,7 +671,6 @@ where
     pub event_tx: Option<EventTx>,
     pub markets: Option<Vec<Market>>,
     pub data: Option<Data>,
-    pub strategy: Option<Strategy>,
     pub liquid_exchange: Option<LiquidExchange>,
     pub illiquid_exchange: Option<IlliquidExchange>,
     pub send_order_tx: Option<mpsc::UnboundedSender<ExecutionRequest>>,
@@ -686,11 +679,10 @@ where
     pub meta_data: Option<SpotArbTraderMetaData>,
 }
 
-impl<Data, Strategy, LiquidExchange, IlliquidExchange>
-    SpotArbTraderBuilder<Data, Strategy, LiquidExchange, IlliquidExchange>
+impl<Data, LiquidExchange, IlliquidExchange>
+    SpotArbTraderBuilder<Data, LiquidExchange, IlliquidExchange>
 where
     Data: MarketGenerator<MarketEvent<DataKind>>,
-    Strategy: SignalGenerator,
     LiquidExchange: ExecutionClient,
     IlliquidExchange: ExecutionClient,
 {
@@ -701,7 +693,6 @@ where
             event_tx: None,
             markets: None,
             data: None,
-            strategy: None,
             liquid_exchange: None,
             illiquid_exchange: None,
             send_order_tx: None,
@@ -742,13 +733,6 @@ where
     pub fn data(self, value: Data) -> Self {
         Self {
             data: Some(value),
-            ..self
-        }
-    }
-
-    pub fn strategy(self, value: Strategy) -> Self {
-        Self {
-            strategy: Some(value),
             ..self
         }
     }
@@ -797,7 +781,7 @@ where
 
     pub fn build(
         self,
-    ) -> Result<SpotArbTrader<Data, Strategy, LiquidExchange, IlliquidExchange>, EngineError> {
+    ) -> Result<SpotArbTrader<Data, LiquidExchange, IlliquidExchange>, EngineError> {
         Ok(SpotArbTrader {
             engine_id: self
                 .engine_id
@@ -812,9 +796,6 @@ where
                 .markets
                 .ok_or(EngineError::BuilderIncomplete("markets"))?,
             data: self.data.ok_or(EngineError::BuilderIncomplete("data"))?,
-            stategy: self
-                .strategy
-                .ok_or(EngineError::BuilderIncomplete("strategy"))?,
             liquid_exchange: self
                 .liquid_exchange
                 .ok_or(EngineError::BuilderIncomplete("liquid_exchange"))?,

@@ -109,6 +109,23 @@ impl SpotPortfolio {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // OrderGenerator trait
+    pub fn evaluate_order(&mut self, order: &mut OrderEvent) -> Result<bool, PortfolioError> {
+        let position = self
+            .repository
+            .get_open_position(&ExchangeAssetId::from((&order.exchange, &order.instrument)))?;
+
+        self.allocator.allocate_order2(order, position);
+        let balance_id = determine_balance_id(&order.instrument.quote, &order.exchange);
+
+        if position.is_none()
+            && self.no_cash_to_enter_new_position(balance_id, order.get_dollar_value())?
+        {
+            return Ok(false);
+        }
+
+        Ok(true)
+    }
+
     pub fn generate_order2(
         &mut self,
         signal: &Signal,
@@ -142,8 +159,7 @@ impl SpotPortfolio {
             last_execution_time: None,
         };
 
-        self.allocator
-            .allocate_order2(&mut order, position, *signal_strength);
+        self.allocator.allocate_order2(&mut order, position);
 
         let balance_id = determine_balance_id(&signal.instrument.quote, &signal.exchange);
 

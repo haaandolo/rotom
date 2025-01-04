@@ -13,14 +13,9 @@ use super::OrderAllocator;
 pub struct SpotArbAllocator;
 
 impl SpotArbAllocator {
-    pub fn allocate_order2(
-        &self,
-        order: &mut OrderEvent,
-        position: Option<&Position2>,
-        signal_strength: SignalStrength,
-    ) {
+    pub fn allocate_order2(&self, order: &mut OrderEvent, position: Option<&Position2>) {
         // Calculate exact order_size
-        let dollar_amount = order.market_meta.close * signal_strength.0;
+        let dollar_amount = order.market_meta.close * order.original_quantity;
         let order_size = dollar_amount / order.market_meta.close;
 
         match order.decision {
