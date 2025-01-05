@@ -4,7 +4,10 @@ pub mod order;
 
 use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter};
+use std::{
+    borrow::Borrow,
+    fmt::{Display, Formatter},
+};
 
 /*----- */
 // Client Order Id
@@ -33,9 +36,12 @@ pub enum Side {
     Sell,
 }
 
-impl From<Decision> for Side {
-    fn from(decision: Decision) -> Self {
-        match decision {
+impl<T> From<T> for Side
+where
+    T: Borrow<Decision>,
+{
+    fn from(decision: T) -> Self {
+        match decision.borrow() {
             Decision::Long => Side::Buy,
             Decision::CloseLong => Side::Sell,
             Decision::Short => Side::Sell,
@@ -101,5 +107,19 @@ impl Display for OrderKind {
                 OrderKind::TakeProfitLimit => "take profit limit",
             }
         )
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::{Decision, Side};
+
+    #[test]
+    fn test_side_from_owned_and_ref() {
+        let buy = Side::from(Decision::Long);
+        assert_eq!(buy, Side::Buy);
+
+        let buy_ref = Side::from(&Decision::Long);
+        assert_eq!(buy_ref, Side::Buy);
     }
 }

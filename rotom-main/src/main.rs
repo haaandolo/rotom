@@ -2,6 +2,7 @@ use chrono::Utc;
 use futures::StreamExt;
 use parking_lot::Mutex;
 use rotom_data::{
+    assets::level::Level,
     exchange::{
         binance::public_http::binance_public_http_client::BinancePublicData,
         poloniex::public_http::poloniex_public_http_client::PoloniexPublicData,
@@ -19,7 +20,11 @@ use rotom_main::{
     engine::{self, Engine},
     trader::{
         single_trader::SingleMarketTrader,
-        spot_arb_trader::{self, SpotArbTrader, SpotArbTraderMetaData},
+        spot_arb_trader::{
+            self,
+            generate_decision::{SpotArbBookData, SpotArbOrderGenerator},
+            SpotArbTrader, SpotArbTraderMetaData,
+        },
     },
 };
 use rotom_oms::{
@@ -53,6 +58,8 @@ use rotom_oms::{
 use rotom_strategy::{spread::SpreadStategy, Decision};
 use std::{
     collections::HashMap,
+    default,
+    marker::PhantomData,
     sync::{atomic, Arc},
     time::Duration,
 };
@@ -286,6 +293,13 @@ pub async fn main() {
                 "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string();
         }
 
+        // todo: make this better
+        let order_generator = SpotArbOrderGenerator::<BinanceExecution, PoloniexExecution> {
+            liquid_exchange: SpotArbBookData::default(),
+            illiquid_exchange: SpotArbBookData::default(),
+            marker: PhantomData::<(BinanceExecution, PoloniexExecution)>,
+        };
+
         let arb_trader = SpotArbTrader::builder()
             .engine_id(engine_id)
             .market(markets)
@@ -295,6 +309,7 @@ pub async fn main() {
             .data(MarketFeed::new(stream_trades().await))
             .liquid_exchange(BinanceExecution::new())
             .illiquid_exchange(PoloniexExecution::new())
+            .order_generator(order_generator)
             .order_update_rx(order_update_rx)
             .meta_data(spot_arb_meta_data)
             .build()
@@ -434,7 +449,6 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - finish removing signals
 // - figure out limit order exe for polo cos rn its market
 // - cancel and replace exe
 // - delete strategy class?
@@ -443,6 +457,8 @@ fn init_logging() {
 // - funcitons to convert orderEvent to OpenOrder, CancelOrder, TransferOrder etc
 // - do we still need balance update in fill updater? for spot portfolio
 // - what to do with new order and an existing order exists?
+// - make a spot arb specific enum trading loop
+// - sometimes account data ws connection connects later than sending an order, so account for this
 // - rate limit ring buffer
 // - code to keep a limit order at bba
 // - make binance account stream get keys automatically every hour

@@ -1,7 +1,7 @@
 pub mod generate_decision;
 
 use async_trait::async_trait;
-use generate_decision::process_market_event;
+use generate_decision::SpotArbOrderGenerator;
 use parking_lot::Mutex;
 use rotom_data::exchange::binance::public_http::binance_public_http_client::BinancePublicData;
 use rotom_data::exchange::poloniex::public_http::poloniex_public_http_client::PoloniexPublicData;
@@ -14,6 +14,7 @@ use rotom_data::{
     Feed, Market, MarketGenerator,
 };
 use rotom_oms::exchange::binance::requests::new_order;
+use rotom_oms::model::order::CancelOrder;
 use rotom_oms::{
     event::{Event, EventTx, MessageTransmitter},
     exchange::ExecutionClient,
@@ -35,6 +36,29 @@ use uuid::Uuid;
 use crate::engine::{error::EngineError, Command};
 
 use super::TraderRun;
+
+/*
+SpotArbTraderMetaData {
+    order: None,
+    execution_state: NoPosition,
+    liquid_deposit_address: "0x1b7c39f6669cee023caff84e06001b03a76f829f",
+    illiquid_deposit_address: "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f",
+    liquid_ticker_info: TickerInfo {
+        precision: TickerPrecision {
+            quantity_precision: 0.01,
+            price_precision: 0.001,
+            notional_precision: 0.001,
+        },
+    },
+    illiquid_ticker_info: TickerInfo {
+        precision: TickerPrecision {
+            quantity_precision: 0.0001,
+            price_precision: 0.0001,
+            notional_precision: 0.0001,
+        },
+    },
+}
+*/
 
 /*----- */
 // Spot Arb Trader - Metadata info
@@ -61,29 +85,6 @@ pub struct SpotArbTraderMetaData {
     pub illiquid_ticker_info: TickerInfo,
 }
 
-/*
-SpotArbTraderMetaData {
-    order: None,
-    execution_state: NoPosition,
-    liquid_deposit_address: "0x1b7c39f6669cee023caff84e06001b03a76f829f",
-    illiquid_deposit_address: "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f",
-    liquid_ticker_info: TickerInfo {
-        precision: TickerPrecision {
-            quantity_precision: 0.01,
-            price_precision: 0.001,
-            notional_precision: 0.001,
-        },
-    },
-    illiquid_ticker_info: TickerInfo {
-        precision: TickerPrecision {
-            quantity_precision: 0.0001,
-            price_precision: 0.0001,
-            notional_precision: 0.0001,
-        },
-    },
-}
-*/
-
 /*----- */
 // Spot Arb Trader Lego
 /*----- */
@@ -101,6 +102,7 @@ where
     pub data: Data,
     pub liquid_exchange: LiquidExchange,
     pub illiquid_exchange: IlliquidExchange,
+    pub order_generator: SpotArbOrderGenerator<LiquidExchange, IlliquidExchange>,
     pub send_order_tx: mpsc::UnboundedSender<ExecutionRequest>,
     pub order_update_rx: mpsc::Receiver<AccountData>,
     pub porfolio: Arc<Mutex<SpotPortfolio>>,
@@ -124,6 +126,7 @@ where
     data: Data,
     liquid_exchange: LiquidExchange,
     illiquid_exchange: IlliquidExchange,
+    order_generator: SpotArbOrderGenerator<LiquidExchange, IlliquidExchange>,
     order_update_rx: mpsc::Receiver<AccountData>,
     event_queue: VecDeque<Event>,
     portfolio: Arc<Mutex<SpotPortfolio>>,
@@ -145,6 +148,7 @@ where
             data: lego.data,
             liquid_exchange: lego.liquid_exchange,
             illiquid_exchange: lego.illiquid_exchange,
+            order_generator: lego.order_generator,
             order_update_rx: lego.order_update_rx,
             event_queue: VecDeque::with_capacity(4),
             portfolio: lego.porfolio,
@@ -158,13 +162,24 @@ where
 
     pub async fn process_new_order(&mut self) {
         if let Some(order) = &mut self.meta_data.order {
+            /*----- Open new market order for liquid coin ----- */
             if order.get_exchange() == LiquidExchange::CLIENT {
                 // order.order_kind = OrderKind::Market;
 
                 // Construct for new order request
                 let new_order_request = OpenOrder {
-                    price: order.market_meta.close,
-                    quantity: order.original_quantity,
+                    price: round_float_to_precision(
+                        order.market_meta.close,
+                        self.meta_data.liquid_ticker_info.precision.price_precision,
+                    ),
+                    quantity: round_float_to_precision(
+                        // order.original_quantity,
+                        1.0, // todo: just for now
+                        self.meta_data
+                            .liquid_ticker_info
+                            .precision
+                            .quantity_precision,
+                    ),
                     notional_amount: round_float_to_precision(
                         order.original_quantity * order.market_meta.close,
                         self.meta_data
@@ -187,13 +202,28 @@ where
                 println!("Liquid new order");
                 println!("########################");
                 println!("{:#?}", liquid_new_order);
-            } else {
+            }
+            /*----- Open new market order for illiquid coin ----- */
+            else {
                 // order.order_kind = OrderKind::Limit;
 
                 // Construct for new order request
                 let new_order_request = OpenOrder {
-                    price: order.market_meta.close,
-                    quantity: order.original_quantity,
+                    price: round_float_to_precision(
+                        order.market_meta.close,
+                        self.meta_data
+                            .illiquid_ticker_info
+                            .precision
+                            .price_precision,
+                    ),
+                    quantity: round_float_to_precision(
+                        // order.original_quantity,
+                        1.0, // todo: just for now
+                        self.meta_data
+                            .illiquid_ticker_info
+                            .precision
+                            .quantity_precision,
+                    ),
                     notional_amount: round_float_to_precision(
                         order.original_quantity * order.market_meta.close,
                         self.meta_data
@@ -206,16 +236,18 @@ where
                     instrument: order.instrument.clone(),
                 };
 
+                println!("########################");
+                println!("Illiquid new order");
+                println!("########################");
+                println!("req -> {:#?}", new_order_request);
+
                 // Execute request
                 let illiquid_new_order = self.illiquid_exchange.open_order(new_order_request).await;
 
                 // Update execution state
                 self.meta_data.execution_state = SpotArbTraderExecutionState::MakerBuyIlliquid;
 
-                println!("########################");
-                println!("Illiquid new order");
-                println!("########################");
-                println!("{:#?}", illiquid_new_order);
+                println!("res -> {:#?}", illiquid_new_order);
             }
         }
     }
@@ -232,8 +264,97 @@ where
         }
     }
 
-    pub async fn process_existing_order(&mut self) {
-        unimplemented!()
+    pub async fn process_existing_order(&mut self, new_order: OrderEvent) {
+        if let Some(existing_order) = &self.meta_data.order {
+            // Note: we only make on the illiquid exchange and we only
+            // care about when the execution state is Maker buy or sell
+            if new_order.exchange == IlliquidExchange::CLIENT {
+                match self.meta_data.execution_state {
+                    SpotArbTraderExecutionState::MakerBuyIlliquid => {
+                        /*----- Cancel & replace for maker sell and maker buy ----- */
+                        // Cancel order in outer loop
+                        'cancel_and_replace_maker_buy: loop {
+                            // Construct cancel order payload
+                            let cancel_order_request = CancelOrder::from(existing_order);
+                            match self
+                                .illiquid_exchange
+                                .cancel_order(cancel_order_request)
+                                .await
+                            {
+                                // If cancel order suceeds, place replace current order
+                                Ok(_) => loop {
+                                    // Construct replacement order request
+                                    let replace_order_request = OpenOrder {
+                                        price: round_float_to_precision(
+                                            new_order.market_meta.close,
+                                            self.meta_data
+                                                .illiquid_ticker_info
+                                                .precision
+                                                .price_precision,
+                                        ),
+                                        quantity: round_float_to_precision(
+                                            // new_order.original_quantity,
+                                            1.0, // todo: just for now
+                                            self.meta_data
+                                                .illiquid_ticker_info
+                                                .precision
+                                                .quantity_precision,
+                                        ),
+                                        notional_amount: round_float_to_precision(
+                                            new_order.original_quantity
+                                                * new_order.market_meta.close,
+                                            self.meta_data
+                                                .illiquid_ticker_info
+                                                .precision
+                                                .notional_precision,
+                                        ),
+                                        decision: new_order.decision,
+                                        order_kind: new_order.order_kind.clone(),
+                                        instrument: new_order.instrument.clone(),
+                                    };
+
+                                    // Execute request
+                                    match self
+                                        .illiquid_exchange
+                                        .open_order(replace_order_request)
+                                        .await
+                                    {
+                                        Ok(_) => {
+                                            // Update execution state
+                                            self.meta_data.execution_state =
+                                                SpotArbTraderExecutionState::MakerBuyIlliquid;
+                                            // self.meta_data.order = Some(new_order); // todo: updating like this is not correct, probs just update client order id
+
+                                            println!("#################");
+                                            println!("Cancel & replace - illiquid");
+                                            println!("#################");
+                                            println!("{:#?}", self.meta_data.order);
+
+                                            break 'cancel_and_replace_maker_buy;
+                                        }
+                                        Err(error) => {
+                                            error!(
+                                                message = "error when sending new open request to exchange after canceling",
+                                                error = %error
+                                            );
+                                        }
+                                    }
+                                },
+                                // Else keep trying to cancel order
+                                Err(error) => {
+                                    error!(
+                                        message = "error when sending cancel request to exchange",
+                                        error = %error
+                                    );
+                                }
+                            }
+                        }
+                    }
+                    SpotArbTraderExecutionState::MakerSellIlliquid => {}
+                    _ => {}
+                }
+            }
+        }
     }
 }
 
@@ -315,13 +436,15 @@ where
                 match event {
                     Event::Market(market_event) => {
                         // Process latest market event and generate order if applicable
-                        if let Some(mut new_order) = process_market_event(&market_event) {
-                            // Del
-                            new_order.exchange = ExchangeId::PoloniexSpot;
-                            new_order.original_quantity = 4.7;
-                            new_order.market_meta.close = 2.0;
-                            new_order.order_kind = OrderKind::Market;
-                            // Del
+                        if let Some(mut new_order) =
+                            self.order_generator.process_market_event(&market_event)
+                        {
+                            // // Del
+                            // new_order.exchange = ExchangeId::BinanceSpot;
+                            // new_order.original_quantity = 4.1;
+                            // new_order.market_meta.close = 2.0;
+                            // new_order.order_kind = OrderKind::Market;
+                            // // Del
 
                             self.event_queue.push_back(Event::OrderEvaluate(new_order));
                         }
@@ -348,6 +471,22 @@ where
                             }
                         }
                     }
+                    Event::OrderNew(new_order) => {
+                        match &self.meta_data.order {
+                            Some(_) => {
+                                self.process_existing_order(new_order).await;
+                            }
+                            None => {
+                                // println!("######################");
+                                // println!("Meta Data");
+                                // println!("######################");
+                                // println!("{:#?}", self.meta_data);
+
+                                self.meta_data.order = Some(new_order);
+                                self.process_new_order().await;
+                            }
+                        }
+                    }
                     Event::SignalForceExit(signal_force_exit) => {
                         if let Some(order) = self
                             .portfolio
@@ -359,22 +498,6 @@ where
                             self.event_queue.push_back(Event::OrderNew(order));
                         }
                     }
-                    Event::OrderNew(new_order) => {
-                        match &self.meta_data.order {
-                            Some(_) => {
-                                //  self.process_existing_order().await;
-                            }
-                            None => {
-                                println!("######################");
-                                println!("Meta Data");
-                                println!("######################");
-                                println!("{:#?}", self.meta_data);
-
-                                self.meta_data.order = Some(new_order);
-                                self.process_new_order().await;
-                            }
-                        }
-                    }
                     _ => {}
                 }
             }
@@ -384,11 +507,11 @@ where
             // will get the order update in this section.
 
             // todo: turn this into a while let loop??
-            'account_data_loop: loop {
+            'account_data: loop {
                 match self.order_update_rx.try_recv() {
                     Ok(account_data) => match account_data {
                         AccountData::Order(account_data_order_update) => {
-                            println!("AccountDataOrder: {:#?}", account_data_order_update);
+                            // println!("AccountDataOrder: {:#?}", account_data_order_update);
                             // self.event_queue.push_back(Event::AccountDataOrder(account_data_order_update));
                             if let Some(order) = &mut self.meta_data.order {
                                 // When account data order update comes, update OrderEvent state first
@@ -432,17 +555,6 @@ where
                                             println!("########################");
                                             println!("Wallet transfer request - to illiquid");
                                             println!("########################");
-
-                                            println!("cumsum: {:#?}", order.cumulative_quantity);
-                                            println!("order fee: {:#?}", order.fees);
-                                            println!(
-                                                "quantity precision: {:#?}",
-                                                self.meta_data
-                                                    .liquid_ticker_info
-                                                    .precision
-                                                    .quantity_precision
-                                            );
-
                                             println!("{:#?}", wallet_transfer_request);
 
                                             // Execute request
@@ -454,7 +566,7 @@ where
                                                 Ok(_) => break 'transfer_to_illiquid,
                                                 Err(error) => {
                                                     error!(
-                                                        message = "error when sending request to exchange",
+                                                        message = "error when sending transfer request to exchange",
                                                         error = %error
                                                     );
                                                     continue;
@@ -503,7 +615,7 @@ where
                                                 Ok(_) => break 'transfer_to_liquid,
                                                 Err(error) => {
                                                     error!(
-                                                        message = "error when sending request to exchange",
+                                                        message = "error when sending transfer request to exchange",
                                                         error = %error
                                                     );
                                                     continue;
@@ -520,7 +632,7 @@ where
                             }
                         }
                         AccountData::Balance(balance_update) => {
-                            println!("AccountDataBalance: {:#?}", balance_update);
+                            // println!("AccountDataBalance: {:#?}", balance_update);
                             if let Some(ref order) = self.meta_data.order {
                                 if order.is_order_filled() {
                                     /*----- coin has been transfered to liquid exchange ----- */
@@ -558,7 +670,7 @@ where
                                         };
 
                                         println!("########################");
-                                        println!("testing sell after transfer to liquid");
+                                        println!("Testing sell after transfer to liquid");
                                         println!("########################");
                                         println!("req --> {:#?}", sell_request);
 
@@ -634,7 +746,7 @@ where
                         _ => {}
                     },
                     Err(error) => match error {
-                        mpsc::error::TryRecvError::Empty => break 'account_data_loop,
+                        mpsc::error::TryRecvError::Empty => break 'account_data,
                         mpsc::error::TryRecvError::Disconnected => {
                             warn!(
                                 message = "Order update rx for ArbTrader disconnected",
@@ -673,6 +785,7 @@ where
     pub data: Option<Data>,
     pub liquid_exchange: Option<LiquidExchange>,
     pub illiquid_exchange: Option<IlliquidExchange>,
+    pub order_generator: Option<SpotArbOrderGenerator<LiquidExchange, IlliquidExchange>>,
     pub send_order_tx: Option<mpsc::UnboundedSender<ExecutionRequest>>,
     pub order_update_rx: Option<mpsc::Receiver<AccountData>>,
     pub portfolio: Option<Arc<Mutex<SpotPortfolio>>>,
@@ -695,6 +808,7 @@ where
             data: None,
             liquid_exchange: None,
             illiquid_exchange: None,
+            order_generator: None,
             send_order_tx: None,
             order_update_rx: None,
             portfolio: None,
@@ -751,6 +865,16 @@ where
         }
     }
 
+    pub fn order_generator(
+        self,
+        value: SpotArbOrderGenerator<LiquidExchange, IlliquidExchange>,
+    ) -> Self {
+        Self {
+            order_generator: Some(value),
+            ..self
+        }
+    }
+
     pub fn send_order_tx(self, value: mpsc::UnboundedSender<ExecutionRequest>) -> Self {
         Self {
             send_order_tx: Some(value),
@@ -802,6 +926,9 @@ where
             illiquid_exchange: self
                 .illiquid_exchange
                 .ok_or(EngineError::BuilderIncomplete("illiquid_exchange"))?,
+            order_generator: self
+                .order_generator
+                .ok_or(EngineError::BuilderIncomplete("order_generator"))?,
             order_update_rx: self
                 .order_update_rx
                 .ok_or(EngineError::BuilderIncomplete("order_update_rx"))?,
