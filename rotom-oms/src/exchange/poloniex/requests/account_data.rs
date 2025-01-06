@@ -24,42 +24,42 @@ pub struct PoloniexAccountDataOrder {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PoloniexAccountDataOrderParams {
-    pub symbol: String,
-    pub r#type: OrderKind,
+    pub symbol: String, // symbol name
+    pub r#type: OrderKind, // market, limit, limit maker
     #[serde(deserialize_with = "de_str")]
-    pub quantity: f64,
-    pub order_id: String,
+    pub quantity: f64, // number of base units for this order
+    pub order_id: String, // order id
     #[serde(deserialize_with = "de_str")]
-    pub trade_fee: f64,
-    pub client_order_id: String,
-    pub account_type: String,
-    pub fee_currency: String,
-    pub event_type: PoloniexOrderEventType,
-    pub source: String,
-    pub side: Side,
+    pub trade_fee: f64, // fee amount for the trade
+    pub client_order_id: String, // user specfied id
+    pub account_type: String, // SPOT
+    pub fee_currency: String, // fee currency name
+    pub event_type: PoloniexOrderEventType, // place, trade, canceled
+    pub source: String, // web, app, api
+    pub side: Side, // BUY, SELL
     #[serde(deserialize_with = "de_str")]
-    pub filled_quantity: f64,
+    pub filled_quantity: f64, // base unit filled in this order
     #[serde(deserialize_with = "de_str")]
-    pub filled_amount: f64,
-    pub match_role: String,
-    pub state: OrderStatus,
+    pub filled_amount: f64, // quote unit filled in this order
+    pub match_role: String, // maker, taker
+    pub state: OrderStatus, // New, partially_filled, filled, pending_cancel, partially_canceled, canceled, failed
     #[serde(deserialize_with = "de_u64_epoch_ms_as_datetime_utc")]
-    pub trade_time: DateTime<Utc>,
+    pub trade_time: DateTime<Utc>, // time the trade was executed
     #[serde(deserialize_with = "de_str")]
-    pub trade_amount: f64,
+    pub trade_amount: f64, // number  of quote units for a trade
     #[serde(deserialize_with = "de_str")]
-    pub order_amount: f64,
+    pub order_amount: f64, // number of quote units for this order
     #[serde(deserialize_with = "de_u64_epoch_ms_as_datetime_utc")]
-    pub create_time: DateTime<Utc>,
+    pub create_time: DateTime<Utc>, // time the record was created
     #[serde(deserialize_with = "de_str")]
-    pub price: f64,
+    pub price: f64, // set price of the order
     #[serde(deserialize_with = "de_str")]
-    pub trade_qty: f64,
+    pub trade_qty: f64, // number of base units for a trade
     #[serde(deserialize_with = "de_str")]
-    pub trade_price: f64,
+    pub trade_price: f64, // price of the trade
     #[serde(deserialize_with = "de_str")]
-    pub trade_id: u64,
-    pub ts: u64,
+    pub trade_id: u64, // id of the trade
+    pub ts: u64, // time the record was pushed
 }
 
 impl From<PoloniexAccountDataOrder> for AccountDataOrder {

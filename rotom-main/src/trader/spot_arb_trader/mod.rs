@@ -173,8 +173,7 @@ where
                         self.meta_data.liquid_ticker_info.precision.price_precision,
                     ),
                     quantity: round_float_to_precision(
-                        // order.original_quantity,
-                        1.0, // todo: just for now
+                        order.original_quantity,
                         self.meta_data
                             .liquid_ticker_info
                             .precision
@@ -217,8 +216,7 @@ where
                             .price_precision,
                     ),
                     quantity: round_float_to_precision(
-                        // order.original_quantity,
-                        1.0, // todo: just for now
+                        order.original_quantity,
                         self.meta_data
                             .illiquid_ticker_info
                             .precision
@@ -293,8 +291,7 @@ where
                                                 .price_precision,
                                         ),
                                         quantity: round_float_to_precision(
-                                            // new_order.original_quantity,
-                                            1.0, // todo: just for now
+                                            new_order.original_quantity,
                                             self.meta_data
                                                 .illiquid_ticker_info
                                                 .precision
@@ -328,7 +325,7 @@ where
                                             println!("#################");
                                             println!("Cancel & replace - illiquid");
                                             println!("#################");
-                                            println!("{:#?}", self.meta_data.order);
+                                            // println!("{:#?}", self.meta_data.order);
 
                                             break 'cancel_and_replace_maker_buy;
                                         }
@@ -474,7 +471,7 @@ where
                     Event::OrderNew(new_order) => {
                         match &self.meta_data.order {
                             Some(_) => {
-                                self.process_existing_order(new_order).await;
+                                // self.process_existing_order(new_order).await; // uncomment to start limit order
                             }
                             None => {
                                 // println!("######################");
@@ -483,7 +480,7 @@ where
                                 // println!("{:#?}", self.meta_data);
 
                                 self.meta_data.order = Some(new_order);
-                                self.process_new_order().await;
+                                // self.process_new_order().await; // uncomment to start limit order
                             }
                         }
                     }
@@ -511,7 +508,7 @@ where
                 match self.order_update_rx.try_recv() {
                     Ok(account_data) => match account_data {
                         AccountData::Order(account_data_order_update) => {
-                            // println!("AccountDataOrder: {:#?}", account_data_order_update);
+                            println!("AccountDataOrder: {:#?}", account_data_order_update);
                             // self.event_queue.push_back(Event::AccountDataOrder(account_data_order_update));
                             if let Some(order) = &mut self.meta_data.order {
                                 // When account data order update comes, update OrderEvent state first
@@ -522,7 +519,7 @@ where
                                 // println!("###################");
                                 // println!("Order event");
                                 // println!("###################");
-                                // println!("{:#?}", order);
+                                println!("{:#?}", order);
 
                                 // Then update the portfolio position state with updated OrderEvent
                                 let _ = self.portfolio.lock().update_from_fill2(order);
@@ -1858,6 +1855,181 @@ OrderEvent {
     fees: 0.006,
     last_execution_time: Some(
         2024-12-22T03:23:25.869Z,
+    ),
+}
+
+
+#################3#####
+
+### Raw Acc data ###
+Balance(
+    AccountDataBalance {
+        asset: "USDT",
+        exchange: PoloniexSpot,
+        balance: Balance {
+            total: 4.74845647748,
+            available: 0.0,
+        },
+    },
+)
+### Raw Acc data ###
+Order(
+    AccountDataOrder {
+        exchange: PoloniexSpot,
+        client_order_id: "399211577842257920",
+        asset: "OP_USDT",
+        price: 0.0,
+        quantity: 0.0,
+        status: New,
+        execution_time: 2025-01-06T06:44:17.150Z,
+        side: Buy,
+        fee: 0.0,
+        filled_gross: 0.0,
+    },
+)
+### Raw Acc data ###
+Balance(
+    AccountDataBalance {
+        asset: "USDT",
+        exchange: PoloniexSpot,
+        balance: Balance {
+            total: 4.74845647748,
+            available: 0.0,
+        },
+    },
+)
+### Raw Acc data ###
+Balance(
+    AccountDataBalance {
+        asset: "USDT",
+        exchange: PoloniexSpot,
+        balance: Balance {
+            total: 4.74856948748,
+            available: 0.0,
+        },
+    },
+)
+### Raw Acc data ###
+Balance(
+    AccountDataBalance {
+        asset: "OP",
+        exchange: PoloniexSpot,
+        balance: Balance {
+            total: 1.8929852,
+            available: 0.0,
+        },
+    },
+)
+### Raw Acc data ###
+Balance(
+    AccountDataBalance {
+        asset: "OP",
+        exchange: PoloniexSpot,
+        balance: Balance {
+            total: 1.8891994,
+            available: 0.0,
+        },
+    },
+)
+### Raw Acc data ###
+Order(
+    AccountDataOrder {
+        exchange: PoloniexSpot,
+        client_order_id: "399211577842257920",
+        asset: "OP_USDT",
+        price: 2.1131,
+        quantity: 1.8929,
+        status: Filled,
+        execution_time: 2025-01-06T06:44:17.150Z,
+        side: Buy,
+        fee: 0.0037858,
+        filled_gross: 3.99988699,
+    },
+)
+AccountDataOrder: AccountDataOrder {
+    exchange: PoloniexSpot,
+    client_order_id: "399211577842257920",
+    asset: "OP_USDT",
+    price: 0.0,
+    quantity: 0.0,
+    status: New,
+    execution_time: 2025-01-06T06:44:17.150Z,
+    side: Buy,
+    fee: 0.0,
+    filled_gross: 0.0,
+}
+OrderEvent {
+    order_request_time: 2025-01-06T06:44:08.114939Z,
+    exchange: PoloniexSpot,
+    client_order_id: Some(
+        ClientOrderId(
+            "399211577842257920",
+        ),
+    ),
+    instrument: Instrument {
+        base: "op",
+        quote: "usdt",
+    },
+    market_meta: MarketMeta {
+        close: 2.061626,
+        time: 2025-01-06T06:44:08.114940Z,
+    },
+    decision: Long,
+    original_quantity: 1.0,
+    cumulative_quantity: 0.0,
+    order_kind: Limit,
+    exchange_order_status: Some(
+        New,
+    ),
+    internal_order_state: Open,
+    filled_gross: 0.0,
+    enter_avg_price: NaN,
+    fees: 0.0,
+    last_execution_time: Some(
+        2025-01-06T06:44:17.150Z,
+    ),
+}
+AccountDataOrder: AccountDataOrder {
+    exchange: PoloniexSpot,
+    client_order_id: "399211577842257920",
+    asset: "OP_USDT",
+    price: 2.1131,
+    quantity: 1.8929,
+    status: Filled,
+    execution_time: 2025-01-06T06:44:17.150Z,
+    side: Buy,
+    fee: 0.0037858,
+    filled_gross: 3.99988699,
+}
+OrderEvent {
+    order_request_time: 2025-01-06T06:44:08.114939Z,
+    exchange: PoloniexSpot,
+    client_order_id: Some(
+        ClientOrderId(
+            "399211577842257920",
+        ),
+    ),
+    instrument: Instrument {
+        base: "op",
+        quote: "usdt",
+    },
+    market_meta: MarketMeta {
+        close: 2.061626,
+        time: 2025-01-06T06:44:08.114940Z,
+    },
+    decision: Long,
+    original_quantity: 1.0,
+    cumulative_quantity: 1.8929,
+    order_kind: Limit,
+    exchange_order_status: Some(
+        Filled,
+    ),
+    internal_order_state: Open,
+    filled_gross: 3.99988699,
+    enter_avg_price: 2.1130999999999998,
+    fees: 0.0037858,
+    last_execution_time: Some(
+        2025-01-06T06:44:17.150Z,
     ),
 }
 */

@@ -125,8 +125,8 @@ where
         _backoff_ms *= 2;
 
         while let Some(msg) = stream.user_data_ws.next().await {
-            // println!("### Raw ###");
-            // println!("{:#?}", msg);
+            println!("### Raw ###");
+            println!("{:#?}", msg);
             match WebSocketParser::parse::<Exchange::AccountDataStreamResponse>(msg) {
                 Some(Ok(exchange_message)) => {
                     if let Err(error) = account_data_tx.send(exchange_message.into()) {
@@ -174,6 +174,8 @@ pub async fn send_account_data_to_traders_and_portfolio(
     portfolio: Arc<Mutex<SpotPortfolio>>,
 ) {
     while let Some(message) = account_data_stream.recv().await {
+        println!("### Raw Acc data ###");
+        println!("{:#?}", message);
         match message {
             // Order updates does not require portfolio update, so send update straight to trader
             AccountData::Order(order) => {

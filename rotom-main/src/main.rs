@@ -449,6 +449,8 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
+// - make acc data status generic and impl a filled trait
+// - how should i update order state after cancel and replace order?
 // - figure out limit order exe for polo cos rn its market
 // - cancel and replace exe
 // - delete strategy class?
