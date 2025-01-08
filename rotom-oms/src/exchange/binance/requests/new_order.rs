@@ -66,7 +66,7 @@ pub struct BinanceNewOrder {
 }
 
 impl BinanceNewOrder {
-    pub fn new(order_event: &OpenOrder) -> Result<Self, RequestBuildError> {
+    pub fn new(order_event: OpenOrder) -> Result<Self, RequestBuildError> {
         match &order_event.order_kind {
             OrderKind::Limit => Self::limit_order(order_event),
             OrderKind::Market => Self::market_order(order_event),
@@ -74,7 +74,7 @@ impl BinanceNewOrder {
         }
     }
 
-    fn limit_order(order_event: &OpenOrder) -> Result<Self, RequestBuildError> {
+    fn limit_order(order_event: OpenOrder) -> Result<Self, RequestBuildError> {
         BinanceNewOrderParamsBuilder::default()
             .price(order_event.price)
             .quantity(order_event.quantity)
@@ -82,16 +82,18 @@ impl BinanceNewOrder {
             .symbol(BinanceSymbol::from(&order_event.instrument).0)
             .time_in_force(BinanceTimeInForce::GTC) // todo
             .r#type(order_event.order_kind.as_ref().to_uppercase())
+            .new_client_order_id(order_event.client_order_id.0)
             .sign()
             .build()
     }
 
-    fn market_order(order_event: &OpenOrder) -> Result<Self, RequestBuildError> {
+    fn market_order(order_event: OpenOrder) -> Result<Self, RequestBuildError> {
         BinanceNewOrderParamsBuilder::default()
             .quantity(order_event.quantity)
             .side(BinanceSide::from(order_event.decision))
             .symbol(BinanceSymbol::from(&order_event.instrument).0)
             .r#type(order_event.order_kind.as_ref().to_uppercase())
+            .new_client_order_id(order_event.client_order_id.0)
             .sign()
             .build()
     }

@@ -16,6 +16,7 @@ use rotom_data::{
 use rotom_oms::exchange::binance::requests::new_order;
 use rotom_oms::execution_manager::manager::ExecutionManager;
 use rotom_oms::model::order::CancelOrder;
+use rotom_oms::model::ClientOrderId;
 use rotom_oms::{
     event::{Event, EventTx, MessageTransmitter},
     exchange::ExecutionClient,
@@ -128,6 +129,7 @@ where
 
                 // Construct for new order request
                 let new_order_request = OpenOrder {
+                    client_order_id: order.client_order_id.clone(),
                     price: round_float_to_precision(
                         order.market_meta.close,
                         self.meta_data.liquid_ticker_info.precision.price_precision,
@@ -168,6 +170,7 @@ where
 
                 // Construct for new order request
                 let new_order_request = OpenOrder {
+                    client_order_id: order.client_order_id.clone(),
                     price: round_float_to_precision(
                         order.market_meta.close,
                         self.meta_data
@@ -243,6 +246,7 @@ where
                                 Ok(_) => loop {
                                     // Construct replacement order request
                                     let replace_order_request = OpenOrder {
+                                        client_order_id: ClientOrderId::random(),
                                         price: round_float_to_precision(
                                             new_order.market_meta.close,
                                             self.meta_data
@@ -593,6 +597,7 @@ where
                                     {
                                         // Construct sell order request
                                         let sell_request = OpenOrder {
+                                            client_order_id: order.client_order_id.clone(),
                                             // todo: is close price correct here?
                                             price: round_float_to_precision(
                                                 order.market_meta.close,
@@ -643,6 +648,7 @@ where
                                     {
                                         // Construct sell order request
                                         let sell_request = OpenOrder {
+                                            client_order_id: order.client_order_id.clone(),
                                             // todo: is close price correct here?
                                             price: round_float_to_precision(
                                                 order.market_meta.close,

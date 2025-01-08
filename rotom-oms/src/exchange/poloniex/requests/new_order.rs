@@ -2,7 +2,6 @@ use std::borrow::Cow;
 
 use ::serde::{Deserialize, Serialize};
 use rotom_data::protocols::http::rest_request::RestRequest;
-use uuid::Uuid;
 
 use crate::{
     exchange::errors::RequestBuildError,
@@ -35,7 +34,7 @@ pub struct PoloniexNewOrder {
     amount: Option<String>,
     #[serde(rename(serialize = "clientOrderId"))]
     #[serde(skip_serializing_if = "Option::is_none")]
-    client_order_id: Option<Uuid>,
+    client_order_id: Option<String>,
     #[serde(rename(serialize = "allowBorrow"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     allow_borrow: Option<bool>,
@@ -48,7 +47,7 @@ pub struct PoloniexNewOrder {
 }
 
 impl PoloniexNewOrder {
-    pub fn new(order_event: &OpenOrder) -> Result<Self, RequestBuildError> {
+    pub fn new(order_event: OpenOrder) -> Result<Self, RequestBuildError> {
         // Poloniex has a weird create new order api where, market buy needs a
         // amount field, which is price x quantity aka quote asset value. While other
         // ones like limit buy / sell and market sell requires a quantity field
@@ -59,15 +58,13 @@ impl PoloniexNewOrder {
         ) {
             (OrderKind::Market, PoloniexSide::BUY) => Self::market_buy(order_event),
             (OrderKind::Market, PoloniexSide::SELL) => Self::market_sell(order_event),
-            (OrderKind::Limit, PoloniexSide::BUY) => Self::limit_order_and_market_sell(order_event),
-            (OrderKind::Limit, PoloniexSide::SELL) => {
-                Self::limit_order_and_market_sell(order_event)
-            }
+            (OrderKind::Limit, PoloniexSide::BUY) => Self::limit_order(order_event),
+            (OrderKind::Limit, PoloniexSide::SELL) => Self::limit_order(order_event),
             _ => unimplemented!(), // todo
         }
     }
 
-    pub fn limit_order_and_market_sell(order_event: &OpenOrder) -> Result<Self, RequestBuildError> {
+    pub fn limit_order(order_event: OpenOrder) -> Result<Self, RequestBuildError> {
         PoloniexNewOrderBuilder::new()
             .symbol(PoloniexSymbol::from(&order_event.instrument).0)
             .side(
@@ -78,11 +75,12 @@ impl PoloniexNewOrder {
             .r#type(PoloniexOrderType::Limit) // TODO: limit_marker
             .quantity(order_event.quantity.to_string())
             .price(order_event.price.to_string())
+            .client_order_id(order_event.client_order_id.0.clone())
             .time_in_force(PoloniexTimeInForce::GTC) // TODO
             .build()
     }
 
-    pub fn market_buy(order_event: &OpenOrder) -> Result<Self, RequestBuildError> {
+    pub fn market_buy(order_event: OpenOrder) -> Result<Self, RequestBuildError> {
         PoloniexNewOrderBuilder::new()
             .symbol(PoloniexSymbol::from(&order_event.instrument).0)
             .side(
@@ -90,11 +88,12 @@ impl PoloniexNewOrder {
                     .as_ref()
                     .to_lowercase(),
             )
+            .client_order_id(order_event.client_order_id.0.clone())
             .amount(order_event.notional_amount.to_string())
             .build()
     }
 
-    pub fn market_sell(order_event: &OpenOrder) -> Result<Self, RequestBuildError> {
+    pub fn market_sell(order_event: OpenOrder) -> Result<Self, RequestBuildError> {
         PoloniexNewOrderBuilder::new()
             .symbol(PoloniexSymbol::from(&order_event.instrument).0)
             .side(
@@ -103,6 +102,7 @@ impl PoloniexNewOrder {
                     .to_lowercase(),
             )
             .quantity(order_event.quantity.to_string())
+            .client_order_id(order_event.client_order_id.0.clone())
             .build()
     }
 }
@@ -144,7 +144,7 @@ pub struct PoloniexNewOrderBuilder {
     amount: Option<String>,
     #[serde(rename(serialize = "clientOrderId"))]
     #[serde(skip_serializing_if = "Option::is_none")]
-    client_order_id: Option<Uuid>,
+    client_order_id: Option<String>,
     #[serde(rename(serialize = "allowBorrow"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     allow_borrow: Option<bool>,
@@ -217,7 +217,7 @@ impl PoloniexNewOrderBuilder {
         }
     }
 
-    pub fn client_order_id(self, client_order_id: Uuid) -> Self {
+    pub fn client_order_id(self, client_order_id: String) -> Self {
         Self {
             client_order_id: Some(client_order_id),
             ..self

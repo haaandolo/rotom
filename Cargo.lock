@@ -1216,6 +1216,7 @@ dependencies = [
  "hmac",
  "parking_lot",
  "prettytable-rs",
+ "rand",
  "redis",
  "reqwest",
  "rotom-data",

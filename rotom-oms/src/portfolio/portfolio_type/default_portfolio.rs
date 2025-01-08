@@ -15,7 +15,7 @@ use crate::{
         account_data::{AccountDataOrder, OrderStatus},
         balance::Balance,
         order::{OrderEvent, OrderState},
-        OrderKind, Side,
+        ClientOrderId, OrderKind, Side,
     },
     portfolio::{
         allocator::OrderAllocator,
@@ -313,7 +313,7 @@ where
             order_request_time: Utc::now(),
             exchange: signal.exchange,
             instrument: signal.instrument.clone(),
-            client_order_id: None,
+            client_order_id: ClientOrderId::random(),
             market_meta: signal.market_meta,
             decision: *signal_decision,
             original_quantity: 0.0,

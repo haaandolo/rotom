@@ -22,10 +22,10 @@ pub enum OrderFill {
 /*----- */
 #[derive(Clone, PartialEq, PartialOrd, Debug, Deserialize)]
 pub struct OrderEvent {
-    pub order_request_time: DateTime<Utc>,      // before
-    pub exchange: ExchangeId,                   // before
-    pub client_order_id: Option<ClientOrderId>, // after
-    pub instrument: Instrument,                 // before
+    pub order_request_time: DateTime<Utc>, // before
+    pub exchange: ExchangeId,              // before
+    pub client_order_id: ClientOrderId,    // before
+    pub instrument: Instrument,            // before
     // Metadata propagated from source MarketEvent
     pub market_meta: MarketMeta, // before
     // LONG, CloseLong, SHORT or CloseShort
@@ -84,15 +84,13 @@ impl OrderEvent {
         self.enter_avg_price = self.calculate_avg_price(); // This step has to happen after the cumulative_quantity & filled_gross gets updated
         self.fees += account_data_update.fee;
         self.last_execution_time = Some(account_data_update.execution_time);
-        self.client_order_id = Some(ClientOrderId(account_data_update.client_order_id.clone()));
+        self.client_order_id = ClientOrderId(account_data_update.client_order_id.clone());
     }
 
     // If the state is not open or intransit, we can set a ClientOrderId
     pub fn set_client_id(&mut self, order_update: &AccountDataOrder) {
         match self.internal_order_state.is_order_open() {
-            false => {
-                self.client_order_id = Some(ClientOrderId(order_update.client_order_id.clone()))
-            }
+            false => self.client_order_id = ClientOrderId(order_update.client_order_id.clone()),
             true => (),
         }
     }
@@ -151,6 +149,7 @@ impl From<OrderStatus> for OrderState {
 /*----- */
 #[derive(Debug, Clone)]
 pub struct OpenOrder {
+    pub client_order_id: ClientOrderId,
     // Used for market or limit orders
     pub price: f64,
     // Used for market or limit orders
@@ -220,7 +219,7 @@ pub struct CancelOrder {
 impl From<&OrderEvent> for CancelOrder {
     fn from(order: &OrderEvent) -> Self {
         Self {
-            id: order.client_order_id.clone().unwrap().0,
+            id: order.client_order_id.clone().0,
             symbol: AssetFormatted::from((&order.exchange, &order.instrument)).0,
         }
     }

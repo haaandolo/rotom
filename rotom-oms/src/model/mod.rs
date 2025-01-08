@@ -2,6 +2,7 @@ pub mod account_data;
 pub mod balance;
 pub mod order;
 
+use rand::seq::SliceRandom;
 use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -13,7 +14,38 @@ use std::{
 // Client Order Id
 /*----- */
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]
-pub struct ClientOrderId(pub String); // can be smolstr probs
+// pub struct ClientOrderId(pub String);
+
+pub struct ClientOrderId<T = String>(pub T); // can be smolstr probs
+
+impl ClientOrderId<String> {
+    pub fn new<S: Into<String>>(id: S) -> Self {
+        Self(id.into())
+    }
+
+    pub fn random() -> Self {
+        const LEN_URL_SAFE_SYMBOLS: usize = 64;
+        const URL_SAFE_SYMBOLS: [char; LEN_URL_SAFE_SYMBOLS] = [
+            '_', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e',
+            'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+            'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+            'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+        ];
+
+        const LEN_RANDOM_ID: usize = 23; // Kept same length for compatibility
+        let mut thread_rng = rand::thread_rng();
+        let random_utf8: [u8; LEN_RANDOM_ID] = std::array::from_fn(|_| {
+            let symbol = URL_SAFE_SYMBOLS
+                .choose(&mut thread_rng)
+                .expect("URL_SAFE_SYMBOLS slice is not empty");
+            *symbol as u8
+        });
+
+        let random_utf8_str =
+            std::str::from_utf8(&random_utf8).expect("URL_SAFE_SYMBOLS are valid utf8");
+        Self(random_utf8_str.to_string())
+    }
+}
 
 /*----- */
 // Order Id

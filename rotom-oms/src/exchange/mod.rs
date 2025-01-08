@@ -174,8 +174,8 @@ pub async fn send_account_data_to_traders_and_portfolio(
     portfolio: Arc<Mutex<SpotPortfolio>>,
 ) {
     while let Some(message) = account_data_stream.recv().await {
-        println!("### Raw Acc data ###");
-        println!("{:#?}", message);
+        // println!("### Raw Acc data ###");
+        // println!("{:#?}", message);
         match message {
             // Order updates does not require portfolio update, so send update straight to trader
             AccountData::Order(order) => {

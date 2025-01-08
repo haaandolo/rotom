@@ -10,7 +10,10 @@ use rotom_data::{
     shared::subscription_models::{ExchangeId, Instrument},
     MarketMeta,
 };
-use rotom_oms::{exchange::ExecutionClient, model::order::OrderEvent};
+use rotom_oms::{
+    exchange::ExecutionClient,
+    model::{order::OrderEvent, ClientOrderId},
+};
 use rotom_strategy::Decision;
 
 #[derive(Debug, Default)]
@@ -44,7 +47,7 @@ where
                     order_request_time: Utc::now(),
                     exchange: IlliquidExchange::CLIENT,
                     instrument: instrument.clone(),
-                    client_order_id: None,
+                    client_order_id: ClientOrderId::random(),
                     market_meta: MarketMeta {
                         close: self.illiquid_exchange.best_bid.price * 0.98,
                         time: Utc::now(),
@@ -116,7 +119,7 @@ where
             order_request_time: Utc::now(),
             exchange: ExchangeId::BinanceSpot,
             instrument: Instrument::new("op", "usdt"),
-            client_order_id: None,
+            client_order_id: ClientOrderId::random(),
             market_meta: MarketMeta {
                 close: 1.0,
                 time: Utc::now(),

@@ -72,6 +72,12 @@ use uuid::Uuid;
 
 const ENGINE_RUN_TIMEOUT: Duration = Duration::from_secs(5000);
 
+/*
+println!("blocking");
+std::thread::sleep(std::time::Duration::from_secs(10));
+println!("unblocked");
+*/
+
 /*----- */
 // Main
 /*----- */
@@ -90,15 +96,15 @@ pub async fn main() {
         order_request_time: Utc::now(),
         exchange: ExchangeId::BinanceSpot,
         instrument: Instrument::new("op", "usdt"),
-        client_order_id: Some(ClientOrderId("391776281638920193".to_string())),
+        client_order_id: ClientOrderId::random(),
         market_meta: MarketMeta {
             close: 1.81,
             time: Utc::now(),
         },
         decision: Decision::Short,
-        original_quantity: 5.01,
-        cumulative_quantity: 5.01,
-        order_kind: rotom_oms::model::OrderKind::Limit,
+        original_quantity: 2.8,
+        cumulative_quantity: 4.0,
+        order_kind: rotom_oms::model::OrderKind::Market,
         exchange_order_status: None,
         internal_order_state: rotom_oms::model::order::OrderState::InTransit,
         filled_gross: 0.0,
@@ -109,7 +115,18 @@ pub async fn main() {
 
     // Requests
     // let open_order = OpenOrder::from(&order);
-    let cancel_order = CancelOrder::from(&order);
+
+    let open_order = OpenOrder {
+        client_order_id: order.client_order_id,
+        price: order.market_meta.close,
+        quantity: order.original_quantity,
+        notional_amount: order.market_meta.close * order.original_quantity,
+        decision: order.decision,
+        order_kind: order.order_kind,
+        instrument: order.instrument.clone(),
+    };
+
+    // let cancel_order = CancelOrder::from(&order);
     let polo_wallet_transfer = WalletTransfer {
         coin: order.instrument.base.clone(),
         wallet_address: "0x1b7c39f6669cee023caff84e06001b03a76f829f".to_string(),
@@ -152,215 +169,215 @@ pub async fn main() {
     // let res = polo_exe.wallet_transfer(polo_wallet_transfer).await;
     // println!("---> {:#?}", res);
 
-    // ////////////////////////////////////////////////
-    // /*----- */
-    // // Trader builder
-    // /*----- */
-    // /////////////////////////////////////////////////
-    // // Engine id
-    // let engine_id = Uuid::new_v4();
+    ////////////////////////////////////////////////
+    /*----- */
+    // Trader builder
+    /*----- */
+    /////////////////////////////////////////////////
+    // Engine id
+    let engine_id = Uuid::new_v4();
 
-    // ///////////////////////////////////////////////////
-    // // Market
-    // let markets = vec![
-    //     Market::new(ExchangeId::BinanceSpot, Instrument::new("op", "usdt")),
-    //     Market::new(ExchangeId::PoloniexSpot, Instrument::new("op", "usdt")),
-    // ];
+    ///////////////////////////////////////////////////
+    // Market
+    let markets = vec![
+        Market::new(ExchangeId::BinanceSpot, Instrument::new("op", "usdt")),
+        Market::new(ExchangeId::PoloniexSpot, Instrument::new("op", "usdt")),
+    ];
 
-    // // Channels
-    // // Create channel to distribute Commands to the Engine & it's Traders (eg/ Command::Terminate)
-    // let (_command_tx, command_rx) = mpsc::channel(20);
+    // Channels
+    // Create channel to distribute Commands to the Engine & it's Traders (eg/ Command::Terminate)
+    let (_command_tx, command_rx) = mpsc::channel(20);
 
-    // // Create channel for each Trader so the Engine can distribute Commands to it
-    // // let (trader_command_tx, trader_command_rx) = mpsc::channel(10);
+    // Create channel for each Trader so the Engine can distribute Commands to it
+    // let (trader_command_tx, trader_command_rx) = mpsc::channel(10);
 
-    // // Create Event channel to listen to all Engine Events in real-time
-    // let (event_tx, event_rx) = mpsc::unbounded_channel();
-    // let event_tx = EventTx::new(event_tx);
+    // Create Event channel to listen to all Engine Events in real-time
+    let (event_tx, event_rx) = mpsc::unbounded_channel();
+    let event_tx = EventTx::new(event_tx);
 
-    // // Portfolio
-    // let portfolio = Arc::new(Mutex::new(
-    //     MetaPortfolio::builder()
-    //         .engine_id(engine_id)
-    //         .markets(markets.clone())
-    //         .starting_cash(10000.0)
-    //         .repository(InMemoryRepository::<TradingSummary>::new())
-    //         .allocation_manager(DefaultAllocator {
-    //             default_order_value: 100.0,
-    //         })
-    //         .risk_manager(DefaultRisk {})
-    //         .statistic_config(StatisticConfig {
-    //             starting_equity: 10_000.0,
-    //             trading_days_per_year: 365,
-    //             risk_free_return: 0.0,
-    //         })
-    //         .build_init()
-    //         .unwrap(),
-    // ));
+    // Portfolio
+    let portfolio = Arc::new(Mutex::new(
+        MetaPortfolio::builder()
+            .engine_id(engine_id)
+            .markets(markets.clone())
+            .starting_cash(10000.0)
+            .repository(InMemoryRepository::<TradingSummary>::new())
+            .allocation_manager(DefaultAllocator {
+                default_order_value: 100.0,
+            })
+            .risk_manager(DefaultRisk {})
+            .statistic_config(StatisticConfig {
+                starting_equity: 10_000.0,
+                trading_days_per_year: 365,
+                risk_free_return: 0.0,
+            })
+            .build_init()
+            .unwrap(),
+    ));
 
-    // // Build traders
-    // // let single_market_trader = SingleMarketTrader::builder()
-    // //     .engine_id(engine_id)
-    // //     .market(markets[0].clone())
-    // //     .command_rx(trader_command_rx)
-    // //     .event_tx(event_tx.clone())
-    // //     .portfolio(Arc::clone(&portfolio))
-    // //     .data(live::MarketFeed::new(stream_trades().await))
-    // //     .strategy(SpreadStategy::new())
-    // //     .execution(SimulatedExecution::new(Config {
-    // //         simulated_fees_pct: Fees {
-    // //             exchange: 0.01,
-    // //             slippage: 0.05,
-    // //             network: 0.0,
-    // //         },
-    // //     }))
-    // //     .build()
-    // //     .unwrap();
-    // // let single_traders = vec![single_market_trader];
-
-    // ////////////////////////////////////////////////////
-    // // Portfolio
-    // let arb_portfolio = Arc::new(Mutex::new(
-    //     SpotPortfolio::new(
-    //         engine_id,
-    //         vec![ExchangeId::BinanceSpot, ExchangeId::PoloniexSpot],
-    //         SpotInMemoryRepository::default(),
-    //         SpotArbAllocator,
-    //     )
-    //     .init()
-    //     .await
-    //     .unwrap(),
-    // ));
-
-    // println!("arb portfolio: {:#?}", arb_portfolio);
-    // //////////////
-    // // Execution manager
-    // //////////////
-    // let bin_exe_manager = ExecutionManager {
-    //     exeution_client: BinanceExecution::new(),
-    // };
-
-    // let polo_exe_manager = ExecutionManager {
-    //     exeution_client: PoloniexExecution::new(),
-    // };
-
-    // //////////////
-    // // Arb trader
-    // //////////////
-    // let op = vec![
-    //     Market::new(ExchangeId::BinanceSpot, Instrument::new("op", "usdt")),
-    //     Market::new(ExchangeId::PoloniexSpot, Instrument::new("op", "usdt")),
-    // ];
-
-    // // let arb = vec![
-    // //     Market::new(ExchangeId::BinanceSpot, Instrument::new("arb", "usdt")),
-    // //     Market::new(ExchangeId::PoloniexSpot, Instrument::new("arb", "usdt")),
-    // // ];
-
-    // let market2 = vec![op];
-    // let mut arb_traders = Vec::new();
-    // let mut trader_command_txs = HashMap::new();
-    // let mut order_update_txs = HashMap::new();
-
-    // for markets in market2.into_iter() {
-    //     // Trade command, to receive commands from the engine
-    //     let (trader_command_tx, trader_command_rx) = mpsc::channel(10);
-    //     trader_command_txs.insert(markets[0].clone(), trader_command_tx); // todo: arb trader has 2 markets
-
-    //     // Make channels to be able to receive order update from execution arena
-    //     // Since arb trader has 2 assets its tradiding we need to clone the send
-    //     // tx for each asset per exchange. We are using the exchange specific
-    //     // formatting of the asset for the hashmap keys. For example, op_usdt
-    //     // will have a OPUSDT (binance) and OP_USDT (poloniex). Even if 2 exchange
-    //     // have the same asset format it would not matter as the key will just be replaced
-    //     let (order_update_tx, order_update_rx) = mpsc::channel(10);
-    //     let mut spot_arb_meta_data = SpotArbTraderMetaData::default();
-    //     for market in markets.clone().into_iter() {
-    //         // Key to update order
-    //         let order_update_key = ExchangeAssetId::from((&market.exchange, &market.instrument));
-    //         order_update_txs.insert(order_update_key, order_update_tx.clone());
-
-    //         // Key to update balances
-    //         let balance_update_key = ExchangeAssetId(
-    //             format!("{}_{}", &market.exchange.as_str(), &market.instrument.base).to_uppercase(),
-    //         );
-    //         order_update_txs.insert(balance_update_key, order_update_tx.clone());
-
-    //         // Get ticker precision
-    //         let liquid_ticker_info = BinancePublicData::get_ticker_info(&market.instrument)
-    //             .await
-    //             .unwrap();
-    //         spot_arb_meta_data.liquid_ticker_info = TickerInfo::from(liquid_ticker_info);
-
-    //         let mut illiquid_ticker_info = PoloniexPublicData::get_ticker_info(&market.instrument)
-    //             .await
-    //             .unwrap();
-    //         spot_arb_meta_data.illiquid_ticker_info =
-    //             TickerInfo::from(illiquid_ticker_info.remove(0));
-
-    //         // todo: get wallet addresses http requests?
-    //         spot_arb_meta_data.liquid_deposit_address =
-    //             "0x1b7c39f6669cee023caff84e06001b03a76f829f".to_string();
-    //         spot_arb_meta_data.illiquid_deposit_address =
-    //             "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string();
-    //     }
-
-    //     // todo: make this better
-    //     let order_generator = SpotArbOrderGenerator::<BinanceExecution, PoloniexExecution> {
-    //         liquid_exchange: SpotArbBookData::default(),
-    //         illiquid_exchange: SpotArbBookData::default(),
-    //         marker: PhantomData::<(BinanceExecution, PoloniexExecution)>,
-    //     };
-
-    //     let arb_trader = SpotArbTrader::builder()
-    //         .engine_id(engine_id)
-    //         .market(markets)
-    //         .command_rx(trader_command_rx)
-    //         .event_tx(event_tx.clone())
-    //         .portfolio(Arc::clone(&arb_portfolio))
-    //         .data(MarketFeed::new(stream_trades().await))
-    //         .liquid_exchange(BinanceExecution::new())
-    //         .illiquid_exchange(PoloniexExecution::new())
-    //         .order_generator(order_generator)
-    //         .order_update_rx(order_update_rx)
-    //         .meta_data(spot_arb_meta_data)
-    //         .build()
-    //         .unwrap();
-
-    //     arb_traders.push(arb_trader)
-    // }
-
-    // /////////////////////////////////////////////////////////////
-    // // Arena
-    // /////////////////////////////////////////////////////////////
-    // let exchanges = vec![ExchangeId::BinanceSpot, ExchangeId::PoloniexSpot];
-    // combine_account_data_stream(exchanges, order_update_txs, Arc::clone(&arb_portfolio)).await;
-
-    // // Build engine TODO: (check the commands are doing what it is supposed to)
-    // // let trader_command_txs = markets
-    // //     .into_iter()
-    // //     .map(|market| (market, trader_command_tx.clone()))
-    // //     .collect::<HashMap<_, _>>();
-
-    // let engine = Engine::builder()
+    // Build traders
+    // let single_market_trader = SingleMarketTrader::builder()
     //     .engine_id(engine_id)
-    //     .command_rx(command_rx)
-    //     .portfolio(portfolio)
-    //     .traders(arb_traders)
-    //     .trader_command_txs(trader_command_txs)
-    //     .statistics_summary(TradingSummary::init(StatisticConfig {
-    //         starting_equity: 1000.0,
-    //         trading_days_per_year: 365,
-    //         risk_free_return: 0.0,
+    //     .market(markets[0].clone())
+    //     .command_rx(trader_command_rx)
+    //     .event_tx(event_tx.clone())
+    //     .portfolio(Arc::clone(&portfolio))
+    //     .data(live::MarketFeed::new(stream_trades().await))
+    //     .strategy(SpreadStategy::new())
+    //     .execution(SimulatedExecution::new(Config {
+    //         simulated_fees_pct: Fees {
+    //             exchange: 0.01,
+    //             slippage: 0.05,
+    //             network: 0.0,
+    //         },
     //     }))
     //     .build()
-    //     .expect("failed to build engine");
+    //     .unwrap();
+    // let single_traders = vec![single_market_trader];
 
-    // ///////////////////////////////////////////////////
-    // // Run Engine trading & listen to Events it produces
-    // tokio::spawn(listen_to_engine_events(event_rx));
+    ////////////////////////////////////////////////////
+    // Portfolio
+    let arb_portfolio = Arc::new(Mutex::new(
+        SpotPortfolio::new(
+            engine_id,
+            vec![ExchangeId::BinanceSpot, ExchangeId::PoloniexSpot],
+            SpotInMemoryRepository::default(),
+            SpotArbAllocator,
+        )
+        .init()
+        .await
+        .unwrap(),
+    ));
 
-    // let _ = tokio::time::timeout(ENGINE_RUN_TIMEOUT, engine.run()).await;
+    println!("arb portfolio: {:#?}", arb_portfolio);
+    //////////////
+    // Execution manager
+    //////////////
+    let bin_exe_manager = ExecutionManager {
+        exeution_client: BinanceExecution::new(),
+    };
+
+    let polo_exe_manager = ExecutionManager {
+        exeution_client: PoloniexExecution::new(),
+    };
+
+    //////////////
+    // Arb trader
+    //////////////
+    let op = vec![
+        Market::new(ExchangeId::BinanceSpot, Instrument::new("op", "usdt")),
+        Market::new(ExchangeId::PoloniexSpot, Instrument::new("op", "usdt")),
+    ];
+
+    // let arb = vec![
+    //     Market::new(ExchangeId::BinanceSpot, Instrument::new("arb", "usdt")),
+    //     Market::new(ExchangeId::PoloniexSpot, Instrument::new("arb", "usdt")),
+    // ];
+
+    let market2 = vec![op];
+    let mut arb_traders = Vec::new();
+    let mut trader_command_txs = HashMap::new();
+    let mut order_update_txs = HashMap::new();
+
+    for markets in market2.into_iter() {
+        // Trade command, to receive commands from the engine
+        let (trader_command_tx, trader_command_rx) = mpsc::channel(10);
+        trader_command_txs.insert(markets[0].clone(), trader_command_tx); // todo: arb trader has 2 markets
+
+        // Make channels to be able to receive order update from execution arena
+        // Since arb trader has 2 assets its tradiding we need to clone the send
+        // tx for each asset per exchange. We are using the exchange specific
+        // formatting of the asset for the hashmap keys. For example, op_usdt
+        // will have a OPUSDT (binance) and OP_USDT (poloniex). Even if 2 exchange
+        // have the same asset format it would not matter as the key will just be replaced
+        let (order_update_tx, order_update_rx) = mpsc::channel(10);
+        let mut spot_arb_meta_data = SpotArbTraderMetaData::default();
+        for market in markets.clone().into_iter() {
+            // Key to update order
+            let order_update_key = ExchangeAssetId::from((&market.exchange, &market.instrument));
+            order_update_txs.insert(order_update_key, order_update_tx.clone());
+
+            // Key to update balances
+            let balance_update_key = ExchangeAssetId(
+                format!("{}_{}", &market.exchange.as_str(), &market.instrument.base).to_uppercase(),
+            );
+            order_update_txs.insert(balance_update_key, order_update_tx.clone());
+
+            // Get ticker precision
+            let liquid_ticker_info = BinancePublicData::get_ticker_info(&market.instrument)
+                .await
+                .unwrap();
+            spot_arb_meta_data.liquid_ticker_info = TickerInfo::from(liquid_ticker_info);
+
+            let mut illiquid_ticker_info = PoloniexPublicData::get_ticker_info(&market.instrument)
+                .await
+                .unwrap();
+            spot_arb_meta_data.illiquid_ticker_info =
+                TickerInfo::from(illiquid_ticker_info.remove(0));
+
+            // todo: get wallet addresses http requests?
+            spot_arb_meta_data.liquid_deposit_address =
+                "0x1b7c39f6669cee023caff84e06001b03a76f829f".to_string();
+            spot_arb_meta_data.illiquid_deposit_address =
+                "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string();
+        }
+
+        // todo: make this better
+        let order_generator = SpotArbOrderGenerator::<BinanceExecution, PoloniexExecution> {
+            liquid_exchange: SpotArbBookData::default(),
+            illiquid_exchange: SpotArbBookData::default(),
+            marker: PhantomData::<(BinanceExecution, PoloniexExecution)>,
+        };
+
+        let arb_trader = SpotArbTrader::builder()
+            .engine_id(engine_id)
+            .market(markets)
+            .command_rx(trader_command_rx)
+            .event_tx(event_tx.clone())
+            .portfolio(Arc::clone(&arb_portfolio))
+            .data(MarketFeed::new(stream_trades().await))
+            .liquid_exchange(BinanceExecution::new())
+            .illiquid_exchange(PoloniexExecution::new())
+            .order_generator(order_generator)
+            .order_update_rx(order_update_rx)
+            .meta_data(spot_arb_meta_data)
+            .build()
+            .unwrap();
+
+        arb_traders.push(arb_trader)
+    }
+
+    /////////////////////////////////////////////////////////////
+    // Arena
+    /////////////////////////////////////////////////////////////
+    let exchanges = vec![ExchangeId::BinanceSpot, ExchangeId::PoloniexSpot];
+    combine_account_data_stream(exchanges, order_update_txs, Arc::clone(&arb_portfolio)).await;
+
+    // Build engine TODO: (check the commands are doing what it is supposed to)
+    // let trader_command_txs = markets
+    //     .into_iter()
+    //     .map(|market| (market, trader_command_tx.clone()))
+    //     .collect::<HashMap<_, _>>();
+
+    let engine = Engine::builder()
+        .engine_id(engine_id)
+        .command_rx(command_rx)
+        .portfolio(portfolio)
+        .traders(arb_traders)
+        .trader_command_txs(trader_command_txs)
+        .statistics_summary(TradingSummary::init(StatisticConfig {
+            starting_equity: 1000.0,
+            trading_days_per_year: 365,
+            risk_free_return: 0.0,
+        }))
+        .build()
+        .expect("failed to build engine");
+
+    ///////////////////////////////////////////////////
+    // Run Engine trading & listen to Events it produces
+    tokio::spawn(listen_to_engine_events(event_rx));
+
+    let _ = tokio::time::timeout(ENGINE_RUN_TIMEOUT, engine.run()).await;
 }
 
 /*----- */

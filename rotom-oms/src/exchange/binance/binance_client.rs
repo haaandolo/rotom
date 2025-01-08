@@ -74,7 +74,7 @@ impl ExecutionClient for BinanceExecution {
     ) -> Result<Self::NewOrderResponse, SocketError> {
         let response = self
             .http_client
-            .execute(BinanceNewOrder::new(&open_requests)?)
+            .execute(BinanceNewOrder::new(open_requests)?)
             .await?;
         Ok(response.0)
     }

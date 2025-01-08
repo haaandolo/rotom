@@ -142,7 +142,7 @@ impl ExecutionClient for PoloniexExecution {
     ) -> Result<Self::NewOrderResponse, SocketError> {
         let response = self
             .http_client
-            .execute(PoloniexNewOrder::new(&open_request)?)
+            .execute(PoloniexNewOrder::new(open_request)?)
             .await?;
         Ok(response.0)
     }
