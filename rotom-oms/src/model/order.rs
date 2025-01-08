@@ -149,12 +149,12 @@ impl From<OrderStatus> for OrderState {
 /*----- */
 // Open Order
 /*----- */
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct OpenOrder {
     // Used for market or limit orders
-    pub price: f64, 
+    pub price: f64,
     // Used for market or limit orders
-    pub quantity: f64, 
+    pub quantity: f64,
     // Used for market orders
     pub notional_amount: f64,
     pub decision: Decision,

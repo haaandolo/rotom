@@ -14,6 +14,7 @@ use rotom_data::{
     Feed, Market, MarketGenerator,
 };
 use rotom_oms::exchange::binance::requests::new_order;
+use rotom_oms::execution_manager::manager::ExecutionManager;
 use rotom_oms::model::order::CancelOrder;
 use rotom_oms::{
     event::{Event, EventTx, MessageTransmitter},
@@ -86,30 +87,6 @@ pub struct SpotArbTraderMetaData {
 }
 
 /*----- */
-// Spot Arb Trader Lego
-/*----- */
-#[derive(Debug)]
-pub struct SpotArbTraderLego<Data, LiquidExchange, IlliquidExchange>
-where
-    Data: MarketGenerator<MarketEvent<DataKind>>,
-    LiquidExchange: ExecutionClient,
-    IlliquidExchange: ExecutionClient,
-{
-    pub engine_id: Uuid,
-    pub command_rx: mpsc::Receiver<Command>,
-    pub event_tx: EventTx,
-    pub markets: Vec<Market>,
-    pub data: Data,
-    pub liquid_exchange: LiquidExchange,
-    pub illiquid_exchange: IlliquidExchange,
-    pub order_generator: SpotArbOrderGenerator<LiquidExchange, IlliquidExchange>,
-    pub send_order_tx: mpsc::UnboundedSender<ExecutionRequest>,
-    pub order_update_rx: mpsc::Receiver<AccountData>,
-    pub porfolio: Arc<Mutex<SpotPortfolio>>,
-    pub meta_data: SpotArbTraderMetaData,
-}
-
-/*----- */
 // Spot Arb Trader
 /*----- */
 #[derive(Debug)]
@@ -139,23 +116,6 @@ where
     LiquidExchange: ExecutionClient,
     IlliquidExchange: ExecutionClient,
 {
-    pub fn new(lego: SpotArbTraderLego<Data, LiquidExchange, IlliquidExchange>) -> Self {
-        Self {
-            engine_id: lego.engine_id,
-            command_rx: lego.command_rx,
-            event_tx: lego.event_tx,
-            markets: lego.markets,
-            data: lego.data,
-            liquid_exchange: lego.liquid_exchange,
-            illiquid_exchange: lego.illiquid_exchange,
-            order_generator: lego.order_generator,
-            order_update_rx: lego.order_update_rx,
-            event_queue: VecDeque::with_capacity(4),
-            portfolio: lego.porfolio,
-            meta_data: lego.meta_data,
-        }
-    }
-
     pub fn builder() -> SpotArbTraderBuilder<Data, LiquidExchange, IlliquidExchange> {
         SpotArbTraderBuilder::new()
     }
@@ -474,12 +434,6 @@ where
                                 // self.process_existing_order(new_order).await; // uncomment to start limit order
                             }
                             None => {
-                                // println!("######################");
-                                // println!("Meta Data");
-                                // println!("######################");
-                                // println!("{:#?}", self.meta_data);
-
-                                self.meta_data.order = Some(new_order);
                                 // self.process_new_order().await; // uncomment to start limit order
                             }
                         }
