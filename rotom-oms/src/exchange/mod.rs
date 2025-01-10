@@ -27,7 +27,7 @@ use tracing::{debug, error, info, warn};
 use crate::{
     model::{
         account_data::AccountData,
-        order::{CancelOrder, OpenOrder, WalletTransfer},
+        order::{CancelOrder, ExecutionRequest, OpenOrder, WalletTransfer},
     },
     portfolio::portfolio_type::spot_portfolio::SpotPortfolio,
 };
@@ -67,6 +67,7 @@ pub trait ExecutionClient {
     type NewOrderResponse: Send + Debug;
     type WalletTransferResponse: Send + Debug;
     type AccountDataStreamResponse: Send + for<'de> Deserialize<'de> + Debug + Into<AccountData>;
+    type ExecutionRequestChannel: Default;
 
     // Initialise a account data stream
     async fn init() -> Result<AccountDataWebsocket, SocketError>;
@@ -99,6 +100,28 @@ pub trait ExecutionClient {
         &self,
         wallet_transfer_request: WalletTransfer,
     ) -> Result<Self::WalletTransferResponse, SocketError>;
+}
+
+/*----- */
+// Execution Request Channels
+/*----- */
+#[derive(Debug)]
+pub struct ExecutionRequestChannel {
+    pub tx: mpsc::UnboundedSender<ExecutionRequest>,
+    pub rx: mpsc::UnboundedReceiver<ExecutionRequest>,
+}
+
+impl ExecutionRequestChannel {
+    pub fn new() -> Self {
+        let (tx, rx) = mpsc::unbounded_channel();
+        Self { tx, rx }
+    }
+}
+
+impl Default for ExecutionRequestChannel {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /*----- */

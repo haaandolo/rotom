@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use parking_lot::Mutex;
 use rotom_data::{
     model::market_event::{DataKind, MarketEvent},
@@ -91,7 +90,6 @@ where
 /*----- */
 // Impl Trader trait for Single Market Trader
 /*----- */
-#[async_trait]
 impl<Data, Strategy, Execution, Portfolio> TraderRun
     for SingleMarketTrader<Data, Strategy, Execution, Portfolio>
 where
@@ -126,7 +124,7 @@ where
         }
     }
 
-    async fn run(mut self) {
+    fn run(mut self) {
         'trading: loop {
             // Check for mew remote Commands
             while let Some(command) = self.receive_remote_command() {

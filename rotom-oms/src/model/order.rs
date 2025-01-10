@@ -181,32 +181,6 @@ pub struct OpenOrder {
 //     }
 // }
 
-// impl From<&OrderEvent> for OpenOrder {
-//     fn from(order: &OrderEvent) -> Self {
-//         Self {
-//             price: order.market_meta.close,
-//             quantity: order.original_quantity,
-//             notional_amount: order.cumulative_quantity * order.enter_avg_price,
-//             decision: order.decision,
-//             order_kind: order.order_kind.clone(),
-//             instrument: order.instrument.clone(),
-//         }
-//     }
-// }
-
-// impl From<&mut OrderEvent> for OpenOrder {
-//     fn from(order: &mut OrderEvent) -> Self {
-//         Self {
-//             price: order.market_meta.close,
-//             quantity: order.original_quantity,
-//             notional_amount: order.cumulative_quantity * order.enter_avg_price,
-//             decision: order.decision,
-//             order_kind: order.order_kind.clone(),
-//             instrument: order.instrument.clone(),
-//         }
-//     }
-// }
-
 /*----- */
 // Cancel Order
 /*----- */
