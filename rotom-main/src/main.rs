@@ -10,6 +10,7 @@ use rotom_oms::{
     exchange::{
         binance::binance_client::BinanceExecution, poloniex::poloniex_client::PoloniexExecution,
     },
+    execution_manager::builder::ExecutionBuilder,
     model::{
         order::{CancelOrder, OpenOrder, OrderEvent, WalletTransfer},
         ClientOrderId,
@@ -46,89 +47,6 @@ pub async fn main() {
     // Initialise logging
     init_logging();
 
-    /*----- */
-    // Testing
-    /*----- */
-
-    ////////////////////////////////////////////////////
-    // Order
-    let mut order = OrderEvent {
-        order_request_time: Utc::now(),
-        exchange: ExchangeId::BinanceSpot,
-        instrument: Instrument::new("op", "usdt"),
-        client_order_id: ClientOrderId::random(),
-        market_meta: MarketMeta {
-            close: 1.81,
-            time: Utc::now(),
-        },
-        decision: Decision::Short,
-        original_quantity: 2.8,
-        cumulative_quantity: 4.0,
-        order_kind: rotom_oms::model::OrderKind::Market,
-        exchange_order_status: None,
-        internal_order_state: rotom_oms::model::order::OrderState::InTransit,
-        filled_gross: 0.0,
-        enter_avg_price: 0.0,
-        fees: 0.0,
-        last_execution_time: None,
-    };
-
-    // Requests
-    // let open_order = OpenOrder::from(&order);
-
-    let open_order = OpenOrder {
-        client_order_id: order.client_order_id,
-        price: order.market_meta.close,
-        quantity: order.original_quantity,
-        notional_amount: order.market_meta.close * order.original_quantity,
-        decision: order.decision,
-        order_kind: order.order_kind,
-        instrument: order.instrument.clone(),
-    };
-
-    // let cancel_order = CancelOrder::from(&order);
-    let polo_wallet_transfer = WalletTransfer {
-        coin: order.instrument.base.clone(),
-        wallet_address: "0x1b7c39f6669cee023caff84e06001b03a76f829f".to_string(),
-        network: None,
-        amount: 4.25,
-    };
-    let polo_usdt_tron_network = "TBw5BWoS97tWrVr7PSuBtUQeBXU6eJZpyg".to_string();
-    let bin_wallet_transfer = WalletTransfer {
-        coin: order.instrument.base.clone(),
-        // "usdt".to_string(),
-        wallet_address: polo_usdt_tron_network,
-        // "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string(),
-        network: None,
-        // Some("TRX".to_string()),
-        amount: 15.0,
-    };
-
-    // // Test Binance Execution
-    // let binance_exe = BinanceExecution::new();
-    // let res = binance_exe.get_balance_all().await;
-    // let res: Vec<AssetBalance> = res.unwrap().into();
-    // let res = binance_exe.wallet_transfer(bin_wallet_transfer).await;
-    // let res = binance_exe.open_order(open_order).await;
-    // let res = binance_exe
-    //     .cancel_order(cancel_order)
-    //     .await;
-    // let res = binance_exe.cancel_order_all(cancel_order).await;
-    // println!("{:#?}", res);
-    // binance_exe.receive_responses().await;
-
-    ////////////////////////////////////////////////////
-    // Test Poloniex Execution
-    // let polo_exe = PoloniexExecution::new();
-    // println!("---> open order res: {:#?}", open_order);
-    // let res = polo_exe.open_order(open_order).await;
-    // let res = polo_exe.open_order(order.clone()).await;
-    // let res = polo_exe.cancel_order(cancel_order).await;
-    // let res= polo_exe.cancel_order_all("OP_USDT".to_string()).await;
-    // polo_exe.receive_responses().await;
-    // let res = polo_exe.wallet_transfer(polo_wallet_transfer).await;
-    // println!("---> {:#?}", res);
-
     ////////////////////////////////////////////////
     /*----- */
     // Trader builder
@@ -141,9 +59,6 @@ pub async fn main() {
     // Channels
     // Create channel to distribute Commands to the Engine & it's Traders (eg/ Command::Terminate)
     let (_command_tx, command_rx) = mpsc::channel(20);
-
-    // Create channel for each Trader so the Engine can distribute Commands to it
-    // let (trader_command_tx, trader_command_rx) = mpsc::channel(10);
 
     // Create Event channel to listen to all Engine Events in real-time
     let (event_tx, _event_rx) = mpsc::unbounded_channel();
@@ -191,26 +106,23 @@ pub async fn main() {
     ));
 
     println!("arb portfolio: {:#?}", arb_portfolio);
-    //////////////
+
+    ////////////////////////////////////////////////////
     // Execution manager
-    //////////////
-    // let bin_exe_manager = ExecutionManager {
-    //     exeution_client: BinanceExecution::new(),
-    // };
+    ////////////////////////////////////////////////////
+    let execution_tx_map = ExecutionBuilder::default()
+        .add_exchange::<BinanceExecution>()
+        .add_exchange::<PoloniexExecution>()
+        .build();
 
-    // let polo_exe_manager = ExecutionManager {
-    //     exeution_client: PoloniexExecution::new(),
-    // };
-
-    //////////////
+    ////////////////////////////////////////////////////
     // Arb traders builder
-    //////////////
-
-    let mut arb_trader_meta = SpotArbTradersBuilder::default()
+    ////////////////////////////////////////////////////
+    let mut arb_trader_meta = SpotArbTradersBuilder::new(&execution_tx_map)
         .add_traders::<BinanceExecution, PoloniexExecution>(vec![
-            Instrument::new("op", "udst"),
-            Instrument::new("arb", "udst"),
-            Instrument::new("ldo", "udst"),
+            Instrument::new("op", "usdt"),
+            Instrument::new("arb", "usdt"),
+            Instrument::new("ldo", "usdt"),
         ])
         .await;
 
@@ -218,11 +130,8 @@ pub async fn main() {
     let trader_command_txs = std::mem::take(&mut arb_trader_meta.engine_command_tx);
 
     /////////////////////////////////////////////////////////////
-    // Arena
+    // Engine
     /////////////////////////////////////////////////////////////
-    // let exchanges = vec![ExchangeId::BinanceSpot, ExchangeId::PoloniexSpot];
-    // combine_account_data_stream(exchanges, order_update_txs, Arc::clone(&arb_portfolio)).await;
-
     let engine = Engine::builder()
         .engine_id(engine_id)
         .command_rx(command_rx)
@@ -237,8 +146,90 @@ pub async fn main() {
         .build()
         .expect("failed to build engine");
 
-    ///////////////////////////////////////////////////
     let _ = tokio::time::timeout(ENGINE_RUN_TIMEOUT, engine.run()).await;
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // ////////////////////////////////////////////////////
+    // // Testing execution
+    // ////////////////////////////////////////////////////
+    // let mut order = OrderEvent {
+    //     order_request_time: Utc::now(),
+    //     exchange: ExchangeId::BinanceSpot,
+    //     instrument: Instrument::new("op", "usdt"),
+    //     client_order_id: ClientOrderId::random(),
+    //     market_meta: MarketMeta {
+    //         close: 1.81,
+    //         time: Utc::now(),
+    //     },
+    //     decision: Decision::Short,
+    //     original_quantity: 2.8,
+    //     cumulative_quantity: 4.0,
+    //     order_kind: rotom_oms::model::OrderKind::Market,
+    //     exchange_order_status: None,
+    //     internal_order_state: rotom_oms::model::order::OrderState::InTransit,
+    //     filled_gross: 0.0,
+    //     enter_avg_price: 0.0,
+    //     fees: 0.0,
+    //     last_execution_time: None,
+    // };
+
+    // // Requests
+    // // let open_order = OpenOrder::from(&order);
+
+    // let open_order = OpenOrder {
+    //     client_order_id: order.client_order_id,
+    //     price: order.market_meta.close,
+    //     quantity: order.original_quantity,
+    //     notional_amount: order.market_meta.close * order.original_quantity,
+    //     decision: order.decision,
+    //     order_kind: order.order_kind,
+    //     instrument: order.instrument.clone(),
+    // };
+
+    // // let cancel_order = CancelOrder::from(&order);
+    // let polo_wallet_transfer = WalletTransfer {
+    //     coin: order.instrument.base.clone(),
+    //     wallet_address: "0x1b7c39f6669cee023caff84e06001b03a76f829f".to_string(),
+    //     network: None,
+    //     amount: 4.25,
+    // };
+    // let polo_usdt_tron_network = "TBw5BWoS97tWrVr7PSuBtUQeBXU6eJZpyg".to_string();
+    // let bin_wallet_transfer = WalletTransfer {
+    //     coin: order.instrument.base.clone(),
+    //     // "usdt".to_string(),
+    //     wallet_address: polo_usdt_tron_network,
+    //     // "0xc0b2167fc0ff47fe0783ff6e38c0eecc0f784c2f".to_string(),
+    //     network: None,
+    //     // Some("TRX".to_string()),
+    //     amount: 15.0,
+    // };
+
+    // // Test Binance Execution
+    // let binance_exe = BinanceExecution::new();
+    // let res = binance_exe.get_balance_all().await;
+    // let res: Vec<AssetBalance> = res.unwrap().into();
+    // let res = binance_exe.wallet_transfer(bin_wallet_transfer).await;
+    // let res = binance_exe.open_order(open_order).await;
+    // let res = binance_exe
+    //     .cancel_order(cancel_order)
+    //     .await;
+    // let res = binance_exe.cancel_order_all(cancel_order).await;
+    // println!("{:#?}", res);
+    // binance_exe.receive_responses().await;
+
+    ////////////////////////////////////////////////////
+    // Test Poloniex Execution
+    // let polo_exe = PoloniexExecution::new();
+    // println!("---> open order res: {:#?}", open_order);
+    // let res = polo_exe.open_order(open_order).await;
+    // let res = polo_exe.open_order(order.clone()).await;
+    // let res = polo_exe.cancel_order(cancel_order).await;
+    // let res= polo_exe.cancel_order_all("OP_USDT".to_string()).await;
+    // polo_exe.receive_responses().await;
+    // let res = polo_exe.wallet_transfer(polo_wallet_transfer).await;
+    // println!("---> {:#?}", res);
 }
 
 /*----- */
@@ -262,7 +253,7 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
-// - should there be a middle layer between traders and execution manager?
+// - work on exeution manager
 // - idea for execution client. Wrap execution client in a Arc to generate a future - this should be pretty quick, so won't hold up other threads. Then await it inside the trader to yield it.A
 // - also, if we couple a tx and rx for each exchange executionn manager, we can just clone the tx for respective senders
 // - make acc data status generic and impl a filled trait
@@ -274,6 +265,7 @@ fn init_logging() {
 // - finish position2, what fields are required for this
 // - funcitons to convert orderEvent to OpenOrder, CancelOrder, TransferOrder etc
 // - rm lego
+// - spot arb traders builder stream should be not hard coded and try rm the await in this func
 // - do we still need balance update in fill updater? for spot portfolio
 // - what to do with new order and an existing order exists?
 // - make a spot arb specific enum trading loop

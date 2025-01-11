@@ -5,9 +5,12 @@ use rotom_data::{
 };
 use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
+use tokio::sync::mpsc;
+
+use crate::execution_manager::builder::TraderId;
 
 use super::{
-    account_data::{AccountDataOrder, OrderStatus},
+    account_data::{AccountData, AccountDataOrder, OrderStatus},
     ClientOrderId, OrderKind,
 };
 
@@ -149,6 +152,7 @@ impl From<OrderStatus> for OrderState {
 /*----- */
 #[derive(Debug, Clone)]
 pub struct OpenOrder {
+    pub trader_id: TraderId,
     pub client_order_id: ClientOrderId,
     // Used for market or limit orders
     pub price: f64,
@@ -186,17 +190,10 @@ pub struct OpenOrder {
 /*----- */
 #[derive(Debug)]
 pub struct CancelOrder {
-    pub id: String,     // smol str,
-    pub symbol: String, // smol str
-}
-
-impl From<&OrderEvent> for CancelOrder {
-    fn from(order: &OrderEvent) -> Self {
-        Self {
-            id: order.client_order_id.clone().0,
-            symbol: AssetFormatted::from((&order.exchange, &order.instrument)).0,
-        }
-    }
+    pub trader_id: TraderId,
+    // Used to identify order at the given exchange
+    pub client_order_id: String, // smol str,
+    pub symbol: String,          // smol str
 }
 
 /*----- */
@@ -204,6 +201,7 @@ impl From<&OrderEvent> for CancelOrder {
 /*----- */
 #[derive(Debug, Clone)]
 pub struct WalletTransfer {
+    pub trader_id: TraderId,
     pub coin: String,            // smol
     pub wallet_address: String,  // can be static str todo: change to deposit address
     pub network: Option<String>, // smol, probs can be static str
@@ -211,12 +209,34 @@ pub struct WalletTransfer {
 }
 
 /*----- */
+// Execution Manager Subscription Request
+/*----- */
+#[derive(Debug, Clone)]
+pub struct ExecutionManagerSubscribe {
+    pub trader_id: TraderId,
+    pub execution_response_tx: mpsc::UnboundedSender<AccountData>,
+}
+
+/*----- */
 // Execution Requests
 /*----- */
 #[derive(Debug)]
 pub enum ExecutionRequest {
+    Subscribe(ExecutionManagerSubscribe),
     Open(OpenOrder),
     Cancel(CancelOrder),
     CancelAll(CancelOrder),
     Transfer(WalletTransfer),
+}
+
+impl std::fmt::Display for ExecutionRequest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ExecutionRequest::Subscribe(request) => write!(f, "{:#?}", request),
+            ExecutionRequest::Open(request) => write!(f, "{:#?}", request),
+            ExecutionRequest::Cancel(request) => write!(f, "{:#?}", request),
+            ExecutionRequest::CancelAll(request) => write!(f, "{:#?}", request),
+            ExecutionRequest::Transfer(request) => write!(f, "{:#?}", request),
+        }
+    }
 }

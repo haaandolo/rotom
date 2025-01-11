@@ -11,7 +11,6 @@ use crate::exchange::binance::requests::new_order::BinanceNewOrder;
 use crate::exchange::binance::requests::wallet_transfer::BinanceWalletTransfer;
 use crate::exchange::AccountDataWebsocket;
 use crate::exchange::ExecutionClient;
-use crate::exchange::ExecutionRequestChannel;
 use crate::model::order::CancelOrder;
 use crate::model::order::OpenOrder;
 use crate::model::order::WalletTransfer;
@@ -47,7 +46,6 @@ impl ExecutionClient for BinanceExecution {
     type NewOrderResponse = BinanceNewOrderResponses;
     type WalletTransferResponse = BinanceWalletTransferResponse;
     type AccountDataStreamResponse = BinanceAccountEvents;
-    type ExecutionRequestChannel = ExecutionRequestChannel;
 
     async fn init() -> Result<AccountDataWebsocket, SocketError> {
         let http_client =
@@ -88,7 +86,7 @@ impl ExecutionClient for BinanceExecution {
         let response = self
             .http_client
             .execute(BinanceCancelOrder::new(
-                cancel_request.id,
+                cancel_request.client_order_id,
                 cancel_request.symbol,
             )?)
             .await?;

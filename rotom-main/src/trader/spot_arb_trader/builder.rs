@@ -8,11 +8,11 @@ use rotom_data::{
     MarketFeed,
 };
 use rotom_oms::{
-    exchange::{ExecutionClient, ExecutionRequestChannel},
+    exchange::{ExecutionClient, ExecutionResponseChannel},
     execution_manager::builder::TraderId,
-    model::{account_data::AccountData, order::ExecutionRequest},
+    model::order::ExecutionRequest,
 };
-use tokio::sync::mpsc::{self, Sender, UnboundedReceiver, UnboundedSender};
+use tokio::sync::mpsc::{self, Sender, UnboundedReceiver};
 use uuid::Uuid;
 
 use crate::engine::Command;
@@ -22,79 +22,52 @@ use super::{
     trader::{SpotArbTrader, SpotArbTraderExecutionState, SpotArbTraderMetaData},
 };
 
-#[derive(Debug, Default)]
-pub struct SpotArbTradersBuilder {
+#[derive(Debug)]
+pub struct SpotArbTradersBuilder<'a> {
+    // Vec of traders to go into the engine
     pub traders: Vec<SpotArbTrader>,
-    pub execution_request_tx: HashMap<ExchangeId, UnboundedSender<ExecutionRequest>>,
-    pub execution_request_rx: HashMap<ExchangeId, UnboundedReceiver<ExecutionRequest>>,
-    pub execution_response_tx: HashMap<ExchangeId, HashMap<TraderId, Sender<AccountData>>>,
-    pub engine_command_tx: HashMap<TraderId, Sender<Command>>
+    // Temp reference to HashMap of ExecutionManager ExecutionRequest tx's, for traders to clone
+    pub execution_request_txs: &'a HashMap<ExchangeId, mpsc::UnboundedSender<ExecutionRequest>>,
+    // Engine can send remote command's to the trader
+    pub engine_command_tx: HashMap<TraderId, Sender<Command>>,
 }
 
-impl SpotArbTradersBuilder {
+impl<'a> SpotArbTradersBuilder<'a> {
+    pub fn new(
+        execution_request_txs: &'a HashMap<ExchangeId, mpsc::UnboundedSender<ExecutionRequest>>,
+    ) -> Self {
+        Self {
+            traders: Vec::new(),
+            execution_request_txs,
+            engine_command_tx: HashMap::new(),
+        }
+    }
+
     pub async fn add_traders<LiquidExchange, IlliquidExchange>(
         mut self,
         markets: Vec<Instrument>,
     ) -> Self
     where
-        LiquidExchange: ExecutionClient<
-            ExecutionRequestChannel = ExecutionRequestChannel,
-        >,
-        IlliquidExchange: ExecutionClient<
-            ExecutionRequestChannel = ExecutionRequestChannel,
-        >,
+        LiquidExchange: ExecutionClient,
+        IlliquidExchange: ExecutionClient,
     {
-        // Init liquid exchange execution request channel and add to hashmap
-        let liquid_execution_request_channel = LiquidExchange::ExecutionRequestChannel::default();
-
-        self.execution_request_tx
-            .entry(LiquidExchange::CLIENT)
-            .or_insert(liquid_execution_request_channel.tx);
-
-        self.execution_request_rx
-            .entry(LiquidExchange::CLIENT)
-            .or_insert(liquid_execution_request_channel.rx);
-
-        // Init illiquid exchange execution request channel and add to hashmap
-        let illiquid_execution_request_channel =
-            IlliquidExchange::ExecutionRequestChannel::default();
-
-        self.execution_request_tx
-            .entry(IlliquidExchange::CLIENT)
-            .or_insert(illiquid_execution_request_channel.tx);
-
-        self.execution_request_rx
-            .entry(IlliquidExchange::CLIENT)
-            .or_insert(illiquid_execution_request_channel.rx);
-
-        // Add spot arb traders
         for market in markets.into_iter() {
             // Initalise trader id and channels
             let trader_id = TraderId(Uuid::new_v4());
-            let (trader_command_tx, trader_command_rx) = mpsc::channel(10);
-            let (execution_response_tx, execution_response_rx) = mpsc::channel(10);
+            let (engine_command_tx, engine_command_rx) = mpsc::channel(3);
 
             // Insert trader tx to receive remote commands
-            self.engine_command_tx.insert(trader_id.clone(), trader_command_tx);
-
-            // Insert tx to send updates back to this trader from liquid exchange
-            self.execution_response_tx.entry(LiquidExchange::CLIENT)
-                .or_default()
-                .insert(trader_id.clone(), execution_response_tx.clone());
-
-            // Insert tx to send updates back to this trader from illiquid exchange
-            self.execution_response_tx.entry(IlliquidExchange::CLIENT)
-                .or_default()
-                .insert(trader_id.clone(), execution_response_tx.clone());
+            self.engine_command_tx
+                .insert(trader_id.clone(), engine_command_tx);
 
             // Build the trader
             let arb_trader = SpotArbTrader::builder()
                 .engine_id(Uuid::new_v4())
                 .trader_id(trader_id.clone())
-                .command_rx(trader_command_rx)
-                .data(MarketFeed::new(stream_trades().await))
-                .liquid_exchange(
-                    self.execution_request_tx
+                .command_rx(engine_command_rx)
+                .data(MarketFeed::new(stream_trades::<LiquidExchange, IlliquidExchange>(&market).await))
+                .liquid_exchange_execution(
+                    self.execution_request_txs
                         .get(&LiquidExchange::CLIENT)
                         .unwrap_or_else(|| {
                             panic!(
@@ -104,8 +77,8 @@ impl SpotArbTradersBuilder {
                         })
                         .clone(),
                 )
-                .illiquid_exchange(
-                    self.execution_request_tx
+                .illiquid_exchange_execution(
+                    self.execution_request_txs
                         .get(&IlliquidExchange::CLIENT)
                         .unwrap_or_else(|| {
                             panic!(
@@ -115,15 +88,15 @@ impl SpotArbTradersBuilder {
                         })
                         .clone(),
                 )
+                .execution_response_channel(ExecutionResponseChannel::default())
                 .order_generator(SpotArbOrderGenerator::default())
-                .order_update_rx(execution_response_rx)
-                .meta_data(SpotArbTraderMetaData { 
-                    order: None, 
-                    execution_state: SpotArbTraderExecutionState::NoPosition, 
-                    liquid_exchange: LiquidExchange::CLIENT, 
-                    illiquid_exchange: IlliquidExchange::CLIENT, 
-                    market }
-                )
+                .meta_data(SpotArbTraderMetaData {
+                    order: None,
+                    execution_state: SpotArbTraderExecutionState::NoPosition,
+                    liquid_exchange: LiquidExchange::CLIENT,
+                    illiquid_exchange: IlliquidExchange::CLIENT,
+                    market,
+                })
                 .build()
                 .unwrap();
 
@@ -135,12 +108,41 @@ impl SpotArbTradersBuilder {
 }
 
 // todo: make this into a spot arb specfic stream builder
-async fn stream_trades() -> UnboundedReceiver<MarketEvent<DataKind>> {
+async fn stream_trades<LiquidExchange, IlliquidExchange>(
+    market: &Instrument,
+) -> UnboundedReceiver<MarketEvent<DataKind>>
+where
+    LiquidExchange: ExecutionClient,
+    IlliquidExchange: ExecutionClient,
+{
+    let liquid_id = LiquidExchange::CLIENT;
+    let illiquid_id = IlliquidExchange::CLIENT;
+
     let streams = dynamic::DynamicStreams::init([vec![
-        (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::L2),
-        (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::L2),
-        (ExchangeId::BinanceSpot, "op", "usdt", StreamKind::AggTrades),
-        (ExchangeId::PoloniexSpot, "op", "usdt", StreamKind::Trades),
+        (
+            liquid_id,
+            market.base.clone(),
+            market.quote.clone(),
+            StreamKind::L2,
+        ),
+        (
+            illiquid_id,
+            market.base.clone(),
+            market.quote.clone(),
+            StreamKind::L2,
+        ),
+        (
+            liquid_id,
+            market.base.clone(),
+            market.quote.clone(),
+            StreamKind::AggTrades,
+        ),
+        (
+            illiquid_id,
+            market.base.clone(),
+            market.quote.clone(),
+            StreamKind::Trades,
+        ),
     ]])
     .await
     .unwrap();

@@ -124,6 +124,10 @@ where
         }
     }
 
+    fn subscribe_to_execution_manager(&mut self) {
+        todo!()
+    }
+
     fn run(mut self) {
         'trading: loop {
             // Check for mew remote Commands

@@ -16,7 +16,7 @@ use rotom_data::{
 use serde::Deserialize;
 
 use crate::{
-    exchange::{AccountDataWebsocket, ExecutionClient, ExecutionRequestChannel},
+    exchange::{AccountDataWebsocket, ExecutionClient},
     model::order::{CancelOrder, OpenOrder, WalletTransfer},
 };
 
@@ -53,7 +53,6 @@ impl ExecutionClient for PoloniexExecution {
     type NewOrderResponse = PoloniexNewOrderResponse;
     type WalletTransferResponse = PoloniexWalletTransferResponse;
     type AccountDataStreamResponse = PoloniexAccountEvents;
-    type ExecutionRequestChannel = ExecutionRequestChannel;
 
     async fn init() -> Result<AccountDataWebsocket, SocketError> {
         // Spin up listening ws
@@ -154,7 +153,7 @@ impl ExecutionClient for PoloniexExecution {
     ) -> Result<Self::CancelResponse, SocketError> {
         let response = self
             .http_client
-            .execute(PoloniexCancelOrder::new(cancel_request.id))
+            .execute(PoloniexCancelOrder::new(cancel_request.client_order_id))
             .await?;
         Ok(response.0)
     }
