@@ -7,7 +7,7 @@ use rotom_data::{
 };
 use rotom_oms::exchange::ExecutionResponseChannel;
 use rotom_oms::execution_manager::builder::TraderId;
-use rotom_oms::model::account_data::AccountData;
+use rotom_oms::model::account_data::ExecutionResponse;
 use rotom_oms::model::order::ExecutionManagerSubscribe;
 use rotom_oms::{
     event::Event,
@@ -145,7 +145,7 @@ impl TraderRun for SpotArbTrader {
         loop {
             match self.execution_response_channel.rx.try_recv() {
                 Ok(response) => {
-                    if let AccountData::Subscribed(exchange_id) = response {
+                    if let ExecutionResponse::Subscribed(exchange_id) = response {
                         success_msg_received.push(exchange_id);
                     };
 

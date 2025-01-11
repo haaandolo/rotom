@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use rotom_data::{
     shared::subscription_models::{ExchangeId, Instrument},
-    AssetFormatted, MarketMeta,
+    MarketMeta,
 };
 use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
@@ -10,7 +10,7 @@ use tokio::sync::mpsc;
 use crate::execution_manager::builder::TraderId;
 
 use super::{
-    account_data::{AccountData, AccountDataOrder, OrderStatus},
+    account_data::{AccountDataOrder, ExecutionResponse, OrderStatus},
     ClientOrderId, OrderKind,
 };
 
@@ -214,7 +214,7 @@ pub struct WalletTransfer {
 #[derive(Debug, Clone)]
 pub struct ExecutionManagerSubscribe {
     pub trader_id: TraderId,
-    pub execution_response_tx: mpsc::UnboundedSender<AccountData>,
+    pub execution_response_tx: mpsc::UnboundedSender<ExecutionResponse>,
 }
 
 /*----- */

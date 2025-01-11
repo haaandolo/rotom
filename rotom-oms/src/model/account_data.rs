@@ -112,8 +112,7 @@ impl From<&AccountDataBalanceDelta> for ExchangeAssetId {
 }
 
 #[derive(Debug)]
-// todo: change this to execution response
-pub enum AccountData {
+pub enum ExecutionResponse {
     Subscribed(ExchangeId), // Used to let traders know it has succesfully subscribed to ExecutionManager
     Order(AccountDataOrder),
     BalanceVec(Vec<AccountDataBalance>),

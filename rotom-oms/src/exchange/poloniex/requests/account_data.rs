@@ -4,9 +4,9 @@ use rotom_data::shared::de::de_u64_epoch_ms_as_datetime_utc;
 use rotom_data::shared::subscription_models::ExchangeId;
 use serde::{Deserialize, Serialize};
 
-use crate::model::account_data::AccountData;
 use crate::model::account_data::AccountDataBalance;
 use crate::model::account_data::AccountDataOrder;
+use crate::model::account_data::ExecutionResponse;
 use crate::model::account_data::OrderStatus;
 use crate::model::balance::Balance;
 use crate::model::OrderKind;
@@ -24,19 +24,19 @@ pub struct PoloniexAccountDataOrder {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PoloniexAccountDataOrderParams {
-    pub symbol: String, // symbol name
+    pub symbol: String,    // symbol name
     pub r#type: OrderKind, // market, limit, limit maker
     #[serde(deserialize_with = "de_str")]
     pub quantity: f64, // number of base units for this order
-    pub order_id: String, // order id
+    pub order_id: String,  // order id
     #[serde(deserialize_with = "de_str")]
     pub trade_fee: f64, // fee amount for the trade
     pub client_order_id: String, // user specfied id
     pub account_type: String, // SPOT
     pub fee_currency: String, // fee currency name
     pub event_type: PoloniexOrderEventType, // place, trade, canceled
-    pub source: String, // web, app, api
-    pub side: Side, // BUY, SELL
+    pub source: String,    // web, app, api
+    pub side: Side,        // BUY, SELL
     #[serde(deserialize_with = "de_str")]
     pub filled_quantity: f64, // base unit filled in this order
     #[serde(deserialize_with = "de_str")]
@@ -59,7 +59,7 @@ pub struct PoloniexAccountDataOrderParams {
     pub trade_price: f64, // price of the trade
     #[serde(deserialize_with = "de_str")]
     pub trade_id: u64, // id of the trade
-    pub ts: u64, // time the record was pushed
+    pub ts: u64,            // time the record was pushed
 }
 
 impl From<PoloniexAccountDataOrder> for AccountDataOrder {
@@ -150,14 +150,14 @@ pub enum PoloniexAccountEvents {
     Balance(PoloniexAccountDataBalance),
 }
 
-impl From<PoloniexAccountEvents> for AccountData {
+impl From<PoloniexAccountEvents> for ExecutionResponse {
     fn from(account_events: PoloniexAccountEvents) -> Self {
         match account_events {
             PoloniexAccountEvents::Order(order) => {
-                AccountData::Order(AccountDataOrder::from(order))
+                ExecutionResponse::Order(AccountDataOrder::from(order))
             }
             PoloniexAccountEvents::Balance(balance) => {
-                AccountData::Balance(AccountDataBalance::from(balance))
+                ExecutionResponse::Balance(AccountDataBalance::from(balance))
             }
         }
     }

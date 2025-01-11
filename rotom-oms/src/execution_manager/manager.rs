@@ -5,7 +5,7 @@ use tokio::sync::mpsc;
 use crate::{
     exchange::{consume_account_data_stream, ExecutionClient},
     model::{
-        account_data::AccountData,
+        account_data::ExecutionResponse,
         order::{ExecutionManagerSubscribe, ExecutionRequest},
     },
 };
@@ -17,12 +17,12 @@ use super::builder::TraderId;
 /*----- */
 #[derive(Debug)]
 pub struct TraderMetaData {
-    pub update_tx: mpsc::UnboundedSender<AccountData>,
-    pub orders: Vec<AccountData>,
+    pub update_tx: mpsc::UnboundedSender<ExecutionResponse>,
+    pub orders: Vec<ExecutionResponse>,
 }
 
 impl TraderMetaData {
-    pub fn new(update_tx: mpsc::UnboundedSender<AccountData>) -> Self {
+    pub fn new(update_tx: mpsc::UnboundedSender<ExecutionResponse>) -> Self {
         Self {
             update_tx,
             orders: Vec::with_capacity(5),
@@ -42,7 +42,7 @@ where
     pub traders: HashMap<TraderId, TraderMetaData>,
     pub execution_request_tx: mpsc::UnboundedSender<ExecutionRequest>,
     execution_rx: mpsc::UnboundedReceiver<ExecutionRequest>,
-    account_data_rx: mpsc::UnboundedReceiver<AccountData>,
+    account_data_rx: mpsc::UnboundedReceiver<ExecutionResponse>,
     pub request_timeout: std::time::Duration,
 }
 
@@ -72,7 +72,7 @@ where
             .entry(subscription_request.trader_id)
             .or_insert(TraderMetaData::new(execution_response_tx.clone()));
 
-        let _ = execution_response_tx.send(AccountData::Subscribed(Exchange::CLIENT));
+        let _ = execution_response_tx.send(ExecutionResponse::Subscribed(Exchange::CLIENT));
     }
 
     pub async fn run(mut self) {
