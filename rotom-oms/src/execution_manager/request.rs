@@ -1,29 +1,25 @@
 use std::{
     future::Future,
-    marker::PhantomData,
     pin::Pin,
     task::{Context, Poll},
 };
 
 use rotom_data::error::SocketError;
 
-///////
 #[derive(Debug)]
 #[pin_project::pin_project]
-pub struct ExecutionRequestFuture<Request, ResponseFuture, ResponseFutureOk> {
+pub struct ExecutionRequestFuture<Request, ResponseFuture> {
     request: Request,
     #[pin]
     response_future: tokio::time::Timeout<ResponseFuture>,
-    _marker: PhantomData<ResponseFutureOk>,
 }
 
-impl<Request, ResponseFuture, ResponseFutureOk> Future
-    for ExecutionRequestFuture<Request, ResponseFuture, ResponseFutureOk>
+impl<Request, ResponseFuture, T> Future for ExecutionRequestFuture<Request, ResponseFuture>
 where
     Request: Clone,
-    ResponseFuture: Future<Output = Result<ResponseFutureOk, SocketError>>,
+    ResponseFuture: Future<Output = Result<T, SocketError>>,
 {
-    type Output = Result<ResponseFutureOk, (SocketError, Request)>;
+    type Output = Result<T, (SocketError, Request)>;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let this = self.project();
@@ -32,16 +28,12 @@ where
                 Ok(res_inner) => Ok(res_inner),
                 Err(error) => Err((error, this.request.clone())),
             },
-            Err(_error) => Err((
-                SocketError::Misc(String::from("FARK")),
-                this.request.clone(),
-            )),
+            Err(error) => Err((SocketError::TimeOut(error), this.request.clone())),
         })
     }
 }
 
-impl<Request, ResponseFuture, ResponseFutureOk>
-    ExecutionRequestFuture<Request, ResponseFuture, ResponseFutureOk>
+impl<Request, ResponseFuture> ExecutionRequestFuture<Request, ResponseFuture>
 where
     ResponseFuture: Future,
 {
@@ -49,7 +41,6 @@ where
         Self {
             request,
             response_future: tokio::time::timeout(timeout, future),
-            _marker: PhantomData::<ResponseFutureOk>,
         }
     }
 }

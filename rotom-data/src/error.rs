@@ -59,6 +59,9 @@ pub enum SocketError {
     #[error("request authorisation invalid: {0}")]
     Unauthorised(String),
 
+    #[error("Timeout error, http request did not send within specified timeframe: {0}")]
+    TimeOut(tokio::time::error::Elapsed),
+
     #[error("{0}")]
     Misc(String), // Miscellaneous error
 

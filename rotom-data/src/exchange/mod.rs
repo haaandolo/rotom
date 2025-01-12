@@ -60,8 +60,8 @@ pub trait PublicStreamConnector {
 /*----- */
 #[async_trait]
 pub trait PublicHttpConnector {
-    type BookSnapShot;
-    type ExchangeTickerInfo: Into<TickerInfo>;
+    type BookSnapShot: Send + Debug;
+    type ExchangeTickerInfo: Into<TickerInfo> + Send + Debug;
 
     const ID: ExchangeId;
 

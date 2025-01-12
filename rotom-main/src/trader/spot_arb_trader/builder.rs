@@ -13,6 +13,7 @@ use rotom_oms::{
     model::{account_data::ExecutionResponse, order::ExecutionRequest},
 };
 use tokio::sync::mpsc::{self, Sender, UnboundedReceiver};
+use tracing::error;
 use uuid::Uuid;
 
 use crate::engine::Command;
@@ -69,10 +70,11 @@ impl<'a> SpotArbTradersBuilder<'a> {
                     self.execution_request_txs
                         .get(&LiquidExchange::CLIENT)
                         .unwrap_or_else(|| {
-                            panic!(
+                            error!(
                                 "Failed get liquid execution request tx for spot arb trader: {:#?}",
                                 LiquidExchange::CLIENT
-                            )
+                            );
+                            std::process::exit(1);
                         })
                         .clone(),
                 )
@@ -80,10 +82,11 @@ impl<'a> SpotArbTradersBuilder<'a> {
                     self.execution_request_txs
                         .get(&IlliquidExchange::CLIENT)
                         .unwrap_or_else(|| {
-                            panic!(
+                            error!(
                                 "Failed get illiquid execution request tx for spot arb trader: {:#?}",
                                 IlliquidExchange::CLIENT
-                            )
+                            );
+                            std::process::exit(1);
                         })
                         .clone(),
                 )

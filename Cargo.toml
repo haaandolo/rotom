@@ -7,6 +7,12 @@ members = [
     "rotom-oms"
 ]
 
+[profile.release]
+panic = "abort"
+
+[profile.dev]
+panic = "abort"
+
 [workspace.dependencies]
 # Async
 tokio = { version = "1", features = ["sync", "macros", "rt-multi-thread"] }

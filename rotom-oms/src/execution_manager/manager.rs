@@ -7,7 +7,7 @@ use rotom_data::{
     AssetFormatted,
 };
 use tokio::sync::mpsc;
-use tracing::debug;
+use tracing::{debug, error};
 
 use crate::{
     exchange::{consume_account_data_stream, ExecutionClient},
@@ -60,7 +60,7 @@ where
             ticker_info: HashMap::with_capacity(100),
             execution_request_channel: ExchangeChannel::default(),
             account_data_rx,
-            request_timeout: std::time::Duration::from_millis(100), // todo: make exchange specific and include in exeution client
+            request_timeout: std::time::Duration::from_millis(200), // todo: make exchange specific?
         }
     }
 
@@ -72,9 +72,6 @@ where
         loop {
             // Get next order out of FuturesUnordered
             let next_open_response = if inflight_opens.is_empty() {
-                // Either::Left(std::future::pending::<
-                //     Result<Exchange::NewOrderResponse, SocketError>,
-                // >())
                 Either::Left(std::future::pending())
             } else {
                 Either::Right(inflight_opens.select_next_some())
@@ -82,12 +79,7 @@ where
 
             // Get ticker info out of FuturesUnordered
             let next_ticker_info_response = if inflight_ticker_infos.is_empty() {
-                Either::Left(std::future::pending::<
-                    Result<
-                        <Exchange::PublicData as PublicHttpConnector>::ExchangeTickerInfo,
-                        SocketError,
-                    >,
-                >())
+                Either::Left(std::future::pending())
             } else {
                 Either::Right(inflight_ticker_infos.select_next_some())
             };
@@ -108,28 +100,22 @@ where
                             }
 
                             // Add ticker info like  precision, min quantity etc, to ExecutionManger
-                            for instrument in request.instruments.into_iter() {
+                            for instrument in request.instruments.iter() {
                                 self.ticker_info.insert(instrument.clone(), TickerInfo::default());
-                                inflight_ticker_infos.push(Exchange::PublicData::get_ticker_info(instrument));
+                                inflight_ticker_infos.push(ExecutionRequestFuture::new(
+                                    Exchange::PublicData::get_ticker_info(instrument.clone()),
+                                    std::time::Duration::from_secs(5),
+                                    request.clone()
+                                ))
                             }
 
                         },
                         ExecutionRequest::Open(request) => {
-                            // inflight_opens.push(self.execution_client.open_order(request));
-                            // inflight_opens.push(
-                            //     RequestFuture2::new(
-                            //         self.execution_client.open_order(request.clone()), //todo make input a clone
-                            //         self.request_timeout,
-                            //         request,
-                            //     )
-                            // );
-                            inflight_opens.push(
-                                ExecutionRequestFuture::new(
+                            inflight_opens.push(ExecutionRequestFuture::new(
                                     self.execution_client.open_order(request.clone()), //todo make input a clone
                                     self.request_timeout,
                                     request,
-                                )
-                            );
+                                ));
                         }
                         ExecutionRequest::Cancel(_request) => {}
                         ExecutionRequest::CancelAll(_request) => {}
@@ -141,15 +127,16 @@ where
 
                 /*----- Check Results of the FuturesUnordered ----- */
                 open_response = next_open_response => {
-                    println!("##############");
-                    println!("Printing result of open order");
-                    println!("##############");
+                    println!("##### Open order #####");
                     println!("Open order res: {:#?}", open_response);
 
                 }
 
                 // Process ticker info
                 ticker_info_response = next_ticker_info_response => {
+                    // println!("##### Ticker Repsone #####");
+                    // println!("{:#?}", self.ticker_info);
+
                     match ticker_info_response {
                         // If request is successful, loop over ticker_info hashmap and format the
                         // instrument to be exchange specific. If it matched the symbol from the
@@ -169,11 +156,12 @@ where
                         },
                         // If unsuccessful, panic as this step is crusial
                         Err(error) => {
-                            panic!(
+                            error!(
                                 "ExecutionManager: {:#?}, failed to get ticker info with error message, {:#?}",
                                 Exchange::CLIENT,
                                 error
-                            )
+                            );
+                            std::process::exit(1);
                         }
                     }
                 }
@@ -181,9 +169,7 @@ where
 
                 /*----- Process Execution Responses from Exchange ----- */
                 Some(account_data) = self.account_data_rx.recv() => {
-                    println!("##############");
-                    println!("In execution manager");
-                    println!("##############");
+                    println!("##### Execution manger #####");
                     println!("Account Data: {:#?}", account_data);
                 }
 

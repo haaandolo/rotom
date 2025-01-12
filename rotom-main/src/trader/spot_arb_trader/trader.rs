@@ -18,7 +18,7 @@ use rotom_strategy::SignalForceExit;
 use std::collections::VecDeque;
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
-use tracing::{debug, warn};
+use tracing::{debug, error, warn};
 use uuid::Uuid;
 
 use crate::engine::{error::EngineError, Command};
@@ -157,12 +157,13 @@ impl TraderRun for SpotArbTrader {
                 }
                 Err(error) => {
                     if start.elapsed() >= timeout {
-                        panic!(
-                            "Failed to subscribe to ExecutionManager's for SpotArbTrader. Error: {:#?}. Trader meta data: {:#?}. Successful subscription message received from: {:#?}",
-                            error,
-                            self.meta_data,
-                            success_msg_received
-                        );
+                        error!(
+                                "Failed to subscribe to ExecutionManager's for SpotArbTrader. Error: {:#?}. Trader meta data: {:#?}. Successful subscription message received from: {:#?}",
+                                error,
+                                self.meta_data,
+                                success_msg_received
+                            );
+                        std::process::exit(1);
                     }
                 }
             }
@@ -225,7 +226,7 @@ impl TraderRun for SpotArbTrader {
                         Some(_) => {}
                         None => {
                             println!("blocking");
-                            std::thread::sleep(std::time::Duration::from_secs(3));
+                            std::thread::sleep(std::time::Duration::from_secs(1));
                             println!("unblocked");
 
                             let order_request = OpenOrder {
