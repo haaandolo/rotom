@@ -1,6 +1,9 @@
 use chrono::Utc;
 use parking_lot::Mutex;
 use rotom_data::{
+    exchange::{
+        binance::BinanceSpotPublicData, poloniex::PoloniexSpotPublicData, PublicHttpConnector,
+    },
     shared::subscription_models::{ExchangeId, Instrument},
     Market, MarketMeta,
 };
@@ -9,8 +12,9 @@ use rotom_oms::{
     event::EventTx,
     exchange::{
         binance::binance_client::BinanceExecution, poloniex::poloniex_client::PoloniexExecution,
+        ExecutionClient,
     },
-    execution_manager::builder::ExecutionBuilder,
+    execution_manager::builder::{ExecutionBuilder, TraderId},
     model::{
         order::{CancelOrder, OpenOrder, OrderEvent, WalletTransfer},
         ClientOrderId,
@@ -109,8 +113,12 @@ pub async fn main() {
     let (arb_traders, trader_command_txs) = SpotArbTradersBuilder::new(&execution_tx_map)
         .add_traders::<BinanceExecution, PoloniexExecution>(vec![
             Instrument::new("op", "usdt"),
-            // Instrument::new("arb", "usdt"),
-            // Instrument::new("ldo", "usdt"),
+            Instrument::new("arb", "usdt"),
+            Instrument::new("ldo", "usdt"),
+            Instrument::new("icp", "usdt"),
+            Instrument::new("sui", "usdt"),
+            Instrument::new("uni", "usdt"),
+            Instrument::new("atom", "usdt"),
         ])
         .await
         .build();
@@ -149,12 +157,12 @@ pub async fn main() {
     //     instrument: Instrument::new("op", "usdt"),
     //     client_order_id: ClientOrderId::random(),
     //     market_meta: MarketMeta {
-    //         close: 1.81,
+    //         close: 1.0,
     //         time: Utc::now(),
     //     },
-    //     decision: Decision::Short,
-    //     original_quantity: 2.8,
-    //     cumulative_quantity: 4.0,
+    //     decision: Decision::Long,
+    //     original_quantity: 1.0,
+    //     cumulative_quantity: 1.0,
     //     order_kind: rotom_oms::model::OrderKind::Market,
     //     exchange_order_status: None,
     //     internal_order_state: rotom_oms::model::order::OrderState::InTransit,
@@ -164,10 +172,9 @@ pub async fn main() {
     //     last_execution_time: None,
     // };
 
-    // // Requests
-    // // let open_order = OpenOrder::from(&order);
-
+    // // // Requests
     // let open_order = OpenOrder {
+    //     trader_id: TraderId(uuid::Uuid::new_v4()),
     //     client_order_id: order.client_order_id,
     //     price: order.market_meta.close,
     //     quantity: order.original_quantity,
@@ -205,7 +212,7 @@ pub async fn main() {
     //     .cancel_order(cancel_order)
     //     .await;
     // let res = binance_exe.cancel_order_all(cancel_order).await;
-    // println!("{:#?}", res);
+    // println!("{:#?}", info);
     // binance_exe.receive_responses().await;
 
     ////////////////////////////////////////////////////

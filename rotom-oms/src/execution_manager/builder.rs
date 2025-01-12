@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use rotom_data::shared::subscription_models::ExchangeId;
+use rotom_data::{exchange::PublicHttpConnector, shared::subscription_models::ExchangeId};
 use tokio::sync::mpsc;
 use uuid::Uuid;
 
@@ -33,6 +33,7 @@ impl ExecutionBuilder {
     pub fn add_exchange<Exchange>(mut self) -> Self
     where
         Exchange: ExecutionClient + Send + Sync + 'static,
+        Exchange::PublicData: PublicHttpConnector,
     {
         // Initialise ExecutionManager
         let execution_manager = ExecutionManager::<Exchange>::init();

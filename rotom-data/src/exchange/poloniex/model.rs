@@ -9,7 +9,7 @@ use crate::{
     model::{
         event_trade::EventTrade,
         market_event::MarketEvent,
-        ticker_info::{TickerInfo, TickerPrecision},
+        ticker_info::{TickerInfo, TickerSpecs},
     },
     shared::{
         de::{de_str, de_u64_epoch_ms_as_datetime_utc, deserialize_non_empty_vec},
@@ -156,6 +156,7 @@ where
 /*----- */
 // Ticker info
 /*----- */
+// Ref: https://api-docs.poloniex.com/spot/api/public/reference-data
 #[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 pub struct PoloniexSpotTickerInfo {
@@ -187,10 +188,10 @@ pub struct SymbolTradeLimit {
     pub quantity_scale: usize,
     #[serde(rename = "amountScale")]
     amount_scale: usize,
-    #[serde(rename = "minQuantity")]
-    min_quantity: String,
-    #[serde(rename = "minAmount")]
-    min_amount: String,
+    #[serde(rename = "minQuantity", deserialize_with = "de_str")]
+    min_quantity: f64,
+    #[serde(rename = "minAmount", deserialize_with = "de_str")]
+    min_amount: f64,
     #[serde(rename = "highestBid")]
     highest_bid: String,
     #[serde(rename = "lowestAsk")]
@@ -208,14 +209,23 @@ pub struct CrossMargin {
 
 impl From<PoloniexSpotTickerInfo> for TickerInfo {
     fn from(info: PoloniexSpotTickerInfo) -> Self {
-        let price_precision = decimal_places_to_number(info.symbol_trade_limit.price_scale);
-        let quantity_precision = decimal_places_to_number(info.symbol_trade_limit.quantity_scale);
         let notional_precision = decimal_places_to_number(info.symbol_trade_limit.amount_scale);
+
+        let price_precision = decimal_places_to_number(info.symbol_trade_limit.price_scale);
+        let min_price = info.symbol_trade_limit.min_amount;
+
+        let quantity_precision = decimal_places_to_number(info.symbol_trade_limit.quantity_scale);
+        let min_quantity = info.symbol_trade_limit.min_quantity;
+
         Self {
-            precision: TickerPrecision {
+            symbol: info.symbol,
+            specs: TickerSpecs {
                 quantity_precision,
+                min_quantity,
                 price_precision,
+                min_price,
                 notional_precision,
+                min_notional: min_price,
             },
         }
     }

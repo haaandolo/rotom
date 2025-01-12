@@ -5,7 +5,9 @@ use async_trait::async_trait;
 use serde::de::DeserializeOwned;
 use std::{fmt::Debug, time::Duration};
 
-use crate::{error::SocketError, shared::subscription_models::Instrument};
+use crate::{
+    error::SocketError, model::ticker_info::TickerInfo, shared::subscription_models::Instrument,
+};
 
 use super::{
     model::SubKind,
@@ -59,13 +61,15 @@ pub trait PublicStreamConnector {
 #[async_trait]
 pub trait PublicHttpConnector {
     type BookSnapShot;
-    type TickerInfo;
+    type ExchangeTickerInfo: Into<TickerInfo>;
 
     const ID: ExchangeId;
 
-    async fn get_book_snapshot(instrument: &Instrument) -> Result<Self::BookSnapShot, SocketError>;
+    async fn get_book_snapshot(instrument: Instrument) -> Result<Self::BookSnapShot, SocketError>;
 
-    async fn get_ticker_info(instrument: &Instrument) -> Result<Self::TickerInfo, SocketError>;
+    async fn get_ticker_info(
+        instrument: Instrument,
+    ) -> Result<Self::ExchangeTickerInfo, SocketError>;
 }
 
 /*----- */

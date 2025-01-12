@@ -71,8 +71,8 @@ impl OrderBookUpdater for BinanceSpotBookUpdater {
 
     async fn init(instrument: &Instrument) -> Result<InstrumentOrderBook<Self>, SocketError> {
         let (snapshot, ticker_info) = try_join!(
-            BinanceSpotPublicData::get_book_snapshot(instrument),
-            BinanceSpotPublicData::get_ticker_info(instrument),
+            BinanceSpotPublicData::get_book_snapshot(instrument.clone()),
+            BinanceSpotPublicData::get_ticker_info(instrument.clone()),
         )?;
 
         let tick_size = ticker_info.symbols[0].filters.iter().find_map(|filter| {

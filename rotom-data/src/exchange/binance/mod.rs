@@ -102,9 +102,9 @@ impl PublicHttpConnector for BinanceSpotPublicData {
     const ID: ExchangeId = ExchangeId::BinanceSpot;
 
     type BookSnapShot = BinanceSpotSnapshot;
-    type TickerInfo = BinanceSpotTickerInfo;
+    type ExchangeTickerInfo = BinanceSpotTickerInfo;
 
-    async fn get_book_snapshot(instrument: &Instrument) -> Result<Self::BookSnapShot, SocketError> {
+    async fn get_book_snapshot(instrument: Instrument) -> Result<Self::BookSnapShot, SocketError> {
         let snapshot_url = format!(
             "{}?symbol={}{}&limit=100",
             HTTP_BOOK_L2_SNAPSHOT_URL_BINANCE_SPOT,
@@ -120,7 +120,9 @@ impl PublicHttpConnector for BinanceSpotPublicData {
             .map_err(SocketError::Http)
     }
 
-    async fn get_ticker_info(instrument: &Instrument) -> Result<Self::TickerInfo, SocketError> {
+    async fn get_ticker_info(
+        instrument: Instrument,
+    ) -> Result<Self::ExchangeTickerInfo, SocketError> {
         let ticker_info_url = format!(
             "{}{}{}",
             HTTP_TICKER_INFO_URL_BINANCE_SPOT,

@@ -43,8 +43,8 @@ impl OrderBookUpdater for PoloniexSpotBookUpdater {
     type UpdateEvent = PoloniexSpotBookUpdate;
 
     async fn init(instrument: &Instrument) -> Result<InstrumentOrderBook<Self>, SocketError> {
-        let ticker_info = PoloniexSpotPublicData::get_ticker_info(instrument).await?;
-        let price_scale = ticker_info[0].symbol_trade_limit.quantity_scale;
+        let ticker_info = PoloniexSpotPublicData::get_ticker_info(instrument.clone()).await?;
+        let price_scale = ticker_info.symbol_trade_limit.quantity_scale;
         let tick_size = decimal_places_to_number(price_scale);
         let orderbook_init = OrderBook::new(tick_size);
 

@@ -85,19 +85,19 @@ impl PublicHttpConnector for PoloniexSpotPublicData {
     const ID: ExchangeId = ExchangeId::PoloniexSpot;
 
     type BookSnapShot = serde_json::Value;
-    type TickerInfo = Vec<PoloniexSpotTickerInfo>;
+    type ExchangeTickerInfo = PoloniexSpotTickerInfo;
 
     // We dont need this for Poloniex rn as snapshot comes through stream. This function should NEVER be called
-    async fn get_book_snapshot(
-        _instrument: &Instrument,
-    ) -> Result<Self::BookSnapShot, SocketError> {
+    async fn get_book_snapshot(_instrument: Instrument) -> Result<Self::BookSnapShot, SocketError> {
         todo!()
     }
 
     // This function returns a Vec<PoloniexSpotTickerInfo> but the function only
     // takes in a single instrument, we should only get a Vec of len == 1. So
     // here we can index by 0 i.e. info[0] to get the res.
-    async fn get_ticker_info(instrument: &Instrument) -> Result<Self::TickerInfo, SocketError> {
+    async fn get_ticker_info(
+        instrument: Instrument,
+    ) -> Result<Self::ExchangeTickerInfo, SocketError> {
         let ticker_info_url = format!(
             "{}{}_{}",
             HTTP_TICKER_INFO_URL_POLONIEX_SPOT,
@@ -105,11 +105,12 @@ impl PublicHttpConnector for PoloniexSpotPublicData {
             instrument.quote.to_uppercase()
         );
 
-        reqwest::get(ticker_info_url)
+        Ok(reqwest::get(ticker_info_url)
             .await
             .map_err(SocketError::Http)?
             .json::<Vec<PoloniexSpotTickerInfo>>()
             .await
-            .map_err(SocketError::Http)
+            .map_err(SocketError::Http)?
+            .remove(0))
     }
 }

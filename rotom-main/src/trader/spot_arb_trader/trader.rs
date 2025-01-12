@@ -171,7 +171,7 @@ impl TraderRun for SpotArbTrader {
 
     fn run(mut self) {
         // Subscribe to ExecutionManagers, panic if unsuccessful
-        // self.subscribe_to_execution_manager();
+        self.subscribe_to_execution_manager();
 
         // If ExecutionManger subscription is successful then go to trading loop
         'trading: loop {
@@ -224,9 +224,9 @@ impl TraderRun for SpotArbTrader {
                     Event::OrderNew(new_order) => match &self.meta_data.order {
                         Some(_) => {}
                         None => {
-                            println!("blocking");
-                            std::thread::sleep(std::time::Duration::from_secs(3));
-                            println!("unblocked");
+                            // println!("blocking");
+                            // std::thread::sleep(std::time::Duration::from_secs(3));
+                            // println!("unblocked");
 
                             let order_request = OpenOrder {
                                 trader_id: self.trader_id,

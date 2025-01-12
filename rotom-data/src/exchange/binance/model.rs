@@ -8,7 +8,7 @@ use crate::{
     model::{
         event_trade::EventTrade,
         market_event::MarketEvent,
-        ticker_info::{TickerInfo, TickerPrecision},
+        ticker_info::{TickerInfo, TickerSpecs},
     },
     shared::{
         de::{de_str, de_u64_epoch_ms_as_datetime_utc, deserialize_non_empty_vec},
@@ -312,28 +312,33 @@ pub enum Filter {
 }
 
 impl From<BinanceSpotTickerInfo> for TickerInfo {
-    fn from(info: BinanceSpotTickerInfo) -> Self {
-        let price_precision = info.symbols[0].filters.iter().find_map(|filter| {
-            if let Filter::PriceFilter { tick_size, .. } = filter {
-                Some(tick_size.to_owned())
+    fn from(mut info: BinanceSpotTickerInfo) -> Self {
+        let symbol_info = info.symbols.remove(0);
+        let (price_precision, min_price) = symbol_info.filters.iter().find_map(|filter| {
+            if let Filter::PriceFilter { tick_size, min_price,.. } = filter {
+                Some((tick_size.to_owned(), min_price.to_owned()))
             } else {
                 None
             }
         }).unwrap_or_else(|| panic!("Price precision for Binance should never panic. This failed for this ticker: {:#?}", info));
 
-        let quantity_precision = info.symbols[0].filters.iter().find_map(|filter| {
-            if let Filter::LotSize { step_size, .. } = filter {
-                Some(step_size.to_owned())
+        let (quantity_precision, min_quantity) = symbol_info.filters.iter().find_map(|filter| {
+            if let Filter::LotSize { step_size, min_qty, .. } = filter {
+                Some((step_size.to_owned(), min_qty.to_owned()))
             } else {
                 None
             }
         }).unwrap_or_else(|| panic!("Quantity precision for Binance should never panic. This failed for this ticker: {:#?}", info));
 
         Self {
-            precision: TickerPrecision {
-                price_precision,
+            symbol: symbol_info.symbol,
+            specs: TickerSpecs {
                 quantity_precision,
+                min_quantity,
+                price_precision,
+                min_price,
                 notional_precision: price_precision,
+                min_notional: 5.0, // todo: this is only the case for usdt
             },
         }
     }
