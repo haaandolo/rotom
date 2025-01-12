@@ -11,8 +11,8 @@ use crate::protocols::ws::WebSocketClient;
 use crate::shared::subscription_models::Subscription;
 use crate::transformer::ExchangeTransformer;
 use crate::{
+    exchange::{PublicStreamConnector, StreamSelector},
     model::{market_event::MarketEvent, SubKind},
-    exchange::{Connector, StreamSelector},
 };
 
 pub const START_RECONNECTION_BACKOFF_MS: u64 = 125;
@@ -23,7 +23,8 @@ pub async fn consume<Exchange, StreamKind>(
 ) -> SocketError
 where
     StreamKind: SubKind,
-    Exchange: Connector + Send + StreamSelector<Exchange, StreamKind> + Debug + Clone + Sync,
+    Exchange:
+        PublicStreamConnector + Send + StreamSelector<Exchange, StreamKind> + Debug + Clone + Sync,
     Exchange::StreamTransformer: ExchangeTransformer<Exchange, Exchange::Stream, StreamKind>,
     Subscription<Exchange, StreamKind>:
         Identifier<Exchange::Channel> + Identifier<Exchange::Market> + Debug,

@@ -2,12 +2,15 @@ use async_trait::async_trait;
 use chrono::Utc;
 use std::mem;
 
-use super::model::{PoloniexSpotBookData, PoloniexSpotBookUpdate};
+use super::{
+    model::{PoloniexSpotBookData, PoloniexSpotBookUpdate},
+    PoloniexSpotPublicData,
+};
 use crate::{
     assets::orderbook::OrderBook,
     error::SocketError,
+    exchange::PublicHttpConnector,
     model::event_book::EventOrderBook,
-    exchange::poloniex::public_http::poloniex_public_http_client::PoloniexPublicData,
     shared::{subscription_models::Instrument, utils::decimal_places_to_number},
     transformer::book::{InstrumentOrderBook, OrderBookUpdater},
 };
@@ -40,7 +43,7 @@ impl OrderBookUpdater for PoloniexSpotBookUpdater {
     type UpdateEvent = PoloniexSpotBookUpdate;
 
     async fn init(instrument: &Instrument) -> Result<InstrumentOrderBook<Self>, SocketError> {
-        let ticker_info = PoloniexPublicData::get_ticker_info(instrument).await?;
+        let ticker_info = PoloniexSpotPublicData::get_ticker_info(instrument).await?;
         let price_scale = ticker_info[0].symbol_trade_limit.quantity_scale;
         let tick_size = decimal_places_to_number(price_scale);
         let orderbook_init = OrderBook::new(tick_size);

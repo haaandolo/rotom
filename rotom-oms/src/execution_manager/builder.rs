@@ -32,7 +32,7 @@ pub struct ExecutionBuilder {
 impl ExecutionBuilder {
     pub fn add_exchange<Exchange>(mut self) -> Self
     where
-        Exchange: ExecutionClient + Send + 'static,
+        Exchange: ExecutionClient + Send + Sync + 'static,
     {
         // Initialise ExecutionManager
         let execution_manager = ExecutionManager::<Exchange>::init();
@@ -40,7 +40,7 @@ impl ExecutionBuilder {
         // Add ExecutionManager ExecutionRequest tx to hashmap for traders to use
         self.execution_request_tx.insert(
             Exchange::CLIENT,
-            execution_manager.execution_request_tx.clone(),
+            execution_manager.execution_request_channel.tx.clone(),
         );
 
         // Tokio spawn ExecutionManager into the ether

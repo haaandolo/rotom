@@ -8,7 +8,8 @@ use rotom_data::{
 use rotom_oms::exchange::ExecutionResponseChannel;
 use rotom_oms::execution_manager::builder::TraderId;
 use rotom_oms::model::account_data::ExecutionResponse;
-use rotom_oms::model::order::ExecutionManagerSubscribe;
+use rotom_oms::model::order::{ExecutionManagerSubscribe, OpenOrder};
+use rotom_oms::model::ClientOrderId;
 use rotom_oms::{
     event::Event,
     model::order::{ExecutionRequest, OrderEvent},
@@ -126,6 +127,7 @@ impl TraderRun for SpotArbTrader {
         // Create subscription request
         let subscription_request = ExecutionManagerSubscribe {
             trader_id: self.trader_id,
+            instruments: vec![self.meta_data.market.clone()],
             execution_response_tx: self.execution_response_channel.tx.clone(),
         };
 
@@ -169,7 +171,7 @@ impl TraderRun for SpotArbTrader {
 
     fn run(mut self) {
         // Subscribe to ExecutionManagers, panic if unsuccessful
-        self.subscribe_to_execution_manager();
+        // self.subscribe_to_execution_manager();
 
         // If ExecutionManger subscription is successful then go to trading loop
         'trading: loop {
@@ -207,28 +209,43 @@ impl TraderRun for SpotArbTrader {
             while let Some(event) = self.event_queue.pop_front() {
                 match event {
                     Event::Market(market_event) => {
-                        println!("#################");
-                        println!("Market data");
-                        println!("#################");
-                        println!("{:?}", market_event);
+                        // println!("#################");
+                        // println!("Market data");
+                        // println!("#################");
+                        // println!("{:?}", market_event);
 
                         // Process latest market event and generate order if applicable
                         if let Some(new_order) =
                             self.order_generator.process_market_event(&market_event)
                         {
-                            self.event_queue.push_back(Event::OrderEvaluate(new_order));
+                            self.event_queue.push_back(Event::OrderNew(new_order));
                         }
                     }
-                    Event::OrderNew(new_order) => {
-                        match &self.meta_data.order {
-                            Some(_) => {
-                                // self.process_existing_order(new_order).await; // uncomment to start limit order
-                            }
-                            None => {
-                                // self.process_new_order().await; // uncomment to start limit order
-                            }
+                    Event::OrderNew(new_order) => match &self.meta_data.order {
+                        Some(_) => {}
+                        None => {
+                            println!("blocking");
+                            std::thread::sleep(std::time::Duration::from_secs(3));
+                            println!("unblocked");
+
+                            let order_request = OpenOrder {
+                                trader_id: self.trader_id,
+                                client_order_id: ClientOrderId::random(),
+                                price: 1.50,
+                                quantity: 5.0,
+                                notional_amount: 1.50 * 5.0,
+                                decision: rotom_strategy::Decision::Long,
+                                order_kind: rotom_oms::model::OrderKind::Limit,
+                                instrument: self.meta_data.market.clone(),
+                            };
+
+                            // self.send_liquid_execution_request(ExecutionRequest::Open(
+                            //     order_request,
+                            // ));
+
+                            self.meta_data.order = Some(new_order);
                         }
-                    }
+                    },
                     _ => {}
                 }
             }
@@ -250,7 +267,7 @@ impl TraderRun for SpotArbTrader {
 }
 
 /*----- */
-// Single Market Trader builder
+// SpotArbTraderBuilder
 /*----- */
 #[derive(Debug, Default)]
 pub struct SpotArbTraderBuilder {

@@ -57,13 +57,12 @@ impl<'a> SpotArbTradersBuilder<'a> {
             let (engine_command_tx, engine_command_rx) = mpsc::channel(3);
 
             // Insert trader tx to receive remote commands
-            self.engine_command_tx
-                .insert(trader_id.clone(), engine_command_tx);
+            self.engine_command_tx.insert(trader_id, engine_command_tx);
 
             // Build the trader
             let arb_trader = SpotArbTrader::builder()
                 .engine_id(Uuid::new_v4())
-                .trader_id(trader_id.clone())
+                .trader_id(trader_id)
                 .command_rx(engine_command_rx)
                 .data(MarketFeed::new(stream_trades::<LiquidExchange, IlliquidExchange>(&market).await))
                 .liquid_exchange_execution(
@@ -104,6 +103,10 @@ impl<'a> SpotArbTradersBuilder<'a> {
         }
 
         self
+    }
+
+    pub fn build(self) -> (Vec<SpotArbTrader>, HashMap<TraderId, Sender<Command>>) {
+        (self.traders, self.engine_command_tx)
     }
 }
 
@@ -152,7 +155,7 @@ where
     let (tx, rx) = mpsc::unbounded_channel();
     tokio::spawn(async move {
         while let Some(event) = data.next().await {
-            // println!("{:?}", event);
+            println!("{:?}", event);
             let _ = tx.send(event);
         }
     });

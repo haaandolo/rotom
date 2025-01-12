@@ -11,12 +11,12 @@ use vecmap::VecMap;
 use super::single::ExchangeChannel;
 use crate::{
     error::SocketError,
+    exchange::{binance::BinanceSpotPublicData, poloniex::PoloniexSpotPublicData},
     model::{
         event_book::{EventOrderBook, OrderBookL2},
         event_trade::{AggTrades, EventTrade, Trades},
         market_event::MarketEvent,
     },
-    exchange::{binance::public_ws_stream::BinanceSpot, poloniex::public_ws_stream::PoloniexSpot},
     shared::subscription_models::{ExchangeId, StreamKind, Subscription},
     streams::consumer::consume,
 };
@@ -63,28 +63,38 @@ impl DynamicStreams {
                     // Binance Spot
                     /*----- */
                     (ExchangeId::BinanceSpot, StreamKind::L2) => {
-                        tokio::spawn(consume::<BinanceSpot, OrderBookL2>(
+                        tokio::spawn(consume::<BinanceSpotPublicData, OrderBookL2>(
                             subs.into_iter()
                                 .map(|sub| {
-                                    Subscription::new(BinanceSpot, sub.instrument, OrderBookL2)
+                                    Subscription::new(
+                                        BinanceSpotPublicData,
+                                        sub.instrument,
+                                        OrderBookL2,
+                                    )
                                 })
                                 .collect(),
                             channels.l2s.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::BinanceSpot, StreamKind::Trades) => {
-                        tokio::spawn(consume::<BinanceSpot, Trades>(
+                        tokio::spawn(consume::<BinanceSpotPublicData, Trades>(
                             subs.into_iter()
-                                .map(|sub| Subscription::new(BinanceSpot, sub.instrument, Trades))
+                                .map(|sub| {
+                                    Subscription::new(BinanceSpotPublicData, sub.instrument, Trades)
+                                })
                                 .collect(),
                             channels.trades.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::BinanceSpot, StreamKind::AggTrades) => {
-                        tokio::spawn(consume::<BinanceSpot, AggTrades>(
+                        tokio::spawn(consume::<BinanceSpotPublicData, AggTrades>(
                             subs.into_iter()
                                 .map(|sub| {
-                                    Subscription::new(BinanceSpot, sub.instrument, AggTrades)
+                                    Subscription::new(
+                                        BinanceSpotPublicData,
+                                        sub.instrument,
+                                        AggTrades,
+                                    )
                                 })
                                 .collect(),
                             channels.trades.entry(exchange).or_default().tx.clone(),
@@ -94,19 +104,29 @@ impl DynamicStreams {
                     // Poloniex Spot
                     /*----- */
                     (ExchangeId::PoloniexSpot, StreamKind::L2) => {
-                        tokio::spawn(consume::<PoloniexSpot, OrderBookL2>(
+                        tokio::spawn(consume::<PoloniexSpotPublicData, OrderBookL2>(
                             subs.into_iter()
                                 .map(|sub| {
-                                    Subscription::new(PoloniexSpot, sub.instrument, OrderBookL2)
+                                    Subscription::new(
+                                        PoloniexSpotPublicData,
+                                        sub.instrument,
+                                        OrderBookL2,
+                                    )
                                 })
                                 .collect(),
                             channels.l2s.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::PoloniexSpot, StreamKind::Trades) => {
-                        tokio::spawn(consume::<PoloniexSpot, Trades>(
+                        tokio::spawn(consume::<PoloniexSpotPublicData, Trades>(
                             subs.into_iter()
-                                .map(|sub| Subscription::new(PoloniexSpot, sub.instrument, Trades))
+                                .map(|sub| {
+                                    Subscription::new(
+                                        PoloniexSpotPublicData,
+                                        sub.instrument,
+                                        Trades,
+                                    )
+                                })
                                 .collect(),
                             channels.trades.entry(exchange).or_default().tx.clone(),
                         ));

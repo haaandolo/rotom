@@ -1,6 +1,6 @@
 use rotom_data::{
+    exchange::{binance::BinanceSpotPublicData, poloniex::PoloniexSpotPublicData},
     model::event_book::OrderBookL2,
-    exchange::{binance::public_ws_stream::BinanceSpot, poloniex::public_ws_stream::PoloniexSpot},
     shared::subscription_models::ExchangeId,
     streams::builder::Streams,
 };
@@ -15,13 +15,13 @@ pub async fn main() {
     /*----- */
     let mut streams = Streams::<OrderBookL2>::builder()
         .subscribe([
-            (BinanceSpot, "sol", "usdt", OrderBookL2),
-            (BinanceSpot, "btc", "usdt", OrderBookL2),
-            (BinanceSpot, "arb", "usdt", OrderBookL2),
+            (BinanceSpotPublicData, "sol", "usdt", OrderBookL2),
+            (BinanceSpotPublicData, "btc", "usdt", OrderBookL2),
+            (BinanceSpotPublicData, "arb", "usdt", OrderBookL2),
         ])
         .subscribe([
-            (PoloniexSpot, "btc", "usdt", OrderBookL2),
-            (PoloniexSpot, "eth", "usdt", OrderBookL2),
+            (PoloniexSpotPublicData, "btc", "usdt", OrderBookL2),
+            (PoloniexSpotPublicData, "eth", "usdt", OrderBookL2),
         ])
         .init()
         .await

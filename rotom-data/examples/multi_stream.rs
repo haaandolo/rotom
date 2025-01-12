@@ -1,12 +1,12 @@
 use futures::StreamExt;
 
 use rotom_data::{
+    exchange::{binance::BinanceSpotPublicData, poloniex::PoloniexSpotPublicData},
     model::{
         event_book::OrderBookL2,
         event_trade::Trades,
         market_event::{DataKind, MarketEvent},
     },
-    exchange::{binance::public_ws_stream::BinanceSpot, poloniex::public_ws_stream::PoloniexSpot},
     streams::builder::Streams,
 };
 
@@ -22,25 +22,25 @@ pub async fn main() {
         .add(
             Streams::<OrderBookL2>::builder()
                 .subscribe([
-                    (BinanceSpot, "avax", "usdt", OrderBookL2),
-                    (BinanceSpot, "celo", "usdt", OrderBookL2),
+                    (BinanceSpotPublicData, "avax", "usdt", OrderBookL2),
+                    (BinanceSpotPublicData, "celo", "usdt", OrderBookL2),
                 ])
                 .subscribe([
-                    (PoloniexSpot, "naka", "usdt", OrderBookL2),
-                    (PoloniexSpot, "matic", "usdt", OrderBookL2),
-                    (PoloniexSpot, "ada", "usdt", OrderBookL2),
+                    (PoloniexSpotPublicData, "naka", "usdt", OrderBookL2),
+                    (PoloniexSpotPublicData, "matic", "usdt", OrderBookL2),
+                    (PoloniexSpotPublicData, "ada", "usdt", OrderBookL2),
                 ]),
         )
         .add(
             Streams::<Trades>::builder()
                 .subscribe([
-                    (BinanceSpot, "sol", "usdt", Trades),
-                    (BinanceSpot, "btc", "usdt", Trades),
-                    (BinanceSpot, "btc", "usdt", Trades),
+                    (BinanceSpotPublicData, "sol", "usdt", Trades),
+                    (BinanceSpotPublicData, "btc", "usdt", Trades),
+                    (BinanceSpotPublicData, "btc", "usdt", Trades),
                 ])
                 .subscribe([
-                    (PoloniexSpot, "sol", "usdt", Trades),
-                    (PoloniexSpot, "btc", "usdt", Trades),
+                    (PoloniexSpotPublicData, "sol", "usdt", Trades),
+                    (PoloniexSpotPublicData, "btc", "usdt", Trades),
                 ]),
         )
         .init()

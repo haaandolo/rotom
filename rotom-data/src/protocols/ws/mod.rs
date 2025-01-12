@@ -10,13 +10,15 @@ use futures::{
 use poll_next::ExchangeStream;
 use serde_json::Value;
 use tokio::{net::TcpStream, time::sleep, time::Duration};
-use tokio_tungstenite::{connect_async, tungstenite::client::IntoClientRequest, MaybeTlsStream, WebSocketStream};
+use tokio_tungstenite::{
+    connect_async, tungstenite::client::IntoClientRequest, MaybeTlsStream, WebSocketStream,
+};
 use tracing::{debug, info};
 
 use crate::{
     error::SocketError,
+    exchange::{Identifier, PublicStreamConnector, StreamSelector},
     model::SubKind,
-    exchange::{Connector, Identifier, StreamSelector},
     shared::subscription_models::{ExchangeSubscription, Subscription},
     streams::validator::{SubscriptionValidator, WebSocketValidator},
     transformer::ExchangeTransformer,
@@ -43,7 +45,12 @@ impl WebSocketClient {
     ) -> Result<ExchangeStream<Exchange::StreamTransformer>, SocketError>
     where
         StreamKind: SubKind,
-        Exchange: Connector + StreamSelector<Exchange, StreamKind> + Send + Clone + Debug + Sync,
+        Exchange: PublicStreamConnector
+            + StreamSelector<Exchange, StreamKind>
+            + Send
+            + Clone
+            + Debug
+            + Sync,
         Exchange::StreamTransformer: ExchangeTransformer<Exchange, Exchange::Stream, StreamKind>,
         Subscription<Exchange, StreamKind>:
             Identifier<Exchange::Channel> + Identifier<Exchange::Market> + Debug,

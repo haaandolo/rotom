@@ -214,6 +214,7 @@ pub struct WalletTransfer {
 #[derive(Debug, Clone)]
 pub struct ExecutionManagerSubscribe {
     pub trader_id: TraderId,
+    pub instruments: Vec<Instrument>,
     pub execution_response_tx: mpsc::UnboundedSender<ExecutionResponse>,
 }
 

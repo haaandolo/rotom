@@ -1,11 +1,13 @@
 use async_trait::async_trait;
 use chrono::Utc;
+use futures::try_join;
 
 use super::model::BinanceSpotBookUpdate;
+use super::model::Filter;
+use super::BinanceSpotPublicData;
 use crate::assets::orderbook::OrderBook;
 use crate::error::SocketError;
-use crate::exchange::binance::public_http::binance_public_http_client::BinancePublicData;
-use crate::exchange::binance::public_http::requests::ticker_info::Filter;
+use crate::exchange::PublicHttpConnector;
 use crate::model::event_book::EventOrderBook;
 use crate::shared::subscription_models::ExchangeId;
 use crate::shared::subscription_models::Instrument;
@@ -68,8 +70,10 @@ impl OrderBookUpdater for BinanceSpotBookUpdater {
     type UpdateEvent = BinanceSpotBookUpdate;
 
     async fn init(instrument: &Instrument) -> Result<InstrumentOrderBook<Self>, SocketError> {
-        let snapshot = BinancePublicData::get_book_snapshot(instrument).await?;
-        let ticker_info = BinancePublicData::get_ticker_info(instrument).await?;
+        let (snapshot, ticker_info) = try_join!(
+            BinanceSpotPublicData::get_book_snapshot(instrument),
+            BinanceSpotPublicData::get_ticker_info(instrument),
+        )?;
 
         let tick_size = ticker_info.symbols[0].filters.iter().find_map(|filter| {
             if let Filter::PriceFilter { tick_size, .. } = filter {

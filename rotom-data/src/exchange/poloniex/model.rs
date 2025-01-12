@@ -5,11 +5,16 @@ use std::mem;
 use crate::{
     assets::level::Level,
     error::SocketError,
-    model::{event_trade::EventTrade, market_event::MarketEvent},
     exchange::Identifier,
+    model::{
+        event_trade::EventTrade,
+        market_event::MarketEvent,
+        ticker_info::{TickerInfo, TickerPrecision},
+    },
     shared::{
         de::{de_str, de_u64_epoch_ms_as_datetime_utc, deserialize_non_empty_vec},
         subscription_models::{ExchangeId, Instrument},
+        utils::decimal_places_to_number,
     },
     streams::validator::Validator,
 };
@@ -148,6 +153,73 @@ where
     <&str as Deserialize>::deserialize(deserializer).map(|buyer_is_maker| buyer_is_maker == "buy")
 }
 
+/*----- */
+// Ticker info
+/*----- */
+#[allow(dead_code)]
+#[derive(Deserialize, Debug)]
+pub struct PoloniexSpotTickerInfo {
+    symbol: String,
+    #[serde(rename = "baseCurrencyName")]
+    base_currency_name: String,
+    #[serde(rename = "quoteCurrencyName")]
+    quote_currency_name: String,
+    #[serde(rename = "displayName")]
+    display_name: String,
+    state: String,
+    #[serde(rename = "visibleStartTime")]
+    visible_start_time: u64,
+    #[serde(rename = "tradableStartTime")]
+    tradable_start_time: u64,
+    #[serde(rename = "symbolTradeLimit")]
+    pub symbol_trade_limit: SymbolTradeLimit,
+    #[serde(rename = "crossMargin")]
+    cross_margin: CrossMargin,
+}
+
+#[allow(dead_code)]
+#[derive(Deserialize, Debug)]
+pub struct SymbolTradeLimit {
+    symbol: String,
+    #[serde(rename = "priceScale")]
+    price_scale: usize,
+    #[serde(rename = "quantityScale")]
+    pub quantity_scale: usize,
+    #[serde(rename = "amountScale")]
+    amount_scale: usize,
+    #[serde(rename = "minQuantity")]
+    min_quantity: String,
+    #[serde(rename = "minAmount")]
+    min_amount: String,
+    #[serde(rename = "highestBid")]
+    highest_bid: String,
+    #[serde(rename = "lowestAsk")]
+    lowest_ask: String,
+}
+
+#[allow(dead_code)]
+#[derive(Deserialize, Debug)]
+pub struct CrossMargin {
+    #[serde(rename = "supportCrossMargin")]
+    support_cross_margin: bool,
+    #[serde(rename = "maxLeverage")]
+    max_leverage: u8,
+}
+
+impl From<PoloniexSpotTickerInfo> for TickerInfo {
+    fn from(info: PoloniexSpotTickerInfo) -> Self {
+        let price_precision = decimal_places_to_number(info.symbol_trade_limit.price_scale);
+        let quantity_precision = decimal_places_to_number(info.symbol_trade_limit.quantity_scale);
+        let notional_precision = decimal_places_to_number(info.symbol_trade_limit.amount_scale);
+        Self {
+            precision: TickerPrecision {
+                quantity_precision,
+                price_precision,
+                notional_precision,
+            },
+        }
+    }
+}
 
 // /*----- */
 // // Tests

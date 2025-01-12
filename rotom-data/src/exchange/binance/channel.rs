@@ -1,10 +1,10 @@
-use super::BinanceSpot;
+use super::BinanceSpotPublicData;
 use crate::{
+    exchange::Identifier,
     model::{
         event_book::OrderBookL2,
         event_trade::{AggTrades, Trades},
     },
-    exchange::Identifier,
     shared::subscription_models::Subscription,
 };
 
@@ -25,18 +25,18 @@ impl AsRef<str> for BinanceChannel {
     }
 }
 
-impl Identifier<BinanceChannel> for Subscription<BinanceSpot, OrderBookL2> {
+impl Identifier<BinanceChannel> for Subscription<BinanceSpotPublicData, OrderBookL2> {
     fn id(&self) -> BinanceChannel {
         BinanceChannel::ORDER_BOOK_L2
     }
 }
-impl Identifier<BinanceChannel> for Subscription<BinanceSpot, Trades> {
+impl Identifier<BinanceChannel> for Subscription<BinanceSpotPublicData, Trades> {
     fn id(&self) -> BinanceChannel {
         BinanceChannel::TRADES
     }
 }
 
-impl Identifier<BinanceChannel> for Subscription<BinanceSpot, AggTrades> {
+impl Identifier<BinanceChannel> for Subscription<BinanceSpotPublicData, AggTrades> {
     fn id(&self) -> BinanceChannel {
         BinanceChannel::AGGREGATED_TRADES
     }

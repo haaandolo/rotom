@@ -1,9 +1,11 @@
 pub mod binance;
 pub mod poloniex;
 
+use async_trait::async_trait;
+use serde::de::DeserializeOwned;
 use std::{fmt::Debug, time::Duration};
 
-use serde::de::DeserializeOwned;
+use crate::{error::SocketError, shared::subscription_models::Instrument};
 
 use super::{
     model::SubKind,
@@ -18,13 +20,12 @@ pub const DEFAULT_SUBSCRIPTION_TIMEOUT: Duration = Duration::from_secs(10);
 /*----- */
 // Exchange connector trait
 /*----- */
-pub trait Connector {
-    type ExchangeId;
+pub trait PublicStreamConnector {
+    const ID: ExchangeId;
+
     type Channel: Send + Sync;
     type Market: Send + Sync;
     type SubscriptionResponse: DeserializeOwned + Validator + Send + Debug;
-
-    const ID: ExchangeId;
 
     fn url() -> &'static str;
 
@@ -53,11 +54,26 @@ pub trait Connector {
 }
 
 /*----- */
+// Exchange http connector
+/*----- */
+#[async_trait]
+pub trait PublicHttpConnector {
+    type BookSnapShot;
+    type TickerInfo;
+
+    const ID: ExchangeId;
+
+    async fn get_book_snapshot(instrument: &Instrument) -> Result<Self::BookSnapShot, SocketError>;
+
+    async fn get_ticker_info(instrument: &Instrument) -> Result<Self::TickerInfo, SocketError>;
+}
+
+/*----- */
 // Stream Selector
 /*----- */
 pub trait StreamSelector<Exchange, StreamKind>
 where
-    Exchange: Connector,
+    Exchange: PublicStreamConnector,
     StreamKind: SubKind,
 {
     type Stream;

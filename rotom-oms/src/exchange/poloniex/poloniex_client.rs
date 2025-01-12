@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use futures::{SinkExt, StreamExt};
 use rotom_data::{
     error::SocketError,
-    exchange::{poloniex::public_ws_stream::PoloniexSpot, Connector},
+    exchange::{poloniex::PoloniexSpotPublicData, PublicStreamConnector},
     protocols::{
         http::{client::RestClient, http_parser::StandardHttpParser},
         ws::{
@@ -114,7 +114,7 @@ impl ExecutionClient for PoloniexExecution {
 
         // Handle custom ping
         let mut tasks = Vec::new();
-        if let Some(ping_interval) = PoloniexSpot::ping_interval() {
+        if let Some(ping_interval) = PoloniexSpotPublicData::ping_interval() {
             let ping_handler =
                 tokio::spawn(schedule_pings_to_exchange(user_data_write, ping_interval));
             tasks.push(ping_handler)

@@ -4,7 +4,12 @@ use tokio::sync::mpsc::{self};
 
 use super::Streams;
 use crate::{
-    error::SocketError, model::{market_event::MarketEvent, SubKind}, exchange::{Connector, Identifier, StreamSelector}, shared::subscription_models::{ExchangeId, Subscription}, streams::consumer::consume, transformer::ExchangeTransformer
+    error::SocketError,
+    exchange::{Identifier, PublicStreamConnector, StreamSelector},
+    model::{market_event::MarketEvent, SubKind},
+    shared::subscription_models::{ExchangeId, Subscription},
+    streams::consumer::consume,
+    transformer::ExchangeTransformer,
 };
 
 pub type SubscribeFuture = Pin<Box<dyn Future<Output = Result<(), SocketError>>>>;
@@ -37,7 +42,7 @@ where
         SubIter: IntoIterator<Item = Sub>,
         Sub: Into<Subscription<Exchange, StreamKind>>,
         Exchange::StreamTransformer: ExchangeTransformer<Exchange, Exchange::Stream, StreamKind>,
-        Exchange: Connector
+        Exchange: PublicStreamConnector
             + Send
             + StreamSelector<Exchange, StreamKind>
             + Ord
@@ -82,6 +87,7 @@ where
 /*----- */
 // Exchange channels
 /*----- */
+#[derive(Debug)]
 pub struct ExchangeChannel<T> {
     pub tx: mpsc::UnboundedSender<T>,
     pub rx: mpsc::UnboundedReceiver<T>,

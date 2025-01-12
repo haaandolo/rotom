@@ -6,9 +6,9 @@ use std::marker::PhantomData;
 use super::book::Map;
 use super::{ExchangeTransformer, Transformer};
 use crate::error::SocketError;
+use crate::exchange::{Identifier, PublicStreamConnector};
 use crate::model::market_event::MarketEvent;
 use crate::model::SubKind;
-use crate::exchange::{Connector, Identifier};
 use crate::shared::subscription_models::{ExchangeSubscription, Instrument};
 
 /*----- */
@@ -53,7 +53,7 @@ impl<Exchange, DeStruct, StreamKind> ExchangeTransformer<Exchange, DeStruct, Str
     for StatelessTransformer<Exchange, DeStruct, StreamKind>
 where
     StreamKind: SubKind,
-    Exchange: Connector + Sync,
+    Exchange: PublicStreamConnector + Sync,
     Exchange::Market: AsRef<str>,
     DeStruct: Send + for<'de> Deserialize<'de> + Identifier<String>,
     MarketEvent<StreamKind::Event>: From<(DeStruct, Instrument)>,

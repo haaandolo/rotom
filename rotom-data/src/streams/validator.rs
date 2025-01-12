@@ -6,7 +6,7 @@ use tracing::debug;
 
 use crate::{
     error::SocketError,
-    exchange::Connector,
+    exchange::PublicStreamConnector,
     protocols::ws::{
         ws_parser::{StreamParser, WebSocketParser},
         WsRead,
@@ -35,7 +35,7 @@ pub trait SubscriptionValidator {
         websocket: WsRead,
     ) -> Result<WsRead, SocketError>
     where
-        Exchange: Connector + Send + Sync,
+        Exchange: PublicStreamConnector + Send + Sync,
         Exchange::SubscriptionResponse: Validator + Send + Debug;
 }
 
@@ -50,7 +50,7 @@ impl SubscriptionValidator for WebSocketValidator {
         mut websocket: WsRead,
     ) -> Result<WsRead, SocketError>
     where
-        Exchange: Connector + Send + Sync,
+        Exchange: PublicStreamConnector + Send + Sync,
         Exchange::SubscriptionResponse: Validator + Send + Debug,
     {
         let exchange_id = Exchange::ID;

@@ -47,24 +47,12 @@ pub async fn main() {
     // Initialise logging
     init_logging();
 
-    ////////////////////////////////////////////////
-    /*----- */
-    // Trader builder
-    /*----- */
-    /////////////////////////////////////////////////
     // Engine id
     let engine_id = Uuid::new_v4();
 
+    ////////////////////////////////////////////////
+    // Old Portfolio - to be replaced
     ///////////////////////////////////////////////////
-    // Channels
-    // Create channel to distribute Commands to the Engine & it's Traders (eg/ Command::Terminate)
-    let (_command_tx, command_rx) = mpsc::channel(20);
-
-    // Create Event channel to listen to all Engine Events in real-time
-    let (event_tx, _event_rx) = mpsc::unbounded_channel();
-    let _event_tx = EventTx::new(event_tx);
-
-    // Portfolio
     let portfolio = Arc::new(Mutex::new(
         MetaPortfolio::builder()
             .engine_id(engine_id)
@@ -118,20 +106,21 @@ pub async fn main() {
     ////////////////////////////////////////////////////
     // Arb traders builder
     ////////////////////////////////////////////////////
-    let mut arb_trader_meta = SpotArbTradersBuilder::new(&execution_tx_map)
+    let (arb_traders, trader_command_txs) = SpotArbTradersBuilder::new(&execution_tx_map)
         .add_traders::<BinanceExecution, PoloniexExecution>(vec![
             Instrument::new("op", "usdt"),
-            Instrument::new("arb", "usdt"),
-            Instrument::new("ldo", "usdt"),
+            // Instrument::new("arb", "usdt"),
+            // Instrument::new("ldo", "usdt"),
         ])
-        .await;
-
-    let arb_traders = std::mem::take(&mut arb_trader_meta.traders);
-    let trader_command_txs = std::mem::take(&mut arb_trader_meta.engine_command_tx);
+        .await
+        .build();
 
     /////////////////////////////////////////////////////////////
     // Engine
     /////////////////////////////////////////////////////////////
+    // Create channel to distribute Commands to the Engine & it's Traders (eg/ Command::Terminate)
+    let (_command_tx, command_rx) = mpsc::channel(20);
+
     let engine = Engine::builder()
         .engine_id(engine_id)
         .command_rx(command_rx)
@@ -253,6 +242,7 @@ fn init_logging() {
 /*----- */
 // Todo
 /*----- */
+// - futures unordered!!!!!!!
 // - work on exeution manager
 // - idea for execution client. Wrap execution client in a Arc to generate a future - this should be pretty quick, so won't hold up other threads. Then await it inside the trader to yield it.A
 // - also, if we couple a tx and rx for each exchange executionn manager, we can just clone the tx for respective senders

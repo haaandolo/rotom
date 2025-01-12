@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
-use crate::exchange::{Connector, Identifier};
+use crate::exchange::{Identifier, PublicStreamConnector};
 
 /*----- */
 // Instrument model
@@ -86,7 +86,7 @@ pub struct ExchangeSubscription<Exchange, Channel, Market> {
 
 impl<Exchange> ExchangeSubscription<Exchange, Exchange::Channel, Exchange::Market>
 where
-    Exchange: Connector + Clone,
+    Exchange: PublicStreamConnector + Clone,
 {
     pub fn new<StreamKind>(subs: &Subscription<Exchange, StreamKind>) -> Self
     where

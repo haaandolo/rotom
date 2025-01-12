@@ -4,7 +4,7 @@ pub mod stateless_transformer;
 use async_trait::async_trait;
 use serde::Deserialize;
 
-use crate::{exchange::Connector, shared::subscription_models::ExchangeSubscription};
+use crate::{exchange::PublicStreamConnector, shared::subscription_models::ExchangeSubscription};
 
 use super::{
     error::SocketError,
@@ -31,7 +31,7 @@ where
     Self: Transformer<Input = DeStruct, Output = MarketEvent<StreamKind::Event>, Error = SocketError>
         + Sized,
     StreamKind: SubKind,
-    Exchange: Connector,
+    Exchange: PublicStreamConnector,
 {
     async fn new(
         subs: &[ExchangeSubscription<Exchange, Exchange::Channel, Exchange::Market>],
