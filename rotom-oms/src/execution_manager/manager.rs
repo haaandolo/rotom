@@ -11,6 +11,7 @@ use tracing::debug;
 
 use crate::{
     exchange::{consume_account_data_stream, ExecutionClient},
+    execution_manager::request::ExecutionRequestFuture,
     model::{
         account_data::{AccountDataOrder, ExecutionResponse},
         order::{ExecutionManagerSubscribe, ExecutionRequest, OpenOrder},
@@ -65,21 +66,22 @@ where
 
     pub async fn run(mut self) {
         // Init FuturesUnordered
-        let mut ticker_infos = FuturesUnordered::new();
         let mut inflight_opens = FuturesUnordered::new();
+        let mut inflight_ticker_infos = FuturesUnordered::new();
 
         loop {
             // Get next order out of FuturesUnordered
             let next_open_response = if inflight_opens.is_empty() {
-                Either::Left(std::future::pending::<
-                    Result<Exchange::NewOrderResponse, SocketError>,
-                >())
+                // Either::Left(std::future::pending::<
+                //     Result<Exchange::NewOrderResponse, SocketError>,
+                // >())
+                Either::Left(std::future::pending())
             } else {
                 Either::Right(inflight_opens.select_next_some())
             };
 
             // Get ticker info out of FuturesUnordered
-            let next_ticker_info_response = if ticker_infos.is_empty() {
+            let next_ticker_info_response = if inflight_ticker_infos.is_empty() {
                 Either::Left(std::future::pending::<
                     Result<
                         <Exchange::PublicData as PublicHttpConnector>::ExchangeTickerInfo,
@@ -87,11 +89,11 @@ where
                     >,
                 >())
             } else {
-                Either::Right(ticker_infos.select_next_some())
+                Either::Right(inflight_ticker_infos.select_next_some())
             };
 
             tokio::select! {
-                // Handle execution requests
+                /*----- Handle Execution Requests from Traders ----- */
                 Some(request) = self.execution_request_channel.rx.recv() => {
                     match request {
                         ExecutionRequest::Subscribe(request) => {
@@ -108,12 +110,26 @@ where
                             // Add ticker info like  precision, min quantity etc, to ExecutionManger
                             for instrument in request.instruments.into_iter() {
                                 self.ticker_info.insert(instrument.clone(), TickerInfo::default());
-                                ticker_infos.push(Exchange::PublicData::get_ticker_info(instrument));
+                                inflight_ticker_infos.push(Exchange::PublicData::get_ticker_info(instrument));
                             }
 
                         },
                         ExecutionRequest::Open(request) => {
-                            inflight_opens.push(self.execution_client.open_order(request));
+                            // inflight_opens.push(self.execution_client.open_order(request));
+                            // inflight_opens.push(
+                            //     RequestFuture2::new(
+                            //         self.execution_client.open_order(request.clone()), //todo make input a clone
+                            //         self.request_timeout,
+                            //         request,
+                            //     )
+                            // );
+                            inflight_opens.push(
+                                ExecutionRequestFuture::new(
+                                    self.execution_client.open_order(request.clone()), //todo make input a clone
+                                    self.request_timeout,
+                                    request,
+                                )
+                            );
                         }
                         ExecutionRequest::Cancel(_request) => {}
                         ExecutionRequest::CancelAll(_request) => {}
@@ -122,15 +138,8 @@ where
 
                 }
 
-                // Handle account data updates
-                Some(account_data) = self.account_data_rx.recv() => {
-                    println!("##############");
-                    println!("In execution manager");
-                    println!("##############");
-                    println!("Account Data: {:#?}", account_data);
-                }
 
-                // Process next ExecutionRequest::Open response
+                /*----- Check Results of the FuturesUnordered ----- */
                 open_response = next_open_response => {
                     println!("##############");
                     println!("Printing result of open order");
@@ -141,13 +150,10 @@ where
 
                 // Process ticker info
                 ticker_info_response = next_ticker_info_response => {
-                    println!("##############");
-                    println!("Ticker info");
-                    println!("##############");
-                    println!("ticker info: {:#?}", self.ticker_info);
-
                     match ticker_info_response {
-                        // If request is successful match find the formatted instrument and insert the actual value
+                        // If request is successful, loop over ticker_info hashmap and format the
+                        // instrument to be exchange specific. If it matched the symbol from the
+                        // result of the response, replace the value of the hashmap with this.
                         Ok(ticker_info) => {
                             let ticker = ticker_info.into();
 
@@ -164,12 +170,21 @@ where
                         // If unsuccessful, panic as this step is crusial
                         Err(error) => {
                             panic!(
-                                "ExecutionManager: {:#?}, failed to get ticker infomation with error, {:#?}",
+                                "ExecutionManager: {:#?}, failed to get ticker info with error message, {:#?}",
                                 Exchange::CLIENT,
                                 error
                             )
                         }
                     }
+                }
+
+
+                /*----- Process Execution Responses from Exchange ----- */
+                Some(account_data) = self.account_data_rx.recv() => {
+                    println!("##############");
+                    println!("In execution manager");
+                    println!("##############");
+                    println!("Account Data: {:#?}", account_data);
                 }
 
                 // Break the loop if both channels are closed

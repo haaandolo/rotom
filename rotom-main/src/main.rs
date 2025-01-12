@@ -113,12 +113,12 @@ pub async fn main() {
     let (arb_traders, trader_command_txs) = SpotArbTradersBuilder::new(&execution_tx_map)
         .add_traders::<BinanceExecution, PoloniexExecution>(vec![
             Instrument::new("op", "usdt"),
-            Instrument::new("arb", "usdt"),
-            Instrument::new("ldo", "usdt"),
-            Instrument::new("icp", "usdt"),
-            Instrument::new("sui", "usdt"),
-            Instrument::new("uni", "usdt"),
-            Instrument::new("atom", "usdt"),
+            // Instrument::new("arb", "usdt"),
+            // Instrument::new("ldo", "usdt"),
+            // Instrument::new("icp", "usdt"),
+            // Instrument::new("sui", "usdt"),
+            // Instrument::new("uni", "usdt"),
+            // Instrument::new("atom", "usdt"),
         ])
         .await
         .build();

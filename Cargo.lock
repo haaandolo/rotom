@@ -1214,6 +1214,7 @@ dependencies = [
  "hex",
  "hmac",
  "parking_lot",
+ "pin-project",
  "prettytable-rs",
  "rand",
  "redis",

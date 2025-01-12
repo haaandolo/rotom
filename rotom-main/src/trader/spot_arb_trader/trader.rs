@@ -224,24 +224,24 @@ impl TraderRun for SpotArbTrader {
                     Event::OrderNew(new_order) => match &self.meta_data.order {
                         Some(_) => {}
                         None => {
-                            // println!("blocking");
-                            // std::thread::sleep(std::time::Duration::from_secs(3));
-                            // println!("unblocked");
+                            println!("blocking");
+                            std::thread::sleep(std::time::Duration::from_secs(3));
+                            println!("unblocked");
 
                             let order_request = OpenOrder {
                                 trader_id: self.trader_id,
                                 client_order_id: ClientOrderId::random(),
                                 price: 1.50,
-                                quantity: 5.0,
+                                quantity: 50.0,
                                 notional_amount: 1.50 * 5.0,
                                 decision: rotom_strategy::Decision::Long,
                                 order_kind: rotom_oms::model::OrderKind::Limit,
                                 instrument: self.meta_data.market.clone(),
                             };
 
-                            // self.send_liquid_execution_request(ExecutionRequest::Open(
-                            //     order_request,
-                            // ));
+                            self.send_liquid_execution_request(ExecutionRequest::Open(
+                                order_request,
+                            ));
 
                             self.meta_data.order = Some(new_order);
                         }
