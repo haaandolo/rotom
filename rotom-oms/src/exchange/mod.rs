@@ -9,6 +9,7 @@ use futures::StreamExt;
 use hmac::Hmac;
 use rotom_data::{
     error::SocketError,
+    exchange::{PublicHttpConnector, PublicStreamConnector},
     protocols::ws::{
         ws_parser::{StreamParser, WebSocketParser},
         JoinHandle, WsRead,
@@ -55,6 +56,7 @@ impl AccountDataWebsocket {
 pub trait ExecutionClient {
     const CLIENT: ExchangeId;
 
+    type PublicData: PublicStreamConnector + PublicHttpConnector;
     type CancelResponse: Send + Debug;
     type CancelAllResponse: Send + Debug;
     type NewOrderResponse: Send + Debug;

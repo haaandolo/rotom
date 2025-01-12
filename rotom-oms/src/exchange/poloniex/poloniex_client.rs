@@ -48,6 +48,7 @@ pub struct PoloniexExecution {
 impl ExecutionClient for PoloniexExecution {
     const CLIENT: ExchangeId = ExchangeId::PoloniexSpot;
 
+    type PublicData = PoloniexSpotPublicData;
     type CancelResponse = Vec<PoloniexCancelOrderResponse>;
     type CancelAllResponse = Vec<PoloniexCancelOrderResponse>;
     type NewOrderResponse = PoloniexNewOrderResponse;

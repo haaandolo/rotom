@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use futures::StreamExt;
 use rotom_data::error::SocketError;
+use rotom_data::exchange::binance::BinanceSpotPublicData;
 use rotom_data::protocols::http::client::RestClient;
 use rotom_data::protocols::http::http_parser::StandardHttpParser;
 use rotom_data::protocols::ws::connect;
@@ -41,6 +42,7 @@ pub struct BinanceExecution {
 impl ExecutionClient for BinanceExecution {
     const CLIENT: ExchangeId = ExchangeId::BinanceSpot;
 
+    type PublicData = BinanceSpotPublicData;
     type CancelResponse = BinanceCancelOrderResponse;
     type CancelAllResponse = Vec<BinanceCancelOrderResponse>;
     type NewOrderResponse = BinanceNewOrderResponses;
