@@ -1,11 +1,11 @@
 use rotom_data::shared::subscription_models::Instrument;
+use rotom_data::streams::builder::single::ExchangeChannel;
 use rotom_data::MarketFeed;
 use rotom_data::{
     model::market_event::{DataKind, MarketEvent},
     shared::subscription_models::ExchangeId,
     Feed, MarketGenerator,
 };
-use rotom_oms::exchange::ExecutionResponseChannel;
 use rotom_oms::execution_manager::builder::TraderId;
 use rotom_oms::model::account_data::ExecutionResponse;
 use rotom_oms::model::order::{ExecutionManagerSubscribe, OpenOrder};
@@ -60,7 +60,7 @@ pub struct SpotArbTrader {
     data: MarketFeed<MarketEvent<DataKind>>,
     liquid_exchange_execution: mpsc::UnboundedSender<ExecutionRequest>,
     illiquid_exchange_execution: mpsc::UnboundedSender<ExecutionRequest>,
-    execution_response_channel: ExecutionResponseChannel,
+    execution_response_channel: ExchangeChannel<ExecutionResponse>,
     order_generator: SpotArbOrderGenerator,
     event_queue: VecDeque<Event>,
     meta_data: SpotArbTraderMetaData,
@@ -277,7 +277,7 @@ pub struct SpotArbTraderBuilder {
     pub data: Option<MarketFeed<MarketEvent<DataKind>>>,
     pub liquid_exchange_execution: Option<mpsc::UnboundedSender<ExecutionRequest>>,
     pub illiquid_exchange_execution: Option<mpsc::UnboundedSender<ExecutionRequest>>,
-    pub execution_response_channel: Option<ExecutionResponseChannel>,
+    pub execution_response_channel: Option<ExchangeChannel<ExecutionResponse>>,
     pub order_generator: Option<SpotArbOrderGenerator>,
     pub meta_data: Option<SpotArbTraderMetaData>,
 }
@@ -342,7 +342,7 @@ impl SpotArbTraderBuilder {
         }
     }
 
-    pub fn execution_response_channel(self, value: ExecutionResponseChannel) -> Self {
+    pub fn execution_response_channel(self, value: ExchangeChannel<ExecutionResponse>) -> Self {
         Self {
             execution_response_channel: Some(value),
             ..self

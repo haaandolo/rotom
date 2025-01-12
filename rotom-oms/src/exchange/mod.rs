@@ -98,28 +98,6 @@ pub trait ExecutionClient {
 }
 
 /*----- */
-// Execution Request Channels
-/*----- */
-#[derive(Debug)]
-pub struct ExecutionResponseChannel {
-    pub tx: mpsc::UnboundedSender<ExecutionResponse>,
-    pub rx: mpsc::UnboundedReceiver<ExecutionResponse>,
-}
-
-impl ExecutionResponseChannel {
-    pub fn new() -> Self {
-        let (tx, rx) = mpsc::unbounded_channel();
-        Self { tx, rx }
-    }
-}
-
-impl Default for ExecutionResponseChannel {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-/*----- */
 // Account User Data Auto Reconnect
 /*----- */
 pub async fn consume_account_data_stream<Exchange>(

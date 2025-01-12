@@ -4,13 +4,13 @@ use futures::StreamExt;
 use rotom_data::{
     model::market_event::{DataKind, MarketEvent},
     shared::subscription_models::{ExchangeId, Instrument, StreamKind},
-    streams::builder::dynamic,
+    streams::builder::{dynamic, single::ExchangeChannel},
     MarketFeed,
 };
 use rotom_oms::{
-    exchange::{ExecutionClient, ExecutionResponseChannel},
+    exchange::ExecutionClient,
     execution_manager::builder::TraderId,
-    model::order::ExecutionRequest,
+    model::{account_data::ExecutionResponse, order::ExecutionRequest},
 };
 use tokio::sync::mpsc::{self, Sender, UnboundedReceiver};
 use uuid::Uuid;
@@ -87,7 +87,7 @@ impl<'a> SpotArbTradersBuilder<'a> {
                         })
                         .clone(),
                 )
-                .execution_response_channel(ExecutionResponseChannel::default())
+                .execution_response_channel(ExchangeChannel::<ExecutionResponse>::default())
                 .order_generator(SpotArbOrderGenerator::default())
                 .meta_data(SpotArbTraderMetaData {
                     order: None,
