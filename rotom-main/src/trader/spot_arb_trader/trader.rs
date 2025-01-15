@@ -240,9 +240,9 @@ impl TraderRun for SpotArbTrader {
                                 instrument: self.meta_data.market.clone(),
                             };
 
-                            self.send_liquid_execution_request(ExecutionRequest::Open(
-                                order_request,
-                            ));
+                            // self.send_liquid_execution_request(ExecutionRequest::Open(
+                            //     order_request,
+                            // ));
 
                             self.meta_data.order = Some(new_order);
                         }

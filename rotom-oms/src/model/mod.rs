@@ -103,11 +103,6 @@ impl std::fmt::Display for Side {
 pub enum OrderKind {
     Market,
     Limit,
-    StopLoss,
-    StopLossLimit,
-    TakeProfit,
-    TakeProfitLimit,
-    LimitMaker,
 }
 
 impl AsRef<str> for OrderKind {
@@ -115,11 +110,6 @@ impl AsRef<str> for OrderKind {
         match self {
             OrderKind::Market => "market",
             OrderKind::Limit => "limit",
-            OrderKind::LimitMaker => "limit maker",
-            OrderKind::StopLoss => "stop loss",
-            OrderKind::StopLossLimit => "stop loss limit",
-            OrderKind::TakeProfit => "take profit",
-            OrderKind::TakeProfitLimit => "take profit limit",
         }
     }
 }
@@ -132,11 +122,6 @@ impl Display for OrderKind {
             match self {
                 OrderKind::Market => "market",
                 OrderKind::Limit => "limit",
-                OrderKind::LimitMaker => "limit maker",
-                OrderKind::StopLoss => "stop loss",
-                OrderKind::StopLossLimit => "stop loss limit",
-                OrderKind::TakeProfit => "take profit",
-                OrderKind::TakeProfitLimit => "take profit limit",
             }
         )
     }

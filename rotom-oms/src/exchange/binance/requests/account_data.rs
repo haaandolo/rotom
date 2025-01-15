@@ -78,13 +78,14 @@ impl From<BinanceAccountDataOrder> for AccountDataOrder {
             exchange: ExchangeId::BinanceSpot,
             client_order_id: order.c,
             asset: order.s,
-            price: order.L,
-            quantity: order.l,
+            current_executed_price: order.L,
+            current_executed_quantity: order.l,
+            cumulative_base: order.z,
+            cumulative_quote: order.Z,
             status: order.X,
             execution_time: order.T,
             side: order.S,
             fee: order.n,
-            filled_gross: order.Z,
         }
     }
 }

@@ -27,25 +27,35 @@ pub enum OrderStatus {
     Failed,
 }
 
+/*
+pub enum ExchangeOrderState {
+    Open(Open),
+    FullyFilled,
+    Cancelled(Cancelled),
+    Rejected(Option<String>),
+    Expired,
+}
+*/
+
 /*----- */
 // Account Data - Order
 /*----- */
 #[derive(Debug)]
 pub struct AccountDataOrder {
     pub exchange: ExchangeId,
-    pub client_order_id: String,
     pub asset: String, // smol
+    pub client_order_id: String,
     // Executed price for this order. E.g. if filled with multiple price levels, the price represents the price this certain order got executed
-    pub price: f64,
+    pub current_executed_price: f64,
     // Excuted quantity for this order. E.g. if order is filled with mulitple limit orders, then this figure represents the quantity for this order and not the aggregate
-    pub quantity: f64,
+    pub current_executed_quantity: f64,
+    pub cumulative_base: f64,
+    pub cumulative_quote: f64,
     pub status: OrderStatus,
     pub execution_time: DateTime<Utc>,
     pub side: Side,
     // Fee is not cumulative, and relates to this particular trade. E.g. if filled on multiple orders, this fee represents the amount paid for a single fill and not the aggregate
     pub fee: f64,
-    // Aggregate quote fill value, this is a cumulative figure. E.g. if filled with muliple limit orders, this represents the total filled quote amount for the order as a whole. We wanted $50 worth and got 2 limit order fills or $10, so this figure will be $20.
-    pub filled_gross: f64,
 }
 
 impl From<&AccountDataOrder> for ExchangeAssetId {

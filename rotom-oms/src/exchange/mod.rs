@@ -123,10 +123,10 @@ where
         _backoff_ms *= 2;
 
         while let Some(msg) = stream.user_data_ws.next().await {
-            println!("### Raw ###");
-            println!("{:#?}", msg);
             match WebSocketParser::parse::<Exchange::AccountDataStreamResponse>(msg) {
                 Some(Ok(exchange_message)) => {
+                    println!("### Parsed  ###");
+                    println!("{:#?}", exchange_message);
                     if let Err(error) = account_data_tx.send(exchange_message.into()) {
                         debug!(
                             payload = ?error.0,

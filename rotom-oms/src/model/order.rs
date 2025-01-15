@@ -82,8 +82,8 @@ impl OrderEvent {
     ) {
         self.set_state(OrderState::Open);
         self.exchange_order_status = Some(account_data_update.status);
-        self.filled_gross = account_data_update.filled_gross; // Filled_gross field in AccountDataOrder is cumulative so we can just set it each time
-        self.cumulative_quantity += account_data_update.quantity; // Quantity field in AccountDataOrder is not cumulative we have to "+=" here
+        self.filled_gross = account_data_update.cumulative_quote; // Filled_gross field in AccountDataOrder is cumulative so we can just set it each time
+        self.cumulative_quantity += account_data_update.current_executed_quantity; // Quantity field in AccountDataOrder is not cumulative we have to "+=" here
         self.enter_avg_price = self.calculate_avg_price(); // This step has to happen after the cumulative_quantity & filled_gross gets updated
         self.fees += account_data_update.fee;
         self.last_execution_time = Some(account_data_update.execution_time);
@@ -239,5 +239,69 @@ impl std::fmt::Display for ExecutionRequest {
             ExecutionRequest::CancelAll(request) => write!(f, "{:#?}", request),
             ExecutionRequest::Transfer(request) => write!(f, "{:#?}", request),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[derive(Deserialize, Debug, PartialEq)]
+    struct CoinId {
+        id: String,
+    }
+
+    #[test]
+    fn test_partial_deserialization() {
+        // Test case 1: Basic JSON with extra field
+        let json = r#"
+            {
+                "id": "coin123",
+                "balance": 1000
+            }
+        "#;
+
+        let coin = serde_json::from_str::<CoinId>(json).unwrap();
+        assert_eq!(
+            coin,
+            CoinId {
+                id: String::from("coin123")
+            }
+        );
+
+        // Test case 2: JSON with multiple extra fields
+        let complex_json = r#"
+            {
+                "id": "coin456",
+                "balance": 2000,
+                "owner": "alice",
+                "created_at": "2024-01-16",
+                "active": true
+            }
+        "#;
+
+        let coin = serde_json::from_str::<CoinId>(complex_json).unwrap();
+        assert_eq!(
+            coin,
+            CoinId {
+                id: String::from("coin456")
+            }
+        );
+
+        // Test case 3: JSON with different field order
+        let reordered_json = r#"
+            {
+                "balance": 3000,
+                "id": "coin789"
+            }
+        "#;
+
+        let coin = serde_json::from_str::<CoinId>(reordered_json).unwrap();
+        assert_eq!(
+            coin,
+            CoinId {
+                id: String::from("coin789")
+            }
+        );
     }
 }

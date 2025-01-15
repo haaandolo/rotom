@@ -1,6 +1,11 @@
 use std::{collections::HashMap, sync::Arc};
 
-use futures::{future::Either, stream::FuturesUnordered, StreamExt};
+use futures::{
+    future::{self, Either},
+    stream::FuturesUnordered,
+    StreamExt,
+};
+
 use rotom_data::{
     error::SocketError, exchange::PublicHttpConnector, model::ticker_info::TickerInfo,
     shared::subscription_models::Instrument, streams::builder::single::ExchangeChannel,
@@ -114,7 +119,7 @@ where
                             inflight_opens.push(ExecutionRequestFuture::new(
                                     self.execution_client.open_order(request.clone()), //todo make input a clone
                                     self.request_timeout,
-                                    request,
+                                    request.clone(),
                                 ));
                         }
                         ExecutionRequest::Cancel(_request) => {}
@@ -124,12 +129,22 @@ where
 
                 }
 
+                /*----- Process Execution Responses from Exchange ----- */
+                Some(account_data) = self.account_data_rx.recv() => {
+                    // println!("##### Execution manger #####");
+                    // println!("Account Data: {:#?}", account_data);
+                }
 
                 /*----- Check Results of the FuturesUnordered ----- */
                 open_response = next_open_response => {
-                    println!("##### Open order #####");
-                    println!("Open order res: {:#?}", open_response);
+                    // println!("##### Open order #####");
+                    // println!("Open order res: {:#?}", open_response);
 
+                    // When checking http reponse, we only cared if it error. If it
+                    // is successful, we would see it come up in the stream
+                    if let Err(error) = open_response {
+                        println!("{:#?}", error); // todo
+                    }
                 }
 
                 // Process ticker info
@@ -166,12 +181,6 @@ where
                     }
                 }
 
-
-                /*----- Process Execution Responses from Exchange ----- */
-                Some(account_data) = self.account_data_rx.recv() => {
-                    println!("##### Execution manger #####");
-                    println!("Account Data: {:#?}", account_data);
-                }
 
                 // Break the loop if both channels are closed
                 else => {

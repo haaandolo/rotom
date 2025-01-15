@@ -68,13 +68,14 @@ impl From<PoloniexAccountDataOrder> for AccountDataOrder {
             exchange: ExchangeId::PoloniexSpot,
             client_order_id: std::mem::take(&mut order.data[0].order_id),
             asset: std::mem::take(&mut order.data[0].symbol),
-            price: order.data[0].trade_price,
-            quantity: order.data[0].trade_qty,
+            current_executed_price: order.data[0].trade_price,
+            current_executed_quantity: order.data[0].trade_qty,
+            cumulative_base: order.data[0].filled_quantity,
+            cumulative_quote: order.data[0].filled_amount,
             status: order.data[0].state,
             execution_time: order.data[0].create_time,
             side: order.data[0].side,
             fee: order.data[0].trade_fee,
-            filled_gross: order.data[0].filled_amount,
         }
     }
 }
