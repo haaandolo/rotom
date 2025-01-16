@@ -34,7 +34,7 @@ impl Authenticator for PoloniexAuthParams {
 /*----- */
 // Impl Authenticator for Poloniex
 /*----- */
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PoloniexRequestBuilder;
 
 #[derive(Debug)]

@@ -3,7 +3,7 @@ use rotom_data::{
     error::SocketError,
     model::market_event::{DataKind, MarketEvent},
     shared::subscription_models::ExchangeId,
-    AssetFormatted, ExchangeAssetId,
+    ExchangeAssetId,
 };
 use rotom_strategy::{Decision, Signal, SignalForceExit, SignalStrength};
 use std::collections::HashMap;
@@ -12,19 +12,18 @@ use uuid::Uuid;
 use crate::{
     event::Event,
     exchange::{
-        binance::binance_client::BinancePrivateData, poloniex::poloniex_client::PoloniexPrivateData,
+        binance::binance_client::BinanceExecution, poloniex::poloniex_client::PoloniexExecution,
+        ExecutionClient,
     },
     execution::FillEvent,
     model::{
-        account_data::{
-            AccountDataBalance, AccountDataBalanceDelta, AccountDataOrder, OrderStatus,
-        },
+        account_data::{AccountDataBalance, AccountDataBalanceDelta},
         balance::{determine_balance_id, SpotBalanceId},
         order::{OrderEvent, OrderState},
         ClientOrderId, OrderKind, Side,
     },
     portfolio::{
-        allocator::{spot_arb_allocator::SpotArbAllocator, OrderAllocator},
+        allocator::spot_arb_allocator::SpotArbAllocator,
         error::PortfolioError,
         persistence::spot_in_memory::SpotInMemoryRepository,
         position::{
@@ -64,14 +63,12 @@ impl SpotPortfolio {
         for exchange in self.exchanges.iter() {
             let exchange_balance = match exchange {
                 ExchangeId::BinanceSpot => {
-                    let balance = BinancePrivateData::new().get_balance_all().await?;
-                    let asset_balance: Vec<AccountDataBalance> = balance.into();
-                    asset_balance
+                    let balance = BinanceExecution::get_balances().await?;
+                    balance
                 }
                 ExchangeId::PoloniexSpot => {
-                    let balance = PoloniexPrivateData::new().get_balance_all().await?;
-                    let asset_balance: Vec<AccountDataBalance> = balance.into();
-                    asset_balance
+                    let balance = PoloniexExecution::get_balances().await?;
+                    balance
                 }
             };
 

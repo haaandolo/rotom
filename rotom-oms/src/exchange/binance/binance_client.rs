@@ -12,6 +12,7 @@ use crate::exchange::binance::requests::new_order::BinanceNewOrder;
 use crate::exchange::binance::requests::wallet_transfer::BinanceWalletTransfer;
 use crate::exchange::AccountDataWebsocket;
 use crate::exchange::ExecutionClient;
+use crate::model::account_data::AccountDataBalance;
 use crate::model::order::CancelOrder;
 use crate::model::order::OpenOrder;
 use crate::model::order::WalletTransfer;
@@ -19,7 +20,6 @@ use crate::model::order::WalletTransfer;
 use super::request_builder::BinanceRequestBuilder;
 use super::requests::account_data::BinanceAccountEvents;
 use super::requests::balance::BinanceBalance;
-use super::requests::balance::BinanceBalanceResponse;
 use super::requests::cancel_order::BinanceCancelAllOrder;
 use super::requests::cancel_order::BinanceCancelOrderResponse;
 use super::requests::listening_key::BinanceListeningKey;
@@ -121,32 +121,12 @@ impl ExecutionClient for BinanceExecution {
             .await?;
         Ok(response.0)
     }
-}
 
-/*----- */
-// Binance Private Data
-/*----- */
-#[derive(Debug)]
-pub struct BinancePrivateData {
-    pub http_client: BinanceRestClient,
-}
-
-impl Default for BinancePrivateData {
-    fn default() -> Self {
-        BinancePrivateData::new()
-    }
-}
-
-impl BinancePrivateData {
-    pub fn new() -> Self {
+    async fn get_balances() -> Result<Vec<AccountDataBalance>, SocketError> {
         let http_client =
             RestClient::new(BINANCE_BASE_URL, StandardHttpParser, BinanceRequestBuilder);
-        Self { http_client }
-    }
-
-    #[inline]
-    pub async fn get_balance_all(&self) -> Result<BinanceBalanceResponse, SocketError> {
-        let response = self.http_client.execute(BinanceBalance::new()?).await?;
-        Ok(response.0)
+        let response = http_client.execute(BinanceBalance::new()?).await?;
+        let account_data: Vec<AccountDataBalance> = response.0.into();
+        Ok(account_data)
     }
 }

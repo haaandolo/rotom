@@ -32,7 +32,7 @@ use rotom_oms::{
         persistence::{in_memory::InMemoryRepository, spot_in_memory::SpotInMemoryRepository},
         portfolio_type::{default_portfolio::MetaPortfolio, spot_portfolio::SpotPortfolio},
         risk_manager::default_risk_manager::DefaultRisk,
-        spot_portfolio::portfolio::SpotPortfolio2,
+        spot_portfolio::portfolio::{SpotPortfolio2, SpotPortfolio2Builder},
     },
     statistic::summary::{
         trading::{Config as StatisticConfig, TradingSummary},
@@ -111,8 +111,14 @@ pub async fn main() {
     ////////////////////////////////////////////////////
     // Portfolio 2
     ////////////////////////////////////////////////////
-    let exchanges = vec![ExchangeId::BinanceSpot, ExchangeId::PoloniexSpot];
-    let spot_porfolio2 = SpotPortfolio2::init(exchanges).await.unwrap();
+    let spot_porfolio2 = SpotPortfolio2Builder::default()
+        .add_exchange::<BinanceExecution>()
+        .add_exchange::<PoloniexExecution>()
+        .build()
+        .await
+        .unwrap();
+
+    println!("{:#?}", spot_porfolio2);
 
     ////////////////////////////////////////////////////
     // Execution manager

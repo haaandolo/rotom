@@ -22,7 +22,7 @@ use tokio::sync::mpsc;
 use tracing::{debug, error, info, warn};
 
 use crate::model::{
-    account_data::ExecutionResponse,
+    account_data::{AccountDataBalance, ExecutionResponse},
     order::{CancelOrder, OpenOrder, WalletTransfer},
 };
 
@@ -97,6 +97,9 @@ pub trait ExecutionClient {
         &self,
         wallet_transfer_request: WalletTransfer,
     ) -> Result<Self::WalletTransferResponse, SocketError>;
+
+    // Get all balance figure on a exchange
+    async fn get_balances() -> Result<Vec<AccountDataBalance>, SocketError>;
 }
 
 /*----- */

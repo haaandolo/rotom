@@ -17,14 +17,17 @@ use serde::Deserialize;
 
 use crate::{
     exchange::{AccountDataWebsocket, ExecutionClient},
-    model::order::{CancelOrder, OpenOrder, WalletTransfer},
+    model::{
+        account_data::AccountDataBalance,
+        order::{CancelOrder, OpenOrder, WalletTransfer},
+    },
 };
 
 use super::{
     request_builder::PoloniexRequestBuilder,
     requests::{
         account_data::PoloniexAccountEvents,
-        balance::{PoloniexBalance, PoloniexBalanceResponse},
+        balance::PoloniexBalance,
         cancel_order::{PoloniexCancelAllOrder, PoloniexCancelOrder, PoloniexCancelOrderResponse},
         new_order::{PoloniexNewOrder, PoloniexNewOrderResponse},
         wallet_transfer::{PoloniexWalletTransfer, PoloniexWalletTransferResponse},
@@ -185,36 +188,17 @@ impl ExecutionClient for PoloniexExecution {
             .await?;
         Ok(response.0)
     }
-}
 
-/*----- */
-// Poloniex Private Data
-/*----- */
-#[derive(Debug)]
-pub struct PoloniexPrivateData {
-    pub http_client: PoloniexRestClient,
-}
-
-impl Default for PoloniexPrivateData {
-    fn default() -> Self {
-        PoloniexPrivateData::new()
-    }
-}
-
-impl PoloniexPrivateData {
-    pub fn new() -> Self {
-        let http_client = RestClient::new(
+    async fn get_balances() -> Result<Vec<AccountDataBalance>, SocketError> {
+        let http_client = PoloniexRestClient::new(
             POLONIEX_BASE_URL,
             StandardHttpParser,
             PoloniexRequestBuilder,
         );
-        Self { http_client }
-    }
 
-    #[inline]
-    pub async fn get_balance_all(&self) -> Result<PoloniexBalanceResponse, SocketError> {
-        let response = self.http_client.execute(PoloniexBalance).await?;
-        Ok(response.0)
+        let response = http_client.execute(PoloniexBalance).await?;
+        let account_data: Vec<AccountDataBalance> = response.0.into();
+        Ok(account_data)
     }
 }
 
