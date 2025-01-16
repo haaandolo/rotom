@@ -1,10 +1,18 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
+use parking_lot::RwLock;
 use rotom_data::{exchange::PublicHttpConnector, shared::subscription_models::ExchangeId};
 use tokio::sync::mpsc;
 use uuid::Uuid;
 
-use crate::{exchange::ExecutionClient, model::order::ExecutionRequest};
+use crate::{
+    exchange::ExecutionClient,
+    model::{
+        balance::{Balance, SpotBalanceId},
+        order::ExecutionRequest,
+    },
+    portfolio::spot_portfolio::portfolio::BalanceMap,
+};
 
 use super::manager::ExecutionManager;
 
@@ -30,7 +38,7 @@ pub struct ExecutionBuilder {
 }
 
 impl ExecutionBuilder {
-    pub fn add_exchange<Exchange>(mut self) -> Self
+    pub fn add_exchange<Exchange>(mut self, balances: Arc<RwLock<BalanceMap>>) -> Self
     where
         Exchange: ExecutionClient + Send + Sync + 'static,
         Exchange::PublicData: PublicHttpConnector,

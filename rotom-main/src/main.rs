@@ -3,7 +3,7 @@ use parking_lot::Mutex;
 use rotom_data::{
     error::SocketError,
     exchange::{
-        binance::BinanceSpotPublicData, poloniex::PoloniexSpotPublicData, PublicHttpConnector,
+        self, binance::BinanceSpotPublicData, poloniex::PoloniexSpotPublicData, PublicHttpConnector,
     },
     shared::{
         subscription_models::{ExchangeId, Instrument},
@@ -32,6 +32,7 @@ use rotom_oms::{
         persistence::{in_memory::InMemoryRepository, spot_in_memory::SpotInMemoryRepository},
         portfolio_type::{default_portfolio::MetaPortfolio, spot_portfolio::SpotPortfolio},
         risk_manager::default_risk_manager::DefaultRisk,
+        spot_portfolio::portfolio::SpotPortfolio2,
     },
     statistic::summary::{
         trading::{Config as StatisticConfig, TradingSummary},
@@ -62,37 +63,37 @@ pub async fn main() {
     // Engine id
     let engine_id = Uuid::new_v4();
 
-    // ////////////////////////////////////////////////
-    // // Old Portfolio - to be replaced
-    // ///////////////////////////////////////////////////
-    // let portfolio = Arc::new(Mutex::new(
-    //     MetaPortfolio::builder()
-    //         .engine_id(engine_id)
-    //         .markets(vec![Market::new(
-    //             ExchangeId::BinanceSpot,
-    //             Instrument::new("op", "usdt"),
-    //         )])
-    //         .starting_cash(10000.0)
-    //         .repository(InMemoryRepository::<TradingSummary>::new())
-    //         .allocation_manager(DefaultAllocator {
-    //             default_order_value: 100.0,
-    //         })
-    //         .risk_manager(DefaultRisk {})
-    //         .statistic_config(StatisticConfig {
-    //             starting_equity: 10_000.0,
-    //             trading_days_per_year: 365,
-    //             risk_free_return: 0.0,
-    //         })
-    //         .build_init()
-    //         .unwrap(),
-    // ));
+    ////////////////////////////////////////////////
+    // Old Portfolio - to be replaced
+    ///////////////////////////////////////////////////
+    let portfolio = Arc::new(Mutex::new(
+        MetaPortfolio::builder()
+            .engine_id(engine_id)
+            .markets(vec![Market::new(
+                ExchangeId::BinanceSpot,
+                Instrument::new("op", "usdt"),
+            )])
+            .starting_cash(10000.0)
+            .repository(InMemoryRepository::<TradingSummary>::new())
+            .allocation_manager(DefaultAllocator {
+                default_order_value: 100.0,
+            })
+            .risk_manager(DefaultRisk {})
+            .statistic_config(StatisticConfig {
+                starting_equity: 10_000.0,
+                trading_days_per_year: 365,
+                risk_free_return: 0.0,
+            })
+            .build_init()
+            .unwrap(),
+    ));
 
-    // ////////////////////////////////////////////////////////////////////////////////////////////////////
-    // ////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // ////////////////////////////////////////////////////
-    // // Portfolio
-    // ////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////
+    // Portfolio
+    ////////////////////////////////////////////////////
     let arb_portfolio = Arc::new(Mutex::new(
         SpotPortfolio::new(
             engine_id,
@@ -107,51 +108,57 @@ pub async fn main() {
 
     println!("arb portfolio: {:#?}", arb_portfolio);
 
-    // ////////////////////////////////////////////////////
-    // // Execution manager
-    // ////////////////////////////////////////////////////
-    // let execution_tx_map = ExecutionBuilder::default()
-    //     .add_exchange::<BinanceExecution>()
-    //     .add_exchange::<PoloniexExecution>()
-    //     .build();
+    ////////////////////////////////////////////////////
+    // Portfolio 2
+    ////////////////////////////////////////////////////
+    let exchanges = vec![ExchangeId::BinanceSpot, ExchangeId::PoloniexSpot];
+    let spot_porfolio2 = SpotPortfolio2::init(exchanges).await.unwrap();
 
-    // ////////////////////////////////////////////////////
-    // // Arb traders builder
-    // ////////////////////////////////////////////////////
-    // let (arb_traders, trader_command_txs) = SpotArbTradersBuilder::new(&execution_tx_map)
-    //     .add_traders::<BinanceExecution, PoloniexExecution>(vec![
-    //         Instrument::new("op", "usdt"),
-    //         // Instrument::new("arb", "usdt"),
-    //         // Instrument::new("ldo", "usdt"),
-    //         // Instrument::new("icp", "usdt"),
-    //         // Instrument::new("sui", "usdt"),
-    //         // Instrument::new("uni", "usdt"),
-    //         // Instrument::new("atom", "usdt"),
-    //     ])
-    //     .await
-    //     .build();
+    ////////////////////////////////////////////////////
+    // Execution manager
+    ////////////////////////////////////////////////////
+    let execution_tx_map = ExecutionBuilder::default()
+        .add_exchange::<BinanceExecution>(Arc::clone(&spot_porfolio2.balances))
+        .add_exchange::<PoloniexExecution>(Arc::clone(&spot_porfolio2.balances))
+        .build();
 
-    // /////////////////////////////////////////////////////////////
-    // // Engine
-    // /////////////////////////////////////////////////////////////
-    // // Create channel to distribute Commands to the Engine & it's Traders (eg/ Command::Terminate)
-    // let (_command_tx, command_rx) = mpsc::channel(20);
+    ////////////////////////////////////////////////////
+    // Arb traders builder
+    ////////////////////////////////////////////////////
+    let (arb_traders, trader_command_txs) = SpotArbTradersBuilder::new(&execution_tx_map)
+        .add_traders::<BinanceExecution, PoloniexExecution>(vec![
+            Instrument::new("op", "usdt"),
+            // Instrument::new("arb", "usdt"),
+            // Instrument::new("ldo", "usdt"),
+            // Instrument::new("icp", "usdt"),
+            // Instrument::new("sui", "usdt"),
+            // Instrument::new("uni", "usdt"),
+            // Instrument::new("atom", "usdt"),
+        ])
+        .await
+        .build();
 
-    // let engine = Engine::builder()
-    //     .engine_id(engine_id)
-    //     .command_rx(command_rx)
-    //     .portfolio(portfolio)
-    //     .traders(arb_traders)
-    //     .trader_command_txs(trader_command_txs)
-    //     .statistics_summary(TradingSummary::init(StatisticConfig {
-    //         starting_equity: 1000.0,
-    //         trading_days_per_year: 365,
-    //         risk_free_return: 0.0,
-    //     }))
-    //     .build()
-    //     .expect("failed to build engine");
+    /////////////////////////////////////////////////////////////
+    // Engine
+    /////////////////////////////////////////////////////////////
+    // Create channel to distribute Commands to the Engine & it's Traders (eg/ Command::Terminate)
+    let (_command_tx, command_rx) = mpsc::channel(20);
 
-    // let _ = tokio::time::timeout(ENGINE_RUN_TIMEOUT, engine.run()).await;
+    let engine = Engine::builder()
+        .engine_id(engine_id)
+        .command_rx(command_rx)
+        .portfolio(portfolio)
+        .traders(arb_traders)
+        .trader_command_txs(trader_command_txs)
+        .statistics_summary(TradingSummary::init(StatisticConfig {
+            starting_equity: 1000.0,
+            trading_days_per_year: 365,
+            risk_free_return: 0.0,
+        }))
+        .build()
+        .expect("failed to build engine");
+
+    let _ = tokio::time::timeout(ENGINE_RUN_TIMEOUT, engine.run()).await;
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////
