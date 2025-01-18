@@ -1,9 +1,9 @@
-pub mod execution_response;
 pub mod balance;
 pub mod execution_request;
+pub mod execution_response;
 pub mod order;
 
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use rand::seq::SliceRandom;
 use rotom_data::shared::subscription_models::ExchangeId;
 use rotom_strategy::Decision;
@@ -22,7 +22,7 @@ use crate::execution_manager::builder::TraderId;
 pub struct Order<RequestResponse> {
     pub trader_id: TraderId,
     pub exchange: ExchangeId,
-    pub requested_time: Utc,
+    pub requested_time: DateTime<Utc>,
     pub request_response: RequestResponse,
 }
 

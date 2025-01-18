@@ -7,6 +7,7 @@ use crate::{
     execution_manager::builder::TraderId,
     model::{
         execution_request::ExecutionRequest, execution_response::ExecutionResponse, ClientOrderId,
+        Order,
     },
     portfolio::position2::Position2,
 };
@@ -21,7 +22,7 @@ pub struct OrderManagementSystem {
     balances: BalanceMap,
     open_positions: HashMap<(TraderId, ClientOrderId), Position2>,
     // Receieve ExecutionRequests sent by traders
-    execution_request_rx: mpsc::UnboundedReceiver<ExecutionRequest>,
+    execution_request_rx: mpsc::UnboundedReceiver<Order<ExecutionRequest>>,
     // Send ExecutionRequests to corresponding ExecutionManager
     execution_manager_txs: HashMap<ExchangeId, mpsc::UnboundedSender<ExecutionRequest>>,
     // Receive ExecutionResponse from ExecutionManger
@@ -62,7 +63,7 @@ impl OrderManagementSystem {
 #[derive(Default)]
 pub struct OrderManagementSystemBuilder {
     balances: Option<BalanceMap>,
-    execution_request_rx: Option<mpsc::UnboundedReceiver<ExecutionRequest>>,
+    execution_request_rx: Option<mpsc::UnboundedReceiver<Order<ExecutionRequest>>>,
     execution_manager_txs: Option<HashMap<ExchangeId, mpsc::UnboundedSender<ExecutionRequest>>>,
     execution_response_rx: Option<mpsc::UnboundedReceiver<ExecutionResponse>>,
     execution_response_txs: Option<HashMap<TraderId, mpsc::UnboundedSender<ExecutionResponse>>>,
@@ -78,7 +79,7 @@ impl OrderManagementSystemBuilder {
 
     pub fn execution_request_rx(
         self,
-        execution_request_rx: mpsc::UnboundedReceiver<ExecutionRequest>,
+        execution_request_rx: mpsc::UnboundedReceiver<Order<ExecutionRequest>>,
     ) -> Self {
         Self {
             execution_request_rx: Some(execution_request_rx),

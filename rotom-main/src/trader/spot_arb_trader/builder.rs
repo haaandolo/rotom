@@ -10,7 +10,7 @@ use rotom_data::{
 use rotom_oms::{
     exchange::ExecutionClient,
     execution_manager::builder::TraderId,
-    model::{execution_request::ExecutionRequest, execution_response::ExecutionResponse},
+    model::{execution_request::ExecutionRequest, execution_response::ExecutionResponse, Order},
 };
 use tokio::sync::mpsc::{self, Sender, UnboundedReceiver};
 use uuid::Uuid;
@@ -27,7 +27,7 @@ pub struct SpotArbTradersBuilder {
     // Vec of traders to go into the engine
     pub traders: Vec<SpotArbTrader>,
     // Channel to send ExecutionRequest to OrderManagementSystem
-    pub execution_request_tx: mpsc::UnboundedSender<ExecutionRequest>,
+    pub execution_request_tx: mpsc::UnboundedSender<Order<ExecutionRequest>>,
     // Engine can send remote command's to the trader
     pub engine_command_tx: HashMap<TraderId, Sender<Command>>,
     // Channels to send back ExecuionResponses back to Traders
@@ -35,7 +35,7 @@ pub struct SpotArbTradersBuilder {
 }
 
 impl SpotArbTradersBuilder {
-    pub fn new(execution_request_tx: mpsc::UnboundedSender<ExecutionRequest>) -> Self {
+    pub fn new(execution_request_tx: mpsc::UnboundedSender<Order<ExecutionRequest>>) -> Self {
         Self {
             traders: Vec::new(),
             execution_request_tx,

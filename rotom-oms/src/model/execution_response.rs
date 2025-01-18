@@ -2,11 +2,9 @@ use chrono::{DateTime, Utc};
 use rotom_data::shared::subscription_models::ExchangeId;
 use serde::Deserialize;
 
-use crate::execution_manager::builder::TraderId;
-
 use super::{
     balance::{Balance, SpotBalanceId},
-    Order, Side,
+    Side,
 };
 
 // /*----- */
