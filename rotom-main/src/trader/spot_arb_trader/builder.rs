@@ -8,8 +8,9 @@ use rotom_data::{
     MarketFeed,
 };
 use rotom_oms::{
-    exchange::ExecutionClient, execution_manager::builder::TraderId,
-    model::{execution_response::ExecutionResponse, execution_request::ExecutionRequest},
+    exchange::ExecutionClient,
+    execution_manager::builder::TraderId,
+    model::{execution_request::ExecutionRequest, execution_response::ExecutionResponse},
 };
 use tokio::sync::mpsc::{self, Sender, UnboundedReceiver};
 use uuid::Uuid;

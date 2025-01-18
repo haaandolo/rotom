@@ -18,9 +18,7 @@ use crate::{
     exchange::{consume_account_data_stream, ExecutionClient},
     execution_manager::request::ExecutionRequestFuture,
     model::{
-        execution_response::{AccountDataOrder, ExecutionResponse},
-        execution_request::ExecutionRequest,
-        ClientOrderId,
+        execution_request::ExecutionRequest, execution_response::ExecutionResponse, ClientOrderId,
     },
 };
 

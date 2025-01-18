@@ -6,8 +6,8 @@ use rotom_data::{
     Feed, MarketGenerator,
 };
 use rotom_oms::execution_manager::builder::TraderId;
-use rotom_oms::model::execution_response::ExecutionResponse;
 use rotom_oms::model::execution_request::{ExecutionRequest, OpenOrder};
+use rotom_oms::model::execution_response::ExecutionResponse;
 use rotom_oms::model::ClientOrderId;
 use rotom_oms::{event::Event, model::order::OrderEvent};
 use rotom_strategy::SignalForceExit;

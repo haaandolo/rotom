@@ -5,12 +5,9 @@ use rotom_data::{
 };
 use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
-use tokio::sync::mpsc;
-
-use crate::execution_manager::builder::TraderId;
 
 use super::{
-    execution_response::{AccountDataOrder, ExecutionResponse, OrderStatus},
+    execution_response::{AccountDataOrder, OrderStatus},
     ClientOrderId, OrderKind,
 };
 

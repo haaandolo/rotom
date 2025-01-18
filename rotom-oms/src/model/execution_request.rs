@@ -1,24 +1,10 @@
-use chrono::Utc;
-use rotom_data::shared::subscription_models::{ExchangeId, Instrument};
+use rotom_data::shared::subscription_models::Instrument;
 use rotom_strategy::Decision;
-
-use crate::execution_manager::builder::TraderId;
 
 use super::{ClientOrderId, OrderKind};
 
 /*----- */
-// Order
-/*----- */
-#[derive(Debug, Clone)]
-pub struct Order {
-    trader_id: TraderId,
-    exchange: ExchangeId,
-    requested_time: Utc,
-    request: ExecutionRequest,
-}
-
-/*----- */
-// Execution Requests
+// ExecutionRequest
 /*----- */
 #[derive(Debug, Clone)]
 pub enum ExecutionRequest {

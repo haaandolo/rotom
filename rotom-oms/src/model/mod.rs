@@ -3,7 +3,9 @@ pub mod balance;
 pub mod execution_request;
 pub mod order;
 
+use chrono::Utc;
 use rand::seq::SliceRandom;
+use rotom_data::shared::subscription_models::ExchangeId;
 use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -11,12 +13,23 @@ use std::{
     fmt::{Display, Formatter},
 };
 
+use crate::execution_manager::builder::TraderId;
+
+/*----- */
+// Generic order type
+/*----- */
+#[derive(Debug, Clone)]
+pub struct Order<RequestResponse> {
+    pub trader_id: TraderId,
+    pub exchange: ExchangeId,
+    pub requested_time: Utc,
+    pub request_response: RequestResponse,
+}
+
 /*----- */
 // Client Order Id
 /*----- */
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]
-// pub struct ClientOrderId(pub String);
-
 pub struct ClientOrderId<T = String>(pub T); // can be smolstr probs
 
 impl ClientOrderId<String> {

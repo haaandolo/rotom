@@ -1,12 +1,32 @@
 use chrono::{DateTime, Utc};
-use rotom_data::{shared::subscription_models::ExchangeId, ExchangeAssetId};
+use rotom_data::shared::subscription_models::ExchangeId;
 use serde::Deserialize;
+
+use crate::execution_manager::builder::TraderId;
 
 use super::{
     balance::{Balance, SpotBalanceId},
     Side,
 };
 
+// /*----- */
+// // Order Response
+// /*----- */
+// #[derive(Debug)]
+// pub struct OrderResponse {
+//     trader_id: TraderId,
+//     exchange: ExchangeId,
+//     requested_time: Utc,
+//     request: ExecutionResponse,
+// }
+
+#[derive(Debug)]
+pub enum ExecutionResponse {
+    Order(AccountDataOrder),
+    BalanceVec(Vec<AccountDataBalance>),
+    Balance(AccountDataBalance),
+    BalanceDelta(AccountDataBalanceDelta),
+}
 /*----- */
 // State
 /*----- */
@@ -58,12 +78,6 @@ pub struct AccountDataOrder {
     pub fee: f64,
 }
 
-impl From<&AccountDataOrder> for ExchangeAssetId {
-    fn from(order: &AccountDataOrder) -> Self {
-        ExchangeAssetId(format!("{}_{}", order.exchange.as_str(), order.asset).to_uppercase())
-    }
-}
-
 /*----- */
 // Account Data - Balance
 /*----- */
@@ -91,12 +105,6 @@ impl From<&AccountDataBalance> for SpotBalanceId {
     }
 }
 
-impl From<&AccountDataBalance> for ExchangeAssetId {
-    fn from(balance: &AccountDataBalance) -> Self {
-        ExchangeAssetId(format!("{}_{}", balance.exchange.as_str(), balance.asset).to_uppercase())
-    }
-}
-
 /*----- */
 // Account Data - Balance Delta
 /*----- */
@@ -113,19 +121,4 @@ impl From<&AccountDataBalanceDelta> for SpotBalanceId {
     fn from(asset_balance: &AccountDataBalanceDelta) -> Self {
         SpotBalanceId(format!("{}_{}", asset_balance.exchange, asset_balance.asset,).to_lowercase())
     }
-}
-
-impl From<&AccountDataBalanceDelta> for ExchangeAssetId {
-    fn from(balance: &AccountDataBalanceDelta) -> Self {
-        ExchangeAssetId(format!("{}_{}", balance.exchange.as_str(), balance.asset).to_uppercase())
-    }
-}
-
-#[derive(Debug)]
-pub enum ExecutionResponse {
-    Subscribed(ExchangeId), // Used to let traders know it has succesfully subscribed to ExecutionManager
-    Order(AccountDataOrder),
-    BalanceVec(Vec<AccountDataBalance>),
-    Balance(AccountDataBalance),
-    BalanceDelta(AccountDataBalanceDelta),
 }
