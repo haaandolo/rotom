@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use futures::StreamExt;
 use rotom_data::{
     model::market_event::{DataKind, MarketEvent},
-    shared::subscription_models::{ExchangeId, Instrument, StreamKind},
-    streams::builder::{dynamic, single::ExchangeChannel},
+    shared::subscription_models::{Instrument, StreamKind},
+    streams::builder::dynamic,
     MarketFeed,
 };
 use rotom_oms::{
@@ -13,7 +13,6 @@ use rotom_oms::{
     model::{account_data::ExecutionResponse, order::ExecutionRequest},
 };
 use tokio::sync::mpsc::{self, Sender, UnboundedReceiver};
-use tracing::error;
 use uuid::Uuid;
 
 use crate::engine::Command;
@@ -24,23 +23,24 @@ use super::{
 };
 
 #[derive(Debug)]
-pub struct SpotArbTradersBuilder<'a> {
+pub struct SpotArbTradersBuilder {
     // Vec of traders to go into the engine
     pub traders: Vec<SpotArbTrader>,
-    // Temp reference to HashMap of ExecutionManager ExecutionRequest tx's, for traders to clone
-    pub execution_request_txs: &'a HashMap<ExchangeId, mpsc::UnboundedSender<ExecutionRequest>>,
+    // Channel to send ExecutionRequest to OrderManagementSystem
+    pub execution_request_tx: mpsc::UnboundedSender<ExecutionRequest>,
     // Engine can send remote command's to the trader
     pub engine_command_tx: HashMap<TraderId, Sender<Command>>,
+    // Channels to send back ExecuionResponses back to Traders
+    pub execution_response_txs: HashMap<TraderId, mpsc::UnboundedSender<ExecutionResponse>>,
 }
 
-impl<'a> SpotArbTradersBuilder<'a> {
-    pub fn new(
-        execution_request_txs: &'a HashMap<ExchangeId, mpsc::UnboundedSender<ExecutionRequest>>,
-    ) -> Self {
+impl SpotArbTradersBuilder {
+    pub fn new(execution_request_tx: mpsc::UnboundedSender<ExecutionRequest>) -> Self {
         Self {
             traders: Vec::new(),
-            execution_request_txs,
+            execution_request_tx,
             engine_command_tx: HashMap::new(),
+            execution_response_txs: HashMap::new(),
         }
     }
 
@@ -56,41 +56,25 @@ impl<'a> SpotArbTradersBuilder<'a> {
             // Initalise trader id and channels
             let trader_id = TraderId(Uuid::new_v4());
             let (engine_command_tx, engine_command_rx) = mpsc::channel(3);
+            let (execution_response_tx, execution_response_rx) = mpsc::unbounded_channel();
 
             // Insert trader tx to receive remote commands
             self.engine_command_tx.insert(trader_id, engine_command_tx);
+
+            // Insert execution response channels to hashmap
+            self.execution_response_txs
+                .insert(trader_id, execution_response_tx);
 
             // Build the trader
             let arb_trader = SpotArbTrader::builder()
                 .engine_id(Uuid::new_v4())
                 .trader_id(trader_id)
                 .command_rx(engine_command_rx)
-                .data(MarketFeed::new(stream_trades::<LiquidExchange, IlliquidExchange>(&market).await))
-                .liquid_exchange_execution(
-                    self.execution_request_txs
-                        .get(&LiquidExchange::CLIENT)
-                        .unwrap_or_else(|| {
-                            error!(
-                                "Failed get liquid execution request tx for spot arb trader: {:#?}",
-                                LiquidExchange::CLIENT
-                            );
-                            std::process::exit(1);
-                        })
-                        .clone(),
-                )
-                .illiquid_exchange_execution(
-                    self.execution_request_txs
-                        .get(&IlliquidExchange::CLIENT)
-                        .unwrap_or_else(|| {
-                            error!(
-                                "Failed get illiquid execution request tx for spot arb trader: {:#?}",
-                                IlliquidExchange::CLIENT
-                            );
-                            std::process::exit(1);
-                        })
-                        .clone(),
-                )
-                .execution_response_channel(ExchangeChannel::<ExecutionResponse>::default())
+                .data(MarketFeed::new(
+                    stream_trades::<LiquidExchange, IlliquidExchange>(&market).await,
+                ))
+                .execution_request_tx(self.execution_request_tx.clone())
+                .execution_response_rx(execution_response_rx)
                 .order_generator(SpotArbOrderGenerator::default())
                 .meta_data(SpotArbTraderMetaData {
                     order: None,
@@ -108,8 +92,19 @@ impl<'a> SpotArbTradersBuilder<'a> {
         self
     }
 
-    pub fn build(self) -> (Vec<SpotArbTrader>, HashMap<TraderId, Sender<Command>>) {
-        (self.traders, self.engine_command_tx)
+    #[allow(clippy::type_complexity)]
+    pub fn build(
+        self,
+    ) -> (
+        Vec<SpotArbTrader>,
+        HashMap<TraderId, Sender<Command>>,
+        HashMap<TraderId, mpsc::UnboundedSender<ExecutionResponse>>,
+    ) {
+        (
+            self.traders,
+            self.engine_command_tx,
+            self.execution_response_txs,
+        )
     }
 }
 

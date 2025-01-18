@@ -1,5 +1,4 @@
 use rotom_data::shared::subscription_models::Instrument;
-use rotom_data::streams::builder::single::ExchangeChannel;
 use rotom_data::MarketFeed;
 use rotom_data::{
     model::market_event::{DataKind, MarketEvent},
@@ -8,7 +7,7 @@ use rotom_data::{
 };
 use rotom_oms::execution_manager::builder::TraderId;
 use rotom_oms::model::account_data::ExecutionResponse;
-use rotom_oms::model::order::{ExecutionManagerSubscribe, OpenOrder};
+use rotom_oms::model::order::OpenOrder;
 use rotom_oms::model::ClientOrderId;
 use rotom_oms::{
     event::Event,
@@ -16,9 +15,8 @@ use rotom_oms::{
 };
 use rotom_strategy::SignalForceExit;
 use std::collections::VecDeque;
-use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
-use tracing::{debug, error, warn};
+use tracing::{debug, warn};
 use uuid::Uuid;
 
 use crate::engine::{error::EngineError, Command};
@@ -58,9 +56,8 @@ pub struct SpotArbTrader {
     trader_id: TraderId,
     command_rx: mpsc::Receiver<Command>,
     data: MarketFeed<MarketEvent<DataKind>>,
-    liquid_exchange_execution: mpsc::UnboundedSender<ExecutionRequest>,
-    illiquid_exchange_execution: mpsc::UnboundedSender<ExecutionRequest>,
-    execution_response_channel: ExchangeChannel<ExecutionResponse>,
+    execution_request_tx: mpsc::UnboundedSender<ExecutionRequest>,
+    execution_response_rx: mpsc::UnboundedReceiver<ExecutionResponse>,
     order_generator: SpotArbOrderGenerator,
     event_queue: VecDeque<Event>,
     meta_data: SpotArbTraderMetaData,
@@ -69,26 +66,6 @@ pub struct SpotArbTrader {
 impl SpotArbTrader {
     pub fn builder() -> SpotArbTraderBuilder {
         SpotArbTraderBuilder::new()
-    }
-
-    pub fn send_liquid_execution_request(&self, request: ExecutionRequest) {
-        if let Err(error) = self.liquid_exchange_execution.send(request) {
-            debug!(
-                message = "Failed to send execution request for liquid exchange in SpotArbTrader",
-                trader_meta_data = ?self.meta_data,
-                error = %error
-            )
-        }
-    }
-
-    pub fn send_illiquid_execution_request(&self, request: ExecutionRequest) {
-        if let Err(error) = self.illiquid_exchange_execution.send(request) {
-            debug!(
-                message = "Failed to send execution request for illiquid exchange in SpotArbTrader",
-                trader_meta_data = ?self.meta_data,
-                error = %error
-            )
-        }
     }
 }
 
@@ -123,57 +100,9 @@ impl TraderRun for SpotArbTrader {
         }
     }
 
-    fn subscribe_to_execution_manager(&mut self) {
-        // Create subscription request
-        let subscription_request = ExecutionManagerSubscribe {
-            trader_id: self.trader_id,
-            instruments: vec![self.meta_data.market.clone()],
-            execution_response_tx: self.execution_response_channel.tx.clone(),
-        };
-
-        // Subscribe to ExecutionManagers
-        self.send_liquid_execution_request(ExecutionRequest::Subscribe(
-            subscription_request.clone(),
-        ));
-
-        self.send_illiquid_execution_request(ExecutionRequest::Subscribe(
-            subscription_request.clone(),
-        ));
-
-        // Make sure to receive 2 successful responses back from ExecutionManger before continuing
-        let start = Instant::now();
-        let timeout = Duration::from_secs(10);
-        let mut success_msg_received = Vec::with_capacity(2);
-        loop {
-            match self.execution_response_channel.rx.try_recv() {
-                Ok(response) => {
-                    if let ExecutionResponse::Subscribed(exchange_id) = response {
-                        success_msg_received.push(exchange_id);
-                    };
-
-                    if success_msg_received.len() == 2 {
-                        break;
-                    }
-                }
-                Err(error) => {
-                    if start.elapsed() >= timeout {
-                        error!(
-                                "Failed to subscribe to ExecutionManager's for SpotArbTrader. Error: {:#?}. Trader meta data: {:#?}. Successful subscription message received from: {:#?}",
-                                error,
-                                self.meta_data,
-                                success_msg_received
-                            );
-                        std::process::exit(1);
-                    }
-                }
-            }
-        }
-    }
+    fn subscribe_to_execution_manager(&mut self) {} // todo; rm
 
     fn run(mut self) {
-        // Subscribe to ExecutionManagers, panic if unsuccessful
-        self.subscribe_to_execution_manager();
-
         // If ExecutionManger subscription is successful then go to trading loop
         'trading: loop {
             /*----- 1. Check for remote cmd ----- */
@@ -240,9 +169,9 @@ impl TraderRun for SpotArbTrader {
                                 instrument: self.meta_data.market.clone(),
                             };
 
-                            // self.send_liquid_execution_request(ExecutionRequest::Open(
-                            //     order_request,
-                            // ));
+                            let test = self
+                                .execution_request_tx
+                                .send(ExecutionRequest::Open(order_request));
 
                             self.meta_data.order = Some(new_order);
                         }
@@ -252,7 +181,7 @@ impl TraderRun for SpotArbTrader {
             }
 
             /*----- 4. Process any execution updates ----- */
-            match self.execution_response_channel.rx.try_recv() {
+            match self.execution_response_rx.try_recv() {
                 Ok(execution_result) => {}
                 Err(error) => {}
             }
@@ -276,9 +205,8 @@ pub struct SpotArbTraderBuilder {
     pub trader_id: Option<TraderId>,
     pub command_rx: Option<mpsc::Receiver<Command>>,
     pub data: Option<MarketFeed<MarketEvent<DataKind>>>,
-    pub liquid_exchange_execution: Option<mpsc::UnboundedSender<ExecutionRequest>>,
-    pub illiquid_exchange_execution: Option<mpsc::UnboundedSender<ExecutionRequest>>,
-    pub execution_response_channel: Option<ExchangeChannel<ExecutionResponse>>,
+    pub execution_request_tx: Option<mpsc::UnboundedSender<ExecutionRequest>>,
+    pub execution_response_rx: Option<mpsc::UnboundedReceiver<ExecutionResponse>>,
     pub order_generator: Option<SpotArbOrderGenerator>,
     pub meta_data: Option<SpotArbTraderMetaData>,
 }
@@ -290,10 +218,9 @@ impl SpotArbTraderBuilder {
             trader_id: None,
             command_rx: None,
             data: None,
-            liquid_exchange_execution: None,
-            illiquid_exchange_execution: None,
+            execution_request_tx: None,
             order_generator: None,
-            execution_response_channel: None,
+            execution_response_rx: None,
             meta_data: None,
         }
     }
@@ -326,26 +253,16 @@ impl SpotArbTraderBuilder {
         }
     }
 
-    pub fn liquid_exchange_execution(self, value: mpsc::UnboundedSender<ExecutionRequest>) -> Self {
+    pub fn execution_request_tx(self, value: mpsc::UnboundedSender<ExecutionRequest>) -> Self {
         Self {
-            liquid_exchange_execution: Some(value),
+            execution_request_tx: Some(value),
             ..self
         }
     }
 
-    pub fn illiquid_exchange_execution(
-        self,
-        value: mpsc::UnboundedSender<ExecutionRequest>,
-    ) -> Self {
+    pub fn execution_response_rx(self, value: mpsc::UnboundedReceiver<ExecutionResponse>) -> Self {
         Self {
-            illiquid_exchange_execution: Some(value),
-            ..self
-        }
-    }
-
-    pub fn execution_response_channel(self, value: ExchangeChannel<ExecutionResponse>) -> Self {
-        Self {
-            execution_response_channel: Some(value),
+            execution_response_rx: Some(value),
             ..self
         }
     }
@@ -376,15 +293,12 @@ impl SpotArbTraderBuilder {
                 .command_rx
                 .ok_or(EngineError::BuilderIncomplete("command_rx"))?,
             data: self.data.ok_or(EngineError::BuilderIncomplete("data"))?,
-            liquid_exchange_execution: self
-                .liquid_exchange_execution
-                .ok_or(EngineError::BuilderIncomplete("liquid_exchange_execution"))?,
-            illiquid_exchange_execution: self.illiquid_exchange_execution.ok_or(
-                EngineError::BuilderIncomplete("illiquid_exchange_execution"),
-            )?,
-            execution_response_channel: self
-                .execution_response_channel
-                .ok_or(EngineError::BuilderIncomplete("execution_response_channel"))?,
+            execution_request_tx: self
+                .execution_request_tx
+                .ok_or(EngineError::BuilderIncomplete("execution_request"))?,
+            execution_response_rx: self
+                .execution_response_rx
+                .ok_or(EngineError::BuilderIncomplete("execution_response_rx"))?,
             order_generator: self
                 .order_generator
                 .ok_or(EngineError::BuilderIncomplete("order_generator"))?,

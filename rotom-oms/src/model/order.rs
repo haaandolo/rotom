@@ -209,21 +209,10 @@ pub struct WalletTransfer {
 }
 
 /*----- */
-// Execution Manager Subscription Request
-/*----- */
-#[derive(Debug, Clone)]
-pub struct ExecutionManagerSubscribe {
-    pub trader_id: TraderId,
-    pub instruments: Vec<Instrument>,
-    pub execution_response_tx: mpsc::UnboundedSender<ExecutionResponse>,
-}
-
-/*----- */
 // Execution Requests
 /*----- */
 #[derive(Debug)]
 pub enum ExecutionRequest {
-    Subscribe(ExecutionManagerSubscribe),
     Open(OpenOrder),
     Cancel(CancelOrder),
     CancelAll(CancelOrder),
@@ -233,7 +222,6 @@ pub enum ExecutionRequest {
 impl std::fmt::Display for ExecutionRequest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ExecutionRequest::Subscribe(request) => write!(f, "{:#?}", request),
             ExecutionRequest::Open(request) => write!(f, "{:#?}", request),
             ExecutionRequest::Cancel(request) => write!(f, "{:#?}", request),
             ExecutionRequest::CancelAll(request) => write!(f, "{:#?}", request),

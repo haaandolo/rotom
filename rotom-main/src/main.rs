@@ -27,12 +27,12 @@ use rotom_oms::{
         order::{CancelOrder, OpenOrder, OrderEvent, WalletTransfer},
         ClientOrderId, OrderKind,
     },
+    order_manager::{balance_builder::BalanceBuilder, manager::OrderManagementSystemBuilder},
     portfolio::{
         allocator::{default_allocator::DefaultAllocator, spot_arb_allocator::SpotArbAllocator},
         persistence::{in_memory::InMemoryRepository, spot_in_memory::SpotInMemoryRepository},
         portfolio_type::{default_portfolio::MetaPortfolio, spot_portfolio::SpotPortfolio},
         risk_manager::default_risk_manager::DefaultRisk,
-        spot_portfolio::portfolio::{SpotPortfolio2, SpotPortfolio2Builder},
     },
     statistic::summary::{
         trading::{Config as StatisticConfig, TradingSummary},
@@ -92,6 +92,15 @@ pub async fn main() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////
+    // Init channels
+    ////////////////////////////////////////////////////
+    // Tx goes to Traders and rx goes to oms
+    let (execution_request_tx, execution_request_rx) = mpsc::unbounded_channel();
+
+    // Tx goes to ExecutionManagers, rx goes to oms
+    let (execution_response_tx, execution_response_rx) = mpsc::unbounded_channel();
+
+    ////////////////////////////////////////////////////
     // Portfolio
     ////////////////////////////////////////////////////
     let arb_portfolio = Arc::new(Mutex::new(
@@ -109,44 +118,55 @@ pub async fn main() {
     println!("arb portfolio: {:#?}", arb_portfolio);
 
     ////////////////////////////////////////////////////
-    // Portfolio 2
+    // Balance builder
     ////////////////////////////////////////////////////
-    let spot_porfolio2 = SpotPortfolio2Builder::default()
+    let balances = BalanceBuilder::default()
         .add_exchange::<BinanceExecution>()
         .add_exchange::<PoloniexExecution>()
         .build()
         .await
         .unwrap();
 
-    println!("{:#?}", spot_porfolio2);
+    println!("{:#?}", balances);
 
     ////////////////////////////////////////////////////
     // Execution manager
     ////////////////////////////////////////////////////
-    let execution_tx_map = ExecutionBuilder::default()
-        .add_exchange::<BinanceExecution>(Arc::clone(&spot_porfolio2.balances))
-        .add_exchange::<PoloniexExecution>(Arc::clone(&spot_porfolio2.balances))
+    let execution_manager_txs = ExecutionBuilder::default()
+        .add_exchange::<BinanceExecution>(execution_response_tx.clone())
+        .add_exchange::<PoloniexExecution>(execution_response_tx.clone())
         .build();
 
     ////////////////////////////////////////////////////
     // Arb traders builder
     ////////////////////////////////////////////////////
-    let (arb_traders, trader_command_txs) = SpotArbTradersBuilder::new(&execution_tx_map)
-        .add_traders::<BinanceExecution, PoloniexExecution>(vec![
-            Instrument::new("op", "usdt"),
-            // Instrument::new("arb", "usdt"),
-            // Instrument::new("ldo", "usdt"),
-            // Instrument::new("icp", "usdt"),
-            // Instrument::new("sui", "usdt"),
-            // Instrument::new("uni", "usdt"),
-            // Instrument::new("atom", "usdt"),
-        ])
-        .await
-        .build();
+    let (arb_traders, trader_command_txs, execution_response_txs) =
+        SpotArbTradersBuilder::new(execution_request_tx.clone())
+            .add_traders::<BinanceExecution, PoloniexExecution>(vec![
+                Instrument::new("op", "usdt"),
+                // Instrument::new("arb", "usdt"),
+                // Instrument::new("ldo", "usdt"),
+            ])
+            .await
+            .build();
 
-    /////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////
+    // OMS builder
+    ////////////////////////////////////////////////////
+    let oms = OrderManagementSystemBuilder::default()
+        .balances(balances)
+        .execution_request_rx(execution_request_rx)
+        .execution_manager_txs(execution_manager_txs)
+        .execution_response_rx(execution_response_rx)
+        .execution_response_txs(execution_response_txs)
+        .build()
+        .unwrap();
+
+    tokio::spawn(async move { oms.run().await });
+
+    ////////////////////////////////////////////////////
     // Engine
-    /////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////
     // Create channel to distribute Commands to the Engine & it's Traders (eg/ Command::Terminate)
     let (_command_tx, command_rx) = mpsc::channel(20);
 
