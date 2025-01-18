@@ -6,7 +6,7 @@ use rotom_data::{
     Feed, MarketGenerator,
 };
 use rotom_oms::execution_manager::builder::TraderId;
-use rotom_oms::model::account_data::ExecutionResponse;
+use rotom_oms::model::execution_response::ExecutionResponse;
 use rotom_oms::model::execution_request::{ExecutionRequest, OpenOrder};
 use rotom_oms::model::ClientOrderId;
 use rotom_oms::{event::Event, model::order::OrderEvent};
@@ -156,7 +156,6 @@ impl TraderRun for SpotArbTrader {
                             println!("unblocked");
 
                             let order_request = OpenOrder {
-                                trader_id: self.trader_id,
                                 client_order_id: ClientOrderId::random(),
                                 price: 1.50,
                                 quantity: 50.0,

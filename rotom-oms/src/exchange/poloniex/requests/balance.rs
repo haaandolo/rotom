@@ -6,7 +6,7 @@ use rotom_data::{
     protocols::http::rest_request::RestRequest, shared::subscription_models::ExchangeId,
 };
 
-use crate::model::account_data::AccountDataBalance;
+use crate::model::execution_response::AccountDataBalance;
 use crate::model::balance::Balance;
 
 /*----- */

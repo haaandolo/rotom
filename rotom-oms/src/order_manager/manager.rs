@@ -5,7 +5,7 @@ use tokio::sync::mpsc;
 use crate::{
     error::OrderManagmentSystemError,
     execution_manager::builder::TraderId,
-    model::{account_data::ExecutionResponse, execution_request::ExecutionRequest, ClientOrderId},
+    model::{execution_response::ExecutionResponse, execution_request::ExecutionRequest, ClientOrderId},
     portfolio::position2::Position2,
 };
 

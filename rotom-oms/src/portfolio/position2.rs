@@ -11,7 +11,7 @@ use uuid::Uuid;
 use crate::{
     execution::{FeeAmount, Fees, FillEvent},
     model::{
-        account_data::AccountDataOrder,
+        execution_response::AccountDataOrder,
         balance::Balance,
         order::{OrderEvent, OrderState},
         Side,

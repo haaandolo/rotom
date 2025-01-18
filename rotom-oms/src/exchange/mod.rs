@@ -22,7 +22,7 @@ use tokio::sync::mpsc;
 use tracing::{debug, error, info, warn};
 
 use crate::model::{
-    account_data::{AccountDataBalance, ExecutionResponse},
+    execution_response::{AccountDataBalance, ExecutionResponse},
     execution_request::{CancelOrder, OpenOrder, WalletTransfer},
 };
 

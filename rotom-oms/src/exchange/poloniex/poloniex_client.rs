@@ -18,7 +18,7 @@ use serde::Deserialize;
 use crate::{
     exchange::{AccountDataWebsocket, ExecutionClient},
     model::{
-        account_data::AccountDataBalance,
+        execution_response::AccountDataBalance,
         execution_request::{CancelOrder, OpenOrder, WalletTransfer},
     },
 };
@@ -157,7 +157,7 @@ impl ExecutionClient for PoloniexExecution {
     ) -> Result<Self::CancelResponse, SocketError> {
         let response = self
             .http_client
-            .execute(PoloniexCancelOrder::new(cancel_request.client_order_id))
+            .execute(PoloniexCancelOrder::new(cancel_request.client_order_id.0))
             .await?;
         Ok(response.0)
     }

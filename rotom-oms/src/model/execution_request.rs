@@ -1,4 +1,5 @@
-use rotom_data::shared::subscription_models::Instrument;
+use chrono::Utc;
+use rotom_data::shared::subscription_models::{ExchangeId, Instrument};
 use rotom_strategy::Decision;
 
 use crate::execution_manager::builder::TraderId;
@@ -6,50 +7,20 @@ use crate::execution_manager::builder::TraderId;
 use super::{ClientOrderId, OrderKind};
 
 /*----- */
-// Open Order
+// Order
 /*----- */
 #[derive(Debug, Clone)]
-pub struct OpenOrder {
-    pub trader_id: TraderId,
-    pub client_order_id: ClientOrderId,
-    // Used for market or limit orders
-    pub price: f64,
-    // Used for market or limit orders
-    pub quantity: f64,
-    // Used for market orders
-    pub notional_amount: f64,
-    pub decision: Decision,
-    pub order_kind: OrderKind,
-    pub instrument: Instrument,
-}
-
-/*----- */
-// Cancel Order
-/*----- */
-#[derive(Debug)]
-pub struct CancelOrder {
-    pub trader_id: TraderId,
-    // Used to identify order at the given exchange
-    pub client_order_id: String, // smol str,
-    pub symbol: String,          // smol str
-}
-
-/*----- */
-// Wallet transfer
-/*----- */
-#[derive(Debug, Clone)]
-pub struct WalletTransfer {
-    pub trader_id: TraderId,
-    pub coin: String,            // smol
-    pub wallet_address: String,  // can be static str todo: change to deposit address
-    pub network: Option<String>, // smol, probs can be static str
-    pub amount: f64,
+pub struct Order {
+    trader_id: TraderId,
+    exchange: ExchangeId,
+    requested_time: Utc,
+    request: ExecutionRequest,
 }
 
 /*----- */
 // Execution Requests
 /*----- */
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ExecutionRequest {
     Open(OpenOrder),
     Cancel(CancelOrder),
@@ -66,6 +37,38 @@ impl std::fmt::Display for ExecutionRequest {
             ExecutionRequest::Transfer(request) => write!(f, "{:#?}", request),
         }
     }
+}
+
+/*----- */
+// Requests
+/*----- */
+#[derive(Debug, Clone)]
+pub struct OpenOrder {
+    pub client_order_id: ClientOrderId,
+    // Used for market or limit orders
+    pub price: f64,
+    // Used for market or limit orders
+    pub quantity: f64,
+    // Used for market orders
+    pub notional_amount: f64,
+    pub decision: Decision,
+    pub order_kind: OrderKind,
+    pub instrument: Instrument,
+}
+
+#[derive(Debug, Clone)]
+pub struct CancelOrder {
+    // Used to identify order at the given exchange
+    pub client_order_id: ClientOrderId, // smol str,
+    pub symbol: String,                 // smol str
+}
+
+#[derive(Debug, Clone)]
+pub struct WalletTransfer {
+    pub coin: String,            // smol
+    pub wallet_address: String,  // can be static str todo: change to deposit address
+    pub network: Option<String>, // smol, probs can be static str
+    pub amount: f64,
 }
 
 // impl From<(&TickerPrecision, &OrderEvent)> for OpenOrder {

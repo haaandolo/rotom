@@ -12,7 +12,7 @@ use crate::exchange::binance::requests::new_order::BinanceNewOrder;
 use crate::exchange::binance::requests::wallet_transfer::BinanceWalletTransfer;
 use crate::exchange::AccountDataWebsocket;
 use crate::exchange::ExecutionClient;
-use crate::model::account_data::AccountDataBalance;
+use crate::model::execution_response::AccountDataBalance;
 use crate::model::execution_request::CancelOrder;
 use crate::model::execution_request::OpenOrder;
 use crate::model::execution_request::WalletTransfer;
@@ -88,7 +88,7 @@ impl ExecutionClient for BinanceExecution {
         let response = self
             .http_client
             .execute(BinanceCancelOrder::new(
-                cancel_request.client_order_id,
+                cancel_request.client_order_id.0,
                 cancel_request.symbol,
             )?)
             .await?;

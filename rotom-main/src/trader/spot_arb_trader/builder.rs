@@ -9,7 +9,7 @@ use rotom_data::{
 };
 use rotom_oms::{
     exchange::ExecutionClient, execution_manager::builder::TraderId,
-    model::{account_data::ExecutionResponse, execution_request::ExecutionRequest},
+    model::{execution_response::ExecutionResponse, execution_request::ExecutionRequest},
 };
 use tokio::sync::mpsc::{self, Sender, UnboundedReceiver};
 use uuid::Uuid;

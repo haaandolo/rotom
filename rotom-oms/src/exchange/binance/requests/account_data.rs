@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
 use crate::model::{
-    account_data::{
+    execution_response::{
         AccountDataBalance, AccountDataBalanceDelta, AccountDataOrder, ExecutionResponse,
         OrderStatus,
     },

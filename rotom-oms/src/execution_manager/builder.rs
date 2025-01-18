@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::{
     exchange::ExecutionClient,
-    model::{account_data::ExecutionResponse, execution_request::ExecutionRequest},
+    model::{execution_response::ExecutionResponse, execution_request::ExecutionRequest},
 };
 
 use super::manager::ExecutionManager;
