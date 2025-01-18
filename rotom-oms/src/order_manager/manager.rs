@@ -1,11 +1,11 @@
 use rotom_data::shared::subscription_models::ExchangeId;
-use std::{collections::HashMap, hash::Hash};
+use std::collections::HashMap;
 use tokio::sync::mpsc;
 
 use crate::{
     error::OrderManagmentSystemError,
     execution_manager::builder::TraderId,
-    model::{account_data::ExecutionResponse, order::ExecutionRequest, ClientOrderId},
+    model::{account_data::ExecutionResponse, execution_request::ExecutionRequest, ClientOrderId},
     portfolio::position2::Position2,
 };
 
@@ -33,10 +33,15 @@ impl OrderManagementSystem {
         loop {
             tokio::select! {
                 Some(request) = self.execution_request_rx.recv() => {
-                    println!("Request: {:#?}", request);
+                    println!("### Request ### \n {:#?}", request);
+                    // match self.execution_manager_txs.get(&request) {
+                    //     Some(execution_tx) => {},
+                    //     None => {}
+                    // }
+
                 },
                 Some(response) = self.execution_response_rx.recv() => {
-                    println!("Response: {:#?}", response);
+                    println!("### Response ### \n {:#?}", response);
                 },
                 else => {
                     // This handles the case where both channels are closed

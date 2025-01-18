@@ -19,7 +19,7 @@ use crate::{
     exchange::{AccountDataWebsocket, ExecutionClient},
     model::{
         account_data::AccountDataBalance,
-        order::{CancelOrder, OpenOrder, WalletTransfer},
+        execution_request::{CancelOrder, OpenOrder, WalletTransfer},
     },
 };
 

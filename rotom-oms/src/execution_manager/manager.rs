@@ -19,7 +19,7 @@ use crate::{
     execution_manager::request::ExecutionRequestFuture,
     model::{
         account_data::{AccountDataOrder, ExecutionResponse},
-        order::{ExecutionRequest, OpenOrder},
+        execution_request::ExecutionRequest,
         ClientOrderId,
     },
 };

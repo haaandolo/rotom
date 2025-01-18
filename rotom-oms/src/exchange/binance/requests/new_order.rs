@@ -8,7 +8,7 @@ use std::borrow::Cow;
 
 use crate::exchange::binance::request_builder::BinanceAuthParams;
 use crate::exchange::errors::RequestBuildError;
-use crate::model::order::OpenOrder;
+use crate::model::execution_request::OpenOrder;
 use crate::model::OrderKind;
 use rotom_data::shared::de::de_str;
 

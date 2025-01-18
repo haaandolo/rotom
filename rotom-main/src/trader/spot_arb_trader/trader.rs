@@ -7,12 +7,9 @@ use rotom_data::{
 };
 use rotom_oms::execution_manager::builder::TraderId;
 use rotom_oms::model::account_data::ExecutionResponse;
-use rotom_oms::model::order::OpenOrder;
+use rotom_oms::model::execution_request::{ExecutionRequest, OpenOrder};
 use rotom_oms::model::ClientOrderId;
-use rotom_oms::{
-    event::Event,
-    model::order::{ExecutionRequest, OrderEvent},
-};
+use rotom_oms::{event::Event, model::order::OrderEvent};
 use rotom_strategy::SignalForceExit;
 use std::collections::VecDeque;
 use tokio::sync::mpsc;

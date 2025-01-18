@@ -23,7 +23,7 @@ use tracing::{debug, error, info, warn};
 
 use crate::model::{
     account_data::{AccountDataBalance, ExecutionResponse},
-    order::{CancelOrder, OpenOrder, WalletTransfer},
+    execution_request::{CancelOrder, OpenOrder, WalletTransfer},
 };
 
 /*----- */

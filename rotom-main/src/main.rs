@@ -23,10 +23,7 @@ use rotom_oms::{
         ExecutionClient,
     },
     execution_manager::builder::{ExecutionBuilder, TraderId},
-    model::{
-        order::{CancelOrder, OpenOrder, OrderEvent, WalletTransfer},
-        ClientOrderId, OrderKind,
-    },
+    model::{ClientOrderId, OrderKind},
     order_manager::{balance_builder::BalanceBuilder, manager::OrderManagementSystemBuilder},
     portfolio::{
         allocator::{default_allocator::DefaultAllocator, spot_arb_allocator::SpotArbAllocator},

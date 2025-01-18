@@ -5,7 +5,7 @@ use rotom_data::protocols::http::rest_request::RestRequest;
 
 use crate::{
     exchange::errors::RequestBuildError,
-    model::{order::OpenOrder, OrderKind},
+    model::{execution_request::OpenOrder, OrderKind},
 };
 use rotom_data::shared::de::de_str;
 

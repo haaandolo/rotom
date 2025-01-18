@@ -13,9 +13,9 @@ use crate::exchange::binance::requests::wallet_transfer::BinanceWalletTransfer;
 use crate::exchange::AccountDataWebsocket;
 use crate::exchange::ExecutionClient;
 use crate::model::account_data::AccountDataBalance;
-use crate::model::order::CancelOrder;
-use crate::model::order::OpenOrder;
-use crate::model::order::WalletTransfer;
+use crate::model::execution_request::CancelOrder;
+use crate::model::execution_request::OpenOrder;
+use crate::model::execution_request::WalletTransfer;
 
 use super::request_builder::BinanceRequestBuilder;
 use super::requests::account_data::BinanceAccountEvents;
