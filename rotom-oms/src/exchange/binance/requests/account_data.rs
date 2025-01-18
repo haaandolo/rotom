@@ -2,11 +2,10 @@ use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
 use crate::model::{
-    execution_response::{
-        AccountDataBalance, AccountDataBalanceDelta, AccountDataOrder, ExecutionResponse,
-        OrderStatus,
-    },
     balance::Balance,
+    execution_response::{
+        AccountBalance, AccountBalanceDelta, ExecutionResponse, OrderResponse, OrderStatus,
+    },
     OrderKind, Side,
 };
 
@@ -72,7 +71,7 @@ pub struct BinanceAccountDataOrder {
     pub V: String, // SelfTradePreventionMode
 }
 
-impl From<BinanceAccountDataOrder> for AccountDataOrder {
+impl From<BinanceAccountDataOrder> for OrderResponse {
     fn from(order: BinanceAccountDataOrder) -> Self {
         Self {
             exchange: ExchangeId::BinanceSpot,
@@ -112,12 +111,12 @@ pub struct BinanceAccountDataBalanceVec {
     pub l: f64, // locked
 }
 
-impl From<BinanceAccountDataBalance> for Vec<AccountDataBalance> {
+impl From<BinanceAccountDataBalance> for Vec<AccountBalance> {
     fn from(account_balances: BinanceAccountDataBalance) -> Self {
         account_balances
             .B
             .into_iter()
-            .map(|balance| AccountDataBalance {
+            .map(|balance| AccountBalance {
                 asset: balance.a,
                 exchange: ExchangeId::BinanceSpot,
                 balance: Balance {
@@ -143,9 +142,9 @@ pub struct BinanceAccountDataDelta {
     pub T: u64,    // clear time
 }
 
-impl From<BinanceAccountDataDelta> for AccountDataBalanceDelta {
+impl From<BinanceAccountDataDelta> for AccountBalanceDelta {
     fn from(delta: BinanceAccountDataDelta) -> Self {
-        AccountDataBalanceDelta {
+        AccountBalanceDelta {
             asset: delta.a,
             exchange: ExchangeId::BinanceSpot,
             total: delta.d,
@@ -197,13 +196,13 @@ impl From<BinanceAccountEvents> for ExecutionResponse {
     fn from(account_events: BinanceAccountEvents) -> Self {
         match account_events {
             BinanceAccountEvents::Order(order) => {
-                ExecutionResponse::Order(AccountDataOrder::from(order))
+                ExecutionResponse::Order(OrderResponse::from(order))
             }
             BinanceAccountEvents::Balance(balance) => {
-                ExecutionResponse::BalanceVec(Vec::<AccountDataBalance>::from(balance))
+                ExecutionResponse::BalanceVec(Vec::<AccountBalance>::from(balance))
             }
             BinanceAccountEvents::BalanceDelta(balance_delta) => {
-                ExecutionResponse::BalanceDelta(AccountDataBalanceDelta::from(balance_delta))
+                ExecutionResponse::BalanceDelta(AccountBalanceDelta::from(balance_delta))
             }
             _ => unimplemented!(),
         }
@@ -346,7 +345,7 @@ mod test {
 
 ### Limit sell ###
 "{\"e\":\"executionReport\",\"E\":1734745890682,\"s\":\"OPUSDT\",\"c\":\"web_5fd0965995964e7d8d7890b500bc1f5d\",\"S\":\"SELL\",\"o\":\"LIMIT\",\"f\":\"GTC\",\"q\":\"4.96000000\",\"p\":\"1.91000000\",\"P\":\"0.00000000\",\"F\":\"0.00000000\",\"g\":-1,\"C\":\"\",\"x\":\"NEW\",\"X\":\"NEW\",\"r\":\"NONE\",\"i\":1985639387,\"l\":\"0.00000000\",\"z\":\"0.00000000\",\"L\":\"0.00000000\",\"n\":\"0\",\"N\":null,\"T\":1734745890681,\"t\":-1,\"I\":4096624429,\"w\":true,\"m\":false,\"M\":false,\"O\":1734745890681,\"Z\":\"0.00000000\",\"Y\":\"0.00000000\",\"Q\":\"0.00000000\",\"W\":1734745890681,\"V\":\"EXPIRE_MAKER\"}",
-AccountDataOrder: AccountDataOrder {
+OrderResponse: OrderResponse {
     exchange: BinanceSpot,
     client_order_id: "web_5fd0965995964e7d8d7890b500bc1f5d",
     asset: "OPUSDT",
@@ -360,7 +359,7 @@ AccountDataOrder: AccountDataOrder {
 }
 
 "{\"e\":\"executionReport\",\"E\":1734745936793,\"s\":\"OPUSDT\",\"c\":\"web_5fd0965995964e7d8d7890b500bc1f5d\",\"S\":\"SELL\",\"o\":\"LIMIT\",\"f\":\"GTC\",\"q\":\"4.96000000\",\"p\":\"1.91000000\",\"P\":\"0.00000000\",\"F\":\"0.00000000\",\"g\":-1,\"C\":\"\",\"x\":\"TRADE\",\"X\":\"FILLED\",\"r\":\"NONE\",\"i\":1985639387,\"l\":\"4.96000000\",\"z\":\"4.96000000\",\"L\":\"1.91000000\",\"n\":\"0.00947360\",\"N\":\"USDT\",\"T\":1734745936793,\"t\":114330470,\"I\":4096630531,\"w\":false,\"m\":true,\"M\":true,\"O\":1734745890681,\"Z\":\"9.47360000\",\"Y\":\"9.47360000\",\"Q\":\"0.00000000\",\"W\":1734745890681,\"V\":\"EXPIRE_MAKER\"}",
-AccountDataOrder: AccountDataOrder {
+OrderResponse: OrderResponse {
     exchange: BinanceSpot,
     client_order_id: "web_5fd0965995964e7d8d7890b500bc1f5d",
     asset: "OPUSDT",
@@ -377,7 +376,7 @@ AccountDataOrder: AccountDataOrder {
 "{\"e\":\"executionReport\",\"E\":1734745597750,\"s\":\"OPUSDT\",\"c\":\"web_ec703d3d0e82439ca696363f4f0c681c\",\"S\":\"BUY\",\"o\":\"MARKET\",\"f\":\"GTC\",\"q\":\"4.99000000\",\"p\":\"0.00000000\",\"P\":\"0.00000000\",\"F\":\"0.00000000\",\"g\":-1,\"C\":\"\",\"x\":\"NEW\",\"X\":\"NEW\",\"r\":\"NONE\",\"i\":1985620466,\"l\":\"0.00000000\",\"z\":\"0.00000000\",\"L\":\"0.00000000\",\"n\":\"0\",\"N\":null,\"T\":1734745597750,\"t\":-1,\"I\":4096586101,\"w\":true,\"m\":false,\"M\":false,\"O\":1734745597750,\"Z\":\"0.00000000\",\"Y\":\"0.00000000\",\"Q\":\"9.51812000\",\"W\":1734745597750,\"V\":\"EXPIRE_MAKER\"}",
 "{\"e\":\"executionReport\",\"E\":1734745597750,\"s\":\"OPUSDT\",\"c\":\"web_ec703d3d0e82439ca696363f4f0c681c\",\"S\":\"BUY\",\"o\":\"MARKET\",\"f\":\"GTC\",\"q\":\"4.99000000\",\"p\":\"0.00000000\",\"P\":\"0.00000000\",\"F\":\"0.00000000\",\"g\":-1,\"C\":\"\",\"x\":\"TRADE\",\"X\":\"FILLED\",\"r\":\"NONE\",\"i\":1985620466,\"l\":\"4.99000000\",\"z\":\"4.99000000\",\"L\":\"1.90700000\",\"n\":\"0.00499000\",\"N\":\"OP\",\"T\":1734745597750,\"t\":114329975,\"I\":4096586102,\"w\":false,\"m\":false,\"M\":true,\"O\":1734745597750,\"Z\":\"9.51593000\",\"Y\":\"9.51593000\",\"Q\":\"9.51812000\",\"W\":1734745597750,\"V\":\"EXPIRE_MAKER\"}",
 
-AccountDataOrder: AccountDataOrder {
+OrderResponse: OrderResponse {
     exchange: BinanceSpot,
     client_order_id: "web_ec703d3d0e82439ca696363f4f0c681c",
     asset: "OPUSDT",
@@ -389,7 +388,7 @@ AccountDataOrder: AccountDataOrder {
     fee: 0.0,
     filled_gross: 0.0,
 }
-AccountDataOrder: AccountDataOrder {
+OrderResponse: OrderResponse {
     exchange: BinanceSpot,
     client_order_id: "web_ec703d3d0e82439ca696363f4f0c681c",
     asset: "OPUSDT",
@@ -407,7 +406,7 @@ AccountDataOrder: AccountDataOrder {
 "{\"e\":\"executionReport\",\"E\":1734745618076,\"s\":\"OPUSDT\",\"c\":\"web_7c4fcae94537497fb41b87a13927fd0f\",\"S\":\"SELL\",\"o\":\"MARKET\",\"f\":\"GTC\",\"q\":\"4.99000000\",\"p\":\"0.00000000\",\"P\":\"0.00000000\",\"F\":\"0.00000000\",\"g\":-1,\"C\":\"\",\"x\":\"NEW\",\"X\":\"NEW\",\"r\":\"NONE\",\"i\":1985621169,\"l\":\"0.00000000\",\"z\":\"0.00000000\",\"L\":\"0.00000000\",\"n\":\"0\",\"N\":null,\"T\":1734745618075,\"t\":-1,\"I\":4096587500,\"w\":true,\"m\":false,\"M\":false,\"O\":1734745618075,\"Z\":\"0.00000000\",\"Y\":\"0.00000000\",\"Q\":\"0.00000000\",\"W\":1734745618075,\"V\":\"EXPIRE_MAKER\"}",
 "{\"e\":\"executionReport\",\"E\":1734745618076,\"s\":\"OPUSDT\",\"c\":\"web_7c4fcae94537497fb41b87a13927fd0f\",\"S\":\"SELL\",\"o\":\"MARKET\",\"f\":\"GTC\",\"q\":\"4.99000000\",\"p\":\"0.00000000\",\"P\":\"0.00000000\",\"F\":\"0.00000000\",\"g\":-1,\"C\":\"\",\"x\":\"TRADE\",\"X\":\"FILLED\",\"r\":\"NONE\",\"i\":1985621169,\"l\":\"4.99000000\",\"z\":\"4.99000000\",\"L\":\"1.90700000\",\"n\":\"0.00951593\",\"N\":\"USDT\",\"T\":1734745618075,\"t\":114329985,\"I\":4096587501,\"w\":false,\"m\":false,\"M\":true,\"O\":1734745618075,\"Z\":\"9.51593000\",\"Y\":\"9.51593000\",\"Q\":\"0.00000000\",\"W\":1734745618075,\"V\":\"EXPIRE_MAKER\"}",
 
-AccountDataOrder: AccountDataOrder {
+OrderResponse: OrderResponse {
     exchange: BinanceSpot,
     client_order_id: "web_7c4fcae94537497fb41b87a13927fd0f",
     asset: "OPUSDT",
@@ -419,7 +418,7 @@ AccountDataOrder: AccountDataOrder {
     fee: 0.0,
     filled_gross: 0.0,
 }
-AccountDataOrder: AccountDataOrder {
+OrderResponse: OrderResponse {
     exchange: BinanceSpot,
     client_order_id: "web_7c4fcae94537497fb41b87a13927fd0f",
     asset: "OPUSDT",

@@ -17,7 +17,7 @@ use crate::{
     },
     execution::FillEvent,
     model::{
-        execution_response::{AccountDataBalance, AccountDataBalanceDelta},
+        execution_response::{AccountBalance, AccountBalanceDelta},
         balance::{determine_balance_id, SpotBalanceId},
         order::{OrderEvent, OrderState},
         ClientOrderId, OrderKind, Side,
@@ -82,11 +82,11 @@ impl SpotPortfolio {
         Ok(self)
     }
 
-    pub fn update_balance(&mut self, balance_update: &AccountDataBalance) {
+    pub fn update_balance(&mut self, balance_update: &AccountBalance) {
         self.repository.update_balance(balance_update)
     }
 
-    pub fn update_balance_delta(&mut self, balance_update: &AccountDataBalanceDelta) {
+    pub fn update_balance_delta(&mut self, balance_update: &AccountBalanceDelta) {
         self.repository.update_balance_delta(balance_update)
     }
 

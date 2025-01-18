@@ -4,8 +4,8 @@ use rotom_data::shared::de::de_u64_epoch_ms_as_datetime_utc;
 use rotom_data::shared::subscription_models::ExchangeId;
 use serde::{Deserialize, Serialize};
 
-use crate::model::execution_response::AccountDataBalance;
-use crate::model::execution_response::AccountDataOrder;
+use crate::model::execution_response::AccountBalance;
+use crate::model::execution_response::OrderResponse;
 use crate::model::execution_response::ExecutionResponse;
 use crate::model::execution_response::OrderStatus;
 use crate::model::balance::Balance;
@@ -62,7 +62,7 @@ pub struct PoloniexAccountDataOrderParams {
     pub ts: u64,            // time the record was pushed
 }
 
-impl From<PoloniexAccountDataOrder> for AccountDataOrder {
+impl From<PoloniexAccountDataOrder> for OrderResponse {
     fn from(mut order: PoloniexAccountDataOrder) -> Self {
         Self {
             exchange: ExchangeId::PoloniexSpot,
@@ -116,9 +116,9 @@ pub struct PoloniexAccountDataBalanceParams {
     pub ts: u64,
 }
 
-impl From<PoloniexAccountDataBalance> for AccountDataBalance {
-    fn from(mut account_balance: PoloniexAccountDataBalance) -> AccountDataBalance {
-        AccountDataBalance {
+impl From<PoloniexAccountDataBalance> for AccountBalance {
+    fn from(mut account_balance: PoloniexAccountDataBalance) -> AccountBalance {
+        AccountBalance {
             asset: std::mem::take(&mut account_balance.data[0].currency), // when changed to small string, can rm std::mem::take
             exchange: ExchangeId::PoloniexSpot,
             balance: Balance {
@@ -155,10 +155,10 @@ impl From<PoloniexAccountEvents> for ExecutionResponse {
     fn from(account_events: PoloniexAccountEvents) -> Self {
         match account_events {
             PoloniexAccountEvents::Order(order) => {
-                ExecutionResponse::Order(AccountDataOrder::from(order))
+                ExecutionResponse::Order(OrderResponse::from(order))
             }
             PoloniexAccountEvents::Balance(balance) => {
-                ExecutionResponse::Balance(AccountDataBalance::from(balance))
+                ExecutionResponse::Balance(AccountBalance::from(balance))
             }
         }
     }
@@ -188,11 +188,11 @@ mod test {
 /*----- */
 /*
 ### Note ###
-Asset & price field of AccountDataOrder is wrong, example copied before field was updated
+Asset & price field of OrderResponse is wrong, example copied before field was updated
 
 ### Limit buy ###
 "{\"channel\":\"orders\",\"data\":[{\"orderId\":\"393344737152782336\",\"tradeId\":\"0\",\"clientOrderId\":\"\",\"accountType\":\"SPOT\",\"eventType\":\"place\",\"symbol\":\"OP_USDT\",\"side\":\"BUY\",\"type\":\"LIMIT\",\"price\":\"1.9\",\"quantity\":\"5\",\"state\":\"NEW\",\"createTime\":1734747093330,\"tradeTime\":0,\"tradePrice\":\"0\",\"tradeQty\":\"0\",\"feeCurrency\":\"\",\"tradeFee\":\"0\",\"tradeAmount\":\"0\",\"filledQuantity\":\"0\",\"filledAmount\":\"0\",\"ts\":1734747093363,\"source\":\"WEB\",\"orderAmount\":\"0\",\"matchRole\":\"\"}]}",
-AccountDataOrder: AccountDataOrder {
+OrderResponse: OrderResponse {
     exchange: PoloniexSpot,
     client_order_id: "393344737152782336",
     asset: "OP_USDT",
@@ -206,7 +206,7 @@ AccountDataOrder: AccountDataOrder {
 }
 
 "{\"channel\":\"orders\",\"data\":[{\"orderId\":\"393344737152782336\",\"tradeId\":\"106864093\",\"clientOrderId\":\"\",\"accountType\":\"SPOT\",\"eventType\":\"trade\",\"symbol\":\"OP_USDT\",\"side\":\"BUY\",\"type\":\"LIMIT\",\"price\":\"1.9\",\"quantity\":\"5\",\"state\":\"FILLED\",\"createTime\":1734747093330,\"tradeTime\":1734747093356,\"tradePrice\":\"1.8995\",\"tradeQty\":\"5\",\"feeCurrency\":\"OP\",\"tradeFee\":\"0.01\",\"tradeAmount\":\"9.4975\",\"filledQuantity\":\"5\",\"filledAmount\":\"9.4975\",\"ts\":1734747093403,\"source\":\"WEB\",\"orderAmount\":\"0\",\"matchRole\":\"TAKER\"}]}",
-AccountDataOrder: AccountDataOrder {
+OrderResponse: OrderResponse {
     exchange: PoloniexSpot,
     client_order_id: "393344737152782336",
     asset: "OP_USDT",
@@ -221,7 +221,7 @@ AccountDataOrder: AccountDataOrder {
 
 ### Limit sell ###
 "{\"channel\":\"orders\",\"data\":[{\"orderId\":\"393345318000967680\",\"tradeId\":\"0\",\"clientOrderId\":\"\",\"accountType\":\"SPOT\",\"eventType\":\"place\",\"symbol\":\"OP_USDT\",\"side\":\"SELL\",\"type\":\"LIMIT\",\"price\":\"1.888\",\"quantity\":\"4.99\",\"state\":\"NEW\",\"createTime\":1734747231814,\"tradeTime\":0,\"tradePrice\":\"0\",\"tradeQty\":\"0\",\"feeCurrency\":\"\",\"tradeFee\":\"0\",\"tradeAmount\":\"0\",\"filledQuantity\":\"0\",\"filledAmount\":\"0\",\"ts\":1734747231846,\"source\":\"WEB\",\"orderAmount\":\"0\",\"matchRole\":\"\"}]}",
-AccountDataOrder: AccountDataOrder {
+OrderResponse: OrderResponse {
     exchange: PoloniexSpot,
     client_order_id: "393345318000967680",
     asset: "OP_USDT",
@@ -236,7 +236,7 @@ AccountDataOrder: AccountDataOrder {
 
 "{\"channel\":\"orders\",\"data\":[{\"orderId\":\"393345318000967680\",\"tradeId\":\"106865010\",\"clientOrderId\":\"\",\"accountType\":\"SPOT\",\"eventType\":\"trade\",\"symbol\":\"OP_USDT\",\"side\":\"SELL\",\"type\":\"LIMIT\",\"price\":\"1.888\",\"quantity\":\"4.99\",\"state\":\"PARTIALLY_FILLED\",\"createTime\":1734747231814,\"tradeTime\":1734747232148,\"tradePrice\":\"1.888\",\"tradeQty\":\"3.3059\",\"feeCurrency\":\"USDT\",\"tradeFee\":\"0.0124830784\",\"tradeAmount\":\"6.2415392\",\"filledQuantity\":\"3.3059\",\"filledAmount\":\"6.2415392\",\"ts\":1734747232192,\"source\":\"WEB\",\"orderAmount\":\"0\",\"matchRole\":\"MAKER\"}]}",
 "{\"channel\":\"orders\",\"data\":[{\"orderId\":\"393345318000967680\",\"tradeId\":\"106865011\",\"clientOrderId\":\"\",\"accountType\":\"SPOT\",\"eventType\":\"trade\",\"symbol\":\"OP_USDT\",\"side\":\"SELL\",\"type\":\"LIMIT\",\"price\":\"1.888\",\"quantity\":\"4.99\",\"state\":\"FILLED\",\"createTime\":1734747231814,\"tradeTime\":1734747232150,\"tradePrice\":\"1.888\",\"tradeQty\":\"1.6841\",\"feeCurrency\":\"USDT\",\"tradeFee\":\"0.0063591616\",\"tradeAmount\":\"3.1795808\",\"filledQuantity\":\"4.99\",\"filledAmount\":\"9.42112\",\"ts\":1734747232202,\"source\":\"WEB\",\"orderAmount\":\"0\",\"matchRole\":\"MAKER\"}]}",
-AccountDataOrder: AccountDataOrder {
+OrderResponse: OrderResponse {
     exchange: PoloniexSpot,
     client_order_id: "393345318000967680",
     asset: "OP_USDT",
@@ -249,7 +249,7 @@ AccountDataOrder: AccountDataOrder {
     filled_gross: 6.2415392,
 }
 
-AccountDataOrder: AccountDataOrder {
+OrderResponse: OrderResponse {
     exchange: PoloniexSpot,
     client_order_id: "393345318000967680",
     asset: "OP_USDT",
@@ -265,7 +265,7 @@ AccountDataOrder: AccountDataOrder {
 ### Market buy ###
 "{\"channel\":\"orders\",\"data\":[{\"orderId\":\"393345433256243200\",\"tradeId\":\"0\",\"clientOrderId\":\"\",\"accountType\":\"SPOT\",\"eventType\":\"place\",\"symbol\":\"OP_USDT\",\"side\":\"BUY\",\"type\":\"MARKET\",\"price\":\"0\",\"quantity\":\"0\",\"state\":\"NEW\",\"createTime\":1734747259293,\"tradeTime\":0,\"tradePrice\":\"0\",\"tradeQty\":\"0\",\"feeCurrency\":\"\",\"tradeFee\":\"0\",\"tradeAmount\":\"0\",\"filledQuantity\":\"0\",\"filledAmount\":\"0\",\"ts\":1734747259322,\"source\":\"WEB\",\"orderAmount\":\"3\",\"matchRole\":\"\"}]}",
 "{\"channel\":\"orders\",\"data\":[{\"orderId\":\"393345433256243200\",\"tradeId\":\"106865178\",\"clientOrderId\":\"\",\"accountType\":\"SPOT\",\"eventType\":\"trade\",\"symbol\":\"OP_USDT\",\"side\":\"BUY\",\"type\":\"MARKET\",\"price\":\"0\",\"quantity\":\"0\",\"state\":\"FILLED\",\"createTime\":1734747259293,\"tradeTime\":1734747259317,\"tradePrice\":\"1.8925\",\"tradeQty\":\"1.5852\",\"feeCurrency\":\"OP\",\"tradeFee\":\"0.0031704\",\"tradeAmount\":\"2.999991\",\"filledQuantity\":\"1.5852\",\"filledAmount\":\"2.999991\",\"ts\":1734747259358,\"source\":\"WEB\",\"orderAmount\":\"3\",\"matchRole\":\"TAKER\"}]}",
-AccountDataOrder: AccountDataOrder {
+OrderResponse: OrderResponse {
     exchange: PoloniexSpot,
     client_order_id: "393345433256243200",
     asset: "OP_USDT",
@@ -277,7 +277,7 @@ AccountDataOrder: AccountDataOrder {
     fee: 0.0,
     filled_gross: 0.0,
 }
-AccountDataOrder: AccountDataOrder {
+OrderResponse: OrderResponse {
     exchange: PoloniexSpot,
     client_order_id: "393345433256243200",
     asset: "OP_USDT",
@@ -292,7 +292,7 @@ AccountDataOrder: AccountDataOrder {
 
 ### Market sell ###
 "{\"channel\":\"orders\",\"data\":[{\"orderId\":\"393345503405989889\",\"tradeId\":\"0\",\"clientOrderId\":\"\",\"accountType\":\"SPOT\",\"eventType\":\"place\",\"symbol\":\"OP_USDT\",\"side\":\"SELL\",\"type\":\"MARKET\",\"price\":\"0\",\"quantity\":\"1.582\",\"state\":\"NEW\",\"createTime\":1734747276018,\"tradeTime\":0,\"tradePrice\":\"0\",\"tradeQty\":\"0\",\"feeCurrency\":\"\",\"tradeFee\":\"0\",\"tradeAmount\":\"0\",\"filledQuantity\":\"0\",\"filledAmount\":\"0\",\"ts\":1734747276049,\"source\":\"WEB\",\"orderAmount\":\"0\",\"matchRole\":\"\"}]}",
-AccountDataOrder: AccountDataOrder {
+OrderResponse: OrderResponse {
     exchange: PoloniexSpot,
     client_order_id: "393345503405989889",
     asset: "OP_USDT",
@@ -306,7 +306,7 @@ AccountDataOrder: AccountDataOrder {
 }
 
 "{\"channel\":\"orders\",\"data\":[{\"orderId\":\"393345503405989889\",\"tradeId\":\"106865270\",\"clientOrderId\":\"\",\"accountType\":\"SPOT\",\"eventType\":\"trade\",\"symbol\":\"OP_USDT\",\"side\":\"SELL\",\"type\":\"MARKET\",\"price\":\"0\",\"quantity\":\"1.582\",\"state\":\"FILLED\",\"createTime\":1734747276018,\"tradeTime\":1734747276039,\"tradePrice\":\"1.8864\",\"tradeQty\":\"1.582\",\"feeCurrency\":\"USDT\",\"tradeFee\":\"0.0059685696\",\"tradeAmount\":\"2.9842848\",\"filledQuantity\":\"1.582\",\"filledAmount\":\"2.9842848\",\"ts\":1734747276079,\"source\":\"WEB\",\"orderAmount\":\"0\",\"matchRole\":\"TAKER\"}]}",
-AccountDataOrder: AccountDataOrder {
+OrderResponse: OrderResponse {
     exchange: PoloniexSpot,
     client_order_id: "393345503405989889",
     asset: "OP_USDT",

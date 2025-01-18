@@ -5,13 +5,13 @@ use rotom_data::error::SocketError;
 use crate::{
     exchange::ExecutionClient,
     model::{
-        execution_response::AccountDataBalance,
+        execution_response::AccountBalance,
         balance::{Balance, SpotBalanceId},
     },
 };
 
 type BalanceFutures =
-    Pin<Box<dyn Future<Output = Result<Vec<AccountDataBalance>, SocketError>> + Send>>;
+    Pin<Box<dyn Future<Output = Result<Vec<AccountBalance>, SocketError>> + Send>>;
 
 /*----- */
 // Balance Map

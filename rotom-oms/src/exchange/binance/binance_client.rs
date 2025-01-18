@@ -12,10 +12,10 @@ use crate::exchange::binance::requests::new_order::BinanceNewOrder;
 use crate::exchange::binance::requests::wallet_transfer::BinanceWalletTransfer;
 use crate::exchange::AccountDataWebsocket;
 use crate::exchange::ExecutionClient;
-use crate::model::execution_response::AccountDataBalance;
 use crate::model::execution_request::CancelOrder;
 use crate::model::execution_request::OpenOrder;
 use crate::model::execution_request::WalletTransfer;
+use crate::model::execution_response::AccountBalance;
 
 use super::request_builder::BinanceRequestBuilder;
 use super::requests::account_data::BinanceAccountEvents;
@@ -122,11 +122,11 @@ impl ExecutionClient for BinanceExecution {
         Ok(response.0)
     }
 
-    async fn get_balances() -> Result<Vec<AccountDataBalance>, SocketError> {
+    async fn get_balances() -> Result<Vec<AccountBalance>, SocketError> {
         let http_client =
             RestClient::new(BINANCE_BASE_URL, StandardHttpParser, BinanceRequestBuilder);
         let response = http_client.execute(BinanceBalance::new()?).await?;
-        let account_data: Vec<AccountDataBalance> = response.0.into();
+        let account_data: Vec<AccountBalance> = response.0.into();
         Ok(account_data)
     }
 }

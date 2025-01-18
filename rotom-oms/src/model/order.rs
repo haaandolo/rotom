@@ -7,7 +7,7 @@ use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    execution_response::{AccountDataOrder, OrderStatus},
+    execution_response::{OrderResponse, OrderStatus},
     ClientOrderId, OrderKind,
 };
 
@@ -75,12 +75,12 @@ impl OrderEvent {
 
     pub fn update_order_from_account_data_stream(
         &mut self,
-        account_data_update: &AccountDataOrder,
+        account_data_update: &OrderResponse,
     ) {
         self.set_state(OrderState::Open);
         self.exchange_order_status = Some(account_data_update.status);
-        self.filled_gross = account_data_update.cumulative_quote; // Filled_gross field in AccountDataOrder is cumulative so we can just set it each time
-        self.cumulative_quantity += account_data_update.current_executed_quantity; // Quantity field in AccountDataOrder is not cumulative we have to "+=" here
+        self.filled_gross = account_data_update.cumulative_quote; // Filled_gross field in OrderResponse is cumulative so we can just set it each time
+        self.cumulative_quantity += account_data_update.current_executed_quantity; // Quantity field in OrderResponse is not cumulative we have to "+=" here
         self.enter_avg_price = self.calculate_avg_price(); // This step has to happen after the cumulative_quantity & filled_gross gets updated
         self.fees += account_data_update.fee;
         self.last_execution_time = Some(account_data_update.execution_time);
@@ -88,7 +88,7 @@ impl OrderEvent {
     }
 
     // If the state is not open or intransit, we can set a ClientOrderId
-    pub fn set_client_id(&mut self, order_update: &AccountDataOrder) {
+    pub fn set_client_id(&mut self, order_update: &OrderResponse) {
         match self.internal_order_state.is_order_open() {
             false => self.client_order_id = ClientOrderId(order_update.client_order_id.clone()),
             true => (),

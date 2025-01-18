@@ -11,7 +11,7 @@ use uuid::Uuid;
 use crate::{
     execution::{FeeAmount, Fees, FillEvent},
     model::{
-        execution_response::AccountDataOrder,
+        execution_response::OrderResponse,
         balance::Balance,
         order::{OrderEvent, OrderState},
         Side,
@@ -147,7 +147,7 @@ impl Position2 {
     // PositionExiter trait
     pub fn exit(
         &mut self,
-        account_data: &AccountDataOrder,
+        account_data: &OrderResponse,
         order: &OrderEvent,
     ) -> Result<PositionExit2, PortfolioError> {
         if order.is_order_complete() {

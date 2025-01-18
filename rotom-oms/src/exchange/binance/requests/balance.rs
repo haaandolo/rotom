@@ -9,7 +9,7 @@ use rotom_data::{
 
 use crate::{
     exchange::{binance::request_builder::BinanceAuthParams, errors::RequestBuildError},
-    model::{execution_response::AccountDataBalance, balance::Balance},
+    model::{execution_response::AccountBalance, balance::Balance},
 };
 
 /*----- */
@@ -185,12 +185,12 @@ impl From<BinanceBalanceResponseData> for Balance {
     }
 }
 
-impl From<BinanceBalanceResponse> for Vec<AccountDataBalance> {
+impl From<BinanceBalanceResponse> for Vec<AccountBalance> {
     fn from(bin_balance: BinanceBalanceResponse) -> Self {
         bin_balance
             .balances
             .into_iter()
-            .map(|mut balance| AccountDataBalance {
+            .map(|mut balance| AccountBalance {
                 asset: std::mem::take(&mut balance.asset),
                 exchange: ExchangeId::BinanceSpot,
                 balance: Balance::from(balance),

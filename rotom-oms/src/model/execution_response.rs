@@ -6,7 +6,7 @@ use crate::execution_manager::builder::TraderId;
 
 use super::{
     balance::{Balance, SpotBalanceId},
-    Side,
+    Order, Side,
 };
 
 // /*----- */
@@ -22,10 +22,10 @@ use super::{
 
 #[derive(Debug)]
 pub enum ExecutionResponse {
-    Order(AccountDataOrder),
-    BalanceVec(Vec<AccountDataBalance>),
-    Balance(AccountDataBalance),
-    BalanceDelta(AccountDataBalanceDelta),
+    Order(OrderResponse),
+    BalanceVec(Vec<AccountBalance>),
+    Balance(AccountBalance),
+    BalanceDelta(AccountBalanceDelta),
 }
 /*----- */
 // State
@@ -61,7 +61,7 @@ pub enum ExchangeOrderState {
 // Account Data - Order
 /*----- */
 #[derive(Debug)]
-pub struct AccountDataOrder {
+pub struct OrderResponse {
     pub exchange: ExchangeId,
     pub asset: String, // smol
     pub client_order_id: String,
@@ -82,14 +82,14 @@ pub struct AccountDataOrder {
 // Account Data - Balance
 /*----- */
 #[derive(Debug, Clone)]
-pub struct AccountDataBalance {
+pub struct AccountBalance {
     // note asset is a single currency and not a pair e.g OP not OP_USDT
     pub asset: String, // can be smolstr
     pub exchange: ExchangeId,
     pub balance: Balance,
 }
 
-impl AccountDataBalance {
+impl AccountBalance {
     pub fn new(asset: String, exchange: ExchangeId, balance: Balance) -> Self {
         Self {
             asset,
@@ -99,8 +99,8 @@ impl AccountDataBalance {
     }
 }
 
-impl From<&AccountDataBalance> for SpotBalanceId {
-    fn from(asset_balance: &AccountDataBalance) -> Self {
+impl From<&AccountBalance> for SpotBalanceId {
+    fn from(asset_balance: &AccountBalance) -> Self {
         SpotBalanceId(format!("{}_{}", asset_balance.exchange, asset_balance.asset,).to_lowercase())
     }
 }
@@ -109,7 +109,7 @@ impl From<&AccountDataBalance> for SpotBalanceId {
 // Account Data - Balance Delta
 /*----- */
 #[derive(Debug, Clone)]
-pub struct AccountDataBalanceDelta {
+pub struct AccountBalanceDelta {
     // note asset is a single currency and not a pair e.g OP not OP_USDT
     pub asset: String, // smol
     pub exchange: ExchangeId,
@@ -117,8 +117,8 @@ pub struct AccountDataBalanceDelta {
     pub available: f64, // only used for margin will be zero if spot
 }
 
-impl From<&AccountDataBalanceDelta> for SpotBalanceId {
-    fn from(asset_balance: &AccountDataBalanceDelta) -> Self {
+impl From<&AccountBalanceDelta> for SpotBalanceId {
+    fn from(asset_balance: &AccountBalanceDelta) -> Self {
         SpotBalanceId(format!("{}_{}", asset_balance.exchange, asset_balance.asset,).to_lowercase())
     }
 }

@@ -18,7 +18,7 @@ use serde::Deserialize;
 use crate::{
     exchange::{AccountDataWebsocket, ExecutionClient},
     model::{
-        execution_response::AccountDataBalance,
+        execution_response::AccountBalance,
         execution_request::{CancelOrder, OpenOrder, WalletTransfer},
     },
 };
@@ -189,7 +189,7 @@ impl ExecutionClient for PoloniexExecution {
         Ok(response.0)
     }
 
-    async fn get_balances() -> Result<Vec<AccountDataBalance>, SocketError> {
+    async fn get_balances() -> Result<Vec<AccountBalance>, SocketError> {
         let http_client = PoloniexRestClient::new(
             POLONIEX_BASE_URL,
             StandardHttpParser,
@@ -197,7 +197,7 @@ impl ExecutionClient for PoloniexExecution {
         );
 
         let response = http_client.execute(PoloniexBalance).await?;
-        let account_data: Vec<AccountDataBalance> = response.0.into();
+        let account_data: Vec<AccountBalance> = response.0.into();
         Ok(account_data)
     }
 }
