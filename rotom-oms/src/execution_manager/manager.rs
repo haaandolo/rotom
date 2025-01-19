@@ -8,13 +8,15 @@ use rotom_data::{
     AssetFormatted,
 };
 use tokio::sync::mpsc;
-use tracing::error;
+use tracing::{debug, error};
 
 use crate::{
     exchange::{consume_account_data_stream, ExecutionClient},
     execution_manager::request::ExecutionRequestFuture,
     model::{execution_request::ExecutionRequest, execution_response::ExecutionResponse},
 };
+
+const MAX_RETRIES: u8 = 5;
 
 /*----- */
 // Execution Manager
@@ -85,6 +87,9 @@ where
     pub async fn run(mut self) {
         // Init FuturesUnordered
         let mut inflight_opens = FuturesUnordered::new();
+        let mut inflight_cancels = FuturesUnordered::new();
+        let mut inflight_cancel_alls = FuturesUnordered::new();
+        let mut inflight_transfers = FuturesUnordered::new();
 
         loop {
             // Get next order out of FuturesUnordered
@@ -94,26 +99,166 @@ where
                 Either::Right(inflight_opens.select_next_some())
             };
 
+            let next_cancel_response = if inflight_cancels.is_empty() {
+                Either::Left(std::future::pending())
+            } else {
+                Either::Right(inflight_cancels.select_next_some())
+            };
+
+            let next_cancel_all_response = if inflight_cancel_alls.is_empty() {
+                Either::Left(std::future::pending())
+            } else {
+                Either::Right(inflight_cancel_alls.select_next_some())
+            };
+
+            let next_transfer_response = if inflight_transfers.is_empty() {
+                Either::Left(std::future::pending())
+            } else {
+                Either::Right(inflight_transfers.select_next_some())
+            };
+
+            // Handle Execution Requests from Traders
             tokio::select! {
-                /*----- Handle Execution Requests from Traders ----- */
                 Some(request) = self.execution_request_channel.rx.recv() => {
                     match request {
-                        ExecutionRequest::Open(request) => {
-                              
-                            inflight_opens.push(ExecutionRequestFuture::new(
-                                    self.execution_client.open_order(request.clone()), //todo make input a clone
-                                    self.request_timeout,
-                                    request.clone(),
-                                ));
-                        }
-                        ExecutionRequest::Cancel(_request) => {}
-                        ExecutionRequest::CancelAll(_request) => {}
-                        ExecutionRequest::Transfer(_request) => {}
-                    }
+                        ExecutionRequest::Open(mut open_request) => {
+                            match self.ticker_info.get(&open_request.request.instrument) {
+                                Some(ticker_info) => {
+                                    open_request.request.sanitise(&ticker_info.specs);
+                                    inflight_opens.push(ExecutionRequestFuture::new(
+                                            self.execution_client.open_order(open_request.clone()), //todo make input a clone
+                                            self.request_timeout,
+                                            open_request.clone(),
+                                            0
+                                        ));
+                                }
+                                None => {
+                                    error!(
+                                        message = "Could not find ticker specs",
+                                        payload = format!("{:?}", open_request)
+                                    )
 
+                                }
+                            }
+                        }
+                        ExecutionRequest::Cancel(cancel_request) => {
+                           inflight_cancels.push(ExecutionRequestFuture::new(
+                                self.execution_client.cancel_order(cancel_request.clone()), //todo make input a clone
+                                self.request_timeout,
+                                cancel_request.clone(),
+                                0,
+                           ))
+                        }
+                        ExecutionRequest::CancelAll(cancel_request_all) => {
+                           inflight_cancel_alls.push(ExecutionRequestFuture::new(
+                                self.execution_client.cancel_order_all(cancel_request_all.clone()), //todo make input a clone
+                                self.request_timeout,
+                                cancel_request_all.clone(),
+                                0
+                           ))
+                        }
+                        ExecutionRequest::Transfer(transfer_request) => {
+                           inflight_transfers.push(ExecutionRequestFuture::new(
+                                self.execution_client.wallet_transfer(transfer_request.clone()), //todo make input a clone
+                                self.request_timeout,
+                                transfer_request.clone(),
+                                0
+                           ))
+                        }
+                    }
                 }
 
-                /*----- Process Execution Responses from Exchange ----- */
+                // Check Results of the FuturesUnordered and if failed resend
+                open_response = next_open_response => {
+                    if let Err(error) = open_response {
+                        // println!("{:#?}", error); // todo
+                        debug!(
+                            message = "Open order request failed",
+                            payload = format!("{:#?}", error)
+                        );
+
+                        if error.request_retry_count < MAX_RETRIES {
+                            inflight_opens.push(ExecutionRequestFuture::new(
+                                    self.execution_client.open_order(error.request.clone()), //todo make input a clone
+                                    self.request_timeout,
+                                    error.request.clone(),
+                                    error.request_retry_count
+                                ));
+                        } else {
+                            let _ = self.execution_response_tx
+                                .send(ExecutionResponse::ExecutionError(ExecutionRequest::Open(error.request)));
+                        }
+
+                    }
+                }
+
+                cancel_response = next_cancel_response => {
+                    if let Err(error) = cancel_response {
+                        // println!("{:#?}", error); // todo
+                        debug!(
+                            message = "Cancel request failed",
+                            payload = format!("{:#?}", error)
+                        );
+
+                        if error.request_retry_count < MAX_RETRIES {
+                           inflight_cancels.push(ExecutionRequestFuture::new(
+                                self.execution_client.cancel_order(error.request.clone()), //todo make input a clone
+                                self.request_timeout,
+                                error.request.clone(),
+                                error.request_retry_count,
+                           ))
+                        } else {
+                            let _ = self.execution_response_tx
+                                .send(ExecutionResponse::ExecutionError(ExecutionRequest::Cancel(error.request)));
+                        }
+                    }
+                }
+
+                cancel_all_response= next_cancel_all_response => {
+                    if let Err(error) =  cancel_all_response {
+                        // println!("{:#?}", error); // todo
+                        debug!(
+                            message = "Cancel all request failed",
+                            payload = format!("{:#?}", error)
+                        );
+
+                        if error.request_retry_count < MAX_RETRIES {
+                           inflight_cancel_alls.push(ExecutionRequestFuture::new(
+                                self.execution_client.cancel_order_all(error.request.clone()), //todo make input a clone
+                                self.request_timeout,
+                                error.request.clone(),
+                                error.request_retry_count
+                           ))
+                        } else {
+                            let _ = self.execution_response_tx
+                                .send(ExecutionResponse::ExecutionError(ExecutionRequest::CancelAll(error.request)));
+                        }
+                    }
+                }
+
+                transfer_response =  next_transfer_response => {
+                    if let Err(error) = transfer_response{
+                        // println!("{:#?}", error); // todo
+                        debug!(
+                            message = "Transfer request failed",
+                            payload = format!("{:#?}", error)
+                        );
+
+                        if error.request_retry_count < MAX_RETRIES {
+                           inflight_transfers.push(ExecutionRequestFuture::new(
+                                self.execution_client.wallet_transfer(error.request.clone()), //todo make input a clone
+                                self.request_timeout,
+                                error.request.clone(),
+                                error.request_retry_count
+                           ))
+                        } else {
+                            let _ = self.execution_response_tx
+                                .send(ExecutionResponse::ExecutionError(ExecutionRequest::Transfer(error.request)));
+                        }
+                    }
+                }
+
+                // Process Execution Responses from Exchange
                 Some(execution_response) = self.execution_response_rx.recv() => {
                     if let Err(error) = self.execution_response_tx.send(execution_response) {
                         error!(
@@ -124,21 +269,14 @@ where
                     }
                 }
 
-                /*----- Check Results of the FuturesUnordered ----- */
-                open_response = next_open_response => {
-                    // println!("### Open order ### \n {:#?}", open_response);
-
-                    // When checking http reponse, we only cared if it error. If it
-                    // is successful, we would see it come up in the stream
-                    if let Err(error) = open_response {
-                        println!("{:#?}", error); // todo
-                    }
-                }
-
                 // Break the loop if both channels are closed
                 else => {
-                    println!("All channels closed, shutting down execution manager"); // todo
-                    break;
+                    debug!(
+                        message = "All channels in ExecutionManager have closed",
+                        action = "Shutting down",
+                        exchange = %Exchange::CLIENT,
+                    );
+                    break
                 }
             }
         }

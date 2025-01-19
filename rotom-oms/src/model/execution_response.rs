@@ -4,6 +4,7 @@ use serde::Deserialize;
 
 use super::{
     balance::{Balance, SpotBalanceId},
+    execution_request::ExecutionRequest,
     Side,
 };
 
@@ -16,6 +17,8 @@ pub enum ExecutionResponse {
     BalanceVec(Vec<AccountBalance>),
     Balance(AccountBalance),
     BalanceDelta(AccountBalanceDelta),
+    // Send request back to oms if cannot be executed
+    ExecutionError(ExecutionRequest),
 }
 
 /*----- */

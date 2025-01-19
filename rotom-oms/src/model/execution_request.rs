@@ -1,5 +1,11 @@
 use chrono::{DateTime, Utc};
-use rotom_data::shared::subscription_models::{ExchangeId, Instrument};
+use rotom_data::{
+    model::ticker_info::TickerSpecs,
+    shared::{
+        subscription_models::{ExchangeId, Instrument},
+        utils::rtp,
+    },
+};
 use rotom_strategy::Decision;
 
 use crate::execution_manager::builder::TraderId;
@@ -65,6 +71,14 @@ pub struct OpenOrder {
     pub decision: Decision,
     pub order_kind: OrderKind,
     pub instrument: Instrument,
+}
+
+impl OpenOrder {
+    pub fn sanitise(&mut self, specs: &TickerSpecs) {
+        self.price = rtp(self.price, specs.price_precision);
+        self.quantity = rtp(self.quantity, specs.quantity_precision);
+        self.notional_amount = rtp(self.notional_amount, specs.notional_precision);
+    }
 }
 
 #[derive(Debug, Clone)]
