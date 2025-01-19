@@ -1,6 +1,7 @@
 use rotom_data::shared::subscription_models::ExchangeId;
 use std::collections::HashMap;
 use tokio::sync::mpsc;
+use tracing::{debug, error};
 
 use crate::{
     error::OrderManagmentSystemError,
@@ -36,18 +37,28 @@ impl OrderManagementSystem {
         loop {
             tokio::select! {
                 Some(request) = self.execution_request_rx.recv() => {
-                    println!("### Request ### \n {:#?}", request);
+                    // Find ExecutionManager tx and send ExecutionRequest. If not found, shut down program
                     match self.execution_manager_txs.get(&request.exchange) {
                         Some(execution_tx) => {
-                            execution_tx.send(request.request_response);
+                            if let Err(error) = execution_tx.send(request.request_response) {
+                                error! {
+                                    message = "Error encountered while trying to send ExecutionRequest to ExecutionManager",
+                                    error = %error,
+                                }
+                            }
                         },
                         None => {
-                            // Log error and unwrap
-                            todo!()
+                            error! {
+                                message = "Could not find tx to send ExecutionRequest to ExecutionManager. Check ExecutionManger initialisation for provided request",
+                                payload = format!("{:?}", request),
+                                action = "Shutting down entire program"
+                            }
+                            std::process::exit(1);
                         }
                     }
 
                 },
+                //
                 Some(response) = self.execution_response_rx.recv() => {
                     println!("### Response ### \n {:#?}", response);
                 },

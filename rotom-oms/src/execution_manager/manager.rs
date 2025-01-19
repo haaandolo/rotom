@@ -7,9 +7,8 @@ use futures::{
 };
 
 use rotom_data::{
-    error::SocketError, exchange::PublicHttpConnector, model::ticker_info::TickerInfo,
+    exchange::PublicHttpConnector, model::ticker_info::TickerInfo,
     shared::subscription_models::Instrument, streams::builder::single::ExchangeChannel,
-    AssetFormatted,
 };
 use tokio::sync::mpsc;
 use tracing::{debug, error};
@@ -22,14 +21,6 @@ use crate::{
     },
 };
 
-use super::builder::TraderId;
-
-/*----- */
-// TraderMetaData
-/*----- */
-#[derive(Debug)]
-pub struct TraderUpdateTx(pub mpsc::UnboundedSender<ExecutionResponse>);
-
 /*----- */
 // Execution Manager
 /*----- */
@@ -40,9 +31,9 @@ where
 {
     execution_client: Arc<Exchange>,
     execution_response_tx: mpsc::UnboundedSender<ExecutionResponse>,
+    execution_response_rx: mpsc::UnboundedReceiver<ExecutionResponse>,
     ticker_info: HashMap<Instrument, TickerInfo>,
     pub execution_request_channel: ExchangeChannel<ExecutionRequest>,
-    account_data_rx: mpsc::UnboundedReceiver<ExecutionResponse>,
     request_timeout: std::time::Duration,
 }
 
@@ -58,9 +49,9 @@ where
         Self {
             execution_client: Arc::new(Exchange::new()),
             execution_response_tx,
+            execution_response_rx: account_data_rx,
             ticker_info: HashMap::with_capacity(100),
             execution_request_channel: ExchangeChannel::default(),
-            account_data_rx,
             request_timeout: std::time::Duration::from_millis(500), // todo: make exchange specific?
         }
     }
@@ -90,7 +81,7 @@ where
                 Some(request) = self.execution_request_channel.rx.recv() => {
                     match request {
                         ExecutionRequest::Open(request) => {
-                            println!("### In exchange Manger - OpenOrder ### \n {:#?}", request);
+                            // println!("### In exchange Manger - OpenOrder ### \n {:#?}", request);
                             inflight_opens.push(ExecutionRequestFuture::new(
                                     self.execution_client.open_order(request.clone()), //todo make input a clone
                                     self.request_timeout,
@@ -105,14 +96,19 @@ where
                 }
 
                 /*----- Process Execution Responses from Exchange ----- */
-                Some(account_data) = self.account_data_rx.recv() => {
-                    // println!("##### Execution manger #####");
-                    // println!("Account Data: {:#?}", account_data);
+                Some(execution_response) = self.execution_response_rx.recv() => {
+                    if let Err(error) = self.execution_response_tx.send(execution_response) {
+                        error!(
+                            message = "Error encountered while trying to send back ExecutionResponse to oms",
+                            error = %error,
+                            exchange =  %Exchange::CLIENT
+                        )
+                    }
                 }
 
                 /*----- Check Results of the FuturesUnordered ----- */
                 open_response = next_open_response => {
-                    println!("### Open order ### \n {:#?}", open_response);
+                    // println!("### Open order ### \n {:#?}", open_response);
 
                     // When checking http reponse, we only cared if it error. If it
                     // is successful, we would see it come up in the stream
