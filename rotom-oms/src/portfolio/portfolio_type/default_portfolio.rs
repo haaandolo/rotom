@@ -12,7 +12,7 @@ use crate::{
     event::Event,
     execution::FillEvent,
     model::{
-        account_response::{OrderResponse, OrderStatus},
+        account::{OrderResponse, OrderStatus},
         balance::Balance,
         order::{OrderEvent, OrderState},
         ClientOrderId, OrderKind, Side,

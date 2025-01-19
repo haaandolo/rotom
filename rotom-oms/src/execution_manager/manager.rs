@@ -17,7 +17,7 @@ use tracing::{debug, error};
 use crate::{
     exchange::{consume_account_data_stream, ExecutionClient},
     execution_manager::request::ExecutionRequestFuture,
-    model::{account_response::AccountResponse, execution_request::ExecutionRequest, ClientOrderId},
+    model::{account::AccountResponse, execution_request::ExecutionRequest, ClientOrderId},
 };
 
 use super::builder::TraderId;

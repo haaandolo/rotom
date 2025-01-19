@@ -4,10 +4,10 @@ use rotom_data::shared::de::de_u64_epoch_ms_as_datetime_utc;
 use rotom_data::shared::subscription_models::ExchangeId;
 use serde::{Deserialize, Serialize};
 
-use crate::model::account_response::AccountBalance;
-use crate::model::account_response::OrderResponse;
-use crate::model::account_response::AccountResponse;
-use crate::model::account_response::OrderStatus;
+use crate::model::account::AccountBalance;
+use crate::model::account::OrderResponse;
+use crate::model::account::AccountResponse;
+use crate::model::account::OrderStatus;
 use crate::model::balance::Balance;
 use crate::model::OrderKind;
 use crate::model::Side;

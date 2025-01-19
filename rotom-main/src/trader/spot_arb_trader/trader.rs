@@ -8,7 +8,7 @@ use rotom_data::{
 };
 use rotom_oms::execution_manager::builder::TraderId;
 use rotom_oms::model::execution_request::{ExecutionRequest, OpenOrder};
-use rotom_oms::model::account_response::AccountResponse;
+use rotom_oms::model::account::AccountResponse;
 use rotom_oms::model::{ClientOrderId, Order};
 use rotom_oms::{event::Event, model::order::OrderEvent};
 use rotom_strategy::SignalForceExit;

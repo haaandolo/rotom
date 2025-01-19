@@ -1,6 +1,6 @@
 pub mod balance;
 pub mod execution_request;
-pub mod account_response;
+pub mod account;
 pub mod order;
 
 use chrono::{DateTime, Utc};

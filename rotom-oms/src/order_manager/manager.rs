@@ -6,7 +6,7 @@ use crate::{
     error::OrderManagmentSystemError,
     execution_manager::builder::TraderId,
     model::{
-        execution_request::ExecutionRequest, account_response::AccountResponse, ClientOrderId,
+        execution_request::ExecutionRequest, account::AccountResponse, ClientOrderId,
         Order,
     },
     portfolio::position2::Position2,

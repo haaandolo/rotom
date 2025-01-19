@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 use crate::model::{
     balance::Balance,
-    account_response::{
+    account::{
         AccountBalance, AccountBalanceDelta, AccountResponse, OrderResponse, OrderStatus,
     },
     OrderKind, Side,
