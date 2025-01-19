@@ -9,7 +9,7 @@ use rotom_data::{
 
 use crate::{
     exchange::{binance::request_builder::BinanceAuthParams, errors::RequestBuildError},
-    model::{account::AccountBalance, balance::Balance},
+    model::{execution_response::AccountBalance, balance::Balance},
 };
 
 /*----- */

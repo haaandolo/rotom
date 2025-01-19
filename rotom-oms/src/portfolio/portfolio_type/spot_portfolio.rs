@@ -17,7 +17,7 @@ use crate::{
     },
     execution::FillEvent,
     model::{
-        account::{AccountBalance, AccountBalanceDelta},
+        execution_response::{AccountBalance, AccountBalanceDelta},
         balance::{determine_balance_id, SpotBalanceId},
         order::{OrderEvent, OrderState},
         ClientOrderId, OrderKind, Side,

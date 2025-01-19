@@ -7,7 +7,7 @@ use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    account::{OrderResponse, OrderStatus},
+    execution_response::{OrderResponse, OrderStatus},
     ClientOrderId, OrderKind,
 };
 

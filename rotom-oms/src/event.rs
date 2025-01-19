@@ -2,7 +2,7 @@ use crate::{
     execution::FillEvent,
     model::{
         balance::Balance,
-        account::{AccountBalance, AccountBalanceDelta, OrderResponse},
+        execution_response::{AccountBalance, AccountBalanceDelta, OrderResponse},
         order::OrderEvent,
     },
     portfolio::position::{Position, PositionExit, PositionUpdate},

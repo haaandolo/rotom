@@ -11,12 +11,13 @@ use super::{
 // Order Response
 /*----- */
 #[derive(Debug)]
-pub enum AccountResponse {
+pub enum ExecutionResponse {
     Order(OrderResponse),
     BalanceVec(Vec<AccountBalance>),
     Balance(AccountBalance),
     BalanceDelta(AccountBalanceDelta),
 }
+
 /*----- */
 // State
 /*----- */

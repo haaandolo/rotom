@@ -23,7 +23,7 @@ use tracing::{debug, error, info, warn};
 
 use crate::model::{
     execution_request::{CancelOrder, OpenOrder, WalletTransfer},
-    account::{AccountBalance, AccountResponse},
+    execution_response::{AccountBalance, ExecutionResponse},
 };
 
 /*----- */
@@ -64,7 +64,7 @@ pub trait ExecutionClient {
     type AccountDataStreamResponse: Send
         + for<'de> Deserialize<'de>
         + Debug
-        + Into<AccountResponse>;
+        + Into<ExecutionResponse>;
 
     // Initialise a account data stream
     async fn init() -> Result<AccountDataWebsocket, SocketError>;
@@ -106,7 +106,7 @@ pub trait ExecutionClient {
 // Account User Data Auto Reconnect
 /*----- */
 pub async fn consume_account_data_stream<Exchange>(
-    account_data_tx: mpsc::UnboundedSender<AccountResponse>,
+    account_data_tx: mpsc::UnboundedSender<ExecutionResponse>,
 ) -> Result<(), SocketError>
 where
     Exchange: ExecutionClient,
