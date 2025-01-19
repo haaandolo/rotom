@@ -5,10 +5,7 @@ use rotom_data::{
     exchange::{
         self, binance::BinanceSpotPublicData, poloniex::PoloniexSpotPublicData, PublicHttpConnector,
     },
-    shared::{
-        subscription_models::{ExchangeId, Instrument},
-        utils::round_float_to_precision,
-    },
+    shared::subscription_models::{ExchangeId, Instrument},
     Market, MarketMeta,
 };
 use rotom_main::{engine::Engine, trader::spot_arb_trader::builder::SpotArbTradersBuilder};

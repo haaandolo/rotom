@@ -11,7 +11,7 @@ use crate::{
     error::SocketError,
     exchange::PublicHttpConnector,
     model::event_book::EventOrderBook,
-    shared::{subscription_models::Instrument, utils::decimal_places_to_number},
+    shared::{subscription_models::Instrument, utils::number_to_precision},
     transformer::book::{InstrumentOrderBook, OrderBookUpdater},
 };
 
@@ -45,7 +45,7 @@ impl OrderBookUpdater for PoloniexSpotBookUpdater {
     async fn init(instrument: &Instrument) -> Result<InstrumentOrderBook<Self>, SocketError> {
         let ticker_info = PoloniexSpotPublicData::get_ticker_info(instrument.clone()).await?;
         let price_scale = ticker_info.symbol_trade_limit.quantity_scale;
-        let tick_size = decimal_places_to_number(price_scale);
+        let tick_size = number_to_precision(price_scale);
         let orderbook_init = OrderBook::new(tick_size);
 
         Ok(InstrumentOrderBook {

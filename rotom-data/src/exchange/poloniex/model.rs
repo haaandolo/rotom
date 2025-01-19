@@ -14,7 +14,7 @@ use crate::{
     shared::{
         de::{de_str, de_u64_epoch_ms_as_datetime_utc, deserialize_non_empty_vec},
         subscription_models::{ExchangeId, Instrument},
-        utils::decimal_places_to_number,
+        utils::number_to_precision,
     },
     streams::validator::Validator,
 };
@@ -209,12 +209,12 @@ pub struct CrossMargin {
 
 impl From<PoloniexSpotTickerInfo> for TickerInfo {
     fn from(info: PoloniexSpotTickerInfo) -> Self {
-        let notional_precision = decimal_places_to_number(info.symbol_trade_limit.amount_scale);
+        let notional_precision = number_to_precision(info.symbol_trade_limit.amount_scale);
 
-        let price_precision = decimal_places_to_number(info.symbol_trade_limit.price_scale);
+        let price_precision = number_to_precision(info.symbol_trade_limit.price_scale);
         let min_price = info.symbol_trade_limit.min_amount;
 
-        let quantity_precision = decimal_places_to_number(info.symbol_trade_limit.quantity_scale);
+        let quantity_precision = number_to_precision(info.symbol_trade_limit.quantity_scale);
         let min_quantity = info.symbol_trade_limit.min_quantity;
 
         Self {

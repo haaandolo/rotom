@@ -99,6 +99,7 @@ where
                 Some(request) = self.execution_request_channel.rx.recv() => {
                     match request {
                         ExecutionRequest::Open(request) => {
+                              
                             inflight_opens.push(ExecutionRequestFuture::new(
                                     self.execution_client.open_order(request.clone()), //todo make input a clone
                                     self.request_timeout,
