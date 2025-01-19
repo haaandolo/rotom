@@ -37,10 +37,15 @@ impl OrderManagementSystem {
             tokio::select! {
                 Some(request) = self.execution_request_rx.recv() => {
                     println!("### Request ### \n {:#?}", request);
-                    // match self.execution_manager_txs.get(&request) {
-                    //     Some(execution_tx) => {},
-                    //     None => {}
-                    // }
+                    match self.execution_manager_txs.get(&request.exchange) {
+                        Some(execution_tx) => {
+                            execution_tx.send(request.request_response);
+                        },
+                        None => {
+                            // Log error with unwrap
+                            todo!()
+                        }
+                    }
 
                 },
                 Some(response) = self.execution_response_rx.recv() => {

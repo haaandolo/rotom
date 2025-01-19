@@ -159,7 +159,7 @@ impl TraderRun for SpotArbTrader {
                             let order_request = OpenOrder {
                                 client_order_id: ClientOrderId::random(),
                                 price: 1.50,
-                                quantity: 50.0,
+                                quantity: 5.0,
                                 notional_amount: 1.50 * 5.0,
                                 decision: rotom_strategy::Decision::Long,
                                 order_kind: rotom_oms::model::OrderKind::Limit,
@@ -167,8 +167,8 @@ impl TraderRun for SpotArbTrader {
                             };
 
                             let order = Order {
-                                trader_id: self.trader_id.clone(),
-                                exchange: self.meta_data.liquid_exchange.clone(),
+                                trader_id: self.trader_id,
+                                exchange: self.meta_data.liquid_exchange,
                                 requested_time: Utc::now(),
                                 request_response: ExecutionRequest::Open(order_request),
                             };

@@ -128,8 +128,8 @@ where
         while let Some(msg) = stream.user_data_ws.next().await {
             match WebSocketParser::parse::<Exchange::AccountDataStreamResponse>(msg) {
                 Some(Ok(exchange_message)) => {
-                    println!("### Parsed  ###");
-                    println!("{:#?}", exchange_message);
+                    // println!("### Parsed  ###");
+                    // println!("{:#?}", exchange_message);
                     if let Err(error) = account_data_tx.send(exchange_message.into()) {
                         debug!(
                             payload = ?error.0,

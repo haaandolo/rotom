@@ -61,7 +61,7 @@ where
             ticker_info: HashMap::with_capacity(100),
             execution_request_channel: ExchangeChannel::default(),
             account_data_rx,
-            request_timeout: std::time::Duration::from_millis(200), // todo: make exchange specific?
+            request_timeout: std::time::Duration::from_millis(500), // todo: make exchange specific?
         }
     }
 
@@ -90,6 +90,7 @@ where
                 Some(request) = self.execution_request_channel.rx.recv() => {
                     match request {
                         ExecutionRequest::Open(request) => {
+                            println!("### In exchange Manger - OpenOrder ### \n {:#?}", request);
                             inflight_opens.push(ExecutionRequestFuture::new(
                                     self.execution_client.open_order(request.clone()), //todo make input a clone
                                     self.request_timeout,
@@ -111,8 +112,7 @@ where
 
                 /*----- Check Results of the FuturesUnordered ----- */
                 open_response = next_open_response => {
-                    // println!("##### Open order #####");
-                    // println!("Open order res: {:#?}", open_response);
+                    println!("### Open order ### \n {:#?}", open_response);
 
                     // When checking http reponse, we only cared if it error. If it
                     // is successful, we would see it come up in the stream
