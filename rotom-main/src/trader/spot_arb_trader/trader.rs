@@ -8,7 +8,7 @@ use rotom_data::{
 };
 use rotom_oms::execution_manager::builder::TraderId;
 use rotom_oms::model::execution_request::{ExecutionRequest, OpenOrder};
-use rotom_oms::model::execution_response::ExecutionResponse;
+use rotom_oms::model::account_response::AccountResponse;
 use rotom_oms::model::{ClientOrderId, Order};
 use rotom_oms::{event::Event, model::order::OrderEvent};
 use rotom_strategy::SignalForceExit;
@@ -55,7 +55,7 @@ pub struct SpotArbTrader {
     command_rx: mpsc::Receiver<Command>,
     data: MarketFeed<MarketEvent<DataKind>>,
     execution_request_tx: mpsc::UnboundedSender<Order<ExecutionRequest>>,
-    execution_response_rx: mpsc::UnboundedReceiver<ExecutionResponse>,
+    execution_response_rx: mpsc::UnboundedReceiver<AccountResponse>,
     order_generator: SpotArbOrderGenerator,
     event_queue: VecDeque<Event>,
     meta_data: SpotArbTraderMetaData,
@@ -208,7 +208,7 @@ pub struct SpotArbTraderBuilder {
     pub command_rx: Option<mpsc::Receiver<Command>>,
     pub data: Option<MarketFeed<MarketEvent<DataKind>>>,
     pub execution_request_tx: Option<mpsc::UnboundedSender<Order<ExecutionRequest>>>,
-    pub execution_response_rx: Option<mpsc::UnboundedReceiver<ExecutionResponse>>,
+    pub execution_response_rx: Option<mpsc::UnboundedReceiver<AccountResponse>>,
     pub order_generator: Option<SpotArbOrderGenerator>,
     pub meta_data: Option<SpotArbTraderMetaData>,
 }
@@ -265,7 +265,7 @@ impl SpotArbTraderBuilder {
         }
     }
 
-    pub fn execution_response_rx(self, value: mpsc::UnboundedReceiver<ExecutionResponse>) -> Self {
+    pub fn execution_response_rx(self, value: mpsc::UnboundedReceiver<AccountResponse>) -> Self {
         Self {
             execution_response_rx: Some(value),
             ..self

@@ -6,7 +6,7 @@ use crate::{
     error::OrderManagmentSystemError,
     execution_manager::builder::TraderId,
     model::{
-        execution_request::ExecutionRequest, execution_response::ExecutionResponse, ClientOrderId,
+        execution_request::ExecutionRequest, account_response::AccountResponse, ClientOrderId,
         Order,
     },
     portfolio::position2::Position2,
@@ -25,10 +25,10 @@ pub struct OrderManagementSystem {
     execution_request_rx: mpsc::UnboundedReceiver<Order<ExecutionRequest>>,
     // Send ExecutionRequests to corresponding ExecutionManager
     execution_manager_txs: HashMap<ExchangeId, mpsc::UnboundedSender<ExecutionRequest>>,
-    // Receive ExecutionResponse from ExecutionManger
-    execution_response_rx: mpsc::UnboundedReceiver<ExecutionResponse>,
+    // Receive AccountResponse from ExecutionManger
+    execution_response_rx: mpsc::UnboundedReceiver<AccountResponse>,
     // Send ExecutionResponses back to corresponding Traders
-    execution_response_txs: HashMap<TraderId, mpsc::UnboundedSender<ExecutionResponse>>,
+    execution_response_txs: HashMap<TraderId, mpsc::UnboundedSender<AccountResponse>>,
 }
 
 impl OrderManagementSystem {
@@ -42,7 +42,7 @@ impl OrderManagementSystem {
                             execution_tx.send(request.request_response);
                         },
                         None => {
-                            // Log error with unwrap
+                            // Log error and unwrap
                             todo!()
                         }
                     }
@@ -70,8 +70,8 @@ pub struct OrderManagementSystemBuilder {
     balances: Option<BalanceMap>,
     execution_request_rx: Option<mpsc::UnboundedReceiver<Order<ExecutionRequest>>>,
     execution_manager_txs: Option<HashMap<ExchangeId, mpsc::UnboundedSender<ExecutionRequest>>>,
-    execution_response_rx: Option<mpsc::UnboundedReceiver<ExecutionResponse>>,
-    execution_response_txs: Option<HashMap<TraderId, mpsc::UnboundedSender<ExecutionResponse>>>,
+    execution_response_rx: Option<mpsc::UnboundedReceiver<AccountResponse>>,
+    execution_response_txs: Option<HashMap<TraderId, mpsc::UnboundedSender<AccountResponse>>>,
 }
 
 impl OrderManagementSystemBuilder {
@@ -104,7 +104,7 @@ impl OrderManagementSystemBuilder {
 
     pub fn execution_response_rx(
         self,
-        execution_response_rx: mpsc::UnboundedReceiver<ExecutionResponse>,
+        execution_response_rx: mpsc::UnboundedReceiver<AccountResponse>,
     ) -> Self {
         Self {
             execution_response_rx: Some(execution_response_rx),
@@ -114,7 +114,7 @@ impl OrderManagementSystemBuilder {
 
     pub fn execution_response_txs(
         self,
-        execution_response_txs: HashMap<TraderId, mpsc::UnboundedSender<ExecutionResponse>>,
+        execution_response_txs: HashMap<TraderId, mpsc::UnboundedSender<AccountResponse>>,
     ) -> Self {
         Self {
             execution_response_txs: Some(execution_response_txs),

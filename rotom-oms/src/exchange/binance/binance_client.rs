@@ -15,7 +15,7 @@ use crate::exchange::ExecutionClient;
 use crate::model::execution_request::CancelOrder;
 use crate::model::execution_request::OpenOrder;
 use crate::model::execution_request::WalletTransfer;
-use crate::model::execution_response::AccountBalance;
+use crate::model::account_response::AccountBalance;
 
 use super::request_builder::BinanceRequestBuilder;
 use super::requests::account_data::BinanceAccountEvents;

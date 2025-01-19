@@ -7,7 +7,7 @@ use uuid::Uuid;
 use crate::{
     model::{
         balance::{Balance, SpotBalanceId},
-        execution_response::{AccountBalance, AccountBalanceDelta},
+        account_response::{AccountBalance, AccountBalanceDelta},
     },
     portfolio::{
         position::{determine_position_id, Position, PositionId},

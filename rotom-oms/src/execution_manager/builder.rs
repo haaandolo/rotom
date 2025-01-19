@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::{
     exchange::ExecutionClient,
-    model::{execution_request::ExecutionRequest, execution_response::ExecutionResponse},
+    model::{account_response::AccountResponse, execution_request::ExecutionRequest},
 };
 
 use super::manager::ExecutionManager;
@@ -35,7 +35,7 @@ pub struct ExecutionBuilder {
 impl ExecutionBuilder {
     pub fn add_exchange<Exchange>(
         mut self,
-        execution_response_tx: mpsc::UnboundedSender<ExecutionResponse>,
+        execution_response_tx: mpsc::UnboundedSender<AccountResponse>,
     ) -> Self
     where
         Exchange: ExecutionClient + Send + Sync + 'static,

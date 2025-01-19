@@ -3,8 +3,8 @@ use serde::Deserialize;
 
 use crate::model::{
     balance::Balance,
-    execution_response::{
-        AccountBalance, AccountBalanceDelta, ExecutionResponse, OrderResponse, OrderStatus,
+    account_response::{
+        AccountBalance, AccountBalanceDelta, AccountResponse, OrderResponse, OrderStatus,
     },
     OrderKind, Side,
 };
@@ -192,17 +192,17 @@ pub enum BinanceAccountEvents {
     List(BinanceAccountDataList),
 }
 
-impl From<BinanceAccountEvents> for ExecutionResponse {
+impl From<BinanceAccountEvents> for AccountResponse {
     fn from(account_events: BinanceAccountEvents) -> Self {
         match account_events {
             BinanceAccountEvents::Order(order) => {
-                ExecutionResponse::Order(OrderResponse::from(order))
+                AccountResponse::Order(OrderResponse::from(order))
             }
             BinanceAccountEvents::Balance(balance) => {
-                ExecutionResponse::BalanceVec(Vec::<AccountBalance>::from(balance))
+                AccountResponse::BalanceVec(Vec::<AccountBalance>::from(balance))
             }
             BinanceAccountEvents::BalanceDelta(balance_delta) => {
-                ExecutionResponse::BalanceDelta(AccountBalanceDelta::from(balance_delta))
+                AccountResponse::BalanceDelta(AccountBalanceDelta::from(balance_delta))
             }
             _ => unimplemented!(),
         }

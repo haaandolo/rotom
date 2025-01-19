@@ -18,7 +18,7 @@ use serde::Deserialize;
 use crate::{
     exchange::{AccountDataWebsocket, ExecutionClient},
     model::{
-        execution_response::AccountBalance,
+        account_response::AccountBalance,
         execution_request::{CancelOrder, OpenOrder, WalletTransfer},
     },
 };

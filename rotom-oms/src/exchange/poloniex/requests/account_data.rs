@@ -4,10 +4,10 @@ use rotom_data::shared::de::de_u64_epoch_ms_as_datetime_utc;
 use rotom_data::shared::subscription_models::ExchangeId;
 use serde::{Deserialize, Serialize};
 
-use crate::model::execution_response::AccountBalance;
-use crate::model::execution_response::OrderResponse;
-use crate::model::execution_response::ExecutionResponse;
-use crate::model::execution_response::OrderStatus;
+use crate::model::account_response::AccountBalance;
+use crate::model::account_response::OrderResponse;
+use crate::model::account_response::AccountResponse;
+use crate::model::account_response::OrderStatus;
 use crate::model::balance::Balance;
 use crate::model::OrderKind;
 use crate::model::Side;
@@ -151,14 +151,14 @@ pub enum PoloniexAccountEvents {
     Balance(PoloniexAccountDataBalance),
 }
 
-impl From<PoloniexAccountEvents> for ExecutionResponse {
+impl From<PoloniexAccountEvents> for AccountResponse {
     fn from(account_events: PoloniexAccountEvents) -> Self {
         match account_events {
             PoloniexAccountEvents::Order(order) => {
-                ExecutionResponse::Order(OrderResponse::from(order))
+                AccountResponse::Order(OrderResponse::from(order))
             }
             PoloniexAccountEvents::Balance(balance) => {
-                ExecutionResponse::Balance(AccountBalance::from(balance))
+                AccountResponse::Balance(AccountBalance::from(balance))
             }
         }
     }

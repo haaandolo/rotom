@@ -7,19 +7,11 @@ use super::{
     Side,
 };
 
-// /*----- */
-// // Order Response
-// /*----- */
-// #[derive(Debug)]
-// pub struct OrderResponse {
-//     trader_id: TraderId,
-//     exchange: ExchangeId,
-//     requested_time: Utc,
-//     request: ExecutionResponse,
-// }
-
+/*----- */
+// Order Response
+/*----- */
 #[derive(Debug)]
-pub enum ExecutionResponse {
+pub enum AccountResponse {
     Order(OrderResponse),
     BalanceVec(Vec<AccountBalance>),
     Balance(AccountBalance),

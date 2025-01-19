@@ -17,9 +17,7 @@ use tracing::{debug, error};
 use crate::{
     exchange::{consume_account_data_stream, ExecutionClient},
     execution_manager::request::ExecutionRequestFuture,
-    model::{
-        execution_request::ExecutionRequest, execution_response::ExecutionResponse, ClientOrderId,
-    },
+    model::{account_response::AccountResponse, execution_request::ExecutionRequest, ClientOrderId},
 };
 
 use super::builder::TraderId;
@@ -28,7 +26,7 @@ use super::builder::TraderId;
 // TraderMetaData
 /*----- */
 #[derive(Debug)]
-pub struct TraderUpdateTx(pub mpsc::UnboundedSender<ExecutionResponse>);
+pub struct TraderUpdateTx(pub mpsc::UnboundedSender<AccountResponse>);
 
 /*----- */
 // Execution Manager
@@ -39,10 +37,10 @@ where
     Exchange: ExecutionClient,
 {
     execution_client: Arc<Exchange>,
-    execution_response_tx: mpsc::UnboundedSender<ExecutionResponse>,
+    execution_response_tx: mpsc::UnboundedSender<AccountResponse>,
     ticker_info: HashMap<Instrument, TickerInfo>,
     pub execution_request_channel: ExchangeChannel<ExecutionRequest>,
-    account_data_rx: mpsc::UnboundedReceiver<ExecutionResponse>,
+    account_data_rx: mpsc::UnboundedReceiver<AccountResponse>,
     request_timeout: std::time::Duration,
 }
 
@@ -51,7 +49,7 @@ where
     Exchange: ExecutionClient + 'static,
     Exchange::PublicData: PublicHttpConnector,
 {
-    pub fn init(execution_response_tx: mpsc::UnboundedSender<ExecutionResponse>) -> Self {
+    pub fn init(execution_response_tx: mpsc::UnboundedSender<AccountResponse>) -> Self {
         let (account_data_tx, account_data_rx) = mpsc::unbounded_channel();
         tokio::spawn(consume_account_data_stream::<Exchange>(account_data_tx));
 
