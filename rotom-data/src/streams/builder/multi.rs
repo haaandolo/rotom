@@ -3,11 +3,13 @@ use std::{collections::HashMap, pin::Pin};
 
 use crate::{
     error::SocketError,
-    model::{market_event::MarketEvent,  SubKind}, shared::subscription_models::ExchangeId,
+    model::{market_event::MarketEvent, SubKind},
+    shared::subscription_models::ExchangeId,
 };
 
 use super::{
-    single::{ExchangeChannel, StreamBuilder}, Streams
+    single::{ExchangeChannel, StreamBuilder},
+    Streams,
 };
 
 pub type BuilderInitFuture = Pin<Box<dyn Future<Output = Result<(), SocketError>>>>;

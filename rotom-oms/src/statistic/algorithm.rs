@@ -42,7 +42,6 @@ pub mod welford_online {
 // Grouping of [Welford Online](https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Welford's_online_algorithm)
 // algorithms for calculating running values such as mean and variance in one pass through.
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -226,7 +225,7 @@ mod tests {
             (16200000000.0, 3),
             (99999.9999, 23232),
         ];
-        let expected =[
+        let expected = [
             0.0,
             210.0,
             (1012.5 / 123223.0),

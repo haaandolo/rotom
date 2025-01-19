@@ -1,9 +1,9 @@
+pub mod dynamic;
 pub mod multi;
 pub mod single;
-pub mod dynamic;
 
-use std::collections::HashMap;
 use single::StreamBuilder;
+use std::collections::HashMap;
 use tokio::sync::mpsc::{self, UnboundedReceiver};
 use tokio_stream::{wrappers::UnboundedReceiverStream, StreamMap};
 

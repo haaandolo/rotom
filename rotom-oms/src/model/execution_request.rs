@@ -32,6 +32,15 @@ impl ExecutionRequest {
             ExecutionRequest::Transfer(request) => request.exchange,
         }
     }
+
+    pub fn get_trader_id(&self) -> TraderId {
+        match self {
+            ExecutionRequest::Open(request) => request.trader_id,
+            ExecutionRequest::Cancel(request) => request.trader_id,
+            ExecutionRequest::CancelAll(request) => request.trader_id,
+            ExecutionRequest::Transfer(request) => request.trader_id,
+        }
+    }
 }
 
 impl std::fmt::Display for ExecutionRequest {

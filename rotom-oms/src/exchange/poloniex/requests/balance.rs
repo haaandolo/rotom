@@ -6,8 +6,8 @@ use rotom_data::{
     protocols::http::rest_request::RestRequest, shared::subscription_models::ExchangeId,
 };
 
-use crate::model::execution_response::AccountBalance;
 use crate::model::balance::Balance;
+use crate::model::execution_response::AccountBalance;
 
 /*----- */
 // Poloniex Balance

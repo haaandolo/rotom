@@ -73,10 +73,7 @@ impl OrderEvent {
         }
     }
 
-    pub fn update_order_from_account_data_stream(
-        &mut self,
-        account_data_update: &OrderResponse,
-    ) {
+    pub fn update_order_from_account_data_stream(&mut self, account_data_update: &OrderResponse) {
         self.set_state(OrderState::Open);
         self.exchange_order_status = Some(account_data_update.status);
         self.filled_gross = account_data_update.cumulative_quote; // Filled_gross field in OrderResponse is cumulative so we can just set it each time

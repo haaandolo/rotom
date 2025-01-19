@@ -12,8 +12,8 @@ use crate::{
     event::Event,
     execution::FillEvent,
     model::{
-        execution_response::{OrderResponse, OrderStatus},
         balance::Balance,
+        execution_response::{OrderResponse, OrderStatus},
         order::{OrderEvent, OrderState},
         ClientOrderId, OrderKind, Side,
     },

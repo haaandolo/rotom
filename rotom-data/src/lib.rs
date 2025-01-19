@@ -1,8 +1,8 @@
 pub mod assets;
 pub mod error;
-pub mod model;
 pub mod exchange;
 pub mod metric;
+pub mod model;
 pub mod protocols;
 pub mod shared;
 pub mod streams;

@@ -13,10 +13,7 @@ pub struct Level {
 
 impl Level {
     pub fn new(price: f64, size: f64) -> Self {
-        Self {
-            price,
-            size
-        }
+        Self { price, size }
     }
 }
 

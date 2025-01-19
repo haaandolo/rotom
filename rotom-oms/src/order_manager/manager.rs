@@ -20,7 +20,7 @@ use super::balance_builder::BalanceMap;
 #[derive(Debug)]
 pub struct OrderManagementSystem {
     balances: BalanceMap,
-    open_positions: HashMap<(TraderId, ClientOrderId), Position2>,
+    open_positions: HashMap<ClientOrderId, Position2>,
     // Receieve ExecutionRequests sent by traders
     execution_request_rx: mpsc::UnboundedReceiver<ExecutionRequest>,
     // Send ExecutionRequests to corresponding ExecutionManager
@@ -55,11 +55,16 @@ impl OrderManagementSystem {
                             std::process::exit(1);
                         }
                     }
-
                 },
-                //
                 Some(response) = self.execution_response_rx.recv() => {
                     println!("### Response ### \n {:#?}", response);
+                    if let ExecutionResponse::ExecutionError(error) = response {
+                        let execution_response_tx = self.execution_response_txs
+                            .get(&error.get_trader_id())
+                            .expect("Cannot find execution response tx");
+
+                        let _ =  execution_response_tx.send(ExecutionResponse::ExecutionError(error));
+                    }
                 },
                 else => {
                     // This handles the case where both channels are closed

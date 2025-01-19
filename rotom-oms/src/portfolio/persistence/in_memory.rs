@@ -4,7 +4,9 @@ use rotom_data::{Market, MarketId};
 use uuid::Uuid;
 
 use crate::{
-    model::balance::{Balance, BalanceId}, portfolio::position::{determine_position_id, Position, PositionId}, statistic::summary::PositionSummariser
+    model::balance::{Balance, BalanceId},
+    portfolio::position::{determine_position_id, Position, PositionId},
+    statistic::summary::PositionSummariser,
 };
 
 use super::{

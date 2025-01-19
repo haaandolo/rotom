@@ -5,8 +5,8 @@ use rotom_data::error::SocketError;
 use crate::{
     exchange::ExecutionClient,
     model::{
-        execution_response::AccountBalance,
         balance::{Balance, SpotBalanceId},
+        execution_response::AccountBalance,
     },
 };
 

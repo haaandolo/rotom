@@ -7,7 +7,7 @@ use rotom_data::{
     Feed, MarketGenerator,
 };
 use rotom_oms::execution_manager::builder::TraderId;
-use rotom_oms::model::execution_request::{ExecutionRequest, OpenOrder, Order};
+use rotom_oms::model::execution_request::{CancelOrder, ExecutionRequest, OpenOrder, Order};
 use rotom_oms::model::execution_response::ExecutionResponse;
 use rotom_oms::model::ClientOrderId;
 use rotom_oms::{event::Event, model::order::OrderEvent};
@@ -165,17 +165,22 @@ impl TraderRun for SpotArbTrader {
                                 instrument: self.meta_data.market.clone(),
                             };
 
+                            let cancel_request = CancelOrder {
+                                symbol: "OPUSDT".to_string(),
+                            };
+
                             let order = Order {
                                 trader_id: self.trader_id,
                                 exchange: self.meta_data.liquid_exchange,
-                                cid: ClientOrderId::random(),
+                                // cid: ClientOrderId::random(),
+                                cid: ClientOrderId("c4Kv9bqptOA7x8hFPDsD9r5".to_string()),
                                 requested_time: Utc::now(),
                                 request: order_request,
                             };
 
-                            // let test = self
-                            //     .execution_request_tx
-                            //     .send(ExecutionRequest::Open(order));
+                            let test = self
+                                .execution_request_tx
+                                .send(ExecutionRequest::Open(order));
 
                             self.meta_data.order = Some(new_order);
                         }
@@ -186,7 +191,12 @@ impl TraderRun for SpotArbTrader {
 
             /*----- 4. Process any execution updates ----- */
             match self.execution_response_rx.try_recv() {
-                Ok(execution_result) => {}
+                Ok(execution_result) => {
+                    println!(
+                        "### Trader Execution Response ### \n {:#?}",
+                        execution_result
+                    )
+                }
                 Err(error) => {}
             }
         }
