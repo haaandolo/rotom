@@ -4,20 +4,13 @@ use rotom_data::error::SocketError;
 
 use crate::{
     exchange::ExecutionClient,
-    model::{
-        balance::{Balance, SpotBalanceId},
-        execution_response::AccountBalance,
-    },
+    model::{balance::SpotBalanceId, execution_response::AccountBalance},
 };
+
+use super::maps::BalanceMap;
 
 type BalanceFutures =
     Pin<Box<dyn Future<Output = Result<Vec<AccountBalance>, SocketError>> + Send>>;
-
-/*----- */
-// Balance Map
-/*----- */
-#[derive(Debug)]
-pub struct BalanceMap(pub HashMap<SpotBalanceId, Balance>); // todo: change spot balanc eto balanceId
 
 /*----- */
 // Balance Builder

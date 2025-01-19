@@ -1,7 +1,7 @@
 use rotom_data::shared::subscription_models::ExchangeId;
 use std::collections::HashMap;
 use tokio::sync::mpsc;
-use tracing::{debug, error};
+use tracing::error;
 
 use crate::{
     error::OrderManagmentSystemError,
@@ -12,7 +12,7 @@ use crate::{
     portfolio::position2::Position2,
 };
 
-use super::balance_builder::BalanceMap;
+use super::maps::{BalanceMap, OrderMap};
 
 /*----- */
 // OMS
@@ -20,7 +20,7 @@ use super::balance_builder::BalanceMap;
 #[derive(Debug)]
 pub struct OrderManagementSystem {
     balances: BalanceMap,
-    open_positions: HashMap<ClientOrderId, Position2>,
+    open_positions: OrderMap,
     // Receieve ExecutionRequests sent by traders
     execution_request_rx: mpsc::UnboundedReceiver<ExecutionRequest>,
     // Send ExecutionRequests to corresponding ExecutionManager
@@ -58,12 +58,27 @@ impl OrderManagementSystem {
                 },
                 Some(response) = self.execution_response_rx.recv() => {
                     println!("### Response ### \n {:#?}", response);
-                    if let ExecutionResponse::ExecutionError(error) = response {
-                        let execution_response_tx = self.execution_response_txs
-                            .get(&error.get_trader_id())
-                            .expect("Cannot find execution response tx");
+                    match response {
+                        ExecutionResponse::Order(order) => {}
+                        ExecutionResponse::Balance(balance) => {
+                            self.balances.update_balance(&balance);
+                        }
+                        ExecutionResponse::BalanceVec(balance_vec) => {
+                            for balance in balance_vec.iter() {
+                                self.balances.update_balance(balance);
+                            }
+                        }
+                        ExecutionResponse::BalanceDelta(balance_delta) => {
+                            self.balances.update_balance_delta(&balance_delta);
+                        }
+                        ExecutionResponse::ExecutionError(error) => {
+                            let execution_response_tx = self.execution_response_txs
+                                .get(&error.get_trader_id())
+                                .expect("Cannot find execution response tx");
 
-                        let _ =  execution_response_tx.send(ExecutionResponse::ExecutionError(error));
+                            let _ =  execution_response_tx.send(ExecutionResponse::ExecutionError(error));
+                        }
+
                     }
                 },
                 else => {
@@ -142,7 +157,7 @@ impl OrderManagementSystemBuilder {
             balances: self
                 .balances
                 .ok_or(OrderManagmentSystemError::BuilderIncomplete("balances"))?,
-            open_positions: HashMap::with_capacity(100),
+            open_positions: OrderMap(HashMap::with_capacity(100)),
             execution_request_rx: self.execution_request_rx.ok_or(
                 OrderManagmentSystemError::BuilderIncomplete("execution_request_rx"),
             )?,
