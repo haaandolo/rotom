@@ -3,22 +3,17 @@ use std::{collections::HashMap, sync::Arc};
 use futures::{future::Either, stream::FuturesUnordered, StreamExt};
 
 use rotom_data::{
-    error::SocketError,
-    exchange::PublicHttpConnector,
-    model::ticker_info::{self, TickerInfo},
-    shared::subscription_models::Instrument,
-    streams::builder::single::ExchangeChannel,
+    exchange::PublicHttpConnector, model::ticker_info::TickerInfo,
+    shared::subscription_models::Instrument, streams::builder::single::ExchangeChannel,
     AssetFormatted,
 };
 use tokio::sync::mpsc;
-use tracing::{debug, error};
+use tracing::error;
 
 use crate::{
     exchange::{consume_account_data_stream, ExecutionClient},
     execution_manager::request::ExecutionRequestFuture,
-    model::{
-        execution_request::ExecutionRequest, execution_response::ExecutionResponse, ClientOrderId,
-    },
+    model::{execution_request::ExecutionRequest, execution_response::ExecutionResponse},
 };
 
 /*----- */
@@ -63,9 +58,7 @@ where
 
         let ticker_info_results = futures::future::try_join_all(ticker_info_futures)
             .await
-            .expect(
-                "Could not retrieve ticker info. This is a intialisation method so allowed to fail",
-            );
+            .expect("Could not retrieve ticker info");
 
         for ticker_info_result in ticker_info_results.into_iter() {
             let ticker: TickerInfo = ticker_info_result.into();
@@ -76,7 +69,6 @@ where
                     false => None,
                 }
             });
-
             ticker_info.insert(instrument.unwrap(), ticker); // unwrap should never fail
         }
 

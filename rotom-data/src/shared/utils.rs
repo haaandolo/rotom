@@ -8,6 +8,7 @@ pub fn snapshot_symbol_default_value() -> String {
     String::from("snapshot")
 }
 
+// todo: this should be number to decimal places
 pub fn decimal_places_to_number(places: usize) -> f64 {
     10f64.powi(-(places as i32))
 }
@@ -21,9 +22,52 @@ pub fn round_float_to_precision(value: f64, precision: f64) -> f64 {
     (value * scaling_factor).floor() / scaling_factor
 }
 
+// this should be decimal places to number
+pub fn number_to_decimal_places(value: f64) -> usize {
+    if value == 0.0 {
+        return 0;
+    }
+
+    -value.log10().round() as usize
+}
+
 #[cfg(test)]
 mod test {
-    use super::{decimal_places_to_number, round_float_to_precision};
+    use super::{decimal_places_to_number, number_to_decimal_places, round_float_to_precision};
+
+    #[test]
+    fn test_number_to_decimal_places() {
+        let dec1 = 0.1;
+        let dec2 = 0.01;
+        let dec3 = 0.001;
+        let dec4 = 0.0001;
+        let dec5 = 0.00001;
+        let dec6 = 0.0;
+        let dec7 = 1.0;
+
+        let dec1_res = number_to_decimal_places(dec1);
+        assert_eq!(dec1_res, 1);
+
+        let dec2_res = number_to_decimal_places(dec2);
+        assert_eq!(dec2_res, 2);
+
+        let dec3_res = number_to_decimal_places(dec3);
+        assert_eq!(dec3_res, 3);
+
+        let dec4_res = number_to_decimal_places(dec4);
+        assert_eq!(dec4_res, 4);
+
+        let dec5_res = number_to_decimal_places(dec5);
+        assert_eq!(dec5_res, 5);
+
+        let dec6_res = number_to_decimal_places(dec6);
+        println!("{:#?}", dec6_res);
+        // assert_eq!(dec6_res, 0);
+
+        let dec7_res = number_to_decimal_places(dec7);
+        println!("{:#?}", dec7_res);
+        // assert_eq!(dec7_res, 0);
+    }
 
     #[test]
     fn test_decimal_places_to_number() {
