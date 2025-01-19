@@ -18,8 +18,8 @@ use serde::Deserialize;
 use crate::{
     exchange::{AccountDataWebsocket, ExecutionClient},
     model::{
+        execution_request::{CancelOrder, OpenOrder, Order, WalletTransfer},
         execution_response::AccountBalance,
-        execution_request::{CancelOrder, OpenOrder, WalletTransfer},
     },
 };
 
@@ -142,7 +142,7 @@ impl ExecutionClient for PoloniexExecution {
 
     async fn open_order(
         &self,
-        open_request: OpenOrder,
+        open_request: Order<OpenOrder>,
     ) -> Result<Self::NewOrderResponse, SocketError> {
         let response = self
             .http_client
@@ -153,37 +153,37 @@ impl ExecutionClient for PoloniexExecution {
 
     async fn cancel_order(
         &self,
-        cancel_request: CancelOrder,
+        cancel_request: Order<CancelOrder>,
     ) -> Result<Self::CancelResponse, SocketError> {
         let response = self
             .http_client
-            .execute(PoloniexCancelOrder::new(cancel_request.client_order_id.0))
+            .execute(PoloniexCancelOrder::new(cancel_request.cid.0))
             .await?;
         Ok(response.0)
     }
 
     async fn cancel_order_all(
         &self,
-        cancel_request: CancelOrder,
+        cancel_request: Order<CancelOrder>,
     ) -> Result<Self::CancelAllResponse, SocketError> {
         let response = self
             .http_client
-            .execute(PoloniexCancelAllOrder::new(cancel_request.symbol))
+            .execute(PoloniexCancelAllOrder::new(cancel_request.request.symbol))
             .await?;
         Ok(response.0)
     }
 
     async fn wallet_transfer(
         &self,
-        wallet_transfer_request: WalletTransfer,
+        wallet_transfer_request: Order<WalletTransfer>,
     ) -> Result<Self::WalletTransferResponse, SocketError> {
         let response = self
             .http_client
             .execute(PoloniexWalletTransfer::new(
-                wallet_transfer_request.coin,
-                wallet_transfer_request.network,
-                wallet_transfer_request.amount,
-                wallet_transfer_request.wallet_address,
+                wallet_transfer_request.request.coin,
+                wallet_transfer_request.request.network,
+                wallet_transfer_request.request.amount,
+                wallet_transfer_request.request.wallet_address,
             ))
             .await?;
         Ok(response.0)

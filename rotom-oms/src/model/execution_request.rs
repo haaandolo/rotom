@@ -1,17 +1,43 @@
-use rotom_data::shared::subscription_models::Instrument;
+use chrono::{DateTime, Utc};
+use rotom_data::shared::subscription_models::{ExchangeId, Instrument};
 use rotom_strategy::Decision;
 
+use crate::execution_manager::builder::TraderId;
+
 use super::{ClientOrderId, OrderKind};
+
+/*----- */
+// Generic order type
+/*----- */
+#[derive(Debug, Clone)]
+pub struct Order<Request> {
+    pub trader_id: TraderId,
+    pub exchange: ExchangeId,
+    pub cid: ClientOrderId,
+    pub requested_time: DateTime<Utc>,
+    pub request: Request,
+}
 
 /*----- */
 // ExecutionRequest
 /*----- */
 #[derive(Debug, Clone)]
 pub enum ExecutionRequest {
-    Open(OpenOrder),
-    Cancel(CancelOrder),
-    CancelAll(CancelOrder),
-    Transfer(WalletTransfer),
+    Open(Order<OpenOrder>),
+    Cancel(Order<CancelOrder>),
+    CancelAll(Order<CancelOrder>),
+    Transfer(Order<WalletTransfer>),
+}
+
+impl ExecutionRequest {
+    pub fn get_exchange_id(&self) -> ExchangeId {
+        match self {
+            ExecutionRequest::Open(request) => request.exchange,
+            ExecutionRequest::Cancel(request) => request.exchange,
+            ExecutionRequest::CancelAll(request) => request.exchange,
+            ExecutionRequest::Transfer(request) => request.exchange,
+        }
+    }
 }
 
 impl std::fmt::Display for ExecutionRequest {
@@ -30,7 +56,6 @@ impl std::fmt::Display for ExecutionRequest {
 /*----- */
 #[derive(Debug, Clone)]
 pub struct OpenOrder {
-    pub client_order_id: ClientOrderId,
     // Used for market or limit orders
     pub price: f64,
     // Used for market or limit orders
@@ -44,9 +69,7 @@ pub struct OpenOrder {
 
 #[derive(Debug, Clone)]
 pub struct CancelOrder {
-    // Used to identify order at the given exchange
-    pub client_order_id: ClientOrderId, // smol str,
-    pub symbol: String,                 // smol str
+    pub symbol: String, // smol str
 }
 
 #[derive(Debug, Clone)]

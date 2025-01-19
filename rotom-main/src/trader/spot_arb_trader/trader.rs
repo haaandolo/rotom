@@ -7,9 +7,9 @@ use rotom_data::{
     Feed, MarketGenerator,
 };
 use rotom_oms::execution_manager::builder::TraderId;
-use rotom_oms::model::execution_request::{ExecutionRequest, OpenOrder};
+use rotom_oms::model::execution_request::{ExecutionRequest, OpenOrder, Order};
 use rotom_oms::model::execution_response::ExecutionResponse;
-use rotom_oms::model::{ClientOrderId, Order};
+use rotom_oms::model::ClientOrderId;
 use rotom_oms::{event::Event, model::order::OrderEvent};
 use rotom_strategy::SignalForceExit;
 use std::collections::VecDeque;
@@ -54,7 +54,7 @@ pub struct SpotArbTrader {
     trader_id: TraderId,
     command_rx: mpsc::Receiver<Command>,
     data: MarketFeed<MarketEvent<DataKind>>,
-    execution_request_tx: mpsc::UnboundedSender<Order<ExecutionRequest>>,
+    execution_request_tx: mpsc::UnboundedSender<ExecutionRequest>,
     execution_response_rx: mpsc::UnboundedReceiver<ExecutionResponse>,
     order_generator: SpotArbOrderGenerator,
     event_queue: VecDeque<Event>,
@@ -157,7 +157,6 @@ impl TraderRun for SpotArbTrader {
                             println!("unblocked");
 
                             let order_request = OpenOrder {
-                                client_order_id: ClientOrderId::random(),
                                 price: 1.50,
                                 quantity: 5.0,
                                 notional_amount: 1.50 * 5.0,
@@ -169,11 +168,14 @@ impl TraderRun for SpotArbTrader {
                             let order = Order {
                                 trader_id: self.trader_id,
                                 exchange: self.meta_data.liquid_exchange,
+                                cid: ClientOrderId::random(),
                                 requested_time: Utc::now(),
-                                request_response: ExecutionRequest::Open(order_request),
+                                request: order_request,
                             };
 
-                            let test = self.execution_request_tx.send(order);
+                            let test = self
+                                .execution_request_tx
+                                .send(ExecutionRequest::Open(order));
 
                             self.meta_data.order = Some(new_order);
                         }
@@ -207,7 +209,7 @@ pub struct SpotArbTraderBuilder {
     pub trader_id: Option<TraderId>,
     pub command_rx: Option<mpsc::Receiver<Command>>,
     pub data: Option<MarketFeed<MarketEvent<DataKind>>>,
-    pub execution_request_tx: Option<mpsc::UnboundedSender<Order<ExecutionRequest>>>,
+    pub execution_request_tx: Option<mpsc::UnboundedSender<ExecutionRequest>>,
     pub execution_response_rx: Option<mpsc::UnboundedReceiver<ExecutionResponse>>,
     pub order_generator: Option<SpotArbOrderGenerator>,
     pub meta_data: Option<SpotArbTraderMetaData>,
@@ -255,10 +257,7 @@ impl SpotArbTraderBuilder {
         }
     }
 
-    pub fn execution_request_tx(
-        self,
-        value: mpsc::UnboundedSender<Order<ExecutionRequest>>,
-    ) -> Self {
+    pub fn execution_request_tx(self, value: mpsc::UnboundedSender<ExecutionRequest>) -> Self {
         Self {
             execution_request_tx: Some(value),
             ..self

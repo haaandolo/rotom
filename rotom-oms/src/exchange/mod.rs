@@ -22,7 +22,7 @@ use tokio::sync::mpsc;
 use tracing::{debug, error, info, warn};
 
 use crate::model::{
-    execution_request::{CancelOrder, OpenOrder, WalletTransfer},
+    execution_request::{CancelOrder, ExecutionRequest, OpenOrder, Order, WalletTransfer},
     execution_response::{AccountBalance, ExecutionResponse},
 };
 
@@ -77,25 +77,25 @@ pub trait ExecutionClient {
     // Open order for single asset
     async fn open_order(
         &self,
-        open_request: OpenOrder,
+        open_request: Order<OpenOrder>,
     ) -> Result<Self::NewOrderResponse, SocketError>;
 
     // Cancel order for a single asset
     async fn cancel_order(
         &self,
-        cancel_request: CancelOrder,
+        cancel_request: Order<CancelOrder>,
     ) -> Result<Self::CancelResponse, SocketError>;
 
     // Cancel all orders for a single asset
     async fn cancel_order_all(
         &self,
-        cancel_request: CancelOrder,
+        cancel_request: Order<CancelOrder>,
     ) -> Result<Self::CancelAllResponse, SocketError>;
 
     // Transfer to another wallet
     async fn wallet_transfer(
         &self,
-        wallet_transfer_request: WalletTransfer,
+        wallet_transfer_request: Order<WalletTransfer>,
     ) -> Result<Self::WalletTransferResponse, SocketError>;
 
     // Get all balance figure on a exchange

@@ -5,7 +5,10 @@ use rotom_data::protocols::http::rest_request::RestRequest;
 
 use crate::{
     exchange::errors::RequestBuildError,
-    model::{execution_request::OpenOrder, OrderKind},
+    model::{
+        execution_request::{OpenOrder, Order},
+        OrderKind,
+    },
 };
 use rotom_data::shared::de::de_str;
 
@@ -47,62 +50,63 @@ pub struct PoloniexNewOrder {
 }
 
 impl PoloniexNewOrder {
-    pub fn new(order_event: OpenOrder) -> Result<Self, RequestBuildError> {
+    #[allow(unreachable_patterns)]
+    pub fn new(order_event: Order<OpenOrder>) -> Result<Self, RequestBuildError> {
         // Poloniex has a weird create new order api where, market buy needs a
         // amount field, which is price x quantity aka quote asset value. While other
         // ones like limit buy / sell and market sell requires a quantity field
         // https://api-docs.poloniex.com/spot/api/private/order
         match (
-            &order_event.order_kind,
-            PoloniexSide::from(&order_event.decision),
+            &order_event.request.order_kind,
+            PoloniexSide::from(&order_event.request.decision),
         ) {
             (OrderKind::Market, PoloniexSide::BUY) => Self::market_buy(order_event),
             (OrderKind::Market, PoloniexSide::SELL) => Self::market_sell(order_event),
             (OrderKind::Limit, PoloniexSide::BUY) => Self::limit_order(order_event),
             (OrderKind::Limit, PoloniexSide::SELL) => Self::limit_order(order_event),
-            _ => unimplemented!(), // todo
+            _ => unreachable!(),
         }
     }
 
-    pub fn limit_order(order_event: OpenOrder) -> Result<Self, RequestBuildError> {
+    pub fn limit_order(order_event: Order<OpenOrder>) -> Result<Self, RequestBuildError> {
         PoloniexNewOrderBuilder::new()
-            .symbol(PoloniexSymbol::from(&order_event.instrument).0)
+            .symbol(PoloniexSymbol::from(&order_event.request.instrument).0)
             .side(
-                PoloniexSide::from(&order_event.decision)
+                PoloniexSide::from(&order_event.request.decision)
                     .as_ref()
                     .to_lowercase(),
             )
             .r#type(PoloniexOrderType::Limit) // TODO: limit_marker
-            .quantity(order_event.quantity.to_string())
-            .price(order_event.price.to_string())
-            .client_order_id(order_event.client_order_id.0.clone())
+            .quantity(order_event.request.quantity.to_string())
+            .price(order_event.request.price.to_string())
+            .client_order_id(order_event.cid.0.clone())
             .time_in_force(PoloniexTimeInForce::GTC) // TODO
             .build()
     }
 
-    pub fn market_buy(order_event: OpenOrder) -> Result<Self, RequestBuildError> {
+    pub fn market_buy(order_event: Order<OpenOrder>) -> Result<Self, RequestBuildError> {
         PoloniexNewOrderBuilder::new()
-            .symbol(PoloniexSymbol::from(&order_event.instrument).0)
+            .symbol(PoloniexSymbol::from(&order_event.request.instrument).0)
             .side(
-                PoloniexSide::from(&order_event.decision)
+                PoloniexSide::from(&order_event.request.decision)
                     .as_ref()
                     .to_lowercase(),
             )
-            .client_order_id(order_event.client_order_id.0.clone())
-            .amount(order_event.notional_amount.to_string())
+            .client_order_id(order_event.cid.0.clone())
+            .amount(order_event.request.notional_amount.to_string())
             .build()
     }
 
-    pub fn market_sell(order_event: OpenOrder) -> Result<Self, RequestBuildError> {
+    pub fn market_sell(order_event: Order<OpenOrder>) -> Result<Self, RequestBuildError> {
         PoloniexNewOrderBuilder::new()
-            .symbol(PoloniexSymbol::from(&order_event.instrument).0)
+            .symbol(PoloniexSymbol::from(&order_event.request.instrument).0)
             .side(
-                PoloniexSide::from(&order_event.decision)
+                PoloniexSide::from(&order_event.request.decision)
                     .as_ref()
                     .to_lowercase(),
             )
-            .quantity(order_event.quantity.to_string())
-            .client_order_id(order_event.client_order_id.0.clone())
+            .quantity(order_event.request.quantity.to_string())
+            .client_order_id(order_event.cid.0.clone())
             .build()
     }
 }

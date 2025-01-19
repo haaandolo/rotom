@@ -16,17 +16,6 @@ use std::{
 use crate::execution_manager::builder::TraderId;
 
 /*----- */
-// Generic order type
-/*----- */
-#[derive(Debug, Clone)]
-pub struct Order<RequestResponse> {
-    pub trader_id: TraderId,
-    pub exchange: ExchangeId,
-    pub requested_time: DateTime<Utc>,
-    pub request_response: RequestResponse,
-}
-
-/*----- */
 // Client Order Id
 /*----- */
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]

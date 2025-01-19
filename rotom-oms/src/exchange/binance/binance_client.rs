@@ -14,6 +14,7 @@ use crate::exchange::AccountDataWebsocket;
 use crate::exchange::ExecutionClient;
 use crate::model::execution_request::CancelOrder;
 use crate::model::execution_request::OpenOrder;
+use crate::model::execution_request::Order;
 use crate::model::execution_request::WalletTransfer;
 use crate::model::execution_response::AccountBalance;
 
@@ -72,7 +73,7 @@ impl ExecutionClient for BinanceExecution {
 
     async fn open_order(
         &self,
-        open_requests: OpenOrder,
+        open_requests: Order<OpenOrder>,
     ) -> Result<Self::NewOrderResponse, SocketError> {
         let response = self
             .http_client
@@ -83,13 +84,13 @@ impl ExecutionClient for BinanceExecution {
 
     async fn cancel_order(
         &self,
-        cancel_request: CancelOrder,
+        cancel_request: Order<CancelOrder>,
     ) -> Result<Self::CancelResponse, SocketError> {
         let response = self
             .http_client
             .execute(BinanceCancelOrder::new(
-                cancel_request.client_order_id.0,
-                cancel_request.symbol,
+                cancel_request.cid.0,
+                cancel_request.request.symbol,
             )?)
             .await?;
         Ok(response.0)
@@ -97,26 +98,26 @@ impl ExecutionClient for BinanceExecution {
 
     async fn cancel_order_all(
         &self,
-        cancel_request: CancelOrder,
+        cancel_request: Order<CancelOrder>,
     ) -> Result<Self::CancelAllResponse, SocketError> {
         let response = self
             .http_client
-            .execute(BinanceCancelAllOrder::new(cancel_request.symbol)?)
+            .execute(BinanceCancelAllOrder::new(cancel_request.request.symbol)?)
             .await?;
         Ok(response.0)
     }
 
     async fn wallet_transfer(
         &self,
-        wallet_transfer_request: WalletTransfer,
+        wallet_transfer_request: Order<WalletTransfer>,
     ) -> Result<Self::WalletTransferResponse, SocketError> {
         let response = self
             .http_client
             .execute(BinanceWalletTransfer::new(
-                wallet_transfer_request.coin,
-                wallet_transfer_request.wallet_address,
-                wallet_transfer_request.network,
-                wallet_transfer_request.amount,
+                wallet_transfer_request.request.coin,
+                wallet_transfer_request.request.wallet_address,
+                wallet_transfer_request.request.network,
+                wallet_transfer_request.request.amount,
             )?)
             .await?;
         Ok(response.0)
