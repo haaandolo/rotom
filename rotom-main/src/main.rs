@@ -32,7 +32,7 @@ use rotom_oms::{
         risk_manager::default_risk_manager::DefaultRisk,
     },
     statistic::summary::{
-        trading::{Config as StatisticConfig, TradingSummary},
+        trading::{self, Config as StatisticConfig, TradingSummary},
         Initialiser,
     },
 };
@@ -89,7 +89,7 @@ pub async fn main() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////
-    // Init channels
+    // Init channels and other
     ////////////////////////////////////////////////////
     // Tx goes to Traders and rx goes to oms
     let (execution_request_tx, execution_request_rx) = mpsc::unbounded_channel();
@@ -97,22 +97,12 @@ pub async fn main() {
     // Tx goes to ExecutionManagers, rx goes to oms
     let (execution_response_tx, execution_response_rx) = mpsc::unbounded_channel();
 
-    ////////////////////////////////////////////////////
-    // Portfolio
-    ////////////////////////////////////////////////////
-    let arb_portfolio = Arc::new(Mutex::new(
-        SpotPortfolio::new(
-            engine_id,
-            vec![ExchangeId::BinanceSpot, ExchangeId::PoloniexSpot],
-            SpotInMemoryRepository::default(),
-            SpotArbAllocator,
-        )
-        .init()
-        .await
-        .unwrap(),
-    ));
-
-    println!("arb portfolio: {:#?}", arb_portfolio);
+    // Declare trading universe
+    let trading_universe = vec![
+        Instrument::new("op", "usdt"),
+        // Instrument::new("arb", "usdt"),
+        // Instrument::new("ldo", "usdt"),
+    ];
 
     ////////////////////////////////////////////////////
     // Balance builder
@@ -130,8 +120,10 @@ pub async fn main() {
     // Execution manager
     ////////////////////////////////////////////////////
     let execution_manager_txs = ExecutionBuilder::default()
-        .add_exchange::<BinanceExecution>(execution_response_tx.clone())
-        .add_exchange::<PoloniexExecution>(execution_response_tx.clone())
+        .add_exchange::<BinanceExecution>(execution_response_tx.clone(), trading_universe.clone())
+        .await
+        .add_exchange::<PoloniexExecution>(execution_response_tx.clone(), trading_universe.clone())
+        .await
         .build();
 
     ////////////////////////////////////////////////////

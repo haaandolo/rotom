@@ -173,9 +173,9 @@ impl TraderRun for SpotArbTrader {
                                 request: order_request,
                             };
 
-                            let test = self
-                                .execution_request_tx
-                                .send(ExecutionRequest::Open(order));
+                            // let test = self
+                            //     .execution_request_tx
+                            //     .send(ExecutionRequest::Open(order));
 
                             self.meta_data.order = Some(new_order);
                         }

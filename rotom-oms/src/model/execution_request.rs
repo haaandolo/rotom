@@ -7,18 +7,6 @@ use crate::execution_manager::builder::TraderId;
 use super::{ClientOrderId, OrderKind};
 
 /*----- */
-// Generic order type
-/*----- */
-#[derive(Debug, Clone)]
-pub struct Order<Request> {
-    pub trader_id: TraderId,
-    pub exchange: ExchangeId,
-    pub cid: ClientOrderId,
-    pub requested_time: DateTime<Utc>,
-    pub request: Request,
-}
-
-/*----- */
 // ExecutionRequest
 /*----- */
 #[derive(Debug, Clone)]
@@ -49,6 +37,18 @@ impl std::fmt::Display for ExecutionRequest {
             ExecutionRequest::Transfer(request) => write!(f, "{:#?}", request),
         }
     }
+}
+
+/*----- */
+// Generic order type
+/*----- */
+#[derive(Debug, Clone)]
+pub struct Order<Request> {
+    pub trader_id: TraderId,
+    pub exchange: ExchangeId,
+    pub cid: ClientOrderId,
+    pub requested_time: DateTime<Utc>,
+    pub request: Request,
 }
 
 /*----- */
