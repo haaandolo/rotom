@@ -38,9 +38,6 @@ serde_json = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_urlencoded = { workspace = true }
 
-# Persistence
-redis = { workspace = true }
-
 # Crytographic Signatures
 hmac = { workspace = true }
 sha2 = { workspace = true }

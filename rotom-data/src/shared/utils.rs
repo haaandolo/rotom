@@ -24,7 +24,7 @@ pub fn round_float_to_precision(value: f64, precision: f64) -> f64 {
 
 // this should be decimal places to number
 pub fn number_to_decimal_places(value: f64) -> usize {
-    if value == 0.0 {
+    if value <= 0.0 {
         return 0;
     }
 
@@ -61,12 +61,10 @@ mod test {
         assert_eq!(dec5_res, 5);
 
         let dec6_res = number_to_decimal_places(dec6);
-        println!("{:#?}", dec6_res);
-        // assert_eq!(dec6_res, 0);
+        assert_eq!(dec6_res, 0);
 
         let dec7_res = number_to_decimal_places(dec7);
-        println!("{:#?}", dec7_res);
-        // assert_eq!(dec7_res, 0);
+        assert_eq!(dec7_res, 0);
     }
 
     #[test]

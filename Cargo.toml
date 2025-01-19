@@ -49,9 +49,6 @@ serde_json = { version = "1.0.120" }
 serde = { version = "1.0.197", features = ["derive"] }
 serde_urlencoded = { version = "0.7.1" }
 
-# Persistence
-redis = "0.25.4"
-
 # Crytographic Signatures
 hmac = { version = "0.12.1" }
 sha2 = { version = "0.10.6" }
