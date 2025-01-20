@@ -6,6 +6,7 @@ pub mod model;
 pub mod protocols;
 pub mod shared;
 pub mod streams;
+pub mod temp;
 pub mod transformer;
 
 use std::fmt::Display;

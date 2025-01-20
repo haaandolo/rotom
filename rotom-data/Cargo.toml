@@ -31,6 +31,8 @@ chrono = { workspace = true, features = ["serde"]}
 vecmap-rs = { workspace = true}
 itertools = { workspace = true}
 bytes = { workspace = true }
+flate2 = { version="1.0"}
+bincode = "1.3"
 
 # Crytographic Signatures
 hmac = { workspace = true }
