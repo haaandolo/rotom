@@ -109,7 +109,7 @@ impl SpotArbTradersBuilder {
 }
 
 // todo: make this into a spot arb specfic stream builder
-async fn stream_trades<LiquidExchange, IlliquidExchange>(
+pub async fn stream_trades<LiquidExchange, IlliquidExchange>(
     market: &Instrument,
 ) -> UnboundedReceiver<MarketEvent<DataKind>>
 where

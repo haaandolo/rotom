@@ -1,8 +1,21 @@
-use rotom_data::temp::htx_ws_test;
+use rotom_data::{shared::subscription_models::Instrument, temp::htx_ws_test};
+use rotom_main::trader::spot_arb_trader::builder::stream_trades;
+use rotom_oms::exchange::{
+    binance::binance_client::BinanceExecution, poloniex::poloniex_client::PoloniexExecution,
+};
 
 #[tokio::main]
 pub async fn main() {
     htx_ws_test().await;
+
+    ///////////
+    // Testing
+    ///////////
+    // let mut rx =
+    //     stream_trades::<BinanceExecution, PoloniexExecution>(&Instrument::new("btc", "usdt")).await;
+    // while let Some(msg) = rx.recv().await {
+    //     println!("{:?}", msg);
+    // }
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////

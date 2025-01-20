@@ -15,6 +15,24 @@ where
     data.parse::<T>().map_err(serde::de::Error::custom)
 }
 
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum StrOrFloat<'a> {
+    Str(&'a str),
+    Float(f64),
+}
+
+pub fn de_flexi_float<'de, D>(deserializer: D) -> Result<f64, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = StrOrFloat::deserialize(deserializer)?;
+    match value {
+        StrOrFloat::Str(s) => s.parse().map_err(serde::de::Error::custom),
+        StrOrFloat::Float(f) => Ok(f),
+    }
+}
+
 // Deserialize a symbol to a be lowercase and non-snake or camel case
 pub fn de_str_symbol<'de, D, T>(deserializer: D) -> Result<T, D::Error>
 where

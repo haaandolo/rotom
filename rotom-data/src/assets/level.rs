@@ -1,13 +1,15 @@
 use serde::Deserialize;
 use std::{cmp::Ordering, fmt::Display};
 
-use crate::shared::de::de_str;
+use crate::shared::de::de_flexi_float;
 
 #[derive(Default, Debug, Clone, Copy, Deserialize)]
 pub struct Level {
-    #[serde(deserialize_with = "de_str")]
+    // #[serde(deserialize_with = "de_str")]
+    #[serde(deserialize_with = "de_flexi_float")]
     pub price: f64,
-    #[serde(deserialize_with = "de_str")]
+    // #[serde(deserialize_with = "de_str")]
+    #[serde(deserialize_with = "de_flexi_float")]
     pub size: f64,
 }
 
