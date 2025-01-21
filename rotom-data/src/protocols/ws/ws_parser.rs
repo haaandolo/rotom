@@ -1,3 +1,6 @@
+use std::io::Read;
+
+use flate2::read::GzDecoder;
 use futures::Stream;
 use serde::de::DeserializeOwned;
 use tokio_tungstenite::tungstenite::{
@@ -83,20 +86,45 @@ where
     )
 }
 
+// Todo: make this more performant
 pub fn process_binary<ExchangeMessage>(
     payload: Vec<u8>,
 ) -> Option<Result<ExchangeMessage, SocketError>>
 where
     ExchangeMessage: DeserializeOwned,
 {
-    Some(
-        serde_json::from_slice::<ExchangeMessage>(&payload).map_err(|error| {
-            SocketError::Deserialise {
-                error,
-                payload: String::from_utf8(payload).unwrap_or_else(|x| x.to_string()),
-            }
-        }),
-    )
+    let mut decoder = GzDecoder::new(&payload[..]);
+    let mut decoded = String::new();
+
+    if decoder.read_to_string(&mut decoded).is_ok() {
+        // Sceario when compressed - use the decompressed string
+        Some(
+            serde_json::from_str::<ExchangeMessage>(decoded.as_str()).map_err(|error| {
+                SocketError::Deserialise {
+                    error,
+                    payload: String::from_utf8(payload).unwrap_or_else(|x| x.to_string()),
+                }
+            }),
+        )
+    } else {
+        // Scenario when is not compressed - use the original binary
+        Some(
+            serde_json::from_slice::<ExchangeMessage>(&payload).map_err(|error| {
+                SocketError::Deserialise {
+                    error,
+                    payload: String::from_utf8(payload).unwrap_or_else(|x| x.to_string()),
+                }
+            }),
+        )
+    }
+    // Some(
+    //     serde_json::from_slice::<ExchangeMessage>(&payload).map_err(|error| {
+    //         SocketError::Deserialise {
+    //             error,
+    //             payload: String::from_utf8(payload).unwrap_or_else(|x| x.to_string()),
+    //         }
+    //     }),
+    // )
 }
 
 pub fn process_ping<ExchangeMessage>(

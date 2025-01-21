@@ -157,6 +157,7 @@ impl SpreadStategy {
         match &market_event.event_data {
             // Process book data
             DataKind::OrderBook(book_data) => match market_event.exchange {
+                ExchangeId::HtxSpot => unimplemented!(),
                 ExchangeId::BinanceSpot => {
                     // Update midprice
                     let mid_price = book_data.midprice();
@@ -264,6 +265,7 @@ impl SpreadStategy {
             },
             // Process trade data
             DataKind::Trade(event_trade) => match market_event.exchange {
+                ExchangeId::HtxSpot => unimplemented!(),
                 ExchangeId::BinanceSpot => {
                     if let Some(mid_price) = self.liquid_exchange.mid_price {
                         // Calculate bps offset

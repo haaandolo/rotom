@@ -70,6 +70,9 @@ impl SpotPortfolio {
                     let balance = PoloniexExecution::get_balances().await?;
                     balance
                 }
+                ExchangeId::HtxSpot => {
+                    unimplemented!()
+                }
             };
 
             for asset_balance in exchange_balance.into_iter() {

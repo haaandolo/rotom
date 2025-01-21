@@ -1,4 +1,10 @@
-use rotom_data::{shared::subscription_models::Instrument, temp::htx_ws_test};
+use futures::StreamExt;
+use rotom_data::{
+    model::market_event::{DataKind, MarketEvent},
+    shared::subscription_models::{ExchangeId, Instrument, StreamKind},
+    streams::builder::dynamic::DynamicStreams,
+    temp::htx_ws_test,
+};
 use rotom_main::trader::spot_arb_trader::builder::stream_trades;
 use rotom_oms::exchange::{
     binance::binance_client::BinanceExecution, poloniex::poloniex_client::PoloniexExecution,
@@ -6,7 +12,27 @@ use rotom_oms::exchange::{
 
 #[tokio::main]
 pub async fn main() {
-    htx_ws_test().await;
+    ///////////
+    // Main
+    ///////////
+    // htx_ws_test().await;
+
+    ///////////
+    // Dynamic stream
+    ///////////
+    let streams = DynamicStreams::init([vec![(
+        ExchangeId::HtxSpot,
+        "btc",
+        "usdt",
+        StreamKind::Snapshot,
+    )]])
+    .await
+    .unwrap();
+
+    let mut merged = streams.select_all::<MarketEvent<DataKind>>();
+    while let Some(event) = merged.next().await {
+        // println!("{:?}", event)
+    }
 
     ///////////
     // Testing

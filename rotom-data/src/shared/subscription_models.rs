@@ -109,7 +109,7 @@ where
 pub enum ExchangeId {
     BinanceSpot,
     PoloniexSpot,
-    // HtxSpot,
+    HtxSpot,
 }
 
 impl ExchangeId {
@@ -117,6 +117,7 @@ impl ExchangeId {
         match self {
             ExchangeId::BinanceSpot => "binancespot",
             ExchangeId::PoloniexSpot => "poloniexspot",
+            ExchangeId::HtxSpot => "htxspot",
         }
     }
 }
@@ -136,6 +137,7 @@ pub enum StreamKind {
     #[default]
     L2,
     AggTrades,
+    Snapshot,
 }
 
 impl StreamKind {
@@ -144,6 +146,7 @@ impl StreamKind {
             StreamKind::Trades => "trade",
             StreamKind::L2 => "l2",
             StreamKind::AggTrades => "agg_trade",
+            StreamKind::Snapshot=> "snapshot",
         }
     }
 }

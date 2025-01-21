@@ -5,15 +5,17 @@ use futures::{
 use itertools::Itertools;
 use std::{collections::HashMap, fmt::Debug};
 use tokio_stream::wrappers::UnboundedReceiverStream;
-use tracing::error;
 use vecmap::VecMap;
 
 use super::single::ExchangeChannel;
 use crate::{
     error::SocketError,
-    exchange::{binance::BinanceSpotPublicData, poloniex::PoloniexSpotPublicData},
+    exchange::{
+        binance::BinanceSpotPublicData, htx::HtxSpotPublicData, poloniex::PoloniexSpotPublicData,
+    },
     model::{
         event_book::{EventOrderBook, OrderBookL2},
+        event_book_snapshot::{EventOrderBookSnapshot, OrderBookSnapshot},
         event_trade::{AggTrades, EventTrade, Trades},
         market_event::MarketEvent,
     },
@@ -28,6 +30,7 @@ use crate::{
 pub struct DynamicStreams {
     pub trades: VecMap<ExchangeId, UnboundedReceiverStream<MarketEvent<EventTrade>>>,
     pub l2s: VecMap<ExchangeId, UnboundedReceiverStream<MarketEvent<EventOrderBook>>>,
+    pub snapshots: VecMap<ExchangeId, UnboundedReceiverStream<MarketEvent<EventOrderBookSnapshot>>>,
 }
 
 impl DynamicStreams {
@@ -100,6 +103,9 @@ impl DynamicStreams {
                             channels.trades.entry(exchange).or_default().tx.clone(),
                         ));
                     }
+                    (ExchangeId::BinanceSpot, StreamKind::Snapshot) => {
+                        unimplemented!()
+                    }
                     /*----- */
                     // Poloniex Spot
                     /*----- */
@@ -133,7 +139,36 @@ impl DynamicStreams {
                     }
                     // Poloniex's does not separate regular and aggregated trades
                     (ExchangeId::PoloniexSpot, StreamKind::AggTrades) => {
-                        error!(message = "Poloniex spot does not have a aggregated trades stream")
+                        unimplemented!()
+                    }
+                    (ExchangeId::PoloniexSpot, StreamKind::Snapshot) => {
+                        unimplemented!()
+                    }
+                    /*----- */
+                    // Htx Spot
+                    /*----- */
+                    (ExchangeId::HtxSpot, StreamKind::L2) => {
+                        unimplemented!()
+                    }
+                    (ExchangeId::HtxSpot, StreamKind::AggTrades) => {
+                        unimplemented!()
+                    }
+                    (ExchangeId::HtxSpot, StreamKind::Trades) => {
+                        unimplemented!()
+                    }
+                    (ExchangeId::HtxSpot, StreamKind::Snapshot) => {
+                        tokio::spawn(consume::<HtxSpotPublicData, OrderBookSnapshot>(
+                            subs.into_iter()
+                                .map(|sub| {
+                                    Subscription::new(
+                                        HtxSpotPublicData,
+                                        sub.instrument,
+                                        OrderBookSnapshot,
+                                    )
+                                })
+                                .collect(),
+                            channels.snapshots.entry(exchange).or_default().tx.clone(),
+                        ));
                     }
                 };
             }
@@ -147,6 +182,11 @@ impl DynamicStreams {
                 .collect(),
             l2s: channels
                 .l2s
+                .into_iter()
+                .map(|(exchange, channel)| (exchange, UnboundedReceiverStream::new(channel.rx)))
+                .collect(),
+            snapshots: channels
+                .snapshots
                 .into_iter()
                 .map(|(exchange, channel)| (exchange, UnboundedReceiverStream::new(channel.rx)))
                 .collect(),
@@ -184,8 +224,13 @@ impl DynamicStreams {
         Output: 'static,
         MarketEvent<EventTrade>: Into<Output>,
         MarketEvent<EventOrderBook>: Into<Output>,
+        MarketEvent<EventOrderBookSnapshot>: Into<Output>,
     {
-        let Self { trades, l2s } = self;
+        let Self {
+            trades,
+            l2s,
+            snapshots,
+        } = self;
         let trades = trades
             .into_values()
             .map(|stream| stream.map(MarketEvent::into).boxed());
@@ -194,7 +239,11 @@ impl DynamicStreams {
             .into_values()
             .map(|stream| stream.map(MarketEvent::into).boxed());
 
-        let all = trades.chain(l2s);
+        let snapshots = snapshots
+            .into_values()
+            .map(|stream| stream.map(MarketEvent::into).boxed());
+
+        let all = trades.chain(l2s).chain(snapshots);
 
         select_all(all)
     }
@@ -207,4 +256,5 @@ impl DynamicStreams {
 struct Channels {
     l2s: HashMap<ExchangeId, ExchangeChannel<MarketEvent<EventOrderBook>>>,
     trades: HashMap<ExchangeId, ExchangeChannel<MarketEvent<EventTrade>>>,
+    snapshots: HashMap<ExchangeId, ExchangeChannel<MarketEvent<EventOrderBookSnapshot>>>,
 }

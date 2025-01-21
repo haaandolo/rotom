@@ -23,7 +23,7 @@ const HTX_SPOT_WS_URL: &str = "wss://api.huobi.pro/feed";
 pub struct HtxSpotPublicData;
 
 impl PublicStreamConnector for HtxSpotPublicData {
-    const ID: ExchangeId = ExchangeId::BinanceSpot;
+    const ID: ExchangeId = ExchangeId::HtxSpot;
 
     type Channel = HtxChannel;
     type Market = HtxMarket;

@@ -67,6 +67,9 @@ impl From<(&ExchangeId, &Instrument)> for AssetFormatted {
             ExchangeId::PoloniexSpot => {
                 AssetFormatted(format!("{}_{}", instrument.base, instrument.quote).to_uppercase())
             }
+            ExchangeId::HtxSpot => {
+                AssetFormatted(format!("{}{}", instrument.base, instrument.quote))
+            }
         }
     }
 }
@@ -106,6 +109,12 @@ impl From<(&ExchangeId, &Instrument)> for ExchangeAssetId {
                 )
                 .to_uppercase(),
             ),
+            ExchangeId::HtxSpot => ExchangeAssetId(format!(
+                "{}_{}{}",
+                exchange.as_str(),
+                instrument.base,
+                instrument.quote
+            )),
         }
     }
 }

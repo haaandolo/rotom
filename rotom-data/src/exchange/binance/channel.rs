@@ -30,6 +30,7 @@ impl Identifier<BinanceChannel> for Subscription<BinanceSpotPublicData, OrderBoo
         BinanceChannel::ORDER_BOOK_L2
     }
 }
+
 impl Identifier<BinanceChannel> for Subscription<BinanceSpotPublicData, Trades> {
     fn id(&self) -> BinanceChannel {
         BinanceChannel::TRADES

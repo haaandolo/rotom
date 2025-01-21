@@ -73,8 +73,6 @@ where
                 Poll::Pending => return Poll::Pending,
             };
 
-            // println!("### Poll next ### \n {:?}", input);
-
             // Parse input protocol message into `ExchangeMessage`
             let exchange_message = match WebSocketParser::parse::<StreamTransformer::Input>(input) {
                 // `StreamParser` successfully deserialised `ExchangeMessage`

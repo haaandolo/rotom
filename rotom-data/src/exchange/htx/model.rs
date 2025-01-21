@@ -31,9 +31,10 @@ pub struct HtxOrderBookSnapshotTick {
 }
 
 // todo: change from string to struct()
+// have to split as ws data comes in like "market.glmrusdt.mbp.refresh.5" and we cant have this in stateless transformer
 impl Identifier<String> for HtxOrderBookSnapshot {
     fn id(&self) -> String {
-        self.ch.clone()
+        self.ch.split('.').nth(1).unwrap_or_default().to_owned()
     }
 }
 
@@ -42,7 +43,7 @@ impl From<(HtxOrderBookSnapshot, Instrument)> for MarketEvent<EventOrderBookSnap
         Self {
             exchange_time: value.ts,
             received_time: Utc::now(),
-            exchange: ExchangeId::PoloniexSpot,
+            exchange: ExchangeId::HtxSpot,
             instrument,
             event_data: EventOrderBookSnapshot {
                 bids: value.tick.bids,
