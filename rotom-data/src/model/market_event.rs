@@ -2,12 +2,16 @@ use chrono::{DateTime, Utc};
 
 use crate::shared::subscription_models::{ExchangeId, Instrument};
 
-use super::{event_book::EventOrderBook, event_trade::EventTrade};
+use super::{
+    event_book::EventOrderBook, event_book_snapshot::EventOrderBookSnapshot,
+    event_trade::EventTrade,
+};
 
 #[derive(Debug)]
 pub enum DataKind {
     Trade(EventTrade),
     OrderBook(EventOrderBook),
+    OrderBookSnapshot(EventOrderBookSnapshot),
 }
 
 #[derive(Debug)]
@@ -39,6 +43,18 @@ impl From<MarketEvent<EventOrderBook>> for MarketEvent<DataKind> {
             exchange: event.exchange,
             instrument: event.instrument,
             event_data: DataKind::OrderBook(event.event_data),
+        }
+    }
+}
+
+impl From<MarketEvent<EventOrderBookSnapshot>> for MarketEvent<DataKind> {
+    fn from(event: MarketEvent<EventOrderBookSnapshot>) -> Self {
+        Self {
+            exchange_time: event.exchange_time,
+            received_time: event.received_time,
+            exchange: event.exchange,
+            instrument: event.instrument,
+            event_data: DataKind::OrderBookSnapshot(event.event_data),
         }
     }
 }

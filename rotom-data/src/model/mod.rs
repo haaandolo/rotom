@@ -1,4 +1,5 @@
 pub mod event_book;
+pub mod event_book_snapshot;
 pub mod event_trade;
 pub mod market_event;
 pub mod ticker_info;

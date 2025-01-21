@@ -126,6 +126,7 @@ impl Position2 {
         let close = match &market.event_data {
             DataKind::OrderBook(event_book) => event_book.weighted_midprice()?,
             DataKind::Trade(event_trade) => event_trade.trade.price,
+            DataKind::OrderBookSnapshot(_) => unimplemented!(),
         };
 
         self.current_symbol_price = close;

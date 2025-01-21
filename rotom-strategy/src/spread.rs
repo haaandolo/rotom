@@ -305,6 +305,7 @@ impl SpreadStategy {
                     }
                 }
             },
+            _ => {}
         }
     }
 }

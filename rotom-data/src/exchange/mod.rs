@@ -1,4 +1,5 @@
 pub mod binance;
+pub mod htx;
 pub mod poloniex;
 
 use async_trait::async_trait;

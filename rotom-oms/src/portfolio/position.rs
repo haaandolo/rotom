@@ -203,6 +203,7 @@ impl PositionUpdater for Position {
         let close = match &market.event_data {
             DataKind::OrderBook(event_book) => event_book.weighted_midprice()?,
             DataKind::Trade(event_trade) => event_trade.trade.price,
+            DataKind::OrderBookSnapshot(_) => unimplemented!(),
         };
 
         self.meta.update_time = market.exchange_time;

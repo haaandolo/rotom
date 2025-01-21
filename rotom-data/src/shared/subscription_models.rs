@@ -109,6 +109,7 @@ where
 pub enum ExchangeId {
     BinanceSpot,
     PoloniexSpot,
+    // HtxSpot,
 }
 
 impl ExchangeId {

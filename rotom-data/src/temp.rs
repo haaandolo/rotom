@@ -59,7 +59,7 @@ pub async fn htx_ws_test() {
                 Ok(_) => {
                     println!(
                         "Decompressed: {:?}",
-                        serde_json::from_str::<HtxBookSnaps>(decompressed.as_str())
+                        decompressed // serde_json::from_str::<HtxBookSnaps>(decompressed.as_str())
                     );
                 }
                 Err(e) => println!("Error decompressing: {}", e),
@@ -67,3 +67,9 @@ pub async fn htx_ws_test() {
         }
     }
 }
+
+/*
+Decompressed: "{\"id\":\"id1\",\"status\":\"ok\",\"subbed\":\"market.glmrusdt.mbp.refresh.5\",\"ts\":1737439927338}"
+Decompressed: "{\"ch\":\"market.glmrusdt.mbp.refresh.5\",\"ts\":1737439924265,\"tick\":{\"seqNum\":534669244,\"bids\":[[0.2236,142.845],[0.2212,244.4487],[0.2211,380.0],[0.221,403.0],[0.2209,4762.5499]],\"asks\":[[0.2248,113.2141],[0.2249,70.0],[0.2291,60.0],[0.2297,169.4166],[0.2298,234.1508]]}}"
+Decompressed: "{\"ping\":1737439928888}"
+*/

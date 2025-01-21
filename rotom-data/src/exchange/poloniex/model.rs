@@ -121,11 +121,7 @@ pub enum PoloniexSubscriptionResponse {
 impl Validator for PoloniexSubscriptionResponse {
     fn validate(self) -> Result<Self, SocketError> {
         match &self {
-            PoloniexSubscriptionResponse::Success {
-                event: _,
-                symbols: _,
-                channel: _,
-            } => Ok(self),
+            PoloniexSubscriptionResponse::Success { .. } => Ok(self),
             PoloniexSubscriptionResponse::Error { message, event } => {
                 Err(SocketError::Subscribe(format!(
                     "Error while subscribing to poloniex spot, event: {} & message: {}",
