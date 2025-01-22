@@ -64,7 +64,7 @@ pub trait PublicStreamConnector {
 pub trait PublicHttpConnector {
     type BookSnapShot: Send + Debug;
     type ExchangeTickerInfo: Into<TickerInfo> + Send + Debug;
-    type WalletInfo: Send + Debug;
+    type NetworkInfo: Send + Debug;
 
     const ID: ExchangeId;
 
@@ -74,7 +74,7 @@ pub trait PublicHttpConnector {
         instrument: Instrument,
     ) -> Result<Self::ExchangeTickerInfo, SocketError>;
 
-    async fn get_chain_info() -> Result<Self::WalletInfo, SocketError>;
+    async fn get_network_info() -> Result<Self::NetworkInfo, SocketError>;
 }
 
 /*----- */

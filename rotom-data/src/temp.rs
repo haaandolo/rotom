@@ -9,7 +9,7 @@ use tokio_tungstenite::{connect_async, tungstenite::Message};
 
 use crate::{
     assets::level::Level,
-    exchange::woox::model::{WooxSubscriptionResponse, WooxTrade},
+    exchange::woox::model::{WooxNetworkInfo, WooxSubscriptionResponse, WooxTrade},
     protocols::ws::{schedule_pings_to_exchange, PingInterval},
 };
 
@@ -27,11 +27,19 @@ pub struct WooxOrderBookSnapshotData {
     pub bids: Vec<Level>,
 }
 
-/*
-success: Ok(Text("{\"id\":\"clientid\",\"event\":\"subscribe\",\"success\":true,\"ts\":1737536701623,\"data\":\"SPOT_WOO_USDT@orderbook\"}"))
+/*----- */
+// Test http
+/*----- */
+pub async fn test_http() {
+    let test = reqwest::get("https://api.woox.io/v1/public/token_network")
+        .await
+        .unwrap()
+        .json::<WooxNetworkInfo>()
+        .await
+        .unwrap();
+    println!("{:#?}", test);
+}
 
-failed: Ok(Text("{\"id\":\"clientid\",\"event\":\"subscribe\",\"success\":false,\"ts\":1737536796558,\"errorMsg\":\"Exceed the max size of subscribe topics per request.20\"}"))
-*/
 /*----- */
 // Test Ws
 /*----- */
@@ -64,16 +72,3 @@ pub async fn test_ws() {
         }
     }
 }
-
-/*----- */
-// Test http
-/*----- */
-// pub async fn test_http() {
-//     let test = reqwest::get("https://api-aws.huobi.pro/v1/settings/common/chains")
-//         .await
-//         .unwrap()
-//         .json::<serde_json::Value>()
-//         .await
-//         .unwrap();
-//     println!("{:#?}", test);
-// }

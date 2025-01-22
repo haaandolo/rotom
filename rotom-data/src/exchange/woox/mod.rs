@@ -1,17 +1,19 @@
+use async_trait::async_trait;
 use channel::WooxChannel;
 use market::WooxMarket;
-use model::{WooxOrderBookSnapshot, WooxSubscriptionResponse, WooxTrade};
+use model::{WooxNetworkInfo, WooxOrderBookSnapshot, WooxSubscriptionResponse, WooxTrade};
 use rand::Rng;
 use serde_json::json;
 
 use crate::{
+    error::SocketError,
     model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trades},
     protocols::ws::{PingInterval, WsMessage},
-    shared::subscription_models::{ExchangeId, ExchangeSubscription},
+    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
     transformer::stateless_transformer::StatelessTransformer,
 };
 
-use super::{PublicStreamConnector, StreamSelector};
+use super::{PublicHttpConnector, PublicStreamConnector, StreamSelector};
 
 pub mod channel;
 pub mod market;
@@ -57,6 +59,39 @@ impl PublicStreamConnector for WooxSpotPublicData {
             // message: json!({ "pong": rand::thread_rng().gen::<u64>() }),
             message: json!({ "event": "ping" }),
         })
+    }
+}
+
+/*----- */
+// WooxSpot HttpConnector
+/*----- */
+pub const HTTP_NETWORK_INFO_URL_WOOX_SPOT: &str = "https://api.woox.io/v1/public/token_network";
+
+#[async_trait]
+impl PublicHttpConnector for WooxSpotPublicData {
+    const ID: ExchangeId = ExchangeId::HtxSpot;
+
+    type BookSnapShot = serde_json::Value;
+    type ExchangeTickerInfo = serde_json::Value;
+    type NetworkInfo = WooxNetworkInfo; // todo
+
+    async fn get_book_snapshot(_instrument: Instrument) -> Result<Self::BookSnapShot, SocketError> {
+        unimplemented!()
+    }
+
+    async fn get_ticker_info(
+        _instrument: Instrument,
+    ) -> Result<Self::ExchangeTickerInfo, SocketError> {
+        unimplemented!()
+    }
+
+    async fn get_network_info() -> Result<Self::NetworkInfo, SocketError> {
+        Ok(reqwest::get(HTTP_NETWORK_INFO_URL_WOOX_SPOT)
+            .await
+            .map_err(SocketError::Http)?
+            .json::<Self::NetworkInfo>()
+            .await
+            .map_err(SocketError::Http)?)
     }
 }
 

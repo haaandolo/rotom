@@ -131,3 +131,36 @@ impl Validator for WooxSubscriptionResponse {
         }
     }
 }
+
+/*----- */
+// Network Info
+/*----- */
+#[derive(Debug, Deserialize)]
+pub struct WooxNetworkInfo {
+    pub success: bool,
+    pub rows: Vec<WooxNetworkInfoData>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct WooxNetworkInfoData {
+    pub protocol: String,
+    pub network: String,
+    pub token: String,
+    pub name: String,
+    #[serde(rename = "minimum_withdrawal")]
+    pub minimum_withdrawal: f64,
+    #[serde(rename = "withdrawal_fee")]
+    pub withdrawal_fee: f64,
+    #[serde(rename = "allow_deposit", deserialize_with = "de_network_info_woox")]
+    pub allow_deposit: bool,
+    #[serde(rename = "allow_withdraw", deserialize_with = "de_network_info_woox")]
+    pub allow_withdraw: bool,
+}
+
+pub fn de_network_info_woox<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+    D: serde::de::Deserializer<'de>,
+{
+    <u32 as Deserialize>::deserialize(deserializer)
+        .map(|deposit_withdraw_status| deposit_withdraw_status == 1)
+}

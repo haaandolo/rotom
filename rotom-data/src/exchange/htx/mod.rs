@@ -5,7 +5,7 @@ pub mod model;
 use async_trait::async_trait;
 use channel::HtxChannel;
 use market::HtxMarket;
-use model::{HtxOrderBookSnapshot, HtxSubscriptionResponse, HtxTrade, HtxWalletInfo};
+use model::{HtxNetworkInfo, HtxOrderBookSnapshot, HtxSubscriptionResponse, HtxTrade};
 use rand::Rng;
 use serde_json::json;
 
@@ -62,7 +62,7 @@ impl PublicStreamConnector for HtxSpotPublicData {
 /*----- */
 // HtxSpot HttpConnector
 /*----- */
-pub const HTTP_CHAIN_INFO_URL_HTX_SPOT: &str =
+pub const HTTP_NETWORK_INFO_URL_HTX_SPOT: &str =
     "https://api-aws.huobi.pro/v1/settings/common/chains";
 
 #[async_trait]
@@ -71,7 +71,7 @@ impl PublicHttpConnector for HtxSpotPublicData {
 
     type BookSnapShot = serde_json::Value;
     type ExchangeTickerInfo = serde_json::Value;
-    type WalletInfo = HtxWalletInfo; // todo
+    type NetworkInfo = HtxNetworkInfo;
 
     async fn get_book_snapshot(_instrument: Instrument) -> Result<Self::BookSnapShot, SocketError> {
         unimplemented!()
@@ -83,11 +83,11 @@ impl PublicHttpConnector for HtxSpotPublicData {
         unimplemented!()
     }
 
-    async fn get_chain_info() -> Result<Self::WalletInfo, SocketError> {
-        Ok(reqwest::get(HTTP_CHAIN_INFO_URL_HTX_SPOT)
+    async fn get_network_info() -> Result<Self::NetworkInfo, SocketError> {
+        Ok(reqwest::get(HTTP_NETWORK_INFO_URL_HTX_SPOT)
             .await
             .map_err(SocketError::Http)?
-            .json::<Self::WalletInfo>()
+            .json::<Self::NetworkInfo>()
             .await
             .map_err(SocketError::Http)?)
     }

@@ -165,18 +165,18 @@ impl Validator for HtxSubscriptionResponse {
 }
 
 /*----- */
-// Coin wallet suspension information
+// Wallet Info
 /*----- */
 #[derive(Debug, Deserialize)]
-pub struct HtxWalletInfo {
-    pub data: Vec<HtxCurrencyInfo>,
+pub struct HtxNetworkInfo {
+    pub data: Vec<HtxNetworkInfoData>,
     pub full: i64,
     pub status: String,
     pub ts: String,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct HtxCurrencyInfo {
+pub struct HtxNetworkInfoData {
     pub ac: String,
     pub adt: bool,
     pub ao: bool,

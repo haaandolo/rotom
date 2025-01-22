@@ -103,7 +103,7 @@ impl PublicHttpConnector for BinanceSpotPublicData {
 
     type BookSnapShot = BinanceSpotSnapshot;
     type ExchangeTickerInfo = BinanceSpotTickerInfo;
-    type WalletInfo = serde_json::Value; // todo
+    type NetworkInfo = serde_json::Value; // todo
 
     async fn get_book_snapshot(instrument: Instrument) -> Result<Self::BookSnapShot, SocketError> {
         let snapshot_url = format!(
@@ -139,7 +139,7 @@ impl PublicHttpConnector for BinanceSpotPublicData {
             .map_err(SocketError::Http)
     }
 
-    async fn get_chain_info() -> Result<Self::WalletInfo, SocketError> {
+    async fn get_network_info() -> Result<Self::NetworkInfo, SocketError> {
         unimplemented!()
     }
 }
