@@ -1,3 +1,7 @@
+pub mod channel;
+pub mod market;
+pub mod model;
+
 use async_trait::async_trait;
 use channel::WooxChannel;
 use market::WooxMarket;
@@ -15,9 +19,6 @@ use crate::{
 
 use super::{PublicHttpConnector, PublicStreamConnector, StreamSelector};
 
-pub mod channel;
-pub mod market;
-pub mod model;
 
 #[derive(Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd, Clone)]
 pub struct WooxSpotPublicData;

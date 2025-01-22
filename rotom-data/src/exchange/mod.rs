@@ -1,4 +1,5 @@
 pub mod binance;
+pub mod bitstamp;
 pub mod htx;
 pub mod poloniex;
 pub mod woox;

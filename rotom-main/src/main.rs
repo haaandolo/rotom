@@ -17,6 +17,7 @@ pub async fn main() {
     // Main
     ///////////
     init_logging();
+    test_ws().await;
     // test_http().await;
 
     ///////////
