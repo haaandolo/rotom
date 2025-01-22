@@ -111,6 +111,7 @@ pub enum ExchangeId {
     PoloniexSpot,
     HtxSpot,
     WooxSpot,
+    BitstampSpot,
 }
 
 impl ExchangeId {
@@ -120,6 +121,7 @@ impl ExchangeId {
             ExchangeId::PoloniexSpot => "poloniexspot",
             ExchangeId::HtxSpot => "htxspot",
             ExchangeId::WooxSpot => "wooxspot",
+            ExchangeId::BitstampSpot=> "wooxspot",
         }
     }
 }

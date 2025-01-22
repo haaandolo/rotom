@@ -1,15 +1,19 @@
 use futures::StreamExt;
 use rotom_data::{
     exchange::{htx::HtxSpotPublicData, woox::WooxSpotPublicData, PublicHttpConnector},
-    model::market_event::{DataKind, MarketEvent},
+    model::{
+        event_book_snapshot::OrderBookSnapshot,
+        market_event::{DataKind, MarketEvent},
+    },
     shared::subscription_models::{ExchangeId, Instrument, StreamKind},
-    streams::builder::dynamic::DynamicStreams,
+    streams::builder::{dynamic::DynamicStreams, Streams},
     temp::{test_http, test_ws},
 };
 use rotom_main::trader::spot_arb_trader::builder::stream_trades;
 use rotom_oms::exchange::{
     binance::binance_client::BinanceExecution, poloniex::poloniex_client::PoloniexExecution,
 };
+use tracing_subscriber::fmt::init;
 
 #[tokio::main]
 pub async fn main() {
@@ -17,25 +21,25 @@ pub async fn main() {
     // Main
     ///////////
     init_logging();
-    test_ws().await;
+    // test_ws().await;
     // test_http().await;
 
     ///////////
     // Dynamic stream
     ///////////
-    // let streams = DynamicStreams::init([vec![(
-    //     ExchangeId::PoloniexSpot,
-    //     "ada",
-    //     "usdt",
-    //     StreamKind::Trades,
-    // )]])
-    // .await
-    // .unwrap();
+    let streams = DynamicStreams::init([vec![(
+        ExchangeId::BitstampSpot,
+        "btc",
+        "usdt",
+        StreamKind::Snapshot,
+    )]])
+    .await
+    .unwrap();
 
-    // let mut merged = streams.select_all::<MarketEvent<DataKind>>();
-    // while let Some(event) = merged.next().await {
-    //     println!("{:?}", event)
-    // }
+    let mut merged = streams.select_all::<MarketEvent<DataKind>>();
+    while let Some(event) = merged.next().await {
+        println!("{:?}", event)
+    }
 
     ///////////
     // Testing
@@ -66,6 +70,7 @@ fn init_logging() {
 }
 
 // Todo
+// change instrument map key from market to stream key
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 // Execution - WIP

@@ -1,7 +1,7 @@
 use std::io::Read;
 
 use crate::{
-    exchange::bitstamp::model::BitstampOrderBookSnapshot,
+    exchange::bitstamp::model::{BitstampOrderBookSnapshot, BitstampSubscriptionResponse},
     shared::de::de_str_u64_epoch_ms_as_datetime_utc,
 };
 use chrono::{DateTime, Utc};
@@ -31,6 +31,8 @@ pub async fn test_ws() {
         }
     });
 
+    // {"data": Object {"channel": String("order_book_btcusdt")}, "event": String("bts:subscribe")}
+
     let (ws_stream, _) = connect_async(url).await.unwrap();
     let (mut write, mut read) = ws_stream.split();
 
@@ -46,15 +48,15 @@ pub async fn test_ws() {
     while let Some(msg) = read.next().await {
         // println!("{:?}", msg);
         if let Message::Text(msg) = msg.unwrap() {
-            let test = serde_json::from_str::<BitstampOrderBookSnapshot>(msg.as_str());
+            let test = serde_json::from_str::<BitstampSubscriptionResponse>(msg.as_str());
             println!("{:?}", test);
         }
     }
 }
 
 /*
-sub errror: Ok(Text("{\"event\":\"bts:error\",\"channel\":\"\",\"data\":{\"code\":null,\"message\":\"Bad subscription string.\"}}"))
-sub success:Ok(Text("{\"event\":\"bts:subscription_succeeded\",\"channel\":\"order_book_btcusdt\",\"data\":{}}"))
+sub errror: "{\"event\":\"bts:error\",\"channel\":\"\",\"data\":{\"code\":null,\"message\":\"Bad subscription string.\"}}"))
+sub success: "{\"event\":\"bts:subscription_succeeded\",\"channel\":\"order_book_btcusdt\",\"data\":{}}"))
 */
 
 /*----- */

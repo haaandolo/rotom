@@ -57,7 +57,6 @@ impl PublicStreamConnector for WooxSpotPublicData {
     fn ping_interval() -> Option<PingInterval> {
         Some(PingInterval {
             time: 10,
-            // message: json!({ "pong": rand::thread_rng().gen::<u64>() }),
             message: json!({ "event": "ping" }),
         })
     }

@@ -73,6 +73,9 @@ impl From<(&ExchangeId, &Instrument)> for AssetFormatted {
             ExchangeId::WooxSpot => AssetFormatted(
                 format!("SPOT_{}_{}", instrument.base, instrument.quote).to_uppercase(),
             ),
+            ExchangeId::BitstampSpot => {
+                AssetFormatted(format!("{}{}", instrument.base, instrument.quote))
+            }
         }
     }
 }
@@ -123,6 +126,12 @@ impl From<(&ExchangeId, &Instrument)> for ExchangeAssetId {
                 exchange.as_str(),
                 instrument.base.to_uppercase(),
                 instrument.quote.to_uppercase()
+            )),
+            ExchangeId::BitstampSpot => ExchangeAssetId(format!(
+                "{}_{}{}",
+                exchange.as_str(),
+                instrument.base,
+                instrument.quote
             )),
         }
     }
