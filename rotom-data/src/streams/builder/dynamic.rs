@@ -12,6 +12,7 @@ use crate::{
     error::SocketError,
     exchange::{
         binance::BinanceSpotPublicData, htx::HtxSpotPublicData, poloniex::PoloniexSpotPublicData,
+        woox::WooxSpotPublicData,
     },
     model::{
         event_book::{EventOrderBook, OrderBookL2},
@@ -185,6 +186,33 @@ impl DynamicStreams {
                         unimplemented!()
                     }
                     (ExchangeId::HtxSpot, StreamKind::Trades) => {
+                        unimplemented!("Htx only sends trades aggregated")
+                    }
+                    /*----- */
+                    // Woox Spot
+                    /*----- */
+                    (ExchangeId::WooxSpot, StreamKind::Snapshot) => {
+                        tokio::spawn(consume::<WooxSpotPublicData, OrderBookSnapshot>(
+                            subs.into_iter()
+                                .map(|sub| {
+                                    Subscription::new(
+                                        WooxSpotPublicData,
+                                        sub.instrument,
+                                        OrderBookSnapshot,
+                                    )
+                                })
+                                .collect(),
+                            channels.snapshots.entry(exchange).or_default().tx.clone(),
+                        ));
+                    }
+                    (ExchangeId::WooxSpot, StreamKind::TradesVec) => {}
+                    (ExchangeId::WooxSpot, StreamKind::L2) => {
+                        unimplemented!()
+                    }
+                    (ExchangeId::WooxSpot, StreamKind::AggTrades) => {
+                        unimplemented!()
+                    }
+                    (ExchangeId::WooxSpot, StreamKind::Trades) => {
                         unimplemented!("Htx only sends trades aggregated")
                     }
                 };

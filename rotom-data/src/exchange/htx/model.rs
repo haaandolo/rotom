@@ -119,10 +119,6 @@ where
     <&str as Deserialize>::deserialize(deserializer).map(|buyer_is_maker| buyer_is_maker == "buy")
 }
 
-/*
-"{\"ch\":\"market.htxusdt.trade.detail\",\"ts\":1737482462920,\"tick\":{\"id\":869834759,\"ts\":1737482462919,\"data\":[{\"id\":8698347591252827187293491,\"ts\":1737482462919,\"tradeId\":7984093,\"amount\":135316.99688294003,\"price\":2.204E-6,\"direction\":\"buy\"},{\"id\":8698347591252823990283394,\"ts\":1737482462919,\"tradeId\":7984092,\"amount\":3.258093237E7,\"price\":2.203E-6,\"direction\":\"buy\"},{\"id\":8698347591252824024359809,\"ts\":1737482462919,\"tradeId\":7984091,\"amount\":4.05E7,\"price\":2.203E-6,\"direction\":\"buy\"},{\"id\":8698347591252823981825753,\"ts\":1737482462919,\"tradeId\":7984090,\"amount\":3.867656256366773E7,\"price\":2.203E-6,\"direction\":\"buy\"}]}}"
-*/
-
 /*----- */
 // Subscription response
 /*----- */

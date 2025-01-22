@@ -4,7 +4,7 @@ use rotom_data::{
     model::market_event::{DataKind, MarketEvent},
     shared::subscription_models::{ExchangeId, Instrument, StreamKind},
     streams::builder::dynamic::DynamicStreams,
-    temp::test_http, // temp::htx_ws_test,
+    temp::test_ws,
 };
 use rotom_main::trader::spot_arb_trader::builder::stream_trades;
 use rotom_oms::exchange::{
@@ -16,26 +16,25 @@ pub async fn main() {
     ///////////
     // Main
     ///////////
-    // htx_ws_test().await;
-    let test = HtxSpotPublicData::get_chain_info().await;
-    println!("{:#?}", test);
+    init_logging();
+    // test_ws().await;
 
     ///////////
     // Dynamic stream
     ///////////
-    // let streams = DynamicStreams::init([vec![(
-    //     ExchangeId::HtxSpot,
-    //     "htx",
-    //     "usdt",
-    //     StreamKind::TradesVec,
-    // )]])
-    // .await
-    // .unwrap();
+    let streams = DynamicStreams::init([vec![(
+        ExchangeId::WooxSpot,
+        "woo",
+        "usdt",
+        StreamKind::Snapshot,
+    )]])
+    .await
+    .unwrap();
 
-    // let mut merged = streams.select_all::<MarketEvent<DataKind>>();
-    // while let Some(event) = merged.next().await {
-    //     println!("{:#?}", event)
-    // }
+    let mut merged = streams.select_all::<MarketEvent<DataKind>>();
+    while let Some(event) = merged.next().await {
+        println!("{:?}", event)
+    }
 
     ///////////
     // Testing
@@ -45,6 +44,24 @@ pub async fn main() {
     // while let Some(msg) = rx.recv().await {
     //     println!("{:?}", msg);
     // }
+}
+
+/*----- */
+// Logging config
+/*----- */
+fn init_logging() {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::filter::EnvFilter::builder()
+                .with_default_directive(tracing_subscriber::filter::LevelFilter::INFO.into())
+                .from_env_lossy(),
+        )
+        // Disable colours on release builds
+        .with_ansi(cfg!(debug_assertions))
+        // Enable Json formatting
+        .json()
+        // Install this Tracing subscriber as global default
+        .init()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////

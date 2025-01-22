@@ -110,6 +110,7 @@ pub enum ExchangeId {
     BinanceSpot,
     PoloniexSpot,
     HtxSpot,
+    WooxSpot,
 }
 
 impl ExchangeId {
@@ -118,6 +119,7 @@ impl ExchangeId {
             ExchangeId::BinanceSpot => "binancespot",
             ExchangeId::PoloniexSpot => "poloniexspot",
             ExchangeId::HtxSpot => "htxspot",
+            ExchangeId::WooxSpot => "wooxspot",
         }
     }
 }

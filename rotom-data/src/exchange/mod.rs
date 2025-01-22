@@ -1,6 +1,7 @@
 pub mod binance;
 pub mod htx;
 pub mod poloniex;
+pub mod woox;
 
 use async_trait::async_trait;
 use serde::de::DeserializeOwned;

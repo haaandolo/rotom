@@ -133,7 +133,7 @@ impl Validator for BinanceSubscriptionResponse {
             Ok(self)
         } else {
             Err(SocketError::Subscribe(
-                "received failure subscription response".to_owned(),
+                "received failure subscription response BinanceSpot".to_owned(),
             ))
         }
     }
