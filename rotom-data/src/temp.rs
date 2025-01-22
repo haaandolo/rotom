@@ -51,7 +51,7 @@ pub async fn test_ws() {
 
     let ping_message = PingInterval {
         time: 9,
-        message: json!({ "pong": rand::thread_rng().gen::<u64>() }),
+        message: json!({ "event":  "ping"}),
     };
 
     tokio::spawn(schedule_pings_to_exchange(write, ping_message));

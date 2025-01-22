@@ -95,8 +95,8 @@ where
                     // This error is harmless so dont log and continue
                     SocketError::TransformerNone => continue,
                     // Some de errors are harmless so we dont want to log e.g poloniex exchange pings
-                    SocketError::Deserialise { error, payload } => {
-                        if ACCEPTABLE_DE_ERROR_MESSAGES.contains(&payload.as_str()) {
+                    SocketError::Deserialise { error, .. } => {
+                        if ACCEPTABLE_DE_ERROR_MESSAGES.contains(&error.to_string().as_str()) {
                             continue;
                         } else {
                             warn!(

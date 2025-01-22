@@ -23,7 +23,7 @@ pub async fn main() {
     // Dynamic stream
     ///////////
     let streams = DynamicStreams::init([vec![(
-        ExchangeId::WooxSpot,
+        ExchangeId::PoloniexSpot,
         "ada",
         "usdt",
         StreamKind::Trades,
@@ -63,6 +63,8 @@ fn init_logging() {
         // Install this Tracing subscriber as global default
         .init()
 }
+
+// Todo
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 // Execution - WIP
