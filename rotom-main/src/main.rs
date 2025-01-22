@@ -30,8 +30,8 @@ pub async fn main() {
     let streams = DynamicStreams::init([vec![(
         ExchangeId::BitstampSpot,
         "btc",
-        "usdt",
-        StreamKind::Snapshot,
+        "usd",
+        StreamKind::Trades,
     )]])
     .await
     .unwrap();

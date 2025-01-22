@@ -10,7 +10,7 @@ use super::BitstampSpotPublicData;
 pub struct BitstampChannel(pub &'static str);
 
 impl BitstampChannel {
-    pub const TRADES: Self = Self("live_orders_");
+    pub const TRADES: Self = Self("live_trades_");
     pub const ORDERBOOKSNAPSHOT: Self = Self("order_book_");
 }
 

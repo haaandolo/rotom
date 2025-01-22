@@ -240,14 +240,18 @@ impl DynamicStreams {
                         ));
                     }
                     (ExchangeId::BitstampSpot, StreamKind::Trades) => {
-                        // tokio::spawn(consume::<WooxSpotPublicData, Trades>(
-                        //     subs.into_iter()
-                        //         .map(|sub| {
-                        //             Subscription::new(WooxSpotPublicData, sub.instrument, Trades)
-                        //         })
-                        //         .collect(),
-                        //     channels.trades.entry(exchange).or_default().tx.clone(),
-                        // ));
+                        tokio::spawn(consume::<BitstampSpotPublicData, Trades>(
+                            subs.into_iter()
+                                .map(|sub| {
+                                    Subscription::new(
+                                        BitstampSpotPublicData,
+                                        sub.instrument,
+                                        Trades,
+                                    )
+                                })
+                                .collect(),
+                            channels.trades.entry(exchange).or_default().tx.clone(),
+                        ));
                     }
                     (ExchangeId::BitstampSpot, StreamKind::TradesVec) => {
                         unimplemented!()

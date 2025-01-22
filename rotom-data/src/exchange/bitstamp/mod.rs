@@ -1,10 +1,10 @@
 use channel::BitstampChannel;
 use market::BitstampMarket;
-use model::{BitstampOrderBookSnapshot, BitstampSubscriptionResponse};
+use model::{BitstampOrderBookSnapshot, BitstampSubscriptionResponse, BitstampTrade};
 use serde_json::json;
 
 use crate::{
-    model::event_book_snapshot::OrderBookSnapshot,
+    model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trades},
     protocols::ws::WsMessage,
     shared::subscription_models::{ExchangeId, ExchangeSubscription},
     transformer::stateless_transformer::StatelessTransformer,
@@ -52,14 +52,6 @@ impl PublicStreamConnector for BitstampSpotPublicData {
 
         Some(WsMessage::text(request.to_string()))
     }
-
-    // fn ping_interval() -> Option<PingInterval> {
-    //     Some(PingInterval {
-    //         time: 10,
-    //         // message: json!({ "pong": rand::thread_rng().gen::<u64>() }),
-    //         message: json!({ "event": "ping" }),
-    //     })
-    // }
 }
 
 /*----- */
@@ -69,4 +61,9 @@ impl StreamSelector<BitstampSpotPublicData, OrderBookSnapshot> for BitstampSpotP
     type Stream = BitstampOrderBookSnapshot;
     type StreamTransformer =
         StatelessTransformer<BitstampSpotPublicData, Self::Stream, OrderBookSnapshot>;
+}
+
+impl StreamSelector<BitstampSpotPublicData, Trades> for BitstampSpotPublicData {
+    type Stream = BitstampTrade;
+    type StreamTransformer = StatelessTransformer<BitstampSpotPublicData, Self::Stream, Trades>;
 }

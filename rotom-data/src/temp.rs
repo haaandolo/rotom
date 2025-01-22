@@ -1,7 +1,9 @@
 use std::io::Read;
 
 use crate::{
-    exchange::bitstamp::model::{BitstampOrderBookSnapshot, BitstampSubscriptionResponse},
+    exchange::bitstamp::model::{
+        BitstampOrderBookSnapshot, BitstampSubscriptionResponse, BitstampTrade,
+    },
     shared::de::de_str_u64_epoch_ms_as_datetime_utc,
 };
 use chrono::{DateTime, Utc};
@@ -27,11 +29,9 @@ pub async fn test_ws() {
     let payload = json!({
         "event": "bts:subscribe",
         "data": {
-            "channel": "order_book_btcusdt",
+            "channel": "live_trades_btcusd",
         }
     });
-
-    // {"data": Object {"channel": String("order_book_btcusdt")}, "event": String("bts:subscribe")}
 
     let (ws_stream, _) = connect_async(url).await.unwrap();
     let (mut write, mut read) = ws_stream.split();
@@ -48,7 +48,7 @@ pub async fn test_ws() {
     while let Some(msg) = read.next().await {
         // println!("{:?}", msg);
         if let Message::Text(msg) = msg.unwrap() {
-            let test = serde_json::from_str::<BitstampSubscriptionResponse>(msg.as_str());
+            let test = serde_json::from_str::<BitstampTrade>(msg.as_str());
             println!("{:?}", test);
         }
     }
