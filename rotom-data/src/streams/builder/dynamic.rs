@@ -205,15 +205,22 @@ impl DynamicStreams {
                             channels.snapshots.entry(exchange).or_default().tx.clone(),
                         ));
                     }
+                    (ExchangeId::WooxSpot, StreamKind::Trades) => {
+                        tokio::spawn(consume::<WooxSpotPublicData, Trades>(
+                            subs.into_iter()
+                                .map(|sub| {
+                                    Subscription::new(WooxSpotPublicData, sub.instrument, Trades)
+                                })
+                                .collect(),
+                            channels.trades.entry(exchange).or_default().tx.clone(),
+                        ));
+                    }
                     (ExchangeId::WooxSpot, StreamKind::TradesVec) => {}
                     (ExchangeId::WooxSpot, StreamKind::L2) => {
                         unimplemented!()
                     }
                     (ExchangeId::WooxSpot, StreamKind::AggTrades) => {
                         unimplemented!()
-                    }
-                    (ExchangeId::WooxSpot, StreamKind::Trades) => {
-                        unimplemented!("Htx only sends trades aggregated")
                     }
                 };
             }

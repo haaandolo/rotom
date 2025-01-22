@@ -24,9 +24,9 @@ pub async fn main() {
     ///////////
     let streams = DynamicStreams::init([vec![(
         ExchangeId::WooxSpot,
-        "woo",
+        "ada",
         "usdt",
-        StreamKind::Snapshot,
+        StreamKind::Trades,
     )]])
     .await
     .unwrap();

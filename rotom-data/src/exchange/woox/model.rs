@@ -5,7 +5,10 @@ use crate::{
     assets::level::Level,
     error::SocketError,
     exchange::Identifier,
-    model::{event_book_snapshot::EventOrderBookSnapshot, market_event::MarketEvent},
+    model::{
+        event_book_snapshot::EventOrderBookSnapshot, event_trade::EventTrade,
+        market_event::MarketEvent,
+    },
     shared::{
         de::de_u64_epoch_ms_as_datetime_utc,
         subscription_models::{ExchangeId, Instrument},
@@ -50,6 +53,55 @@ impl From<(WooxOrderBookSnapshot, Instrument)> for MarketEvent<EventOrderBookSna
             },
         }
     }
+}
+
+/*----- */
+// Trade data
+/*----- */
+#[derive(Debug, Default, Deserialize)]
+pub struct WooxTrade {
+    pub topic: String,
+    #[serde(deserialize_with = "de_u64_epoch_ms_as_datetime_utc")]
+    pub ts: DateTime<Utc>,
+    pub data: WooxTradeData,
+}
+
+#[derive(Debug, Default, Deserialize)]
+pub struct WooxTradeData {
+    pub symbol: String,
+    pub price: f64,
+    pub size: f64,
+    #[serde(deserialize_with = "de_buyer_is_maker_woox")]
+    pub side: bool,
+    pub source: u8,
+}
+
+impl Identifier<String> for WooxTrade {
+    fn id(&self) -> String {
+        self.data.symbol.clone()
+    }
+}
+
+impl From<(WooxTrade, Instrument)> for MarketEvent<EventTrade> {
+    fn from((event, instrument): (WooxTrade, Instrument)) -> Self {
+        Self {
+            exchange_time: event.ts,
+            received_time: Utc::now(),
+            exchange: ExchangeId::WooxSpot,
+            instrument,
+            event_data: EventTrade::new(
+                Level::new(event.data.price, event.data.size),
+                event.data.side,
+            ),
+        }
+    }
+}
+
+pub fn de_buyer_is_maker_woox<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+    D: serde::de::Deserializer<'de>,
+{
+    <&str as Deserialize>::deserialize(deserializer).map(|buyer_is_maker| buyer_is_maker == "BUY")
 }
 
 /*----- */

@@ -1,11 +1,11 @@
 use channel::WooxChannel;
 use market::WooxMarket;
-use model::{WooxOrderBookSnapshot, WooxSubscriptionResponse};
+use model::{WooxOrderBookSnapshot, WooxSubscriptionResponse, WooxTrade};
 use rand::Rng;
 use serde_json::json;
 
 use crate::{
-    model::event_book_snapshot::OrderBookSnapshot,
+    model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trades},
     protocols::ws::{PingInterval, WsMessage},
     shared::subscription_models::{ExchangeId, ExchangeSubscription},
     transformer::stateless_transformer::StatelessTransformer,
@@ -33,6 +33,7 @@ impl PublicStreamConnector for WooxSpotPublicData {
         WOOX_SPOT_WS_URL
     }
 
+    // Woox can only have one socket per ticker so when initiating, have one ticker per vector
     fn requests(
         subscriptions: &[ExchangeSubscription<Self, Self::Channel, Self::Market>],
     ) -> Option<WsMessage> {
@@ -65,4 +66,9 @@ impl StreamSelector<WooxSpotPublicData, OrderBookSnapshot> for WooxSpotPublicDat
     type Stream = WooxOrderBookSnapshot;
     type StreamTransformer =
         StatelessTransformer<WooxSpotPublicData, Self::Stream, OrderBookSnapshot>;
+}
+
+impl StreamSelector<WooxSpotPublicData, Trades> for WooxSpotPublicData {
+    type Stream = WooxTrade;
+    type StreamTransformer = StatelessTransformer<WooxSpotPublicData, Self::Stream, Trades>;
 }

@@ -8,7 +8,9 @@ use serde_json::json;
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 
 use crate::{
-    assets::level::Level, exchange::woox::model::WooxSubscriptionResponse, protocols::ws::{schedule_pings_to_exchange, PingInterval}
+    assets::level::Level,
+    exchange::woox::model::{WooxSubscriptionResponse, WooxTrade},
+    protocols::ws::{schedule_pings_to_exchange, PingInterval},
 };
 
 #[derive(Debug, Deserialize)]
@@ -38,7 +40,7 @@ pub async fn test_ws() {
 
     let payload = json!({
         "id": "clientid",
-        "topic": "SPOT_WOO_USDT@orderbook",
+        "topic": "SPOT_ADA_USDT@trade",
         "event": "subscribe",
     });
 
@@ -57,7 +59,7 @@ pub async fn test_ws() {
     while let Some(msg) = read.next().await {
         // println!("{:?}", msg);
         if let Message::Text(msg) = msg.unwrap() {
-            let test = serde_json::from_str::<WooxSubscriptionResponse>(msg.as_str());
+            let test = serde_json::from_str::<WooxTrade>(msg.as_str());
             println!("{:?}", test);
         }
     }

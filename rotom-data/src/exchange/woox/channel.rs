@@ -1,5 +1,6 @@
 use crate::{
-    exchange::Identifier, model::event_book_snapshot::OrderBookSnapshot,
+    exchange::Identifier,
+    model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trades},
     shared::subscription_models::Subscription,
 };
 
@@ -22,5 +23,11 @@ impl AsRef<str> for WooxChannel {
 impl Identifier<WooxChannel> for Subscription<WooxSpotPublicData, OrderBookSnapshot> {
     fn id(&self) -> WooxChannel {
         WooxChannel::ORDERBOOKSNAPSHOT
+    }
+}
+
+impl Identifier<WooxChannel> for Subscription<WooxSpotPublicData, Trades> {
+    fn id(&self) -> WooxChannel {
+        WooxChannel::TRADES
     }
 }
