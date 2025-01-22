@@ -167,3 +167,53 @@ impl Validator for HtxSubscriptionResponse {
         }
     }
 }
+
+/*----- */
+// Coin wallet suspension information
+/*----- */
+#[derive(Debug, Deserialize)]
+pub struct HtxWalletInfo {
+    pub data: Vec<HtxCurrencyInfo>,
+    pub full: i64,
+    pub status: String,
+    pub ts: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct HtxCurrencyInfo {
+    pub ac: String,
+    pub adt: bool,
+    pub ao: bool,
+    pub awt: bool,
+    pub ca: String,
+    pub cct: i64,
+    pub chain: String,
+    pub code: String,
+    pub ct: String,
+    pub currency: String,
+    pub de: bool,
+    pub default: i64,
+    #[serde(rename = "deposit-desc")]
+    #[serde(default)]
+    pub deposit_desc: String,
+    pub dma: String,
+    pub dn: String,
+    pub fc: i64,
+    #[serde(rename = "fn")]
+    pub fn_name: String, // using fn_name since 'fn' is a reserved keyword in Rust
+    pub ft: String,
+    pub sc: i64,
+    pub sda: Option<String>,
+    #[serde(rename = "suspend-deposit-desc")]
+    pub suspend_deposit_desc: Option<String>,
+    #[serde(rename = "suspend-withdraw-desc")]
+    pub suspend_withdraw_desc: Option<String>,
+    pub swa: Option<String>,
+    pub v: bool,
+    pub we: bool,
+    #[serde(rename = "withdraw-desc")]
+    #[serde(default)]
+    pub withdraw_desc: String,
+    pub wma: String,
+    pub wp: i64,
+}

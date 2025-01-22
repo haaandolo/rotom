@@ -86,6 +86,7 @@ impl PublicHttpConnector for PoloniexSpotPublicData {
 
     type BookSnapShot = serde_json::Value;
     type ExchangeTickerInfo = PoloniexSpotTickerInfo;
+    type WalletInfo = serde_json::Value; // todo
 
     // We dont need this for Poloniex rn as snapshot comes through stream. This function should NEVER be called
     async fn get_book_snapshot(_instrument: Instrument) -> Result<Self::BookSnapShot, SocketError> {
@@ -112,5 +113,9 @@ impl PublicHttpConnector for PoloniexSpotPublicData {
             .await
             .map_err(SocketError::Http)?
             .remove(0))
+    }
+
+    async fn get_chain_info() -> Result<Self::WalletInfo, SocketError> {
+        unimplemented!()
     }
 }

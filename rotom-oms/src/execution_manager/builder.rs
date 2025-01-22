@@ -1,6 +1,5 @@
-use std::{collections::HashMap, fmt::Debug, future::Future, pin::Pin};
+use std::{collections::HashMap, fmt::Debug};
 
-use hmac::digest::Output;
 use rotom_data::{
     exchange::PublicHttpConnector,
     shared::subscription_models::{ExchangeId, Instrument},

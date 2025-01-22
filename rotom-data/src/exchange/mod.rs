@@ -63,6 +63,7 @@ pub trait PublicStreamConnector {
 pub trait PublicHttpConnector {
     type BookSnapShot: Send + Debug;
     type ExchangeTickerInfo: Into<TickerInfo> + Send + Debug;
+    type WalletInfo: Send + Debug;
 
     const ID: ExchangeId;
 
@@ -71,6 +72,8 @@ pub trait PublicHttpConnector {
     async fn get_ticker_info(
         instrument: Instrument,
     ) -> Result<Self::ExchangeTickerInfo, SocketError>;
+
+    async fn get_chain_info() -> Result<Self::WalletInfo, SocketError>;
 }
 
 /*----- */
@@ -90,4 +93,13 @@ where
 /*----- */
 pub trait Identifier<T> {
     fn id(&self) -> T;
+}
+
+/*----- */
+// DELETE - only here to satisfy trait req
+/*----- */
+impl From<serde_json::Value> for TickerInfo {
+    fn from(_value: serde_json::Value) -> Self {
+        unimplemented!()
+    }
 }

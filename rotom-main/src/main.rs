@@ -1,9 +1,10 @@
 use futures::StreamExt;
 use rotom_data::{
+    exchange::{htx::HtxSpotPublicData, PublicHttpConnector},
     model::market_event::{DataKind, MarketEvent},
     shared::subscription_models::{ExchangeId, Instrument, StreamKind},
     streams::builder::dynamic::DynamicStreams,
-    temp::htx_ws_test,
+    temp::test_http, // temp::htx_ws_test,
 };
 use rotom_main::trader::spot_arb_trader::builder::stream_trades;
 use rotom_oms::exchange::{
@@ -16,23 +17,25 @@ pub async fn main() {
     // Main
     ///////////
     // htx_ws_test().await;
+    let test = HtxSpotPublicData::get_chain_info().await;
+    println!("{:#?}", test);
 
     ///////////
     // Dynamic stream
     ///////////
-    let streams = DynamicStreams::init([vec![(
-        ExchangeId::HtxSpot,
-        "htx",
-        "usdt",
-        StreamKind::TradesVec,
-    )]])
-    .await
-    .unwrap();
+    // let streams = DynamicStreams::init([vec![(
+    //     ExchangeId::HtxSpot,
+    //     "htx",
+    //     "usdt",
+    //     StreamKind::TradesVec,
+    // )]])
+    // .await
+    // .unwrap();
 
-    let mut merged = streams.select_all::<MarketEvent<DataKind>>();
-    while let Some(event) = merged.next().await {
-        println!("{:#?}", event)
-    }
+    // let mut merged = streams.select_all::<MarketEvent<DataKind>>();
+    // while let Some(event) = merged.next().await {
+    //     println!("{:#?}", event)
+    // }
 
     ///////////
     // Testing
