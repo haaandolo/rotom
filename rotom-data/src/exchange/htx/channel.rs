@@ -1,5 +1,6 @@
 use crate::{
-    exchange::Identifier, model::event_book_snapshot::OrderBookSnapshot,
+    exchange::Identifier,
+    model::{event_book_snapshot::OrderBookSnapshot, event_trade::TradesVec},
     shared::subscription_models::Subscription,
 };
 
@@ -9,7 +10,7 @@ use super::HtxSpotPublicData;
 pub struct HtxChannel(pub &'static str);
 
 impl HtxChannel {
-    // pub const TRADES: Self = Self("@trade");
+    pub const TRADES: Self = Self("trade.detail");
     pub const ORDERBOOKSNAPSHOT: Self = Self("mbp.refresh.5");
 }
 
@@ -22,5 +23,11 @@ impl AsRef<str> for HtxChannel {
 impl Identifier<HtxChannel> for Subscription<HtxSpotPublicData, OrderBookSnapshot> {
     fn id(&self) -> HtxChannel {
         HtxChannel::ORDERBOOKSNAPSHOT
+    }
+}
+
+impl Identifier<HtxChannel> for Subscription<HtxSpotPublicData, TradesVec> {
+    fn id(&self) -> HtxChannel {
+        HtxChannel::TRADES
     }
 }

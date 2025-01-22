@@ -4,12 +4,12 @@ pub mod model;
 
 use channel::HtxChannel;
 use market::HtxMarket;
-use model::{HtxOrderBookSnapshot, HtxSubscriptionResponse};
+use model::{HtxOrderBookSnapshot, HtxSubscriptionResponse, HtxTrade};
 use rand::Rng;
 use serde_json::json;
 
 use crate::{
-    model::event_book_snapshot::OrderBookSnapshot,
+    model::{event_book_snapshot::OrderBookSnapshot, event_trade::TradesVec},
     protocols::ws::{PingInterval, WsMessage},
     shared::subscription_models::{ExchangeId, ExchangeSubscription},
     transformer::stateless_transformer::StatelessTransformer,
@@ -17,7 +17,7 @@ use crate::{
 
 use super::{PublicStreamConnector, StreamSelector};
 
-const HTX_SPOT_WS_URL: &str = "wss://api.huobi.pro/feed";
+const HTX_SPOT_WS_URL: &str = "wss://api-aws.huobi.pro/ws";
 
 #[derive(Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd, Clone)]
 pub struct HtxSpotPublicData;
@@ -64,4 +64,9 @@ impl StreamSelector<HtxSpotPublicData, OrderBookSnapshot> for HtxSpotPublicData 
     type Stream = HtxOrderBookSnapshot;
     type StreamTransformer =
         StatelessTransformer<HtxSpotPublicData, Self::Stream, OrderBookSnapshot>;
+}
+
+impl StreamSelector<HtxSpotPublicData, TradesVec> for HtxSpotPublicData {
+    type Stream = HtxTrade;
+    type StreamTransformer = StatelessTransformer<HtxSpotPublicData, Self::Stream, TradesVec>;
 }

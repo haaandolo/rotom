@@ -65,7 +65,6 @@ where
 
         // Read from stream and send via channel, but if error occurs, attempt reconnection
         while let Some(market_event) = stream.next().await {
-            println!("$$$ {:#?}", market_event);
             match market_event {
                 Ok(market_event) => {
                     if let Err(error) = exchange_tx.send(market_event) {

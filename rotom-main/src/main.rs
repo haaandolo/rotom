@@ -22,16 +22,16 @@ pub async fn main() {
     ///////////
     let streams = DynamicStreams::init([vec![(
         ExchangeId::HtxSpot,
-        "btc",
+        "htx",
         "usdt",
-        StreamKind::Snapshot,
+        StreamKind::TradesVec,
     )]])
     .await
     .unwrap();
 
     let mut merged = streams.select_all::<MarketEvent<DataKind>>();
     while let Some(event) = merged.next().await {
-        // println!("{:?}", event)
+        println!("{:#?}", event)
     }
 
     ///////////

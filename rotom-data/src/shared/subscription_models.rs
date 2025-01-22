@@ -134,6 +134,7 @@ impl Display for ExchangeId {
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize, Default, Copy)]
 pub enum StreamKind {
     Trades,
+    TradesVec,
     #[default]
     L2,
     AggTrades,
@@ -144,9 +145,10 @@ impl StreamKind {
     pub fn as_str(&self) -> &'static str {
         match self {
             StreamKind::Trades => "trade",
+            StreamKind::TradesVec => "tradesVec",
             StreamKind::L2 => "l2",
             StreamKind::AggTrades => "agg_trade",
-            StreamKind::Snapshot=> "snapshot",
+            StreamKind::Snapshot => "snapshot",
         }
     }
 }

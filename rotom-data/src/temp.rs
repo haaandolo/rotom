@@ -27,14 +27,38 @@ pub struct Tick {
     pub asks: Vec<Level>,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct TradeMarketData {
+    pub ch: String,
+    pub ts: u64,
+    pub tick: Tick2,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Tick2 {
+    pub id: u64,
+    pub ts: u64,
+    pub data: Vec<Trade2Data>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Trade2Data {
+    pub id: u128, // Representing large IDs as `f64` to handle scientific notation
+    pub ts: u64,
+    pub tradeId: u64,
+    pub amount: f64,
+    pub price: f64,
+    pub direction: String,
+}
+
 pub async fn htx_ws_test() {
-    let url = "wss://api.huobi.pro/feed";
+    // let url = "wss://api.huobi.pro/feed";
+    let url = "wss://api-aws.huobi.pro/ws";
 
     let payload = json!({
         "sub": vec![
-            // "market.glmrusdt.mbp.5",
-            // "market.racausdt.mbp.5",
-            "market.glmrusdt.mbp.refresh.5"
+            "market.htxusdt.trade.detail",
+            // "market.btcusdt.mbp.refresh.20"
         ],
         "id": "id1"
     });
@@ -57,9 +81,10 @@ pub async fn htx_ws_test() {
             let mut decompressed = String::new();
             match decoder.read_to_string(&mut decompressed) {
                 Ok(_) => {
+                    println!("### Raw ### \n {:#?}", decompressed);
                     println!(
-                        "Decompressed: {:?}",
-                        decompressed // serde_json::from_str::<HtxBookSnaps>(decompressed.as_str())
+                        "### Deserialised ### \n {:?}",
+                        serde_json::from_str::<TradeMarketData>(decompressed.as_str())
                     );
                 }
                 Err(e) => println!("Error decompressing: {}", e),

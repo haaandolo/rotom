@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
+use crate::model::event_trade::EventTrade;
 use crate::shared::de::de_u64_epoch_ms_as_datetime_utc;
 use crate::{
     assets::level::Level,
@@ -52,6 +53,76 @@ impl From<(HtxOrderBookSnapshot, Instrument)> for MarketEvent<EventOrderBookSnap
         }
     }
 }
+
+/*----- */
+// Trade data
+/*----- */
+#[derive(Debug, Default, Deserialize)]
+pub struct HtxTrade {
+    pub ch: String,
+    pub ts: u64,
+    pub tick: HtxTradeData,
+}
+
+#[derive(Debug, Default, Deserialize)]
+pub struct HtxTradeData {
+    pub id: u64,
+    #[serde(deserialize_with = "de_u64_epoch_ms_as_datetime_utc")]
+    pub ts: DateTime<Utc>,
+    pub data: Vec<HtxTradeTick>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+pub struct HtxTradeTick {
+    pub id: u128,
+    pub ts: u64,
+    #[serde(rename = "tradeId")]
+    pub trade_id: u64,
+    pub amount: f64,
+    pub price: f64,
+    #[serde(deserialize_with = "de_buyer_is_maker_htx")]
+    pub direction: bool,
+}
+
+impl Identifier<String> for HtxTrade {
+    fn id(&self) -> String {
+        self.ch.split('.').nth(1).unwrap_or_default().to_owned()
+    }
+}
+
+impl From<(HtxTrade, Instrument)> for MarketEvent<Vec<EventTrade>> {
+    fn from((event, instrument): (HtxTrade, Instrument)) -> Self {
+        Self {
+            exchange_time: event.tick.ts,
+            received_time: Utc::now(),
+            exchange: ExchangeId::HtxSpot,
+            instrument,
+            event_data: event
+                .tick
+                .data
+                .iter()
+                .map(|trade_data| {
+                    EventTrade::new(
+                        Level::new(trade_data.price, trade_data.amount),
+                        trade_data.direction,
+                    )
+                })
+                .collect::<Vec<EventTrade>>(),
+        }
+    }
+}
+
+pub fn de_buyer_is_maker_htx<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+    D: serde::de::Deserializer<'de>,
+{
+    <&str as Deserialize>::deserialize(deserializer).map(|buyer_is_maker| buyer_is_maker == "buy")
+}
+
+/*
+"{\"ch\":\"market.htxusdt.trade.detail\",\"ts\":1737482462920,\"tick\":{\"id\":869834759,\"ts\":1737482462919,\"data\":[{\"id\":8698347591252827187293491,\"ts\":1737482462919,\"tradeId\":7984093,\"amount\":135316.99688294003,\"price\":2.204E-6,\"direction\":\"buy\"},{\"id\":8698347591252823990283394,\"ts\":1737482462919,\"tradeId\":7984092,\"amount\":3.258093237E7,\"price\":2.203E-6,\"direction\":\"buy\"},{\"id\":8698347591252824024359809,\"ts\":1737482462919,\"tradeId\":7984091,\"amount\":4.05E7,\"price\":2.203E-6,\"direction\":\"buy\"},{\"id\":8698347591252823981825753,\"ts\":1737482462919,\"tradeId\":7984090,\"amount\":3.867656256366773E7,\"price\":2.203E-6,\"direction\":\"buy\"}]}}"
+*/
+
 /*----- */
 // Subscription response
 /*----- */

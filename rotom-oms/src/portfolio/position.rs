@@ -204,6 +204,7 @@ impl PositionUpdater for Position {
             DataKind::OrderBook(event_book) => event_book.weighted_midprice()?,
             DataKind::Trade(event_trade) => event_trade.trade.price,
             DataKind::OrderBookSnapshot(_) => unimplemented!(),
+            DataKind::TradesVec(_) => unimplemented!()
         };
 
         self.meta.update_time = market.exchange_time;

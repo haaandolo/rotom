@@ -138,7 +138,7 @@ impl SpreadStategy {
     }
 
     pub fn generate_signal_map(
-        current_spread: f64,
+        _current_spread: f64,
         _current_fee: f64,
     ) -> HashMap<Decision, SignalStrength> {
         let mut signals = HashMap::with_capacity(4);

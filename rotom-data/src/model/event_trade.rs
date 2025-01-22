@@ -36,3 +36,13 @@ pub struct AggTrades;
 impl SubKind for AggTrades {
     type Event = EventTrade;
 }
+
+/*----- */
+// Trades Vec
+/*----- */
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize, Default)]
+pub struct TradesVec;
+
+impl SubKind for TradesVec {
+    type Event = Vec<EventTrade>;
+}
