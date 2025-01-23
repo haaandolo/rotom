@@ -1,6 +1,11 @@
 use futures::StreamExt;
 use rotom_data::{
-    exchange::{htx::HtxSpotPublicData, woox::WooxSpotPublicData, PublicHttpConnector},
+    exchange::{
+        coinex::{market::CoinExMarket, CoinExSpotPublicData},
+        htx::HtxSpotPublicData,
+        woox::WooxSpotPublicData,
+        PublicHttpConnector,
+    },
     model::{
         event_book_snapshot::OrderBookSnapshot,
         market_event::{DataKind, MarketEvent},
@@ -21,18 +26,19 @@ pub async fn main() {
     // Main
     ///////////
     init_logging();
-    test_ws().await;
+    // test_ws().await;
     // test_http().await;
+
+    let test = CoinExSpotPublicData::get_network_info().await;
+    println!("{:?}", test);
 
     ///////////
     // Dynamic stream
     ///////////
-    let streams = DynamicStreams::init([vec![(
-        ExchangeId::CoinExSpot,
-        "btc",
-        "usdt",
-        StreamKind::TradesVec,
-    )]])
+    let streams = DynamicStreams::init([vec![
+        // (ExchangeId::CoinExSpot, "btc", "usdt", StreamKind::Snapshot),
+        (ExchangeId::CoinExSpot, "btc", "usdt", StreamKind::TradesVec),
+    ]])
     .await
     .unwrap();
 
@@ -78,6 +84,7 @@ fn init_logging() {
 // kucoin
 // ascendex
 // change instrument map key from market to stream key
+// - coinex ws error why does it disconnect?
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 // Execution - WIP

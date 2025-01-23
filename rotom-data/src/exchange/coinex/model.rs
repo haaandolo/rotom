@@ -144,3 +144,46 @@ impl Validator for CoinExSubscriptionResponse {
         }
     }
 }
+
+/*----- */
+// Network infomation
+/*----- */
+#[derive(Debug, Deserialize)]
+pub struct CoinExNetworkInfo {
+    pub code: u32,
+    pub data: Vec<CoinExNetworkTicker>,
+    pub message: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CoinExNetworkTicker {
+    pub asset: CoinExNetworkTickerInfo,
+    pub chains: Vec<CoinExNetworksAvailable>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CoinExNetworkTickerInfo {
+    pub ccy: String,
+    pub deposit_enabled: bool,
+    pub withdraw_enabled: bool,
+    pub inter_transfer_enabled: bool,
+    pub is_st: bool,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CoinExNetworksAvailable {
+    pub chain: String,
+    pub min_deposit_amount: String,
+    pub min_withdraw_amount: String,
+    pub deposit_enabled: bool,
+    pub withdraw_enabled: bool,
+    pub deposit_delay_minutes: i32,
+    pub safe_confirmations: i32,
+    pub irreversible_confirmations: i32,
+    pub deflation_rate: String,
+    pub withdrawal_fee: String,
+    pub withdrawal_precision: i32,
+    pub memo: String,
+    pub is_memo_required_for_deposit: bool,
+    pub explorer_asset_url: String,
+}

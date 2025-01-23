@@ -1,17 +1,19 @@
+use async_trait::async_trait;
 use channel::CoinExChannel;
 use market::CoinExMarket;
-use model::{CoinExOrderBookSnapshot, CoinExSubscriptionResponse, CoinExTrade};
+use model::{CoinExNetworkInfo, CoinExOrderBookSnapshot, CoinExSubscriptionResponse, CoinExTrade};
 use rand::Rng;
 use serde_json::json;
 
 use crate::{
+    error::SocketError,
     model::{event_book_snapshot::OrderBookSnapshot, event_trade::TradesVec},
     protocols::ws::WsMessage,
-    shared::subscription_models::{ExchangeId, ExchangeSubscription},
+    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
     transformer::stateless_transformer::StatelessTransformer,
 };
 
-use super::{PublicStreamConnector, StreamSelector};
+use super::{PublicHttpConnector, PublicStreamConnector, StreamSelector};
 
 pub mod channel;
 pub mod market;
@@ -39,6 +41,7 @@ impl PublicStreamConnector for CoinExSpotPublicData {
     ) -> Option<WsMessage> {
         // I think you can only sub to one type of channel for [ExchangeSubscription] so this index is fine
         let channel = subscriptions[0].channel;
+        let random_id = rand::thread_rng().gen::<u64>();
 
         // Trade channel
         if channel.0 == CoinExChannel::TRADES.0 {
@@ -52,10 +55,8 @@ impl PublicStreamConnector for CoinExSpotPublicData {
                 "params": {
                    "market_list": params
                 },
-                "id": rand::thread_rng().gen::<u64>(),
+                "id": random_id,
             });
-
-            println!("request: \n {:#?}", request);
 
             Some(WsMessage::text(request.to_string()))
         }
@@ -71,12 +72,45 @@ impl PublicStreamConnector for CoinExSpotPublicData {
                 "params": {
                    "market_list": params
                 },
-                // "id": rand::thread_rng().gen::<u64>(),
-                "id": 1
+                "id": random_id,
             });
 
             Some(WsMessage::text(request.to_string()))
         }
+    }
+}
+
+/*----- */
+// CoinExSpot HttpConnector
+/*----- */
+pub const HTTP_NETWORK_INFO_URL_COINEX_SPOT: &str =
+    "https://api.coinex.com/v2/assets/all-deposit-withdraw-config";
+
+#[async_trait]
+impl PublicHttpConnector for CoinExSpotPublicData {
+    const ID: ExchangeId = ExchangeId::CoinExSpot;
+
+    type BookSnapShot = serde_json::Value;
+    type ExchangeTickerInfo = serde_json::Value;
+    type NetworkInfo = CoinExNetworkInfo; // todo
+
+    async fn get_book_snapshot(_instrument: Instrument) -> Result<Self::BookSnapShot, SocketError> {
+        unimplemented!()
+    }
+
+    async fn get_ticker_info(
+        _instrument: Instrument,
+    ) -> Result<Self::ExchangeTickerInfo, SocketError> {
+        unimplemented!()
+    }
+
+    async fn get_network_info() -> Result<Self::NetworkInfo, SocketError> {
+        Ok(reqwest::get(HTTP_NETWORK_INFO_URL_COINEX_SPOT)
+            .await
+            .map_err(SocketError::Http)?
+            .json::<Self::NetworkInfo>()
+            .await
+            .map_err(SocketError::Http)?)
     }
 }
 

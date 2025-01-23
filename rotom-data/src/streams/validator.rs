@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use async_trait::async_trait;
 use futures::StreamExt;
-use tracing::{debug, error};
+use tracing::{debug, error, info};
 
 use crate::{
     error::SocketError,
@@ -57,6 +57,12 @@ impl SubscriptionValidator for WebSocketValidator {
         let timeout = Exchange::subscription_validation_timeout();
         let expected_responses = Exchange::expected_responses(subscriptions);
         let mut success_responses: usize = 0;
+
+        info!(
+            message = "Validating ws stream",
+            exchange = %exchange_id,
+        );
+
         loop {
             if success_responses == expected_responses {
                 break Ok(websocket);
@@ -102,7 +108,7 @@ impl SubscriptionValidator for WebSocketValidator {
                         }
                         Some(Err(SocketError::Deserialise { error, payload })) if success_responses >= 1 => {
                             // Already active subscription payloads, so skip to next SubResponse
-                            debug!(
+                            info!(
                                 exchange = %Exchange::ID,
                                 ?error,
                                 %success_responses,
