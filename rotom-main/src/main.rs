@@ -28,10 +28,10 @@ pub async fn main() {
     // Dynamic stream
     ///////////
     let streams = DynamicStreams::init([vec![(
-        ExchangeId::BitstampSpot,
+        ExchangeId::CoinEx,
         "btc",
-        "usd",
-        StreamKind::Trades,
+        "usdt",
+        StreamKind::Snapshot,
     )]])
     .await
     .unwrap();
@@ -70,6 +70,13 @@ fn init_logging() {
 }
 
 // Todo
+// bitstamp chain int
+// coinex
+// Okx
+// Exmo
+// phmex
+// kucoin
+// ascendex
 // change instrument map key from market to stream key
 
 //////////////////////////////////////////////////////////////////////////////////////////////

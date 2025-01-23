@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use async_trait::async_trait;
 use futures::StreamExt;
-use tracing::debug;
+use tracing::{debug, error};
 
 use crate::{
     error::SocketError,
@@ -91,7 +91,14 @@ impl SubscriptionValidator for WebSocketValidator {
                             }
 
                             // Subscription failure
-                            Err(err) => break Err(err)
+                            Err(error) => {
+                                error!(
+                                    exchange = %Exchange::ID,
+                                    ?error,
+                                    message = "failed to validate stream"
+                                );
+                                break Err(error)
+                            }
                         }
                         Some(Err(SocketError::Deserialise { error, payload })) if success_responses >= 1 => {
                             // Already active subscription payloads, so skip to next SubResponse

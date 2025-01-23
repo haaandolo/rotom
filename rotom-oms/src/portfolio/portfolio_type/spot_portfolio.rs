@@ -79,6 +79,9 @@ impl SpotPortfolio {
                 ExchangeId::BitstampSpot => {
                     unimplemented!()
                 }
+                ExchangeId::CoinEx=> {
+                    unimplemented!()
+                }
             };
 
             for asset_balance in exchange_balance.into_iter() {

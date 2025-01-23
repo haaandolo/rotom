@@ -1,9 +1,11 @@
 use std::io::Read;
 
 use crate::{
-    exchange::bitstamp::model::{
-        BitstampOrderBookSnapshot, BitstampSubscriptionResponse, BitstampTrade,
+    exchange::{
+        bitstamp::model::{BitstampOrderBookSnapshot, BitstampSubscriptionResponse, BitstampTrade},
+        coinex::model::CoinExOrderBookSnapshot,
     },
+    protocols::ws::ws_parser::{StreamParser, WebSocketParser},
     shared::de::de_str_u64_epoch_ms_as_datetime_utc,
 };
 use chrono::{DateTime, Utc};
@@ -20,17 +22,23 @@ use crate::{
     protocols::ws::{schedule_pings_to_exchange, PingInterval},
 };
 
+// "{\"id\":1,\"code\":0,\"message\":\"OK\"}"
+// "{\"id\":1,\"code\":20001,\"message\":\"invalid argument\"}"
+
 /*----- */
 // Test Ws
 /*----- */
 pub async fn test_ws() {
-    let url = "wss://ws.bitstamp.net";
+    let url = "wss://socket.coinex.com/v2/spot";
 
     let payload = json!({
-        "event": "bts:subscribe",
-        "data": {
-            "channel": "live_trades_btcusd",
-        }
+      "method": "depth.subscribe",
+      "params": {"market_list": [
+          ("BTCUSDT", 5, "0", true),
+        //   ["ETHUSDT", 10, "0", false]
+      ]
+      },
+      "id": 1
     });
 
     let (ws_stream, _) = connect_async(url).await.unwrap();
@@ -46,10 +54,15 @@ pub async fn test_ws() {
     // tokio::spawn(schedule_pings_to_exchange(write, ping_message));
 
     while let Some(msg) = read.next().await {
-        // println!("{:?}", msg);
-        if let Message::Text(msg) = msg.unwrap() {
-            let test = serde_json::from_str::<BitstampTrade>(msg.as_str());
-            println!("{:?}", test);
+        // let test = WebSocketParser::parse::<CoinexOrderBookSnapshot>(msg);
+        // println!("{:?}", test);
+
+        if let Message::Binary(bin) = msg.unwrap() {
+            let mut decoder = GzDecoder::new(&bin[..]);
+            let mut decoded = String::new();
+
+            let test = decoder.read_to_string(&mut decoded);
+            println!("{:?}", decoded);
         }
     }
 }
