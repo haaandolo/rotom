@@ -1,6 +1,6 @@
 use crate::{
     exchange::Identifier,
-    model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trades},
+    model::{event_book_snapshot::OrderBookSnapshot, event_trade::TradesVec},
     shared::subscription_models::Subscription,
 };
 
@@ -26,7 +26,7 @@ impl Identifier<CoinExChannel> for Subscription<CoinExSpotPublicData, OrderBookS
     }
 }
 
-impl Identifier<CoinExChannel> for Subscription<CoinExSpotPublicData, Trades> {
+impl Identifier<CoinExChannel> for Subscription<CoinExSpotPublicData, TradesVec> {
     fn id(&self) -> CoinExChannel {
         CoinExChannel::TRADES
     }

@@ -3,7 +3,7 @@ use std::io::Read;
 use crate::{
     exchange::{
         bitstamp::model::{BitstampOrderBookSnapshot, BitstampSubscriptionResponse, BitstampTrade},
-        coinex::model::CoinExOrderBookSnapshot,
+        coinex::model::{CoinExOrderBookSnapshot, CoinExTrade},
     },
     protocols::ws::ws_parser::{StreamParser, WebSocketParser},
     shared::de::de_str_u64_epoch_ms_as_datetime_utc,
@@ -41,6 +41,12 @@ pub async fn test_ws() {
       "id": 1
     });
 
+    let payload = json!({
+      "method": "deals.subscribe",
+      "params": {"market_list": ["BTCUSDT"]},
+      "id": 1
+    });
+
     let (ws_stream, _) = connect_async(url).await.unwrap();
     let (mut write, mut read) = ws_stream.split();
 
@@ -54,16 +60,16 @@ pub async fn test_ws() {
     // tokio::spawn(schedule_pings_to_exchange(write, ping_message));
 
     while let Some(msg) = read.next().await {
-        // let test = WebSocketParser::parse::<CoinexOrderBookSnapshot>(msg);
-        // println!("{:?}", test);
+        let test = WebSocketParser::parse::<CoinExTrade>(msg);
+        println!("{:?}", test);
 
-        if let Message::Binary(bin) = msg.unwrap() {
-            let mut decoder = GzDecoder::new(&bin[..]);
-            let mut decoded = String::new();
+        // if let Message::Binary(bin) = msg.unwrap() {
+        //     let mut decoder = GzDecoder::new(&bin[..]);
+        //     let mut decoded = String::new();
 
-            let test = decoder.read_to_string(&mut decoded);
-            println!("{:?}", decoded);
-        }
+        //     let test = decoder.read_to_string(&mut decoded);
+        //     println!("{:?}", decoded);
+        // }
     }
 }
 

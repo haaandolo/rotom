@@ -76,7 +76,7 @@ impl From<(&ExchangeId, &Instrument)> for AssetFormatted {
             ExchangeId::BitstampSpot => {
                 AssetFormatted(format!("{}{}", instrument.base, instrument.quote))
             }
-            ExchangeId::CoinEx => {
+            ExchangeId::CoinExSpot => {
                 AssetFormatted(format!("{}{}", instrument.base, instrument.quote).to_uppercase())
             }
         }
@@ -136,7 +136,7 @@ impl From<(&ExchangeId, &Instrument)> for ExchangeAssetId {
                 instrument.base,
                 instrument.quote
             )),
-            ExchangeId::CoinEx => ExchangeAssetId(format!(
+            ExchangeId::CoinExSpot => ExchangeAssetId(format!(
                 "{}_{}{}",
                 exchange.as_str(),
                 instrument.base.to_uppercase(),

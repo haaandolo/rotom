@@ -1,11 +1,11 @@
 use channel::CoinExChannel;
 use market::CoinExMarket;
-use model::{CoinExOrderBookSnapshot, CoinExSubscriptionResponse};
+use model::{CoinExOrderBookSnapshot, CoinExSubscriptionResponse, CoinExTrade};
 use rand::Rng;
 use serde_json::json;
 
 use crate::{
-    model::event_book_snapshot::OrderBookSnapshot,
+    model::{event_book_snapshot::OrderBookSnapshot, event_trade::TradesVec},
     protocols::ws::WsMessage,
     shared::subscription_models::{ExchangeId, ExchangeSubscription},
     transformer::stateless_transformer::StatelessTransformer,
@@ -23,7 +23,7 @@ pub struct CoinExSpotPublicData;
 const COINEX_SPOT_WS_URL: &str = "wss://socket.coinex.com/v2/spot";
 
 impl PublicStreamConnector for CoinExSpotPublicData {
-    const ID: ExchangeId = ExchangeId::CoinEx;
+    const ID: ExchangeId = ExchangeId::CoinExSpot;
 
     type Channel = CoinExChannel;
     type Market = CoinExMarket;
@@ -89,7 +89,7 @@ impl StreamSelector<CoinExSpotPublicData, OrderBookSnapshot> for CoinExSpotPubli
         StatelessTransformer<CoinExSpotPublicData, Self::Stream, OrderBookSnapshot>;
 }
 
-// impl StreamSelector<CoinExSpotPublicData, Trades> for CoinExSpotPublicData {
-//     type Stream = CoinExOrderBookSnapshot;
-//     type StreamTransformer = StatelessTransformer<CoinExSpotPublicData, Self::Stream, Trades>;
-// }
+impl StreamSelector<CoinExSpotPublicData, TradesVec> for CoinExSpotPublicData {
+    type Stream = CoinExTrade;
+    type StreamTransformer = StatelessTransformer<CoinExSpotPublicData, Self::Stream, TradesVec>;
+}

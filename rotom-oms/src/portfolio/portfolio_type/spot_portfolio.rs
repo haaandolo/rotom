@@ -79,7 +79,7 @@ impl SpotPortfolio {
                 ExchangeId::BitstampSpot => {
                     unimplemented!()
                 }
-                ExchangeId::CoinEx=> {
+                ExchangeId::CoinExSpot => {
                     unimplemented!()
                 }
             };

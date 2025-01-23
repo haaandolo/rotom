@@ -21,17 +21,17 @@ pub async fn main() {
     // Main
     ///////////
     init_logging();
-    // test_ws().await;
+    test_ws().await;
     // test_http().await;
 
     ///////////
     // Dynamic stream
     ///////////
     let streams = DynamicStreams::init([vec![(
-        ExchangeId::CoinEx,
+        ExchangeId::CoinExSpot,
         "btc",
         "usdt",
-        StreamKind::Snapshot,
+        StreamKind::TradesVec,
     )]])
     .await
     .unwrap();

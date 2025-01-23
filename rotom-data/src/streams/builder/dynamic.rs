@@ -266,7 +266,7 @@ impl DynamicStreams {
                     /*----- */
                     // CoinEx spot
                     /*----- */
-                    (ExchangeId::CoinEx, StreamKind::Snapshot) => {
+                    (ExchangeId::CoinExSpot, StreamKind::Snapshot) => {
                         tokio::spawn(consume::<CoinExSpotPublicData, OrderBookSnapshot>(
                             subs.into_iter()
                                 .map(|sub| {
@@ -280,27 +280,27 @@ impl DynamicStreams {
                             channels.snapshots.entry(exchange).or_default().tx.clone(),
                         ));
                     }
-                    (ExchangeId::CoinEx, StreamKind::Trades) => {
-                        // tokio::spawn(consume::<BitstampSpotPublicData, Trades>(
-                        //     subs.into_iter()
-                        //         .map(|sub| {
-                        //             Subscription::new(
-                        //                 BitstampSpotPublicData,
-                        //                 sub.instrument,
-                        //                 Trades,
-                        //             )
-                        //         })
-                        //         .collect(),
-                        //     channels.trades.entry(exchange).or_default().tx.clone(),
-                        // ));
+                    (ExchangeId::CoinExSpot, StreamKind::TradesVec) => {
+                        tokio::spawn(consume::<CoinExSpotPublicData, TradesVec>(
+                            subs.into_iter()
+                                .map(|sub| {
+                                    Subscription::new(
+                                        CoinExSpotPublicData,
+                                        sub.instrument,
+                                        TradesVec,
+                                    )
+                                })
+                                .collect(),
+                            channels.trades_vec.entry(exchange).or_default().tx.clone(),
+                        ));
                     }
-                    (ExchangeId::CoinEx, StreamKind::TradesVec) => {
+                    (ExchangeId::CoinExSpot, StreamKind::Trades) => {
                         unimplemented!()
                     }
-                    (ExchangeId::CoinEx, StreamKind::L2) => {
+                    (ExchangeId::CoinExSpot, StreamKind::L2) => {
                         unimplemented!()
                     }
-                    (ExchangeId::CoinEx, StreamKind::AggTrades) => {
+                    (ExchangeId::CoinExSpot, StreamKind::AggTrades) => {
                         unimplemented!()
                     }
                 };
