@@ -29,9 +29,6 @@ pub async fn main() {
     // test_ws().await;
     // test_http().await;
 
-    let test = CoinExSpotPublicData::get_network_info().await;
-    println!("{:?}", test);
-
     ///////////
     // Dynamic stream
     ///////////
@@ -77,7 +74,6 @@ fn init_logging() {
 
 // Todo
 // bitstamp chain int
-// coinex
 // Okx
 // Exmo
 // phmex

@@ -86,6 +86,7 @@ impl SubscriptionValidator for WebSocketValidator {
                         Some(Ok(response)) => match response.validate() {
                             // Subscription success
                             Ok(response) => {
+                                println!("in sub successs");
                                 success_responses += 1;
                                 debug!(
                                     exchange = %exchange_id,
@@ -98,6 +99,7 @@ impl SubscriptionValidator for WebSocketValidator {
 
                             // Subscription failure
                             Err(error) => {
+                                println!("in sub errror");
                                 error!(
                                     exchange = %Exchange::ID,
                                     ?error,
@@ -123,13 +125,17 @@ impl SubscriptionValidator for WebSocketValidator {
                                 format!("received WebSocket CloseFrame: {close_frame}")
                             ))
                         }
+                        Some(Err(SocketError::WebSocketDisconnected { error })) => {
+                            break Err(SocketError::WebSocketDisconnected { error })
+                        }
                         _ => {
                             // Pings, Pongs, Frames, etc.
                             continue
                         }
+
                     }
                 }
             }
-        } //
+        }
     }
 }

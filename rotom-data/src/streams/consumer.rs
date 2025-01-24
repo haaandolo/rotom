@@ -52,6 +52,10 @@ where
                 stream
             }
             Err(error) => {
+                if error.is_terminal() {
+                    continue;
+                }
+
                 if connection_attempt == 1 {
                     return SocketError::Subscribe(format!(
                         "Subscription failed on first attempt: {}",

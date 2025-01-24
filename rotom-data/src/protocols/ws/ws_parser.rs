@@ -159,7 +159,7 @@ pub fn is_websocket_disconnected(error: &WsError) -> bool {
     matches!(
         error,
         WsError::ConnectionClosed
-            // | WsError::AlreadyClosed
+            | WsError::AlreadyClosed
             | WsError::Io(_)
             | WsError::Protocol(ProtocolError::SendAfterClosing)
             | WsError::Protocol(ProtocolError::ResetWithoutClosingHandshake) // WsError::Protocol(_)
