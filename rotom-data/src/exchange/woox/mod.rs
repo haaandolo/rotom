@@ -19,7 +19,6 @@ use crate::{
 
 use super::{PublicHttpConnector, PublicStreamConnector, StreamSelector};
 
-
 #[derive(Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd, Clone)]
 pub struct WooxSpotPublicData;
 
@@ -65,7 +64,7 @@ impl PublicStreamConnector for WooxSpotPublicData {
 /*----- */
 // WooxSpot HttpConnector
 /*----- */
-pub const HTTP_NETWORK_INFO_URL_WOOX_SPOT: &str = "https://api.woox.io/v1/public/token_network";
+pub const WOOX_BASE_HTTP_URL: &str = "https://api.woox.io";
 
 #[async_trait]
 impl PublicHttpConnector for WooxSpotPublicData {
@@ -86,12 +85,15 @@ impl PublicHttpConnector for WooxSpotPublicData {
     }
 
     async fn get_network_info() -> Result<Self::NetworkInfo, SocketError> {
-        Ok(reqwest::get(HTTP_NETWORK_INFO_URL_WOOX_SPOT)
-            .await
-            .map_err(SocketError::Http)?
-            .json::<Self::NetworkInfo>()
-            .await
-            .map_err(SocketError::Http)?)
+        let request_path = "/v1/public/token_network";
+        Ok(
+            reqwest::get(format!("{}{}", WOOX_BASE_HTTP_URL, request_path))
+                .await
+                .map_err(SocketError::Http)?
+                .json::<Self::NetworkInfo>()
+                .await
+                .map_err(SocketError::Http)?,
+        )
     }
 }
 

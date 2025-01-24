@@ -62,8 +62,7 @@ impl PublicStreamConnector for HtxSpotPublicData {
 /*----- */
 // HtxSpot HttpConnector
 /*----- */
-pub const HTTP_NETWORK_INFO_URL_HTX_SPOT: &str =
-    "https://api-aws.huobi.pro/v1/settings/common/chains";
+pub const HTX_BASE_HTTP_URL: &str = "https://api-aws.huobi.pro/v1";
 
 #[async_trait]
 impl PublicHttpConnector for HtxSpotPublicData {
@@ -84,12 +83,15 @@ impl PublicHttpConnector for HtxSpotPublicData {
     }
 
     async fn get_network_info() -> Result<Self::NetworkInfo, SocketError> {
-        Ok(reqwest::get(HTTP_NETWORK_INFO_URL_HTX_SPOT)
-            .await
-            .map_err(SocketError::Http)?
-            .json::<Self::NetworkInfo>()
-            .await
-            .map_err(SocketError::Http)?)
+        let request_path = "/settings/common/chains";
+        Ok(
+            reqwest::get(format!("{}{}", HTX_BASE_HTTP_URL, request_path))
+                .await
+                .map_err(SocketError::Http)?
+                .json::<Self::NetworkInfo>()
+                .await
+                .map_err(SocketError::Http)?,
+        )
     }
 }
 

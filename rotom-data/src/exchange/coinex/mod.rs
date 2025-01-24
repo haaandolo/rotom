@@ -83,8 +83,7 @@ impl PublicStreamConnector for CoinExSpotPublicData {
 /*----- */
 // CoinExSpot HttpConnector
 /*----- */
-pub const HTTP_NETWORK_INFO_URL_COINEX_SPOT: &str =
-    "https://api.coinex.com/v2/assets/all-deposit-withdraw-config";
+pub const COINEX_BASE_HTTP_URL: &str = "https://api.coinex.com/v2";
 
 #[async_trait]
 impl PublicHttpConnector for CoinExSpotPublicData {
@@ -105,12 +104,15 @@ impl PublicHttpConnector for CoinExSpotPublicData {
     }
 
     async fn get_network_info() -> Result<Self::NetworkInfo, SocketError> {
-        Ok(reqwest::get(HTTP_NETWORK_INFO_URL_COINEX_SPOT)
-            .await
-            .map_err(SocketError::Http)?
-            .json::<Self::NetworkInfo>()
-            .await
-            .map_err(SocketError::Http)?)
+        let request_path = "/assets/all-deposit-withdraw-config";
+        Ok(
+            reqwest::get(format!("{}{}", COINEX_BASE_HTTP_URL, request_path))
+                .await
+                .map_err(SocketError::Http)?
+                .json::<Self::NetworkInfo>()
+                .await
+                .map_err(SocketError::Http)?,
+        )
     }
 }
 

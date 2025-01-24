@@ -93,9 +93,8 @@ impl StreamSelector<BinanceSpotPublicData, AggTrades> for BinanceSpotPublicData 
 /*----- */
 // BinanceSpot HttpConnector
 /*----- */
-pub const HTTP_BOOK_L2_SNAPSHOT_URL_BINANCE_SPOT: &str = "https://api.binance.com/api/v3/depth";
-pub const HTTP_TICKER_INFO_URL_BINANCE_SPOT: &str =
-    "https://api.binance.us/api/v3/exchangeInfo?symbol=";
+pub const BINANCE_BASE_HTTP_URL: &str = "https://api.binance.com";
+pub const BINANCE_BASE_HTTP_URL2: &str = "https://api.binance.us";
 
 #[async_trait]
 impl PublicHttpConnector for BinanceSpotPublicData {
@@ -106,9 +105,11 @@ impl PublicHttpConnector for BinanceSpotPublicData {
     type NetworkInfo = serde_json::Value; // todo
 
     async fn get_book_snapshot(instrument: Instrument) -> Result<Self::BookSnapShot, SocketError> {
+        let request_path = "/api/v3/depth";
         let snapshot_url = format!(
-            "{}?symbol={}{}&limit=100",
-            HTTP_BOOK_L2_SNAPSHOT_URL_BINANCE_SPOT,
+            "{}{}?symbol={}{}&limit=100",
+            BINANCE_BASE_HTTP_URL,
+            request_path,
             instrument.base.to_uppercase(),
             instrument.quote.to_uppercase()
         );
@@ -124,9 +125,11 @@ impl PublicHttpConnector for BinanceSpotPublicData {
     async fn get_ticker_info(
         instrument: Instrument,
     ) -> Result<Self::ExchangeTickerInfo, SocketError> {
+        let request_path = "/api/v3/exchangeInfo?symbol=";
         let ticker_info_url = format!(
-            "{}{}{}",
-            HTTP_TICKER_INFO_URL_BINANCE_SPOT,
+            "{}{}{}{}",
+            BINANCE_BASE_HTTP_URL2,
+            request_path,
             instrument.base.to_uppercase(),
             instrument.quote.to_uppercase()
         );

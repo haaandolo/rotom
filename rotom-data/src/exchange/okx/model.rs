@@ -178,3 +178,74 @@ where
 {
     <&str as Deserialize>::deserialize(deserializer).map(|buyer_is_maker| buyer_is_maker == "buy")
 }
+
+/*----- */
+// Network infomation
+/*----- */
+#[derive(Debug, Deserialize)]
+pub struct OkxNetworkInfo {
+    #[serde(default)]
+    pub msg: String,
+    pub data: Vec<OkxNetworkInfoData>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct OkxNetworkInfoData {
+    #[serde(rename = "burningFeeRate")]
+    pub burning_fee_rate: String,
+    #[serde(rename = "canDep")]
+    pub can_deposit: bool,
+    #[serde(rename = "canInternal")]
+    pub can_internal: bool,
+    #[serde(rename = "canWd")]
+    pub can_withdraw: bool,
+    pub ccy: String,
+    pub chain: String,
+    #[serde(rename = "ctAddr")]
+    pub contract_address: String,
+    #[serde(rename = "depEstOpenTime")]
+    pub deposit_estimated_open_time: String,
+    #[serde(rename = "depQuotaFixed")]
+    pub deposit_quota_fixed: String,
+    #[serde(rename = "depQuoteDailyLayer2")]
+    pub deposit_quota_daily_layer2: String,
+    #[serde(deserialize_with = "de_str")]
+    pub fee: f64,
+    #[serde(rename = "logoLink")]
+    pub logo_link: String,
+    #[serde(rename = "mainNet")]
+    pub main_net: bool,
+    #[serde(rename = "maxFee")]
+    pub max_fee: String,
+    #[serde(rename = "maxFeeForCtAddr")]
+    pub max_fee_for_contract_address: String,
+    #[serde(rename = "maxWd")]
+    pub max_withdraw: String,
+    #[serde(rename = "minDep")]
+    pub min_deposit: String,
+    #[serde(rename = "minDepArrivalConfirm")]
+    pub min_deposit_arrival_confirm: String,
+    #[serde(rename = "minFee")]
+    pub min_fee: String,
+    #[serde(rename = "minFeeForCtAddr")]
+    pub min_fee_for_contract_address: String,
+    #[serde(rename = "minInternal")]
+    pub min_internal: String,
+    #[serde(rename = "minWd")]
+    pub min_withdraw: String,
+    #[serde(rename = "minWdUnlockConfirm")]
+    pub min_withdraw_unlock_confirm: String,
+    pub name: String,
+    #[serde(rename = "needTag")]
+    pub need_tag: bool,
+    #[serde(rename = "usedDepQuotaFixed")]
+    pub used_deposit_quota_fixed: String,
+    #[serde(rename = "usedWdQuota")]
+    pub used_withdraw_quota: String,
+    #[serde(rename = "wdEstOpenTime")]
+    pub withdraw_estimated_open_time: String,
+    #[serde(rename = "wdQuota")]
+    pub withdraw_quota: String,
+    #[serde(rename = "wdTickSz")]
+    pub withdraw_tick_size: String,
+}

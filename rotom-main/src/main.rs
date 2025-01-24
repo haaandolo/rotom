@@ -1,8 +1,10 @@
 use futures::StreamExt;
 use rotom_data::{
     exchange::{
+        binance::BinanceSpotPublicData,
         coinex::{market::CoinExMarket, CoinExSpotPublicData},
         htx::HtxSpotPublicData,
+        okx::OkxSpotPublicData,
         woox::WooxSpotPublicData,
         PublicHttpConnector,
     },
@@ -12,7 +14,7 @@ use rotom_data::{
     },
     shared::subscription_models::{ExchangeId, Instrument, StreamKind},
     streams::builder::{dynamic::DynamicStreams, Streams},
-    temp::{test_http, test_ws},
+    temp::{test_http, test_http_private, test_ws},
 };
 use rotom_main::trader::spot_arb_trader::builder::stream_trades;
 use rotom_oms::exchange::{
@@ -27,23 +29,27 @@ pub async fn main() {
     ///////////
     init_logging();
     // test_ws().await;
+    // test_http_private().await
     // test_http().await;
+
+    let test = BinanceSpotPublicData::get_ticker_info(Instrument::new("op", "usdt")).await;
+    println!("{:#?}", test);
 
     ///////////
     // Dynamic stream
     ///////////
-    let streams = DynamicStreams::init([vec![
-        // (ExchangeId::CoinExSpot, "btc", "usdt", StreamKind::Snapshot),
-        (ExchangeId::OkxSpot, "btc", "usdt", StreamKind::Trades),
-    ]])
-    .await
-    .unwrap();
+    // let streams = DynamicStreams::init([vec![
+    //     // (ExchangeId::CoinExSpot, "btc", "usdt", StreamKind::Snapshot),
+    //     (ExchangeId::OkxSpot, "btc", "usdt", StreamKind::Trades),
+    // ]])
+    // .await
+    // .unwrap();
 
-    let mut merged = streams.select_all::<MarketEvent<DataKind>>();
-    while let Some(event) = merged.next().await {
-        println!("{:?}", event);
-        println!("###########");
-    }
+    // let mut merged = streams.select_all::<MarketEvent<DataKind>>();
+    // while let Some(event) = merged.next().await {
+    //     println!("{:?}", event);
+    //     println!("###########");
+    // }
 
     ///////////
     // Testing
