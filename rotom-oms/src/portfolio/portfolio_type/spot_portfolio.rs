@@ -60,38 +60,39 @@ impl SpotPortfolio {
     }
 
     pub async fn init(mut self) -> Result<SpotPortfolio, SocketError> {
-        for exchange in self.exchanges.iter() {
-            let exchange_balance = match exchange {
-                ExchangeId::BinanceSpot => {
-                    let balance = BinanceExecution::get_balances().await?;
-                    balance
-                }
-                ExchangeId::PoloniexSpot => {
-                    let balance = PoloniexExecution::get_balances().await?;
-                    balance
-                }
-                ExchangeId::HtxSpot => {
-                    unimplemented!()
-                }
-                ExchangeId::WooxSpot => {
-                    unimplemented!()
-                }
-                ExchangeId::BitstampSpot => {
-                    unimplemented!()
-                }
-                ExchangeId::CoinExSpot => {
-                    unimplemented!()
-                }
-            };
+        unimplemented!()
+        // for exchange in self.exchanges.iter() {
+        //     let exchange_balance = match exchange {
+        //         ExchangeId::BinanceSpot => {
+        //             let balance = BinanceExecution::get_balances().await?;
+        //             balance
+        //         }
+        //         ExchangeId::PoloniexSpot => {
+        //             let balance = PoloniexExecution::get_balances().await?;
+        //             balance
+        //         }
+        //         ExchangeId::HtxSpot => {
+        //             unimplemented!()
+        //         }
+        //         ExchangeId::WooxSpot => {
+        //             unimplemented!()
+        //         }
+        //         ExchangeId::BitstampSpot => {
+        //             unimplemented!()
+        //         }
+        //         ExchangeId::CoinExSpot => {
+        //             unimplemented!()
+        //         }
+        //     };
 
-            for asset_balance in exchange_balance.into_iter() {
-                self.repository
-                    .set_balance(SpotBalanceId::from(&asset_balance), asset_balance.balance)
-                    .unwrap(); // todo
-            }
-        }
+        //     for asset_balance in exchange_balance.into_iter() {
+        //         self.repository
+        //             .set_balance(SpotBalanceId::from(&asset_balance), asset_balance.balance)
+        //             .unwrap(); // todo
+        //     }
+        // }
 
-        Ok(self)
+        // Ok(self)
     }
 
     pub fn update_balance(&mut self, balance_update: &AccountBalance) {

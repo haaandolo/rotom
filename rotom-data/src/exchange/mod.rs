@@ -2,6 +2,7 @@ pub mod binance;
 pub mod bitstamp;
 pub mod coinex;
 pub mod htx;
+pub mod okx;
 pub mod poloniex;
 pub mod woox;
 

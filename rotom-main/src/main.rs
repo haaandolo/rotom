@@ -34,14 +34,15 @@ pub async fn main() {
     ///////////
     let streams = DynamicStreams::init([vec![
         // (ExchangeId::CoinExSpot, "btc", "usdt", StreamKind::Snapshot),
-        (ExchangeId::CoinExSpot, "btc", "usdt", StreamKind::TradesVec),
+        (ExchangeId::OkxSpot, "btc", "usdt", StreamKind::Trades),
     ]])
     .await
     .unwrap();
 
     let mut merged = streams.select_all::<MarketEvent<DataKind>>();
     while let Some(event) = merged.next().await {
-        println!("{:?}", event)
+        println!("{:?}", event);
+        println!("###########");
     }
 
     ///////////
@@ -72,15 +73,14 @@ fn init_logging() {
         .init()
 }
 
-// Todo
-// bitstamp chain int
+// Todo:
 // Okx
 // Exmo
 // phmex
 // kucoin
 // ascendex
+// bitstamp chain int
 // change instrument map key from market to stream key
-// - coinex ws error why does it disconnect?
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 // Execution - WIP

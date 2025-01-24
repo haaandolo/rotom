@@ -86,7 +86,6 @@ impl SubscriptionValidator for WebSocketValidator {
                         Some(Ok(response)) => match response.validate() {
                             // Subscription success
                             Ok(response) => {
-                                println!("in sub successs");
                                 success_responses += 1;
                                 debug!(
                                     exchange = %exchange_id,
