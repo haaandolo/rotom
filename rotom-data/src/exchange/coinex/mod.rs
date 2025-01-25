@@ -31,7 +31,7 @@ impl PublicStreamConnector for CoinExSpotPublicData {
     type Market = CoinExMarket;
     type SubscriptionResponse = CoinExSubscriptionResponse;
 
-    fn url() -> &'static str {
+    fn url() -> impl Into<String> {
         COINEX_SPOT_WS_URL
     }
 

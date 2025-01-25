@@ -31,7 +31,7 @@ impl PublicStreamConnector for WooxSpotPublicData {
     type Market = WooxMarket;
     type SubscriptionResponse = WooxSubscriptionResponse;
 
-    fn url() -> &'static str {
+    fn url() -> impl Into<String> {
         WOOX_SPOT_WS_URL
     }
 

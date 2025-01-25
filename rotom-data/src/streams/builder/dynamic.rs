@@ -12,8 +12,8 @@ use crate::{
     error::SocketError,
     exchange::{
         binance::BinanceSpotPublicData, bitstamp::BitstampSpotPublicData,
-        coinex::CoinExSpotPublicData, htx::HtxSpotPublicData, okx::OkxSpotPublicData,
-        poloniex::PoloniexSpotPublicData, woox::WooxSpotPublicData,
+        coinex::CoinExSpotPublicData, htx::HtxSpotPublicData, kucoin::KuCoinSpotPublicData,
+        okx::OkxSpotPublicData, poloniex::PoloniexSpotPublicData, woox::WooxSpotPublicData,
     },
     model::{
         event_book::{EventOrderBook, OrderBookL2},
@@ -337,6 +337,42 @@ impl DynamicStreams {
                         unimplemented!()
                     }
                     (ExchangeId::OkxSpot, StreamKind::AggTrades) => {
+                        unimplemented!()
+                    }
+                    /*----- */
+                    // KuCoin Spot
+                    /*----- */
+                    (ExchangeId::KuCoinSpot, StreamKind::Snapshot) => {
+                        tokio::spawn(consume::<KuCoinSpotPublicData, OrderBookSnapshot>(
+                            subs.into_iter()
+                                .map(|sub| {
+                                    Subscription::new(
+                                        KuCoinSpotPublicData,
+                                        sub.instrument,
+                                        OrderBookSnapshot,
+                                    )
+                                })
+                                .collect(),
+                            channels.snapshots.entry(exchange).or_default().tx.clone(),
+                        ));
+                    }
+                    (ExchangeId::KuCoinSpot, StreamKind::Trades) => {
+                        // tokio::spawn(consume::<KuCoinSpotPublicData, Trades>(
+                        //     subs.into_iter()
+                        //         .map(|sub| {
+                        //             Subscription::new(KuCoinSpotPublicData, sub.instrument, Trades)
+                        //         })
+                        //         .collect(),
+                        //     channels.trades.entry(exchange).or_default().tx.clone(),
+                        // ));
+                    }
+                    (ExchangeId::KuCoinSpot, StreamKind::TradesVec) => {
+                        unimplemented!()
+                    }
+                    (ExchangeId::KuCoinSpot, StreamKind::L2) => {
+                        unimplemented!()
+                    }
+                    (ExchangeId::KuCoinSpot, StreamKind::AggTrades) => {
                         unimplemented!()
                     }
                 };

@@ -31,7 +31,7 @@ impl PublicStreamConnector for HtxSpotPublicData {
     type Market = HtxMarket;
     type SubscriptionResponse = HtxSubscriptionResponse;
 
-    fn url() -> &'static str {
+    fn url() -> impl Into<String> {
         HTX_SPOT_WS_URL
     }
 

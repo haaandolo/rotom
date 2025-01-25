@@ -32,24 +32,22 @@ pub async fn main() {
     // test_http_private().await
     // test_http().await;
 
-    let test = BinanceSpotPublicData::get_ticker_info(Instrument::new("op", "usdt")).await;
-    println!("{:#?}", test);
-
     ///////////
     // Dynamic stream
     ///////////
-    // let streams = DynamicStreams::init([vec![
-    //     // (ExchangeId::CoinExSpot, "btc", "usdt", StreamKind::Snapshot),
-    //     (ExchangeId::OkxSpot, "btc", "usdt", StreamKind::Trades),
-    // ]])
-    // .await
-    // .unwrap();
+    let streams = DynamicStreams::init([vec![
+        // (ExchangeId::CoinExSpot, "btc", "usdt", StreamKind::Snapshot),
+        (ExchangeId::KuCoinSpot, "btc", "usdt", StreamKind::Snapshot),
+        (ExchangeId::KuCoinSpot, "eth", "usdt", StreamKind::Snapshot),
+    ]])
+    .await
+    .unwrap();
 
-    // let mut merged = streams.select_all::<MarketEvent<DataKind>>();
-    // while let Some(event) = merged.next().await {
-    //     println!("{:?}", event);
-    //     println!("###########");
-    // }
+    let mut merged = streams.select_all::<MarketEvent<DataKind>>();
+    while let Some(event) = merged.next().await {
+        println!("{:?}", event);
+        println!("###########");
+    }
 
     ///////////
     // Testing
@@ -80,7 +78,6 @@ fn init_logging() {
 }
 
 // Todo:
-// Okx
 // Exmo
 // phmex
 // kucoin

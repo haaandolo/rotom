@@ -28,7 +28,7 @@ impl PublicStreamConnector for BitstampSpotPublicData {
     type Market = BitstampMarket;
     type SubscriptionResponse = BitstampSubscriptionResponse;
 
-    fn url() -> &'static str {
+    fn url() -> impl Into<String> {
         BITSTAMP_SPOT_WS_URL
     }
 

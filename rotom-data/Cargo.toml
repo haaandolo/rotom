@@ -14,7 +14,7 @@ pin-project = { workspace = true}
 async-trait = { workspace = true}
 
 # Protocol
-reqwest = { workspace = true, features = ["json"]}
+reqwest = { workspace = true, features = ["json", "blocking"]}
 
 # SerDe
 serde_json = { workspace = true }
@@ -33,6 +33,7 @@ itertools = { workspace = true}
 bytes = { workspace = true }
 flate2 = { version="1.0"}
 rand = { workspace =  true}
+uuid = { workspace = true }
 
 # Crytographic Signatures
 hmac = { workspace = true }

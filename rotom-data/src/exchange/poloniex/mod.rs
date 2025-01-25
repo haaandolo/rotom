@@ -36,7 +36,7 @@ impl PublicStreamConnector for PoloniexSpotPublicData {
     type Channel = PoloniexChannel;
     type Market = PoloniexMarket;
 
-    fn url() -> &'static str {
+    fn url() -> impl Into<String> {
         POLONIEX_SPOT_WS_URL
     }
 

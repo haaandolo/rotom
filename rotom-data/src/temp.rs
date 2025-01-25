@@ -4,6 +4,7 @@ use crate::{
     exchange::{
         bitstamp::model::{BitstampOrderBookSnapshot, BitstampSubscriptionResponse, BitstampTrade},
         coinex::model::{CoinExNetworkInfo, CoinExOrderBookSnapshot, CoinExTrade},
+        kucoin::model::{KuCoinOrderBookSnapshot, KuCoinWsUrl},
         okx::model::{OkxNetworkInfo, OkxOrderBookSnapshot, OkxSubscriptionResponse, OkxTrade},
     },
     protocols::ws::ws_parser::{StreamParser, WebSocketParser},
@@ -33,39 +34,53 @@ use crate::{
 // Test Ws
 /*----- */
 pub async fn test_ws() {
-    let url = "wss://wspap.okx.com:8443/ws/v5/public";
+    let base_url_http = "https://api.kucoin.com";
+    let token_post = "/api/v1/bullet-public";
+
+    let test = reqwest::Client::new()
+        .post(format!("{}{}", base_url_http, token_post))
+        .send()
+        .await
+        .unwrap()
+        .json::<KuCoinWsUrl>()
+        .await
+        .unwrap();
+
+    println!("{:#?}", test);
+
+    let url = format!(
+        "{}?token={}&[connectId={}]",
+        test.data.instance_servers[0].endpoint,
+        test.data.token,
+        uuid::Uuid::new_v4()
+    );
 
     let payload = json!({
-        "op": "subscribe",
-        "args": [
-            { "channel": "trades", "instId": "BTC-USDT"},
-        ]
-    });
+        "id": uuid::Uuid::new_v4(),
+        "type": "subscribe",
+        // "topic": "/spotMarket/level2Depth5:BTC-USDT,ETH-USDT",
+        "topic": "/market/match:BTC-USDT,ETH-USDT",
 
-    // let payload = json!({
-    //   "method": "deals.subscribe",
-    //   "params": {"market_list": ["BTCUSDT"]},
-    //   "id": 1
-    // });
+        "response": true
+    });
 
     let (ws_stream, _) = connect_async(url).await.unwrap();
     let (mut write, mut read) = ws_stream.split();
-
     let _ = write.send(Message::text(payload.to_string())).await;
 
-    // let ping_message = PingInterval {
-    //     time: 9,
-    //     message: json!({ "event":  "ping"}),
-    // };
+    let ping_message = PingInterval {
+        time: 30,
+        message: json!({ "id":  uuid::Uuid::new_v4(), "type": "ping"}),
+    };
 
-    // tokio::spawn(schedule_pings_to_exchange(write, ping_message));
+    tokio::spawn(schedule_pings_to_exchange(write, ping_message));
 
     while let Some(msg) = read.next().await {
-        // println!("{:?}", msg);
+        println!("{:?}", msg);
         println!("###########");
 
-        let test = WebSocketParser::parse::<OkxTrade>(msg);
-        println!("{:#?}", test);
+        // let test = WebSocketParser::parse::<KucoinOrderBookSnapshot>(msg);
+        // println!("{:#?}", test);
 
         // if let Message::Binary(bin) = msg.unwrap() {
         //     let mut decoder = GzDecoder::new(&bin[..]);
@@ -78,10 +93,10 @@ pub async fn test_ws() {
 }
 
 /*
-sub errror: "{\"event\":\"subscribe\",\"arg\":{\"channel\":\"books5\",\"instId\":\"BTC-USDT\"},\"connId\":\"0b2ab06e\"}"))
-sub success: "{\"event\":\"error\",\"msg\":\"Illegal request: {\\\"args\\\":[{\\\"channel\\\":\\\"books5\\\",\\\"instId\\\":\\\"BTC-USDT\\\"}],\\\"p\\\":\\\"subscribe\\\"}\",\"code\":\"60012\",\"connId\":\"883b44bd\"}"))
+sub errror: Ok(Text("{\"id\":\"c817503b-341d-473e-af9f-800a9baecc3e\",\"type\":\"error\",\"code\":415,\"data\":\"type is not supported\"}"))
+sub success: Ok(Text("{\"id\":\"b1768693-10f3-44ff-a58f-1af4829c6447\",\"type\":\"ack\"}"))
 
-Ok(Text("{\"arg\":{\"channel\":\"books5\",\"instId\":\"BTC-USDT\"},\"data\":[{\"asks\":[[\"103170\",\"3.91903957\",\"0\",\"1\"],[\"103171.9\",\"7.39808615\",\"0\",\"1\"],[\"103172.3\",\"5.98890138\",\"0\",\"1\"],[\"103174\",\"5.44041781\",\"0\",\"1\"],[\"103174.4\",\"6.94365576\",\"0\",\"1\"]],\"bids\":[[\"103168.2\",\"0.00345408\",\"0\",\"1\"],[\"103167.9\",\"0.036\",\"0\",\"1\"],[\"103161.4\",\"0.0249803\",\"0\",\"1\"],[\"103161.3\",\"0.02911331\",\"0\",\"1\"],[\"103160.6\",\"0.00193888\",\"0\",\"1\"]],\"instId\":\"BTC-USDT\",\"ts\":\"1737684383905\",\"seqId\":464948033}]}"))
+ws conn success: Ok(Text("{\"id\":\"y8rx20rZbc\",\"type\":\"welcome\"}"))
 */
 
 // /api/v5/asset/currencies

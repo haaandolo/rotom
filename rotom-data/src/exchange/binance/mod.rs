@@ -40,7 +40,7 @@ impl PublicStreamConnector for BinanceSpotPublicData {
     type Channel = BinanceChannel;
     type Market = BinanceMarket;
 
-    fn url() -> &'static str {
+    fn url() -> impl Into<String> {
         BINANCE_SPOT_WS_URL
     }
 

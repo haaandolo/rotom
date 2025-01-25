@@ -66,7 +66,7 @@ impl WebSocketClient {
         println!("here3");
         // Make stream connection
         let mut tasks = Vec::new();
-        let ws = connect(Exchange::url()).await?;
+        let ws = connect(Exchange::url().into()).await?;
 
         println!("here4");
         // Split WS and make into read and write

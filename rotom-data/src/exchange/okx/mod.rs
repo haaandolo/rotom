@@ -34,7 +34,7 @@ impl PublicStreamConnector for OkxSpotPublicData {
     type Market = OkxMarket;
     type SubscriptionResponse = OkxSubscriptionResponse;
 
-    fn url() -> &'static str {
+    fn url() -> impl Into<String> {
         OKX_SPOT_WS_URL
     }
 

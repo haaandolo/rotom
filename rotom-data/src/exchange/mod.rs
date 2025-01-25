@@ -2,6 +2,7 @@ pub mod binance;
 pub mod bitstamp;
 pub mod coinex;
 pub mod htx;
+pub mod kucoin;
 pub mod okx;
 pub mod poloniex;
 pub mod woox;
@@ -34,7 +35,7 @@ pub trait PublicStreamConnector {
     type Market: Send + Sync;
     type SubscriptionResponse: DeserializeOwned + Validator + Send + Debug;
 
-    fn url() -> &'static str;
+    fn url() -> impl Into<String>;
 
     fn ping_interval() -> Option<PingInterval> {
         None
