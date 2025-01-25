@@ -5,8 +5,11 @@ use crate::assets::level::Level;
 use crate::error::SocketError;
 use crate::exchange::Identifier;
 use crate::model::event_book_snapshot::EventOrderBookSnapshot;
+use crate::model::event_trade::EventTrade;
 use crate::model::market_event::MarketEvent;
-use crate::shared::de::de_u64_epoch_ms_as_datetime_utc;
+use crate::shared::de::{
+    de_str, de_str_u64_epoch_ns_as_datetime_utc, de_u64_epoch_ms_as_datetime_utc,
+};
 use crate::shared::subscription_models::{ExchangeId, Instrument};
 use crate::streams::validator::Validator;
 
@@ -76,6 +79,68 @@ impl From<(KuCoinOrderBookSnapshot, Instrument)> for MarketEvent<EventOrderBookS
             },
         }
     }
+}
+
+/*----- */
+// Trade
+/*----- */
+#[derive(Debug, Deserialize, Default)]
+pub struct KuCoinTrade {
+    pub topic: String,
+    #[serde(rename = "type")]
+    pub message_type: String,
+    pub subject: String,
+    pub data: KuCoinTradeData,
+}
+
+#[derive(Debug, Deserialize, Default)]
+pub struct KuCoinTradeData {
+    #[serde(rename = "makerOrderId")]
+    pub maker_order_id: String,
+    #[serde(deserialize_with = "de_str")]
+    pub price: f64,
+    pub sequence: String,
+    #[serde(deserialize_with = "de_buyer_is_maker_kucoin")]
+    pub side: bool,
+    #[serde(deserialize_with = "de_str")]
+    pub size: f64,
+    pub symbol: String,
+    #[serde(rename = "takerOrderId")]
+    pub taker_order_id: String,
+    #[serde(deserialize_with = "de_str_u64_epoch_ns_as_datetime_utc")]
+    pub time: DateTime<Utc>,
+    #[serde(rename = "tradeId")]
+    pub trade_id: String,
+    #[serde(rename = "type")]
+    pub trade_type: String,
+}
+
+impl Identifier<String> for KuCoinTrade {
+    fn id(&self) -> String {
+        self.data.symbol.clone()
+    }
+}
+
+impl From<(KuCoinTrade, Instrument)> for MarketEvent<EventTrade> {
+    fn from((event, instrument): (KuCoinTrade, Instrument)) -> Self {
+        Self {
+            exchange_time: event.data.time,
+            received_time: Utc::now(),
+            exchange: ExchangeId::KuCoinSpot,
+            instrument,
+            event_data: EventTrade::new(
+                Level::new(event.data.price, event.data.size),
+                event.data.side,
+            ),
+        }
+    }
+}
+
+fn de_buyer_is_maker_kucoin<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+    D: serde::de::Deserializer<'de>,
+{
+    <&str as Deserialize>::deserialize(deserializer).map(|buyer_is_maker| buyer_is_maker == "buy")
 }
 
 /*----- */

@@ -357,14 +357,14 @@ impl DynamicStreams {
                         ));
                     }
                     (ExchangeId::KuCoinSpot, StreamKind::Trades) => {
-                        // tokio::spawn(consume::<KuCoinSpotPublicData, Trades>(
-                        //     subs.into_iter()
-                        //         .map(|sub| {
-                        //             Subscription::new(KuCoinSpotPublicData, sub.instrument, Trades)
-                        //         })
-                        //         .collect(),
-                        //     channels.trades.entry(exchange).or_default().tx.clone(),
-                        // ));
+                        tokio::spawn(consume::<KuCoinSpotPublicData, Trades>(
+                            subs.into_iter()
+                                .map(|sub| {
+                                    Subscription::new(KuCoinSpotPublicData, sub.instrument, Trades)
+                                })
+                                .collect(),
+                            channels.trades.entry(exchange).or_default().tx.clone(),
+                        ));
                     }
                     (ExchangeId::KuCoinSpot, StreamKind::TradesVec) => {
                         unimplemented!()

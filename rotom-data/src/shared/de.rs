@@ -91,6 +91,16 @@ where
     })
 }
 
+// Deserialise string u128 to DateTime<Utc> in milliseconds
+pub fn de_str_u64_epoch_ns_as_datetime_utc<'de, D>(
+    deserializer: D,
+) -> Result<chrono::DateTime<chrono::Utc>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    de_str(deserializer).map(chrono::DateTime::<chrono::Utc>::from_timestamp_nanos)
+}
+
 // Deserialize a &str "f64" seconds value as `DateTime<Utc>`.
 pub fn de_str_f64_epoch_s_as_datetime_utc<'de, D>(
     deserializer: D,

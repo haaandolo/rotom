@@ -37,8 +37,8 @@ pub async fn main() {
     ///////////
     let streams = DynamicStreams::init([vec![
         // (ExchangeId::CoinExSpot, "btc", "usdt", StreamKind::Snapshot),
-        (ExchangeId::KuCoinSpot, "btc", "usdt", StreamKind::Snapshot),
-        (ExchangeId::KuCoinSpot, "eth", "usdt", StreamKind::Snapshot),
+        (ExchangeId::KuCoinSpot, "btc", "usdt", StreamKind::Trades),
+        (ExchangeId::KuCoinSpot, "eth", "usdt", StreamKind::Trades),
     ]])
     .await
     .unwrap();

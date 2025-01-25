@@ -4,7 +4,7 @@ use crate::{
     exchange::{
         bitstamp::model::{BitstampOrderBookSnapshot, BitstampSubscriptionResponse, BitstampTrade},
         coinex::model::{CoinExNetworkInfo, CoinExOrderBookSnapshot, CoinExTrade},
-        kucoin::model::{KuCoinOrderBookSnapshot, KuCoinWsUrl},
+        kucoin::model::{KuCoinOrderBookSnapshot, KuCoinTrade, KuCoinWsUrl},
         okx::model::{OkxNetworkInfo, OkxOrderBookSnapshot, OkxSubscriptionResponse, OkxTrade},
     },
     protocols::ws::ws_parser::{StreamParser, WebSocketParser},
@@ -76,11 +76,11 @@ pub async fn test_ws() {
     tokio::spawn(schedule_pings_to_exchange(write, ping_message));
 
     while let Some(msg) = read.next().await {
-        println!("{:?}", msg);
+        // println!("{:?}", msg);
         println!("###########");
 
-        // let test = WebSocketParser::parse::<KucoinOrderBookSnapshot>(msg);
-        // println!("{:#?}", test);
+        let test = WebSocketParser::parse::<KuCoinTrade>(msg);
+        println!("{:#?}", test);
 
         // if let Message::Binary(bin) = msg.unwrap() {
         //     let mut decoder = GzDecoder::new(&bin[..]);

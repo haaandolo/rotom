@@ -97,7 +97,7 @@ impl From<(WooxTrade, Instrument)> for MarketEvent<EventTrade> {
     }
 }
 
-pub fn de_buyer_is_maker_woox<'de, D>(deserializer: D) -> Result<bool, D::Error>
+fn de_buyer_is_maker_woox<'de, D>(deserializer: D) -> Result<bool, D::Error>
 where
     D: serde::de::Deserializer<'de>,
 {

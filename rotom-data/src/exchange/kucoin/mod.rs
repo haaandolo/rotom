@@ -4,7 +4,7 @@ pub mod model;
 
 use channel::KuCoinChannel;
 use market::KuCoinMarket;
-use model::{KuCoinOrderBookSnapshot, KuCoinSubscriptionResponse, KuCoinWsUrl};
+use model::{KuCoinOrderBookSnapshot, KuCoinSubscriptionResponse, KuCoinTrade, KuCoinWsUrl};
 use serde_json::json;
 
 use crate::{
@@ -98,7 +98,7 @@ impl StreamSelector<KuCoinSpotPublicData, OrderBookSnapshot> for KuCoinSpotPubli
         StatelessTransformer<KuCoinSpotPublicData, Self::Stream, OrderBookSnapshot>;
 }
 
-// impl StreamSelector<KuCoinSpotPublicData, Trades> for KuCoinSpotPublicData {
-//     type Stream = KuCoinOrderBookSnapshot;
-//     type StreamTransformer = StatelessTransformer<KuCoinSpotPublicData, Self::Stream, Trades>;
-// }
+impl StreamSelector<KuCoinSpotPublicData, Trades> for KuCoinSpotPublicData {
+    type Stream = KuCoinTrade;
+    type StreamTransformer = StatelessTransformer<KuCoinSpotPublicData, Self::Stream, Trades>;
+}
