@@ -1,7 +1,7 @@
 use super::PoloniexSpotPublicData;
 use crate::{
     exchange::Identifier,
-    model::{event_book::OrderBookL2, event_trade::Trades},
+    model::{event_book::OrderBookL2, event_trade::Trade},
     shared::subscription_models::Subscription,
 };
 
@@ -25,7 +25,7 @@ impl Identifier<PoloniexChannel> for Subscription<PoloniexSpotPublicData, OrderB
     }
 }
 
-impl Identifier<PoloniexChannel> for Subscription<PoloniexSpotPublicData, Trades> {
+impl Identifier<PoloniexChannel> for Subscription<PoloniexSpotPublicData, Trade> {
     fn id(&self) -> PoloniexChannel {
         PoloniexChannel::TRADES
     }

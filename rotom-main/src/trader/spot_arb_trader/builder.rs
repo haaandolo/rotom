@@ -142,7 +142,7 @@ where
             illiquid_id,
             market.base.clone(),
             market.quote.clone(),
-            StreamKind::Trades,
+            StreamKind::Trade,
         ),
     ]])
     .await

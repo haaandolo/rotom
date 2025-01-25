@@ -1,6 +1,6 @@
 use crate::{
     exchange::Identifier,
-    model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trades},
+    model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trade},
     shared::subscription_models::Subscription,
 };
 
@@ -26,7 +26,7 @@ impl Identifier<OkxChannel> for Subscription<OkxSpotPublicData, OrderBookSnapsho
     }
 }
 
-impl Identifier<OkxChannel> for Subscription<OkxSpotPublicData, Trades> {
+impl Identifier<OkxChannel> for Subscription<OkxSpotPublicData, Trade> {
     fn id(&self) -> OkxChannel {
         OkxChannel::TRADES
     }

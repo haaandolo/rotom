@@ -1,6 +1,6 @@
 use crate::{
     exchange::Identifier,
-    model::{event_book_snapshot::OrderBookSnapshot, event_trade::TradesVec},
+    model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trades},
     shared::subscription_models::Subscription,
 };
 
@@ -26,7 +26,7 @@ impl Identifier<HtxChannel> for Subscription<HtxSpotPublicData, OrderBookSnapsho
     }
 }
 
-impl Identifier<HtxChannel> for Subscription<HtxSpotPublicData, TradesVec> {
+impl Identifier<HtxChannel> for Subscription<HtxSpotPublicData, Trades> {
     fn id(&self) -> HtxChannel {
         HtxChannel::TRADES
     }

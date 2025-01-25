@@ -18,7 +18,7 @@ use crate::{
     model::{
         event_book::{EventOrderBook, OrderBookL2},
         event_book_snapshot::{EventOrderBookSnapshot, OrderBookSnapshot},
-        event_trade::{AggTrades, EventTrade, Trades, TradesVec},
+        event_trade::{AggTrades, EventTrade, Trade, Trades},
         market_event::MarketEvent,
     },
     shared::subscription_models::{ExchangeId, StreamKind, Subscription},
@@ -30,8 +30,8 @@ use crate::{
 /*----- */
 #[derive(Debug)]
 pub struct DynamicStreams {
-    pub trades: VecMap<ExchangeId, UnboundedReceiverStream<MarketEvent<EventTrade>>>,
-    pub trades_vec: VecMap<ExchangeId, UnboundedReceiverStream<MarketEvent<Vec<EventTrade>>>>,
+    pub trade: VecMap<ExchangeId, UnboundedReceiverStream<MarketEvent<EventTrade>>>,
+    pub trades: VecMap<ExchangeId, UnboundedReceiverStream<MarketEvent<Vec<EventTrade>>>>,
     pub l2s: VecMap<ExchangeId, UnboundedReceiverStream<MarketEvent<EventOrderBook>>>,
     pub snapshots: VecMap<ExchangeId, UnboundedReceiverStream<MarketEvent<EventOrderBookSnapshot>>>,
 }
@@ -82,14 +82,14 @@ impl DynamicStreams {
                             channels.l2s.entry(exchange).or_default().tx.clone(),
                         ));
                     }
-                    (ExchangeId::BinanceSpot, StreamKind::Trades) => {
-                        tokio::spawn(consume::<BinanceSpotPublicData, Trades>(
+                    (ExchangeId::BinanceSpot, StreamKind::Trade) => {
+                        tokio::spawn(consume::<BinanceSpotPublicData, Trade>(
                             subs.into_iter()
                                 .map(|sub| {
-                                    Subscription::new(BinanceSpotPublicData, sub.instrument, Trades)
+                                    Subscription::new(BinanceSpotPublicData, sub.instrument, Trade)
                                 })
                                 .collect(),
-                            channels.trades.entry(exchange).or_default().tx.clone(),
+                            channels.trade.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::BinanceSpot, StreamKind::AggTrades) => {
@@ -103,13 +103,13 @@ impl DynamicStreams {
                                     )
                                 })
                                 .collect(),
-                            channels.trades.entry(exchange).or_default().tx.clone(),
+                            channels.trade.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::BinanceSpot, StreamKind::Snapshot) => {
                         unimplemented!()
                     }
-                    (ExchangeId::BinanceSpot, StreamKind::TradesVec) => {
+                    (ExchangeId::BinanceSpot, StreamKind::Trades) => {
                         unimplemented!("Binance does not send multiple trades for the same symbol in one go like htx")
                     }
                     /*----- */
@@ -129,18 +129,14 @@ impl DynamicStreams {
                             channels.l2s.entry(exchange).or_default().tx.clone(),
                         ));
                     }
-                    (ExchangeId::PoloniexSpot, StreamKind::Trades) => {
-                        tokio::spawn(consume::<PoloniexSpotPublicData, Trades>(
+                    (ExchangeId::PoloniexSpot, StreamKind::Trade) => {
+                        tokio::spawn(consume::<PoloniexSpotPublicData, Trade>(
                             subs.into_iter()
                                 .map(|sub| {
-                                    Subscription::new(
-                                        PoloniexSpotPublicData,
-                                        sub.instrument,
-                                        Trades,
-                                    )
+                                    Subscription::new(PoloniexSpotPublicData, sub.instrument, Trade)
                                 })
                                 .collect(),
-                            channels.trades.entry(exchange).or_default().tx.clone(),
+                            channels.trade.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     // Poloniex's does not separate regular and aggregated trades
@@ -150,20 +146,20 @@ impl DynamicStreams {
                     (ExchangeId::PoloniexSpot, StreamKind::Snapshot) => {
                         unimplemented!()
                     }
-                    (ExchangeId::PoloniexSpot, StreamKind::TradesVec) => {
+                    (ExchangeId::PoloniexSpot, StreamKind::Trades) => {
                         unimplemented!("Poloniex does not send multiple trades for the same symbol in one go like htx")
                     }
                     /*----- */
                     // Htx Spot
                     /*----- */
-                    (ExchangeId::HtxSpot, StreamKind::TradesVec) => {
-                        tokio::spawn(consume::<HtxSpotPublicData, TradesVec>(
+                    (ExchangeId::HtxSpot, StreamKind::Trades) => {
+                        tokio::spawn(consume::<HtxSpotPublicData, Trades>(
                             subs.into_iter()
                                 .map(|sub| {
-                                    Subscription::new(HtxSpotPublicData, sub.instrument, TradesVec)
+                                    Subscription::new(HtxSpotPublicData, sub.instrument, Trades)
                                 })
                                 .collect(),
-                            channels.trades_vec.entry(exchange).or_default().tx.clone(),
+                            channels.trades.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::HtxSpot, StreamKind::Snapshot) => {
@@ -186,7 +182,7 @@ impl DynamicStreams {
                     (ExchangeId::HtxSpot, StreamKind::AggTrades) => {
                         unimplemented!()
                     }
-                    (ExchangeId::HtxSpot, StreamKind::Trades) => {
+                    (ExchangeId::HtxSpot, StreamKind::Trade) => {
                         unimplemented!("Htx only sends trades aggregated")
                     }
                     /*----- */
@@ -206,17 +202,17 @@ impl DynamicStreams {
                             channels.snapshots.entry(exchange).or_default().tx.clone(),
                         ));
                     }
-                    (ExchangeId::WooxSpot, StreamKind::Trades) => {
-                        tokio::spawn(consume::<WooxSpotPublicData, Trades>(
+                    (ExchangeId::WooxSpot, StreamKind::Trade) => {
+                        tokio::spawn(consume::<WooxSpotPublicData, Trade>(
                             subs.into_iter()
                                 .map(|sub| {
-                                    Subscription::new(WooxSpotPublicData, sub.instrument, Trades)
+                                    Subscription::new(WooxSpotPublicData, sub.instrument, Trade)
                                 })
                                 .collect(),
-                            channels.trades.entry(exchange).or_default().tx.clone(),
+                            channels.trade.entry(exchange).or_default().tx.clone(),
                         ));
                     }
-                    (ExchangeId::WooxSpot, StreamKind::TradesVec) => {}
+                    (ExchangeId::WooxSpot, StreamKind::Trades) => {}
                     (ExchangeId::WooxSpot, StreamKind::L2) => {
                         unimplemented!()
                     }
@@ -240,21 +236,17 @@ impl DynamicStreams {
                             channels.snapshots.entry(exchange).or_default().tx.clone(),
                         ));
                     }
-                    (ExchangeId::BitstampSpot, StreamKind::Trades) => {
-                        tokio::spawn(consume::<BitstampSpotPublicData, Trades>(
+                    (ExchangeId::BitstampSpot, StreamKind::Trade) => {
+                        tokio::spawn(consume::<BitstampSpotPublicData, Trade>(
                             subs.into_iter()
                                 .map(|sub| {
-                                    Subscription::new(
-                                        BitstampSpotPublicData,
-                                        sub.instrument,
-                                        Trades,
-                                    )
+                                    Subscription::new(BitstampSpotPublicData, sub.instrument, Trade)
                                 })
                                 .collect(),
-                            channels.trades.entry(exchange).or_default().tx.clone(),
+                            channels.trade.entry(exchange).or_default().tx.clone(),
                         ));
                     }
-                    (ExchangeId::BitstampSpot, StreamKind::TradesVec) => {
+                    (ExchangeId::BitstampSpot, StreamKind::Trades) => {
                         unimplemented!()
                     }
                     (ExchangeId::BitstampSpot, StreamKind::L2) => {
@@ -280,21 +272,17 @@ impl DynamicStreams {
                             channels.snapshots.entry(exchange).or_default().tx.clone(),
                         ));
                     }
-                    (ExchangeId::CoinExSpot, StreamKind::TradesVec) => {
-                        tokio::spawn(consume::<CoinExSpotPublicData, TradesVec>(
+                    (ExchangeId::CoinExSpot, StreamKind::Trades) => {
+                        tokio::spawn(consume::<CoinExSpotPublicData, Trades>(
                             subs.into_iter()
                                 .map(|sub| {
-                                    Subscription::new(
-                                        CoinExSpotPublicData,
-                                        sub.instrument,
-                                        TradesVec,
-                                    )
+                                    Subscription::new(CoinExSpotPublicData, sub.instrument, Trades)
                                 })
                                 .collect(),
-                            channels.trades_vec.entry(exchange).or_default().tx.clone(),
+                            channels.trades.entry(exchange).or_default().tx.clone(),
                         ));
                     }
-                    (ExchangeId::CoinExSpot, StreamKind::Trades) => {
+                    (ExchangeId::CoinExSpot, StreamKind::Trade) => {
                         unimplemented!()
                     }
                     (ExchangeId::CoinExSpot, StreamKind::L2) => {
@@ -320,17 +308,17 @@ impl DynamicStreams {
                             channels.snapshots.entry(exchange).or_default().tx.clone(),
                         ));
                     }
-                    (ExchangeId::OkxSpot, StreamKind::Trades) => {
-                        tokio::spawn(consume::<OkxSpotPublicData, Trades>(
+                    (ExchangeId::OkxSpot, StreamKind::Trade) => {
+                        tokio::spawn(consume::<OkxSpotPublicData, Trade>(
                             subs.into_iter()
                                 .map(|sub| {
-                                    Subscription::new(OkxSpotPublicData, sub.instrument, Trades)
+                                    Subscription::new(OkxSpotPublicData, sub.instrument, Trade)
                                 })
                                 .collect(),
-                            channels.trades.entry(exchange).or_default().tx.clone(),
+                            channels.trade.entry(exchange).or_default().tx.clone(),
                         ));
                     }
-                    (ExchangeId::OkxSpot, StreamKind::TradesVec) => {
+                    (ExchangeId::OkxSpot, StreamKind::Trades) => {
                         unimplemented!()
                     }
                     (ExchangeId::OkxSpot, StreamKind::L2) => {
@@ -356,17 +344,17 @@ impl DynamicStreams {
                             channels.snapshots.entry(exchange).or_default().tx.clone(),
                         ));
                     }
-                    (ExchangeId::KuCoinSpot, StreamKind::Trades) => {
-                        tokio::spawn(consume::<KuCoinSpotPublicData, Trades>(
+                    (ExchangeId::KuCoinSpot, StreamKind::Trade) => {
+                        tokio::spawn(consume::<KuCoinSpotPublicData, Trade>(
                             subs.into_iter()
                                 .map(|sub| {
-                                    Subscription::new(KuCoinSpotPublicData, sub.instrument, Trades)
+                                    Subscription::new(KuCoinSpotPublicData, sub.instrument, Trade)
                                 })
                                 .collect(),
-                            channels.trades.entry(exchange).or_default().tx.clone(),
+                            channels.trade.entry(exchange).or_default().tx.clone(),
                         ));
                     }
-                    (ExchangeId::KuCoinSpot, StreamKind::TradesVec) => {
+                    (ExchangeId::KuCoinSpot, StreamKind::Trades) => {
                         unimplemented!()
                     }
                     (ExchangeId::KuCoinSpot, StreamKind::L2) => {
@@ -380,13 +368,13 @@ impl DynamicStreams {
         }
 
         Ok(Self {
-            trades: channels
-                .trades
+            trade: channels
+                .trade
                 .into_iter()
                 .map(|(exchange, channel)| (exchange, UnboundedReceiverStream::new(channel.rx)))
                 .collect(),
-            trades_vec: channels
-                .trades_vec
+            trades: channels
+                .trades
                 .into_iter()
                 .map(|(exchange, channel)| (exchange, UnboundedReceiverStream::new(channel.rx)))
                 .collect(),
@@ -407,13 +395,13 @@ impl DynamicStreams {
         &mut self,
         exchange: ExchangeId,
     ) -> Option<UnboundedReceiverStream<MarketEvent<EventTrade>>> {
-        self.trades.remove(&exchange)
+        self.trade.remove(&exchange)
     }
 
     pub fn select_all_trades(
         &mut self,
     ) -> SelectAll<UnboundedReceiverStream<MarketEvent<EventTrade>>> {
-        select_all(std::mem::take(&mut self.trades).into_values())
+        select_all(std::mem::take(&mut self.trade).into_values())
     }
 
     pub fn select_l2s(
@@ -438,16 +426,16 @@ impl DynamicStreams {
         MarketEvent<EventOrderBookSnapshot>: Into<Output>,
     {
         let Self {
+            trade,
             trades,
-            trades_vec,
             l2s,
             snapshots,
         } = self;
-        let trades = trades
+        let trade = trade
             .into_values()
             .map(|stream| stream.map(MarketEvent::into).boxed());
 
-        let trades_vec = trades_vec
+        let trades = trades
             .into_values()
             .map(|stream| stream.map(MarketEvent::into).boxed());
 
@@ -459,7 +447,7 @@ impl DynamicStreams {
             .into_values()
             .map(|stream| stream.map(MarketEvent::into).boxed());
 
-        let all = trades.chain(l2s).chain(snapshots).chain(trades_vec);
+        let all = trade.chain(l2s).chain(snapshots).chain(trades);
 
         select_all(all)
     }
@@ -471,7 +459,7 @@ impl DynamicStreams {
 #[derive(Default)]
 struct Channels {
     l2s: HashMap<ExchangeId, ExchangeChannel<MarketEvent<EventOrderBook>>>,
-    trades: HashMap<ExchangeId, ExchangeChannel<MarketEvent<EventTrade>>>,
-    trades_vec: HashMap<ExchangeId, ExchangeChannel<MarketEvent<Vec<EventTrade>>>>,
+    trade: HashMap<ExchangeId, ExchangeChannel<MarketEvent<EventTrade>>>,
+    trades: HashMap<ExchangeId, ExchangeChannel<MarketEvent<Vec<EventTrade>>>>,
     snapshots: HashMap<ExchangeId, ExchangeChannel<MarketEvent<EventOrderBookSnapshot>>>,
 }

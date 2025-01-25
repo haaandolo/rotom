@@ -4,7 +4,7 @@ use rotom_data::{
     exchange::{binance::BinanceSpotPublicData, poloniex::PoloniexSpotPublicData},
     model::{
         event_book::OrderBookL2,
-        event_trade::Trades,
+        event_trade::Trade,
         market_event::{DataKind, MarketEvent},
     },
     streams::builder::Streams,
@@ -32,15 +32,15 @@ pub async fn main() {
                 ]),
         )
         .add(
-            Streams::<Trades>::builder()
+            Streams::<Trade>::builder()
                 .subscribe([
-                    (BinanceSpotPublicData, "sol", "usdt", Trades),
-                    (BinanceSpotPublicData, "btc", "usdt", Trades),
-                    (BinanceSpotPublicData, "btc", "usdt", Trades),
+                    (BinanceSpotPublicData, "sol", "usdt", Trade),
+                    (BinanceSpotPublicData, "btc", "usdt", Trade),
+                    (BinanceSpotPublicData, "btc", "usdt", Trade),
                 ])
                 .subscribe([
-                    (PoloniexSpotPublicData, "sol", "usdt", Trades),
-                    (PoloniexSpotPublicData, "btc", "usdt", Trades),
+                    (PoloniexSpotPublicData, "sol", "usdt", Trade),
+                    (PoloniexSpotPublicData, "btc", "usdt", Trade),
                 ]),
         )
         .init()

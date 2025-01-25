@@ -9,9 +9,9 @@ use super::SubKind;
 /*----- */
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize, Default)]
-pub struct Trades;
+pub struct Trade;
 
-impl SubKind for Trades {
+impl SubKind for Trade {
     type Event = EventTrade;
 }
 
@@ -38,11 +38,11 @@ impl SubKind for AggTrades {
 }
 
 /*----- */
-// Trades Vec
+// Trades
 /*----- */
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize, Default)]
-pub struct TradesVec;
+pub struct Trades;
 
-impl SubKind for TradesVec {
+impl SubKind for Trades {
     type Event = Vec<EventTrade>;
 }

@@ -4,7 +4,7 @@ use model::{BitstampOrderBookSnapshot, BitstampSubscriptionResponse, BitstampTra
 use serde_json::json;
 
 use crate::{
-    model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trades},
+    model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trade},
     protocols::ws::WsMessage,
     shared::subscription_models::{ExchangeId, ExchangeSubscription},
     transformer::stateless_transformer::StatelessTransformer,
@@ -63,7 +63,7 @@ impl StreamSelector<BitstampSpotPublicData, OrderBookSnapshot> for BitstampSpotP
         StatelessTransformer<BitstampSpotPublicData, Self::Stream, OrderBookSnapshot>;
 }
 
-impl StreamSelector<BitstampSpotPublicData, Trades> for BitstampSpotPublicData {
+impl StreamSelector<BitstampSpotPublicData, Trade> for BitstampSpotPublicData {
     type Stream = BitstampTrade;
-    type StreamTransformer = StatelessTransformer<BitstampSpotPublicData, Self::Stream, Trades>;
+    type StreamTransformer = StatelessTransformer<BitstampSpotPublicData, Self::Stream, Trade>;
 }

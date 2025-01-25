@@ -16,12 +16,12 @@ pub async fn main() {
     /*----- */
     let streams = DynamicStreams::init([
         vec![
-            (ExchangeId::PoloniexSpot, "eth", "usdt", StreamKind::Trades),
+            (ExchangeId::PoloniexSpot, "eth", "usdt", StreamKind::Trade),
             (ExchangeId::BinanceSpot, "sui", "usdt", StreamKind::L2),
         ],
         vec![
-            (ExchangeId::BinanceSpot, "btc", "usdt", StreamKind::Trades),
-            (ExchangeId::PoloniexSpot, "btc", "usdt", StreamKind::Trades),
+            (ExchangeId::BinanceSpot, "btc", "usdt", StreamKind::Trade),
+            (ExchangeId::PoloniexSpot, "btc", "usdt", StreamKind::Trade),
         ],
         vec![
             (ExchangeId::PoloniexSpot, "ada", "usdt", StreamKind::L2),
@@ -31,9 +31,9 @@ pub async fn main() {
         ],
         vec![
             (ExchangeId::BinanceSpot, "arb", "usdt", StreamKind::L2),
-            (ExchangeId::BinanceSpot, "eth", "usdt", StreamKind::Trades),
-            (ExchangeId::BinanceSpot, "btc", "usdt", StreamKind::Trades),
-            (ExchangeId::BinanceSpot, "celo", "usdt", StreamKind::Trades),
+            (ExchangeId::BinanceSpot, "eth", "usdt", StreamKind::Trade),
+            (ExchangeId::BinanceSpot, "btc", "usdt", StreamKind::Trade),
+            (ExchangeId::BinanceSpot, "celo", "usdt", StreamKind::Trade),
         ],
     ])
     .await

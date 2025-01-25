@@ -1,3 +1,7 @@
+pub mod channel;
+pub mod market;
+pub mod model;
+
 use async_trait::async_trait;
 use base64::Engine;
 use channel::OkxChannel;
@@ -10,18 +14,13 @@ use sha2::Sha256;
 
 use crate::{
     error::SocketError,
-    model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trades},
+    model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trade},
     protocols::ws::WsMessage,
     shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
     transformer::stateless_transformer::StatelessTransformer,
 };
 
 use super::{PublicHttpConnector, PublicStreamConnector, StreamSelector};
-
-pub mod channel;
-pub mod market;
-pub mod model;
-
 #[derive(Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd, Clone)]
 pub struct OkxSpotPublicData;
 
@@ -121,7 +120,7 @@ impl StreamSelector<OkxSpotPublicData, OrderBookSnapshot> for OkxSpotPublicData 
         StatelessTransformer<OkxSpotPublicData, Self::Stream, OrderBookSnapshot>;
 }
 
-impl StreamSelector<OkxSpotPublicData, Trades> for OkxSpotPublicData {
+impl StreamSelector<OkxSpotPublicData, Trade> for OkxSpotPublicData {
     type Stream = OkxTrade;
-    type StreamTransformer = StatelessTransformer<OkxSpotPublicData, Self::Stream, Trades>;
+    type StreamTransformer = StatelessTransformer<OkxSpotPublicData, Self::Stream, Trade>;
 }

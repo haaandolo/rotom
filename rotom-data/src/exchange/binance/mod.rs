@@ -18,7 +18,7 @@ use crate::{
     exchange::{PublicHttpConnector, PublicStreamConnector, StreamSelector},
     model::{
         event_book::OrderBookL2,
-        event_trade::{AggTrades, Trades},
+        event_trade::{AggTrades, Trade},
     },
     protocols::ws::WsMessage,
     shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
@@ -80,9 +80,9 @@ impl StreamSelector<BinanceSpotPublicData, OrderBookL2> for BinanceSpotPublicDat
         MultiBookTransformer<BinanceSpotPublicData, BinanceSpotBookUpdater, OrderBookL2>;
 }
 
-impl StreamSelector<BinanceSpotPublicData, Trades> for BinanceSpotPublicData {
+impl StreamSelector<BinanceSpotPublicData, Trade> for BinanceSpotPublicData {
     type Stream = BinanceTrade;
-    type StreamTransformer = StatelessTransformer<BinanceSpotPublicData, Self::Stream, Trades>;
+    type StreamTransformer = StatelessTransformer<BinanceSpotPublicData, Self::Stream, Trade>;
 }
 
 impl StreamSelector<BinanceSpotPublicData, AggTrades> for BinanceSpotPublicData {

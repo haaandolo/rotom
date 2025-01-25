@@ -1,6 +1,6 @@
 use crate::{
     exchange::Identifier,
-    model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trades},
+    model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trade},
     shared::subscription_models::Subscription,
 };
 
@@ -26,7 +26,7 @@ impl Identifier<WooxChannel> for Subscription<WooxSpotPublicData, OrderBookSnaps
     }
 }
 
-impl Identifier<WooxChannel> for Subscription<WooxSpotPublicData, Trades> {
+impl Identifier<WooxChannel> for Subscription<WooxSpotPublicData, Trade> {
     fn id(&self) -> WooxChannel {
         WooxChannel::TRADES
     }

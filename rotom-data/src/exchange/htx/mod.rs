@@ -11,7 +11,7 @@ use serde_json::json;
 
 use crate::{
     error::SocketError,
-    model::{event_book_snapshot::OrderBookSnapshot, event_trade::TradesVec},
+    model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trades},
     protocols::ws::{PingInterval, WsMessage},
     shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
     transformer::stateless_transformer::StatelessTransformer,
@@ -104,7 +104,7 @@ impl StreamSelector<HtxSpotPublicData, OrderBookSnapshot> for HtxSpotPublicData 
         StatelessTransformer<HtxSpotPublicData, Self::Stream, OrderBookSnapshot>;
 }
 
-impl StreamSelector<HtxSpotPublicData, TradesVec> for HtxSpotPublicData {
+impl StreamSelector<HtxSpotPublicData, Trades> for HtxSpotPublicData {
     type Stream = HtxTrade;
-    type StreamTransformer = StatelessTransformer<HtxSpotPublicData, Self::Stream, TradesVec>;
+    type StreamTransformer = StatelessTransformer<HtxSpotPublicData, Self::Stream, Trades>;
 }

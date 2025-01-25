@@ -11,7 +11,7 @@ use serde_json::json;
 use crate::error::SocketError;
 use crate::exchange::{PublicHttpConnector, PublicStreamConnector, StreamSelector};
 use crate::model::event_book::OrderBookL2;
-use crate::model::event_trade::Trades;
+use crate::model::event_trade::Trade;
 use crate::protocols::ws::{PingInterval, WsMessage};
 use crate::shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument};
 use crate::transformer::book::MultiBookTransformer;
@@ -70,9 +70,9 @@ impl StreamSelector<PoloniexSpotPublicData, OrderBookL2> for PoloniexSpotPublicD
         MultiBookTransformer<PoloniexSpotPublicData, PoloniexSpotBookUpdater, OrderBookL2>;
 }
 
-impl StreamSelector<PoloniexSpotPublicData, Trades> for PoloniexSpotPublicData {
+impl StreamSelector<PoloniexSpotPublicData, Trade> for PoloniexSpotPublicData {
     type Stream = PoloniexTrade;
-    type StreamTransformer = StatelessTransformer<PoloniexSpotPublicData, Self::Stream, Trades>;
+    type StreamTransformer = StatelessTransformer<PoloniexSpotPublicData, Self::Stream, Trade>;
 }
 
 /*----- */

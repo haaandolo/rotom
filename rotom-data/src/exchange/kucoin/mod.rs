@@ -13,7 +13,7 @@ use serde_json::json;
 
 use crate::{
     error::SocketError,
-    model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trades},
+    model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trade},
     protocols::ws::{PingInterval, WsMessage},
     shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
     transformer::stateless_transformer::StatelessTransformer,
@@ -138,7 +138,7 @@ impl StreamSelector<KuCoinSpotPublicData, OrderBookSnapshot> for KuCoinSpotPubli
         StatelessTransformer<KuCoinSpotPublicData, Self::Stream, OrderBookSnapshot>;
 }
 
-impl StreamSelector<KuCoinSpotPublicData, Trades> for KuCoinSpotPublicData {
+impl StreamSelector<KuCoinSpotPublicData, Trade> for KuCoinSpotPublicData {
     type Stream = KuCoinTrade;
-    type StreamTransformer = StatelessTransformer<KuCoinSpotPublicData, Self::Stream, Trades>;
+    type StreamTransformer = StatelessTransformer<KuCoinSpotPublicData, Self::Stream, Trade>;
 }

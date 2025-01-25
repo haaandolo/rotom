@@ -3,7 +3,7 @@ use crate::{
     exchange::Identifier,
     model::{
         event_book::OrderBookL2,
-        event_trade::{AggTrades, Trades},
+        event_trade::{AggTrades, Trade},
     },
     shared::subscription_models::Subscription,
 };
@@ -31,7 +31,7 @@ impl Identifier<BinanceChannel> for Subscription<BinanceSpotPublicData, OrderBoo
     }
 }
 
-impl Identifier<BinanceChannel> for Subscription<BinanceSpotPublicData, Trades> {
+impl Identifier<BinanceChannel> for Subscription<BinanceSpotPublicData, Trade> {
     fn id(&self) -> BinanceChannel {
         BinanceChannel::TRADES
     }

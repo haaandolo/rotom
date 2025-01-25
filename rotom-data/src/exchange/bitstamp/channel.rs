@@ -1,6 +1,6 @@
 use crate::{
     exchange::Identifier,
-    model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trades},
+    model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trade},
     shared::subscription_models::Subscription,
 };
 
@@ -26,7 +26,7 @@ impl Identifier<BitstampChannel> for Subscription<BitstampSpotPublicData, OrderB
     }
 }
 
-impl Identifier<BitstampChannel> for Subscription<BitstampSpotPublicData, Trades> {
+impl Identifier<BitstampChannel> for Subscription<BitstampSpotPublicData, Trade> {
     fn id(&self) -> BitstampChannel {
         BitstampChannel::TRADES
     }

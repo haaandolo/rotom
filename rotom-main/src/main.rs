@@ -1,7 +1,13 @@
 use futures::StreamExt;
 use rotom_data::{
     exchange::{
-        binance::BinanceSpotPublicData, coinex::{market::CoinExMarket, CoinExSpotPublicData}, htx::HtxSpotPublicData, kucoin::KuCoinSpotPublicData, okx::OkxSpotPublicData, woox::WooxSpotPublicData, PublicHttpConnector
+        binance::BinanceSpotPublicData,
+        coinex::{market::CoinExMarket, CoinExSpotPublicData},
+        htx::HtxSpotPublicData,
+        kucoin::KuCoinSpotPublicData,
+        okx::OkxSpotPublicData,
+        woox::WooxSpotPublicData,
+        PublicHttpConnector,
     },
     model::{
         event_book_snapshot::OrderBookSnapshot,
@@ -27,25 +33,25 @@ pub async fn main() {
     // test_http().await;
     // test_http_private().await
 
-    let test = KuCoinSpotPublicData::get_network_info().await;
-    println!("{:?}", test);
+    // let test = KuCoinSpotPublicData::get_network_info().await;
+    // println!("{:?}", test);
 
     ///////////
     // Dynamic stream
     ///////////
-    // let streams = DynamicStreams::init([vec![
-    //     // (ExchangeId::CoinExSpot, "btc", "usdt", StreamKind::Snapshot),
-    //     (ExchangeId::KuCoinSpot, "btc", "usdt", StreamKind::Trades),
-    //     (ExchangeId::KuCoinSpot, "eth", "usdt", StreamKind::Trades),
-    // ]])
-    // .await
-    // .unwrap();
+    let streams = DynamicStreams::init([vec![
+        // (ExchangeId::CoinExSpot, "btc", "usdt", StreamKind::Snapshot),
+        // (ExchangeId::KuCoinSpot, "btc", "usdt", StreamKind::Trade),
+        (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Trades),
+    ]])
+    .await
+    .unwrap();
 
-    // let mut merged = streams.select_all::<MarketEvent<DataKind>>();
-    // while let Some(event) = merged.next().await {
-    //     println!("{:?}", event);
-    //     println!("###########");
-    // }
+    let mut merged = streams.select_all::<MarketEvent<DataKind>>();
+    while let Some(event) = merged.next().await {
+        println!("{:?}", event);
+        println!("###########");
+    }
 
     ///////////
     // Testing
@@ -78,7 +84,6 @@ fn init_logging() {
 // Todo:
 // Exmo
 // phmex
-// kucoin
 // ascendex
 // bitstamp chain int
 // change instrument map key from market to stream key
