@@ -1,12 +1,7 @@
 use futures::StreamExt;
 use rotom_data::{
     exchange::{
-        binance::BinanceSpotPublicData,
-        coinex::{market::CoinExMarket, CoinExSpotPublicData},
-        htx::HtxSpotPublicData,
-        okx::OkxSpotPublicData,
-        woox::WooxSpotPublicData,
-        PublicHttpConnector,
+        binance::BinanceSpotPublicData, coinex::{market::CoinExMarket, CoinExSpotPublicData}, htx::HtxSpotPublicData, kucoin::KuCoinSpotPublicData, okx::OkxSpotPublicData, woox::WooxSpotPublicData, PublicHttpConnector
     },
     model::{
         event_book_snapshot::OrderBookSnapshot,
@@ -29,25 +24,28 @@ pub async fn main() {
     ///////////
     init_logging();
     // test_ws().await;
-    // test_http_private().await
     // test_http().await;
+    // test_http_private().await
+
+    let test = KuCoinSpotPublicData::get_network_info().await;
+    println!("{:?}", test);
 
     ///////////
     // Dynamic stream
     ///////////
-    let streams = DynamicStreams::init([vec![
-        // (ExchangeId::CoinExSpot, "btc", "usdt", StreamKind::Snapshot),
-        (ExchangeId::KuCoinSpot, "btc", "usdt", StreamKind::Trades),
-        (ExchangeId::KuCoinSpot, "eth", "usdt", StreamKind::Trades),
-    ]])
-    .await
-    .unwrap();
+    // let streams = DynamicStreams::init([vec![
+    //     // (ExchangeId::CoinExSpot, "btc", "usdt", StreamKind::Snapshot),
+    //     (ExchangeId::KuCoinSpot, "btc", "usdt", StreamKind::Trades),
+    //     (ExchangeId::KuCoinSpot, "eth", "usdt", StreamKind::Trades),
+    // ]])
+    // .await
+    // .unwrap();
 
-    let mut merged = streams.select_all::<MarketEvent<DataKind>>();
-    while let Some(event) = merged.next().await {
-        println!("{:?}", event);
-        println!("###########");
-    }
+    // let mut merged = streams.select_all::<MarketEvent<DataKind>>();
+    // while let Some(event) = merged.next().await {
+    //     println!("{:?}", event);
+    //     println!("###########");
+    // }
 
     ///////////
     // Testing

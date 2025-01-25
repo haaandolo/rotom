@@ -168,3 +168,64 @@ impl Validator for KuCoinSubscriptionResponse {
         }
     }
 }
+
+/*----- */
+// Network information
+/*----- */
+#[derive(Debug, Deserialize)]
+pub struct KuCoinNetworkInfo {
+    #[serde(rename = "code")]
+    pub code: String,
+    #[serde(rename = "data")]
+    pub data: Option<Vec<KuCoinNetworkInfoData>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct KuCoinNetworkInfoData {
+    pub currency: String,
+    pub name: String,
+    #[serde(rename = "fullName")]
+    pub full_name: String,
+    pub precision: u8,
+    pub confirms: Option<u8>,
+    #[serde(rename = "contractAddress")]
+    pub contract_address: Option<String>,
+    #[serde(rename = "isMarginEnabled")]
+    pub is_margin_enabled: bool,
+    #[serde(rename = "isDebitEnabled")]
+    pub is_debit_enabled: bool,
+    pub chains: Option<Vec<KuCoinNetworkChain>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct KuCoinNetworkChain {
+    #[serde(rename = "chainName")]
+    pub chain_name: String,
+    #[serde(rename = "withdrawalMinSize")]
+    pub withdrawal_min_size: String,
+    #[serde(rename = "depositMinSize")]
+    pub deposit_min_size: Option<String>,
+    #[serde(rename = "withdrawFeeRate")]
+    pub withdraw_fee_rate: Option<String>,
+    #[serde(rename = "withdrawalMinFee")]
+    pub withdrawal_min_fee: String,
+    #[serde(rename = "isWithdrawEnabled")]
+    pub is_withdraw_enabled: bool,
+    #[serde(rename = "isDepositEnabled")]
+    pub is_deposit_enabled: bool,
+    pub confirms: u32,
+    #[serde(rename = "preConfirms")]
+    pub pre_confirms: u32,
+    #[serde(rename = "contractAddress")]
+    pub contract_address: String,
+    #[serde(rename = "withdrawPrecision")]
+    pub withdraw_precision: u8,
+    #[serde(rename = "maxWithdraw")]
+    pub max_withdraw: Option<String>,
+    #[serde(rename = "maxDeposit")]
+    pub max_deposit: Option<String>,
+    #[serde(rename = "needTag")]
+    pub need_tag: bool,
+    #[serde(rename = "chainId")]
+    pub chain_id: String,
+}

@@ -4,7 +4,7 @@ use crate::{
     exchange::{
         bitstamp::model::{BitstampOrderBookSnapshot, BitstampSubscriptionResponse, BitstampTrade},
         coinex::model::{CoinExNetworkInfo, CoinExOrderBookSnapshot, CoinExTrade},
-        kucoin::model::{KuCoinOrderBookSnapshot, KuCoinTrade, KuCoinWsUrl},
+        kucoin::model::{KuCoinNetworkInfo, KuCoinOrderBookSnapshot, KuCoinTrade, KuCoinWsUrl},
         okx::model::{OkxNetworkInfo, OkxOrderBookSnapshot, OkxSubscriptionResponse, OkxTrade},
     },
     protocols::ws::ws_parser::{StreamParser, WebSocketParser},
@@ -104,11 +104,16 @@ ws conn success: Ok(Text("{\"id\":\"y8rx20rZbc\",\"type\":\"welcome\"}"))
 // Test http
 /*----- */
 pub async fn test_http() {
-    let test = reqwest::get("https://www.okx.com/api/v5/asset/currencies")
+    let base_url = "https://api.kucoin.com";
+    let request_path = "/api/v3/currencies";
+
+    let url = format!("{}{}", base_url, request_path);
+    let test = reqwest::get(url)
         .await
         .unwrap()
-        // .json::<CoinExNetworkInfo>()
-        .json::<serde_json::Value>()
+        // .text()
+        .json::<KuCoinNetworkInfo>()
+        // .json::<serde_json::Value>()
         .await
         .unwrap();
     println!("{:#?}", test);

@@ -72,7 +72,7 @@ impl PublicHttpConnector for WooxSpotPublicData {
 
     type BookSnapShot = serde_json::Value;
     type ExchangeTickerInfo = serde_json::Value;
-    type NetworkInfo = WooxNetworkInfo; // todo
+    type NetworkInfo = WooxNetworkInfo; 
 
     async fn get_book_snapshot(_instrument: Instrument) -> Result<Self::BookSnapShot, SocketError> {
         unimplemented!()
