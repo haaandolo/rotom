@@ -5,7 +5,9 @@ use crate::{
         bitstamp::model::{BitstampOrderBookSnapshot, BitstampSubscriptionResponse, BitstampTrade},
         coinex::model::{CoinExNetworkInfo, CoinExOrderBookSnapshot, CoinExTrade},
         exmo::model::{ExmoOrderBookSnapshot, ExmoSubscriptionResponse, ExmoTrades},
-        kucoin::model::{KuCoinNetworkInfo, KuCoinOrderBookSnapshot, KuCoinTrade, KuCoinWsUrl},
+        kucoin::model::{
+            ExmoNetworkInfo, KuCoinNetworkInfo, KuCoinOrderBookSnapshot, KuCoinTrade, KuCoinWsUrl,
+        },
         okx::model::{OkxNetworkInfo, OkxOrderBookSnapshot, OkxSubscriptionResponse, OkxTrade},
     },
     protocols::ws::ws_parser::{StreamParser, WebSocketParser},
@@ -103,8 +105,8 @@ pub async fn test_http() {
     let test = reqwest::get(url)
         .await
         .unwrap()
-        .text()
-        // .json::<KuCoinNetworkInfo>()
+        // .text()
+        .json::<ExmoNetworkInfo>()
         // .json::<serde_json::Value>()
         .await
         .unwrap();

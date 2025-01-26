@@ -3,6 +3,7 @@ use rotom_data::{
     exchange::{
         binance::BinanceSpotPublicData,
         coinex::{market::CoinExMarket, CoinExSpotPublicData},
+        exmo::ExmoSpotPublicData,
         htx::HtxSpotPublicData,
         kucoin::KuCoinSpotPublicData,
         okx::OkxSpotPublicData,
@@ -33,28 +34,28 @@ pub async fn main() {
     // test_http().await;
     // test_http_private().await
 
-    // let test = KuCoinSpotPublicData::get_network_info().await;
-    // println!("{:?}", test);
+    let test = ExmoSpotPublicData::get_network_info().await;
+    println!("{:#?}", test);
 
     ///////////
     // Dynamic stream
     ///////////
-    let streams = DynamicStreams::init([vec![
-        // (ExchangeId::ExmoSpot, "trx", "usdt", StreamKind::Snapshot),
-        // (ExchangeId::ExmoSpot, "xrp", "usdt", StreamKind::Snapshot),
-        (ExchangeId::ExmoSpot, "trx", "usdt", StreamKind::Trades),
-        (ExchangeId::ExmoSpot, "xrp", "usdt", StreamKind::Trades),
-        // (ExchangeId::KuCoinSpot, "btc", "usdt", StreamKind::Trade),
-        // (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Trades),
-    ]])
-    .await
-    .unwrap();
+    // let streams = DynamicStreams::init([vec![
+    //     // (ExchangeId::ExmoSpot, "trx", "usdt", StreamKind::Snapshot),
+    //     // (ExchangeId::ExmoSpot, "xrp", "usdt", StreamKind::Snapshot),
+    //     (ExchangeId::ExmoSpot, "trx", "usdt", StreamKind::Trades),
+    //     (ExchangeId::ExmoSpot, "xrp", "usdt", StreamKind::Trades),
+    //     // (ExchangeId::KuCoinSpot, "btc", "usdt", StreamKind::Trade),
+    //     // (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Trades),
+    // ]])
+    // .await
+    // .unwrap();
 
-    let mut merged = streams.select_all::<MarketEvent<DataKind>>();
-    while let Some(event) = merged.next().await {
-        println!("{:?}", event);
-        println!("###########");
-    }
+    // let mut merged = streams.select_all::<MarketEvent<DataKind>>();
+    // while let Some(event) = merged.next().await {
+    //     println!("{:?}", event);
+    //     println!("###########");
+    // }
 
     ///////////
     // Testing
