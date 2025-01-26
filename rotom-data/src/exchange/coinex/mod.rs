@@ -35,7 +35,7 @@ impl PublicStreamConnector for CoinExSpotPublicData {
         COINEX_SPOT_WS_URL
     }
 
-    // Request for CoinEx is cooked, add more if else statements here if you add more channels
+    // Request for CoinEx is cooked. Add more if else statements here if you add more channels
     fn requests(
         subscriptions: &[ExchangeSubscription<Self, Self::Channel, Self::Market>],
     ) -> Option<WsMessage> {

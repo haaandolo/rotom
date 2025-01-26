@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use chrono::Utc;
 use futures::try_join;
 
 use crate::{
@@ -15,12 +16,44 @@ use super::model::AscendExBookUpdate;
 
 #[derive(Default, Debug)]
 pub struct AscendExSpotBookUpdater {
+    pub updates_processed: u64,
     pub sequence_number: u64,
 }
 
 impl AscendExSpotBookUpdater {
-    pub fn new(last_update_id: u64) -> Self {
-        Self { sequence_number: 0 }
+    pub fn new(sequence_number: u64) -> Self {
+        Self {
+            updates_processed: 0,
+            sequence_number,
+        }
+    }
+
+    pub fn is_first_update(&self) -> bool {
+        self.updates_processed == 0
+    }
+
+    pub fn validate_first_update(&self, update: &AscendExBookUpdate) -> Result<(), SocketError> {
+        if update.data.seqnum > self.sequence_number {
+            Ok(())
+        } else {
+            Err(SocketError::InvalidSequence {
+                symbol: update.symbol.clone(),
+                prev_last_update_id: self.sequence_number,
+                first_update_id: update.data.seqnum,
+            })
+        }
+    }
+
+    pub fn validate_next_update(&self, update: &AscendExBookUpdate) -> Result<(), SocketError> {
+        if update.data.seqnum == self.sequence_number + 1 {
+            Ok(())
+        } else {
+            Err(SocketError::InvalidSequence {
+                symbol: update.symbol.clone(),
+                prev_last_update_id: self.sequence_number,
+                first_update_id: update.data.seqnum,
+            })
+        }
     }
 }
 
@@ -53,7 +86,7 @@ impl OrderBookUpdater for AscendExSpotBookUpdater {
 
                 Ok(InstrumentOrderBook {
                     instrument: instrument.clone(),
-                    updater: Self::new(snapshot.data.data.seqnum),
+                    updater: Self::new(0),
                     book: orderbook_init,
                 })
             }
@@ -70,6 +103,18 @@ impl OrderBookUpdater for AscendExSpotBookUpdater {
         book: &mut Self::OrderBook,
         update: Self::UpdateEvent,
     ) -> Result<Option<EventOrderBook>, SocketError> {
+        if self.is_first_update() {
+            self.validate_first_update(&update)?;
+        } else {
+            self.validate_next_update(&update)?;
+        }
+
+        book.last_update_time = Utc::now();
+        book.process_lvl2(update.data.bids, update.data.asks);
+
+        self.updates_processed += 1;
+        self.sequence_number = update.data.seqnum;
+
         Ok(Some(book.book_snapshot()))
     }
 }

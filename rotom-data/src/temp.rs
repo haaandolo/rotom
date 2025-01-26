@@ -37,6 +37,12 @@ use crate::{
 // "{\"id\":1,\"code\":0,\"message\":\"OK\"}"
 // "{\"id\":1,\"code\":20001,\"message\":\"invalid argument\"}"
 
+/*
+37823785454
+37823819988
+37823819989
+*/
+
 /*----- */
 // Test Ws
 /*----- */
@@ -46,8 +52,10 @@ pub async fn test_ws() {
     let payload = json!({
         "op": "sub",
         "id": uuid::Uuid::new_v4(),
-        "ch":"depth:ASD/USDT"
+        "ch":"depth:ASD/USDT,BTC/USDT"
     });
+
+    //{"ch":"depth:ASD/USDT","id":"cca2c2e0-2b3c-4eda-8e17-dfb926c84425","op":"sub"}
 
     let (ws_stream, _) = connect_async(url).await.unwrap();
     let (mut write, mut read) = ws_stream.split();
@@ -100,8 +108,8 @@ pub async fn test_http() {
     // https://ascendex.com/api/pro/v1/depth?symbol=ASD/USDT
 
     let base_url = "https://ascendex.com";
-    // let request_path = "/api/pro/v1/depth";
-    let request_path = "/api/pro/v1/cash/products";
+    let request_path = "/api/pro/v1/depth";
+    // let request_path = "/api/pro/v1/cash/products";
 
     let coin = "ASD/USDT";
 
@@ -111,11 +119,11 @@ pub async fn test_http() {
         .await
         .unwrap()
         // .text()
-        .json::<AscendExTickerInfo>()
+        .json::<AscendExOrderBookSnapshot>()
         // .json::<serde_json::Value>()
         .await
         .unwrap();
-    println!("{:#?}", test);
+    println!("{:?}", test);
 }
 
 pub async fn test_http_private() {

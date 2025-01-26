@@ -11,10 +11,10 @@ use super::single::ExchangeChannel;
 use crate::{
     error::SocketError,
     exchange::{
-        binance::BinanceSpotPublicData, bitstamp::BitstampSpotPublicData,
-        coinex::CoinExSpotPublicData, exmo::ExmoSpotPublicData, htx::HtxSpotPublicData,
-        kucoin::KuCoinSpotPublicData, okx::OkxSpotPublicData, poloniex::PoloniexSpotPublicData,
-        woox::WooxSpotPublicData,
+        ascendex::AscendExSpotPublicData, binance::BinanceSpotPublicData,
+        bitstamp::BitstampSpotPublicData, coinex::CoinExSpotPublicData, exmo::ExmoSpotPublicData,
+        htx::HtxSpotPublicData, kucoin::KuCoinSpotPublicData, okx::OkxSpotPublicData,
+        poloniex::PoloniexSpotPublicData, woox::WooxSpotPublicData,
     },
     model::{
         event_book::{EventOrderBook, OrderBookL2},
@@ -391,8 +391,7 @@ impl DynamicStreams {
                             channels.trades.entry(exchange).or_default().tx.clone(),
                         ));
                     }
-                    (ExchangeId::ExmoSpot, StreamKind::Trade) => {
-                    }
+                    (ExchangeId::ExmoSpot, StreamKind::Trade) => {}
                     (ExchangeId::ExmoSpot, StreamKind::L2) => {
                         unimplemented!()
                     }
@@ -402,21 +401,9 @@ impl DynamicStreams {
                     /*----- */
                     // Ascendex Spot
                     /*----- */
-                    (ExchangeId::AscendExSpot, StreamKind::Snapshot) => {
-                        // tokio::spawn(consume::<ExmoSpotPublicData, OrderBookSnapshot>(
-                        //     subs.into_iter()
-                        //         .map(|sub| {
-                        //             Subscription::new(
-                        //                 ExmoSpotPublicData,
-                        //                 sub.instrument,
-                        //                 OrderBookSnapshot,
-                        //             )
-                        //         })
-                        //         .collect(),
-                        //     channels.snapshots.entry(exchange).or_default().tx.clone(),
-                        // ));
-                    }
-                    (ExchangeId::AscendExSpot, StreamKind::Trades) => {
+                    (ExchangeId::AscendExSpot, StreamKind::Snapshot) => {}
+                    (ExchangeId::AscendExSpot, StreamKind::Trades) => {}
+                    (ExchangeId::AscendExSpot, StreamKind::Trade) => {
                         // tokio::spawn(consume::<ExmoSpotPublicData, Trades>(
                         //     subs.into_iter()
                         //         .map(|sub| {
@@ -426,10 +413,19 @@ impl DynamicStreams {
                         //     channels.trades.entry(exchange).or_default().tx.clone(),
                         // ));
                     }
-                    (ExchangeId::AscendExSpot, StreamKind::Trade) => {
-                    }
                     (ExchangeId::AscendExSpot, StreamKind::L2) => {
-                        unimplemented!()
+                        tokio::spawn(consume::<AscendExSpotPublicData, OrderBookL2>(
+                            subs.into_iter()
+                                .map(|sub| {
+                                    Subscription::new(
+                                        AscendExSpotPublicData,
+                                        sub.instrument,
+                                        OrderBookL2,
+                                    )
+                                })
+                                .collect(),
+                            channels.l2s.entry(exchange).or_default().tx.clone(),
+                        ));
                     }
                     (ExchangeId::AscendExSpot, StreamKind::AggTrades) => {
                         unimplemented!()

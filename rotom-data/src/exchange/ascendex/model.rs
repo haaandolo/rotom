@@ -2,9 +2,11 @@ use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
 use crate::assets::level::Level;
+use crate::error::SocketError;
 use crate::exchange::Identifier;
 use crate::model::ticker_info::TickerInfo;
 use crate::shared::de::{de_str, de_u64_epoch_ms_as_datetime_utc};
+use crate::streams::validator::Validator;
 
 /*----- */
 // OrderBook Update L2
@@ -80,6 +82,21 @@ pub enum AscendExSubscriptionResponse {
         code: u64,
         info: String,
     },
+}
+
+impl Validator for AscendExSubscriptionResponse {
+    fn validate(self) -> Result<Self, SocketError> {
+        match self {
+            AscendExSubscriptionResponse::ConnectionSuccess { .. } => Ok(self),
+            AscendExSubscriptionResponse::SubscriptionSuccess { .. } => Ok(self),
+            AscendExSubscriptionResponse::SubscriptionError { reason, info, .. } => {
+                Err(SocketError::Subscribe(format!(
+                    "received failure subscription response AscendExSpot. Reason: {}. Info {}",
+                    reason, info
+                )))
+            }
+        }
+    }
 }
 
 /*----- */
