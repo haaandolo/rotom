@@ -12,8 +12,9 @@ use crate::{
     error::SocketError,
     exchange::{
         binance::BinanceSpotPublicData, bitstamp::BitstampSpotPublicData,
-        coinex::CoinExSpotPublicData, htx::HtxSpotPublicData, kucoin::KuCoinSpotPublicData,
-        okx::OkxSpotPublicData, poloniex::PoloniexSpotPublicData, woox::WooxSpotPublicData,
+        coinex::CoinExSpotPublicData, exmo::ExmoSpotPublicData, htx::HtxSpotPublicData,
+        kucoin::KuCoinSpotPublicData, okx::OkxSpotPublicData, poloniex::PoloniexSpotPublicData,
+        woox::WooxSpotPublicData,
     },
     model::{
         event_book::{EventOrderBook, OrderBookL2},
@@ -361,6 +362,41 @@ impl DynamicStreams {
                         unimplemented!()
                     }
                     (ExchangeId::KuCoinSpot, StreamKind::AggTrades) => {
+                        unimplemented!()
+                    }
+                    /*----- */
+                    // Exmo Spot
+                    /*----- */
+                    (ExchangeId::ExmoSpot, StreamKind::Snapshot) => {
+                        tokio::spawn(consume::<ExmoSpotPublicData, OrderBookSnapshot>(
+                            subs.into_iter()
+                                .map(|sub| {
+                                    Subscription::new(
+                                        ExmoSpotPublicData,
+                                        sub.instrument,
+                                        OrderBookSnapshot,
+                                    )
+                                })
+                                .collect(),
+                            channels.snapshots.entry(exchange).or_default().tx.clone(),
+                        ));
+                    }
+                    (ExchangeId::ExmoSpot, StreamKind::Trades) => {
+                        tokio::spawn(consume::<ExmoSpotPublicData, Trades>(
+                            subs.into_iter()
+                                .map(|sub| {
+                                    Subscription::new(ExmoSpotPublicData, sub.instrument, Trades)
+                                })
+                                .collect(),
+                            channels.trades.entry(exchange).or_default().tx.clone(),
+                        ));
+                    }
+                    (ExchangeId::ExmoSpot, StreamKind::Trade) => {
+                    }
+                    (ExchangeId::ExmoSpot, StreamKind::L2) => {
+                        unimplemented!()
+                    }
+                    (ExchangeId::ExmoSpot, StreamKind::AggTrades) => {
                         unimplemented!()
                     }
                 };

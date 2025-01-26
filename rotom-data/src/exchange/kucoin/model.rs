@@ -62,7 +62,7 @@ pub struct KuCoinOrderBookSnapshotData {
 
 impl Identifier<String> for KuCoinOrderBookSnapshot {
     fn id(&self) -> String {
-        self.topic.split(':').last().unwrap().to_owned()
+        self.topic.split(':').last().unwrap_or_default().to_owned()
     }
 }
 

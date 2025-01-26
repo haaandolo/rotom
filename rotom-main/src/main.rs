@@ -40,9 +40,12 @@ pub async fn main() {
     // Dynamic stream
     ///////////
     let streams = DynamicStreams::init([vec![
-        // (ExchangeId::CoinExSpot, "btc", "usdt", StreamKind::Snapshot),
+        // (ExchangeId::ExmoSpot, "trx", "usdt", StreamKind::Snapshot),
+        // (ExchangeId::ExmoSpot, "xrp", "usdt", StreamKind::Snapshot),
+        (ExchangeId::ExmoSpot, "trx", "usdt", StreamKind::Trades),
+        (ExchangeId::ExmoSpot, "xrp", "usdt", StreamKind::Trades),
         // (ExchangeId::KuCoinSpot, "btc", "usdt", StreamKind::Trade),
-        (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Trades),
+        // (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Trades),
     ]])
     .await
     .unwrap();
@@ -85,7 +88,7 @@ fn init_logging() {
 // Exmo
 // phmex
 // ascendex
-// bitstamp chain int
+// bitstamp chain in
 // change instrument map key from market to stream key
 
 //////////////////////////////////////////////////////////////////////////////////////////////

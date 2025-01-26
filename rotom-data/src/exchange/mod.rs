@@ -1,6 +1,7 @@
 pub mod binance;
 pub mod bitstamp;
 pub mod coinex;
+pub mod exmo;
 pub mod htx;
 pub mod kucoin;
 pub mod okx;

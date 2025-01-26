@@ -4,6 +4,7 @@ use crate::{
     exchange::{
         bitstamp::model::{BitstampOrderBookSnapshot, BitstampSubscriptionResponse, BitstampTrade},
         coinex::model::{CoinExNetworkInfo, CoinExOrderBookSnapshot, CoinExTrade},
+        exmo::model::{ExmoOrderBookSnapshot, ExmoSubscriptionResponse, ExmoTrades},
         kucoin::model::{KuCoinNetworkInfo, KuCoinOrderBookSnapshot, KuCoinTrade, KuCoinWsUrl},
         okx::model::{OkxNetworkInfo, OkxOrderBookSnapshot, OkxSubscriptionResponse, OkxTrade},
     },
@@ -34,53 +35,38 @@ use crate::{
 // Test Ws
 /*----- */
 pub async fn test_ws() {
-    let base_url_http = "https://api.kucoin.com";
-    let token_post = "/api/v1/bullet-public";
-
-    let test = reqwest::Client::new()
-        .post(format!("{}{}", base_url_http, token_post))
-        .send()
-        .await
-        .unwrap()
-        .json::<KuCoinWsUrl>()
-        .await
-        .unwrap();
-
-    println!("{:#?}", test);
-
-    let url = format!(
-        "{}?token={}&[connectId={}]",
-        test.data.instance_servers[0].endpoint,
-        test.data.token,
-        uuid::Uuid::new_v4()
-    );
+    let url = "wss://ws-api.exmo.com:443/v1/public";
 
     let payload = json!({
-        "id": uuid::Uuid::new_v4(),
-        "type": "subscribe",
-        // "topic": "/spotMarket/level2Depth5:BTC-USDT,ETH-USDT",
-        "topic": "/market/match:BTC-USDT,ETH-USDT",
-
-        "response": true
+        "id": rand::thread_rng().gen::<u16>(),
+        "method": "subscribe",
+        "topics": [
+            "spot/order_book_snapshots:BTC_USD",
+            "spot/order_book_snapshots:ETH_USD"
+            // "spot/trades:TRX_USDT",
+            // "spot/trades:XRP_USDT"
+        ]
     });
 
     let (ws_stream, _) = connect_async(url).await.unwrap();
     let (mut write, mut read) = ws_stream.split();
     let _ = write.send(Message::text(payload.to_string())).await;
 
-    let ping_message = PingInterval {
-        time: 30,
-        message: json!({ "id":  uuid::Uuid::new_v4(), "type": "ping"}),
-    };
+    // let ping_message = PingInterval {
+    //     time: 500,
+    //     message: json!({ "id":  uuid::Uuid::new_v4(), "type": "ping"}),
+    // };
 
-    tokio::spawn(schedule_pings_to_exchange(write, ping_message));
+    // request: {"id":63801,"method":"subscribe","topics":["spot/order_book_snapshots:BTC_USDT","spot/order_book_snapshots:ETH_USDT"]}
+
+    // tokio::spawn(schedule_pings_to_exchange(write, ping_message));
 
     while let Some(msg) = read.next().await {
         // println!("{:?}", msg);
-        println!("###########");
+        // println!("###########");
 
-        let test = WebSocketParser::parse::<KuCoinTrade>(msg);
-        println!("{:#?}", test);
+        let test = WebSocketParser::parse::<ExmoOrderBookSnapshot>(msg);
+        println!("{:?}", test);
 
         // if let Message::Binary(bin) = msg.unwrap() {
         //     let mut decoder = GzDecoder::new(&bin[..]);
@@ -93,10 +79,14 @@ pub async fn test_ws() {
 }
 
 /*
-sub errror: Ok(Text("{\"id\":\"c817503b-341d-473e-af9f-800a9baecc3e\",\"type\":\"error\",\"code\":415,\"data\":\"type is not supported\"}"))
-sub success: Ok(Text("{\"id\":\"b1768693-10f3-44ff-a58f-1af4829c6447\",\"type\":\"ack\"}"))
+conn success:
+Ok(Text("{\"ts\":1737843430925,\"event\":\"info\",\"code\":1,\"message\":\"connection established\",\"session_id\":\"b33b2848-3193-4d97-9dfd-f5b9d6dce959\"}"))
 
-ws conn success: Ok(Text("{\"id\":\"y8rx20rZbc\",\"type\":\"welcome\"}"))
+error:
+Ok(Text("{\"ts\":1737840749765,\"event\":\"error\",\"code\":201006,\"message\":\"invalid command format. should be JSON\"}"))
+
+succuss:
+Ok(Text("{\"ts\":1737843431374,\"event\":\"subscribed\",\"id\":64045,\"topic\":\"spot/order_book_snapshots:BTC_USD\"}"))
 */
 
 // /api/v5/asset/currencies
@@ -104,15 +94,17 @@ ws conn success: Ok(Text("{\"id\":\"y8rx20rZbc\",\"type\":\"welcome\"}"))
 // Test http
 /*----- */
 pub async fn test_http() {
-    let base_url = "https://api.kucoin.com";
-    let request_path = "/api/v3/currencies";
+    //curl --location ''
+
+    let base_url = "https://api.exmo.com/v1.1";
+    let request_path = "/payments/providers/crypto/list";
 
     let url = format!("{}{}", base_url, request_path);
     let test = reqwest::get(url)
         .await
         .unwrap()
-        // .text()
-        .json::<KuCoinNetworkInfo>()
+        .text()
+        // .json::<KuCoinNetworkInfo>()
         // .json::<serde_json::Value>()
         .await
         .unwrap();

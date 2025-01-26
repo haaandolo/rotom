@@ -74,7 +74,7 @@ fn de_levels_okx<'de, D>(deserializer: D) -> Result<Vec<Level>, D::Error>
 where
     D: serde::Deserializer<'de>,
 {
-    let raw_data: Vec<[String; 4]> = Vec::deserialize(deserializer)?;
+    let raw_data: Vec<[&str; 4]> = Vec::deserialize(deserializer)?;
 
     Ok(raw_data
         .into_iter()

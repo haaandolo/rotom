@@ -85,6 +85,9 @@ impl From<(&ExchangeId, &Instrument)> for AssetFormatted {
             ExchangeId::KuCoinSpot => {
                 AssetFormatted(format!("{}-{}", instrument.base, instrument.quote).to_uppercase())
             }
+            ExchangeId::ExmoSpot => {
+                AssetFormatted(format!("{}_{}", instrument.base, instrument.quote).to_uppercase())
+            }
         }
     }
 }
@@ -156,6 +159,12 @@ impl From<(&ExchangeId, &Instrument)> for ExchangeAssetId {
             )),
             ExchangeId::KuCoinSpot => ExchangeAssetId(format!(
                 "{}_{}-{}",
+                exchange.as_str(),
+                instrument.base.to_uppercase(),
+                instrument.quote.to_uppercase()
+            )),
+            ExchangeId::ExmoSpot => ExchangeAssetId(format!(
+                "{}_{}_{}",
                 exchange.as_str(),
                 instrument.base.to_uppercase(),
                 instrument.quote.to_uppercase()
