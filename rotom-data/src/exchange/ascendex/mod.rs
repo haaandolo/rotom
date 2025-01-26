@@ -3,21 +3,20 @@ use channel::AscendExChannel;
 use l2::AscendExSpotBookUpdater;
 use market::AscendExMarket;
 use model::{
-    AscendExBookUpdate, AscendExOrderBookSnapshot, AscendExSubscriptionResponse, AscendExTickerInfo,
+    AscendExBookUpdate, AscendExOrderBookSnapshot, AscendExSubscriptionResponse,
+    AscendExTickerInfo, AscendExTrades,
 };
 use serde_json::json;
 
 use crate::{
     error::SocketError,
-    model::{event_book::OrderBookL2, event_trade::Trade},
+    model::{event_book::OrderBookL2, event_trade::Trades},
     protocols::ws::WsMessage,
     shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
     transformer::{book::MultiBookTransformer, stateless_transformer::StatelessTransformer},
 };
 
-use super::{
-    coinex::CoinExSpotPublicData, PublicHttpConnector, PublicStreamConnector, StreamSelector,
-};
+use super::{PublicHttpConnector, PublicStreamConnector, StreamSelector};
 
 pub mod channel;
 pub mod l2;
@@ -129,7 +128,7 @@ impl StreamSelector<AscendExSpotPublicData, OrderBookL2> for AscendExSpotPublicD
         MultiBookTransformer<AscendExSpotPublicData, AscendExSpotBookUpdater, OrderBookL2>;
 }
 
-// impl StreamSelector<AscendExSpotPublicData, Trade> for AscendExSpotPublicData {
-//     type Stream = serde_json::Value;
-//     type StreamTransformer = StatelessTransformer<AscendExSpotPublicData, Self::Stream, Trade>;
-// }
+impl StreamSelector<AscendExSpotPublicData, Trades> for AscendExSpotPublicData {
+    type Stream = AscendExTrades;
+    type StreamTransformer = StatelessTransformer<AscendExSpotPublicData, Self::Stream, Trades>;
+}

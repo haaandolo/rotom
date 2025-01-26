@@ -1,6 +1,6 @@
 use crate::{
     exchange::Identifier,
-    model::{event_book::OrderBookL2, event_trade::Trade},
+    model::{event_book::OrderBookL2, event_trade::Trades},
     shared::subscription_models::Subscription,
 };
 
@@ -26,7 +26,7 @@ impl Identifier<AscendExChannel> for Subscription<AscendExSpotPublicData, OrderB
     }
 }
 
-impl Identifier<AscendExChannel> for Subscription<AscendExSpotPublicData, Trade> {
+impl Identifier<AscendExChannel> for Subscription<AscendExSpotPublicData, Trades> {
     fn id(&self) -> AscendExChannel {
         AscendExChannel::TRADES
     }

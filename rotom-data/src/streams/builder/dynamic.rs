@@ -402,17 +402,21 @@ impl DynamicStreams {
                     // Ascendex Spot
                     /*----- */
                     (ExchangeId::AscendExSpot, StreamKind::Snapshot) => {}
-                    (ExchangeId::AscendExSpot, StreamKind::Trades) => {}
-                    (ExchangeId::AscendExSpot, StreamKind::Trade) => {
-                        // tokio::spawn(consume::<ExmoSpotPublicData, Trades>(
-                        //     subs.into_iter()
-                        //         .map(|sub| {
-                        //             Subscription::new(ExmoSpotPublicData, sub.instrument, Trades)
-                        //         })
-                        //         .collect(),
-                        //     channels.trades.entry(exchange).or_default().tx.clone(),
-                        // ));
+                    (ExchangeId::AscendExSpot, StreamKind::Trades) => {
+                        tokio::spawn(consume::<AscendExSpotPublicData, Trades>(
+                            subs.into_iter()
+                                .map(|sub| {
+                                    Subscription::new(
+                                        AscendExSpotPublicData,
+                                        sub.instrument,
+                                        Trades,
+                                    )
+                                })
+                                .collect(),
+                            channels.trades.entry(exchange).or_default().tx.clone(),
+                        ));
                     }
+                    (ExchangeId::AscendExSpot, StreamKind::Trade) => {}
                     (ExchangeId::AscendExSpot, StreamKind::L2) => {
                         tokio::spawn(consume::<AscendExSpotPublicData, OrderBookL2>(
                             subs.into_iter()

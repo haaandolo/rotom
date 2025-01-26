@@ -4,8 +4,11 @@ use serde::Deserialize;
 use crate::assets::level::Level;
 use crate::error::SocketError;
 use crate::exchange::Identifier;
+use crate::model::event_trade::EventTrade;
+use crate::model::market_event::MarketEvent;
 use crate::model::ticker_info::TickerInfo;
 use crate::shared::de::{de_str, de_u64_epoch_ms_as_datetime_utc};
+use crate::shared::subscription_models::{ExchangeId, Instrument};
 use crate::streams::validator::Validator;
 
 /*----- */
@@ -56,6 +59,52 @@ pub struct AscendExOrderBookSnapshotTicks {
     pub seqnum: u64,
     pub asks: Vec<Level>,
     pub bids: Vec<Level>,
+}
+
+/*----- */
+// Trade
+/*----- */
+#[derive(Debug, Default, Deserialize)]
+pub struct AscendExTrades {
+    pub m: String,
+    pub symbol: String,
+    pub data: Vec<AscendExTradesData>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+pub struct AscendExTradesData {
+    #[serde(deserialize_with = "de_str")]
+    pub p: f64,
+    #[serde(deserialize_with = "de_str")]
+    pub q: f64,
+    #[serde(deserialize_with = "de_u64_epoch_ms_as_datetime_utc")]
+    pub ts: DateTime<Utc>,
+    pub bm: bool,
+    pub seqnum: u64,
+}
+
+impl Identifier<String> for AscendExTrades {
+    fn id(&self) -> String {
+        self.symbol.clone()
+    }
+}
+
+impl From<(AscendExTrades, Instrument)> for MarketEvent<Vec<EventTrade>> {
+    fn from((event, instrument): (AscendExTrades, Instrument)) -> Self {
+        Self {
+            exchange_time: event.data[0].ts, // ts for all trades in the Vex should be the same, so this is allowed
+            received_time: Utc::now(),
+            exchange: ExchangeId::AscendExSpot,
+            instrument,
+            event_data: event
+                .data
+                .iter()
+                .map(|trade_data| {
+                    EventTrade::new(Level::new(trade_data.p, trade_data.q), trade_data.bm)
+                })
+                .collect::<Vec<EventTrade>>(),
+        }
+    }
 }
 
 /*----- */

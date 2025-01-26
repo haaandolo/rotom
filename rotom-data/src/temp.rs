@@ -4,7 +4,7 @@ use crate::{
     exchange::{
         ascendex::model::{
             AscendExBookUpdate, AscendExOrderBookSnapshot, AscendExSubscriptionResponse,
-            AscendExTickerInfo,
+            AscendExTickerInfo, AscendExTrades,
         },
         bitstamp::model::{BitstampOrderBookSnapshot, BitstampSubscriptionResponse, BitstampTrade},
         coinex::model::{CoinExNetworkInfo, CoinExOrderBookSnapshot, CoinExTrade},
@@ -52,10 +52,8 @@ pub async fn test_ws() {
     let payload = json!({
         "op": "sub",
         "id": uuid::Uuid::new_v4(),
-        "ch":"depth:ASD/USDT,BTC/USDT"
+        "ch":"trades:ASD/USDT,BTC/USDT"
     });
-
-    //{"ch":"depth:ASD/USDT","id":"cca2c2e0-2b3c-4eda-8e17-dfb926c84425","op":"sub"}
 
     let (ws_stream, _) = connect_async(url).await.unwrap();
     let (mut write, mut read) = ws_stream.split();
@@ -74,7 +72,7 @@ pub async fn test_ws() {
         // println!("{:?}", msg);
         // println!("###########");
 
-        let test = WebSocketParser::parse::<AscendExBookUpdate>(msg);
+        let test = WebSocketParser::parse::<AscendExTrades>(msg);
         println!("{:?}", test);
 
         // if let Message::Binary(bin) = msg.unwrap() {
