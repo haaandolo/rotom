@@ -399,6 +399,41 @@ impl DynamicStreams {
                     (ExchangeId::ExmoSpot, StreamKind::AggTrades) => {
                         unimplemented!()
                     }
+                    /*----- */
+                    // Ascendex Spot
+                    /*----- */
+                    (ExchangeId::AscendExSpot, StreamKind::Snapshot) => {
+                        // tokio::spawn(consume::<ExmoSpotPublicData, OrderBookSnapshot>(
+                        //     subs.into_iter()
+                        //         .map(|sub| {
+                        //             Subscription::new(
+                        //                 ExmoSpotPublicData,
+                        //                 sub.instrument,
+                        //                 OrderBookSnapshot,
+                        //             )
+                        //         })
+                        //         .collect(),
+                        //     channels.snapshots.entry(exchange).or_default().tx.clone(),
+                        // ));
+                    }
+                    (ExchangeId::AscendExSpot, StreamKind::Trades) => {
+                        // tokio::spawn(consume::<ExmoSpotPublicData, Trades>(
+                        //     subs.into_iter()
+                        //         .map(|sub| {
+                        //             Subscription::new(ExmoSpotPublicData, sub.instrument, Trades)
+                        //         })
+                        //         .collect(),
+                        //     channels.trades.entry(exchange).or_default().tx.clone(),
+                        // ));
+                    }
+                    (ExchangeId::AscendExSpot, StreamKind::Trade) => {
+                    }
+                    (ExchangeId::AscendExSpot, StreamKind::L2) => {
+                        unimplemented!()
+                    }
+                    (ExchangeId::AscendExSpot, StreamKind::AggTrades) => {
+                        unimplemented!()
+                    }
                 };
             }
         }

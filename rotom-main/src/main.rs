@@ -1,6 +1,7 @@
 use futures::StreamExt;
 use rotom_data::{
     exchange::{
+        ascendex::AscendExSpotPublicData,
         binance::BinanceSpotPublicData,
         coinex::{market::CoinExMarket, CoinExSpotPublicData},
         exmo::ExmoSpotPublicData,
@@ -34,28 +35,28 @@ pub async fn main() {
     // test_http().await;
     // test_http_private().await
 
-    let test = ExmoSpotPublicData::get_network_info().await;
-    println!("{:#?}", test);
+    // let test = AscendExSpotPublicData::get_ticker_info(Instrument::new("op", "usdt")).await;
+    // println!("{:#?}", test);
 
     ///////////
     // Dynamic stream
     ///////////
-    // let streams = DynamicStreams::init([vec![
-    //     // (ExchangeId::ExmoSpot, "trx", "usdt", StreamKind::Snapshot),
-    //     // (ExchangeId::ExmoSpot, "xrp", "usdt", StreamKind::Snapshot),
-    //     (ExchangeId::ExmoSpot, "trx", "usdt", StreamKind::Trades),
-    //     (ExchangeId::ExmoSpot, "xrp", "usdt", StreamKind::Trades),
-    //     // (ExchangeId::KuCoinSpot, "btc", "usdt", StreamKind::Trade),
-    //     // (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Trades),
-    // ]])
-    // .await
-    // .unwrap();
+    let streams = DynamicStreams::init([vec![
+        // (ExchangeId::ExmoSpot, "trx", "usdt", StreamKind::Snapshot),
+        (ExchangeId::ExmoSpot, "xrp", "usdt", StreamKind::Snapshot),
+        // (ExchangeId::PoloniexSpot, "btc", "usdt", StreamKind::L2),
+        // (ExchangeId::ExmoSpot, "xrp", "usdt", StreamKind::Trades),
+        // (ExchangeId::KuCoinSpot, "btc", "usdt", StreamKind::Trade),
+        // (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Trades),
+    ]])
+    .await
+    .unwrap();
 
-    // let mut merged = streams.select_all::<MarketEvent<DataKind>>();
-    // while let Some(event) = merged.next().await {
-    //     println!("{:?}", event);
-    //     println!("###########");
-    // }
+    let mut merged = streams.select_all::<MarketEvent<DataKind>>();
+    while let Some(event) = merged.next().await {
+        println!("{:?}", event);
+        println!("###########");
+    }
 
     ///////////
     // Testing
@@ -86,7 +87,6 @@ fn init_logging() {
 }
 
 // Todo:
-// Exmo
 // phmex
 // ascendex
 // bitstamp chain in

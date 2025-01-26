@@ -2,6 +2,10 @@ use std::io::Read;
 
 use crate::{
     exchange::{
+        ascendex::model::{
+            AscendExBookUpdate, AscendExOrderBookSnapshot, AscendExSubscriptionResponse,
+            AscendExTickerInfo,
+        },
         bitstamp::model::{BitstampOrderBookSnapshot, BitstampSubscriptionResponse, BitstampTrade},
         coinex::model::{CoinExNetworkInfo, CoinExOrderBookSnapshot, CoinExTrade},
         exmo::model::{ExmoOrderBookSnapshot, ExmoSubscriptionResponse, ExmoTrades},
@@ -37,17 +41,12 @@ use crate::{
 // Test Ws
 /*----- */
 pub async fn test_ws() {
-    let url = "wss://ws-api.exmo.com:443/v1/public";
+    let url = "wss://ascendex.com/7/api/pro/v1/stream";
 
     let payload = json!({
-        "id": rand::thread_rng().gen::<u16>(),
-        "method": "subscribe",
-        "topics": [
-            "spot/order_book_snapshots:BTC_USD",
-            "spot/order_book_snapshots:ETH_USD"
-            // "spot/trades:TRX_USDT",
-            // "spot/trades:XRP_USDT"
-        ]
+        "op": "sub",
+        "id": uuid::Uuid::new_v4(),
+        "ch":"depth:ASD/USDT"
     });
 
     let (ws_stream, _) = connect_async(url).await.unwrap();
@@ -67,7 +66,7 @@ pub async fn test_ws() {
         // println!("{:?}", msg);
         // println!("###########");
 
-        let test = WebSocketParser::parse::<ExmoOrderBookSnapshot>(msg);
+        let test = WebSocketParser::parse::<AscendExBookUpdate>(msg);
         println!("{:?}", test);
 
         // if let Message::Binary(bin) = msg.unwrap() {
@@ -82,13 +81,13 @@ pub async fn test_ws() {
 
 /*
 conn success:
-Ok(Text("{\"ts\":1737843430925,\"event\":\"info\",\"code\":1,\"message\":\"connection established\",\"session_id\":\"b33b2848-3193-4d97-9dfd-f5b9d6dce959\"}"))
-
-error:
-Ok(Text("{\"ts\":1737840749765,\"event\":\"error\",\"code\":201006,\"message\":\"invalid command format. should be JSON\"}"))
+Ok(Text("{\"m\":\"connected\",\"type\":\"unauth\"}"))
 
 succuss:
-Ok(Text("{\"ts\":1737843431374,\"event\":\"subscribed\",\"id\":64045,\"topic\":\"spot/order_book_snapshots:BTC_USD\"}"))
+Ok(Text("{\"m\":\"sub\",\"id\":\"abc123\",\"ch\":\"depth:ASD/USDT\",\"code\":0}"))
+
+error:
+Ok(Text("{\"m\":\"error\",\"id\":\"abc123\",\"code\":100005,\"reason\":\"INVALID_WS_REQUEST_DATA\",\"info\":\"Invalid channel: deh:ASD/USDT\"}"))
 */
 
 // /api/v5/asset/currencies
@@ -98,15 +97,21 @@ Ok(Text("{\"ts\":1737843431374,\"event\":\"subscribed\",\"id\":64045,\"topic\":\
 pub async fn test_http() {
     //curl --location ''
 
-    let base_url = "https://api.exmo.com/v1.1";
-    let request_path = "/payments/providers/crypto/list";
+    // https://ascendex.com/api/pro/v1/depth?symbol=ASD/USDT
 
-    let url = format!("{}{}", base_url, request_path);
+    let base_url = "https://ascendex.com";
+    // let request_path = "/api/pro/v1/depth";
+    let request_path = "/api/pro/v1/cash/products";
+
+    let coin = "ASD/USDT";
+
+    let url = format!("{}{}?symbol={}", base_url, request_path, coin);
+    // let url = format!("{}{}", base_url, request_path);
     let test = reqwest::get(url)
         .await
         .unwrap()
         // .text()
-        .json::<ExmoNetworkInfo>()
+        .json::<AscendExTickerInfo>()
         // .json::<serde_json::Value>()
         .await
         .unwrap();

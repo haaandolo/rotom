@@ -36,66 +36,62 @@ impl OrderBook {
     }
 
     #[inline]
-    pub fn process_lvl2(&mut self, bids: Option<Vec<Level>>, asks: Option<Vec<Level>>) {
+    pub fn process_lvl2(&mut self, bids: Vec<Level>, asks: Vec<Level>) {
         // Process bids
-        if let Some(levels) = bids {
-            levels.into_iter().for_each(|level| {
-                let price_tick = self.price_ticks(level.price, self.inv_tick_size);
-                if level.size == 0.0 {
-                    if let Some(removed) = self.bids.remove(&price_tick) {
-                        if let Some(best_bid) = self.best_bid {
-                            if removed.price == best_bid.price {
-                                self.best_bid = self.bids.values().next_back().cloned();
-                            }
+        bids.into_iter().for_each(|level| {
+            let price_tick = self.price_ticks(level.price, self.inv_tick_size);
+            if level.size == 0.0 {
+                if let Some(removed) = self.bids.remove(&price_tick) {
+                    if let Some(best_bid) = self.best_bid {
+                        if removed.price == best_bid.price {
+                            self.best_bid = self.bids.values().next_back().cloned();
                         }
                     }
-                } else {
-                    self.bids
-                        .entry(price_tick)
-                        .and_modify(|e| e.size = level.size)
-                        .or_insert(level);
-
-                    let Some(best_bid) = self.best_bid else {
-                        self.best_bid = Some(level);
-                        return;
-                    };
-
-                    if level.price >= best_bid.price {
-                        self.best_bid = Some(level);
-                    }
                 }
-            })
-        }
+            } else {
+                self.bids
+                    .entry(price_tick)
+                    .and_modify(|e| e.size = level.size)
+                    .or_insert(level);
+
+                let Some(best_bid) = self.best_bid else {
+                    self.best_bid = Some(level);
+                    return;
+                };
+
+                if level.price >= best_bid.price {
+                    self.best_bid = Some(level);
+                }
+            }
+        });
 
         // Process asks
-        if let Some(levels) = asks {
-            levels.into_iter().for_each(|level| {
-                let price_tick = self.price_ticks(level.price, self.inv_tick_size);
-                if level.size == 0.0 {
-                    if let Some(removed) = self.asks.remove(&price_tick) {
-                        if let Some(best_ask) = self.best_ask {
-                            if removed.price == best_ask.price {
-                                self.best_ask = self.asks.values().next().cloned();
-                            }
+        asks.into_iter().for_each(|level| {
+            let price_tick = self.price_ticks(level.price, self.inv_tick_size);
+            if level.size == 0.0 {
+                if let Some(removed) = self.asks.remove(&price_tick) {
+                    if let Some(best_ask) = self.best_ask {
+                        if removed.price == best_ask.price {
+                            self.best_ask = self.asks.values().next().cloned();
                         }
                     }
-                } else {
-                    self.asks
-                        .entry(price_tick)
-                        .and_modify(|e| e.size = level.size)
-                        .or_insert(level);
-
-                    let Some(best_ask) = self.best_ask else {
-                        self.best_ask = Some(level);
-                        return;
-                    };
-
-                    if level.price <= best_ask.price {
-                        self.best_ask = Some(level)
-                    }
                 }
-            })
-        }
+            } else {
+                self.asks
+                    .entry(price_tick)
+                    .and_modify(|e| e.size = level.size)
+                    .or_insert(level);
+
+                let Some(best_ask) = self.best_ask else {
+                    self.best_ask = Some(level);
+                    return;
+                };
+
+                if level.price <= best_ask.price {
+                    self.best_ask = Some(level)
+                }
+            }
+        })
     }
 
     #[inline]
@@ -105,8 +101,8 @@ impl OrderBook {
 
     #[inline]
     pub fn book_snapshot(&self) -> EventOrderBook {
-        let bids = self.bids.values().rev().take(20).cloned().collect();
-        let asks = self.asks.values().take(20).cloned().collect();
+        let bids = self.bids.values().rev().take(10).cloned().collect();
+        let asks = self.asks.values().take(10).cloned().collect();
         EventOrderBook::new(self.last_update_time, bids, asks)
     }
 

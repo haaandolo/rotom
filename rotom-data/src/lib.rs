@@ -88,6 +88,9 @@ impl From<(&ExchangeId, &Instrument)> for AssetFormatted {
             ExchangeId::ExmoSpot => {
                 AssetFormatted(format!("{}_{}", instrument.base, instrument.quote).to_uppercase())
             }
+            ExchangeId::AscendExSpot => {
+                AssetFormatted(format!("{}/{}", instrument.base, instrument.quote).to_uppercase())
+            }
         }
     }
 }
@@ -165,6 +168,12 @@ impl From<(&ExchangeId, &Instrument)> for ExchangeAssetId {
             )),
             ExchangeId::ExmoSpot => ExchangeAssetId(format!(
                 "{}_{}_{}",
+                exchange.as_str(),
+                instrument.base.to_uppercase(),
+                instrument.quote.to_uppercase()
+            )),
+            ExchangeId::AscendExSpot => ExchangeAssetId(format!(
+                "{}_{}/{}",
                 exchange.as_str(),
                 instrument.base.to_uppercase(),
                 instrument.quote.to_uppercase()

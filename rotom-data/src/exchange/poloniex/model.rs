@@ -12,7 +12,7 @@ use crate::{
         ticker_info::{TickerInfo, TickerSpecs},
     },
     shared::{
-        de::{de_str, de_u64_epoch_ms_as_datetime_utc, deserialize_non_empty_vec},
+        de::{de_str, de_u64_epoch_ms_as_datetime_utc},
         subscription_models::{ExchangeId, Instrument},
         utils::number_to_precision,
     },
@@ -30,10 +30,8 @@ pub struct PoloniexSpotBookData {
         deserialize_with = "de_u64_epoch_ms_as_datetime_utc"
     )]
     pub timestamp: DateTime<Utc>,
-    #[serde(deserialize_with = "deserialize_non_empty_vec")]
-    pub asks: Option<Vec<Level>>,
-    #[serde(deserialize_with = "deserialize_non_empty_vec")]
-    pub bids: Option<Vec<Level>>,
+    pub asks:Vec<Level>,
+    pub bids: Vec<Level>,
     #[serde(alias = "lastId")]
     pub last_id: u64,
     pub id: u64,

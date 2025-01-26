@@ -11,7 +11,7 @@ use crate::{
         ticker_info::{TickerInfo, TickerSpecs},
     },
     shared::{
-        de::{de_str, de_u64_epoch_ms_as_datetime_utc, deserialize_non_empty_vec},
+        de::{de_str, de_u64_epoch_ms_as_datetime_utc},
         subscription_models::{ExchangeId, Instrument},
         utils::snapshot_symbol_default_value,
     },
@@ -30,11 +30,9 @@ pub struct BinanceSpotBookUpdate {
     #[serde(alias = "u")]
     pub last_update_id: u64,
     #[serde(alias = "b")]
-    #[serde(deserialize_with = "deserialize_non_empty_vec")]
-    pub bids: Option<Vec<Level>>,
+    pub bids: Vec<Level>,
     #[serde(alias = "a")]
-    #[serde(deserialize_with = "deserialize_non_empty_vec")]
-    pub asks: Option<Vec<Level>>,
+    pub asks: Vec<Level>,
 }
 
 impl Identifier<String> for BinanceSpotBookUpdate {
@@ -148,10 +146,8 @@ pub struct BinanceSpotSnapshot {
     symbol: String,
     #[serde(rename = "lastUpdateId")]
     pub last_update_id: u64,
-    #[serde(deserialize_with = "deserialize_non_empty_vec")]
-    pub bids: Option<Vec<Level>>,
-    #[serde(deserialize_with = "deserialize_non_empty_vec")]
-    pub asks: Option<Vec<Level>>,
+    pub bids: Vec<Level>,
+    pub asks: Vec<Level>,
 }
 
 /*----- */

@@ -113,45 +113,6 @@ where
     })
 }
 
-// Deserialize a non empty vec else return None
-pub fn deserialize_non_empty_vec<'de, D, T>(deserializer: D) -> Result<Option<Vec<T>>, D::Error>
-where
-    D: Deserializer<'de>,
-    T: Deserialize<'de>,
-{
-    struct NonEmptyVecVisitor<T>(PhantomData<T>);
-
-    impl<'de, T> Visitor<'de> for NonEmptyVecVisitor<T>
-    where
-        T: Deserialize<'de>,
-    {
-        type Value = Option<Vec<T>>;
-
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            formatter.write_str("a sequence")
-        }
-
-        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-        where
-            A: SeqAccess<'de>,
-        {
-            match seq.next_element()? {
-                Some(first) => {
-                    let mut vec = Vec::with_capacity(seq.size_hint().unwrap_or(4));
-                    vec.push(first);
-                    while let Some(element) = seq.next_element()? {
-                        vec.push(element);
-                    }
-                    Ok(Some(vec))
-                }
-                None => Ok(None),
-            }
-        }
-    }
-
-    deserializer.deserialize_seq(NonEmptyVecVisitor(PhantomData))
-}
-
 // Deserialise a optional str. For example value to deserialise is "69.69". This
 // de will return Some(69.69) if exists. If value to derserialise is "1000", it
 // will return Some(1000) if exists. None the value you are de has to be a string.
