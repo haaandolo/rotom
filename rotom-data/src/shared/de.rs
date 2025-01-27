@@ -1,8 +1,4 @@
-use serde::{
-    de::{SeqAccess, Visitor},
-    Deserialize, Deserializer, Serializer,
-};
-use std::{fmt, marker::PhantomData};
+use serde::{Deserialize, Deserializer, Serializer};
 
 // Deserialize a `String` as the desired type.
 pub fn de_str<'de, D, T>(deserializer: D) -> Result<T, D::Error>
@@ -91,7 +87,7 @@ where
     })
 }
 
-// Deserialise string u128 to DateTime<Utc> in milliseconds
+// Deserialise string u64 to DateTime<Utc> in nanoseconds
 pub fn de_str_u64_epoch_ns_as_datetime_utc<'de, D>(
     deserializer: D,
 ) -> Result<chrono::DateTime<chrono::Utc>, D::Error>
@@ -99,6 +95,17 @@ where
     D: Deserializer<'de>,
 {
     de_str(deserializer).map(chrono::DateTime::<chrono::Utc>::from_timestamp_nanos)
+}
+
+// Deserialise string u64 to DateTime<Utc> in nanoseconds
+pub fn de_u64_epoch_ns_as_datetime_utc<'de, D>(
+    deserializer: D,
+) -> Result<chrono::DateTime<chrono::Utc>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    serde::de::Deserialize::deserialize(deserializer)
+        .map(|epoch_ns| datetime_utc_from_epoch_duration(std::time::Duration::from_nanos(epoch_ns)))
 }
 
 // Deserialize a &str "f64" seconds value as `DateTime<Utc>`.

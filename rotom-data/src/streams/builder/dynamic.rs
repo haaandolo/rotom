@@ -14,7 +14,7 @@ use crate::{
         ascendex::AscendExSpotPublicData, binance::BinanceSpotPublicData,
         bitstamp::BitstampSpotPublicData, coinex::CoinExSpotPublicData, exmo::ExmoSpotPublicData,
         htx::HtxSpotPublicData, kucoin::KuCoinSpotPublicData, okx::OkxSpotPublicData,
-        poloniex::PoloniexSpotPublicData, woox::WooxSpotPublicData,
+        phemex::PhemexSpotPublicData, poloniex::PoloniexSpotPublicData, woox::WooxSpotPublicData,
     },
     model::{
         event_book::{EventOrderBook, OrderBookL2},
@@ -432,6 +432,42 @@ impl DynamicStreams {
                         ));
                     }
                     (ExchangeId::AscendExSpot, StreamKind::AggTrades) => {
+                        unimplemented!()
+                    }
+                    /*----- */
+                    // Phemex Spot
+                    /*----- */
+                    (ExchangeId::PhemexSpot, StreamKind::Snapshot) => {}
+                    (ExchangeId::PhemexSpot, StreamKind::Trades) => {
+                        tokio::spawn(consume::<AscendExSpotPublicData, Trades>(
+                            subs.into_iter()
+                                .map(|sub| {
+                                    Subscription::new(
+                                        AscendExSpotPublicData,
+                                        sub.instrument,
+                                        Trades,
+                                    )
+                                })
+                                .collect(),
+                            channels.trades.entry(exchange).or_default().tx.clone(),
+                        ));
+                    }
+                    (ExchangeId::PhemexSpot, StreamKind::Trade) => {}
+                    (ExchangeId::PhemexSpot, StreamKind::L2) => {
+                        tokio::spawn(consume::<PhemexSpotPublicData, OrderBookL2>(
+                            subs.into_iter()
+                                .map(|sub| {
+                                    Subscription::new(
+                                        PhemexSpotPublicData,
+                                        sub.instrument,
+                                        OrderBookL2,
+                                    )
+                                })
+                                .collect(),
+                            channels.l2s.entry(exchange).or_default().tx.clone(),
+                        ));
+                    }
+                    (ExchangeId::PhemexSpot, StreamKind::AggTrades) => {
                         unimplemented!()
                     }
                 };

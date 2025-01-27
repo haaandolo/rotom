@@ -116,7 +116,8 @@ pub enum ExchangeId {
     OkxSpot,
     KuCoinSpot,
     ExmoSpot,
-    AscendExSpot
+    AscendExSpot,
+    PhemexSpot,
 }
 
 impl ExchangeId {
@@ -131,7 +132,8 @@ impl ExchangeId {
             ExchangeId::OkxSpot => "okxspot",
             ExchangeId::KuCoinSpot => "kucoinspot",
             ExchangeId::ExmoSpot => "exmospot",
-            ExchangeId::AscendExSpot=> "ascendexspot",
+            ExchangeId::AscendExSpot => "ascendexspot",
+            ExchangeId::PhemexSpot => "phemexspot",
         }
     }
 }

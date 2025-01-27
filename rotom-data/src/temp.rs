@@ -1,9 +1,10 @@
-use std::io::Read;
+use std::io::{Read, Write};
 
 use crate::{
     exchange::{
         ascendex::model::{
-            AscendExBookUpdate, AscendExNetworkInfo, AscendExOrderBookSnapshot, AscendExSubscriptionResponse, AscendExTickerInfo, AscendExTrades
+            AscendExBookUpdate, AscendExNetworkInfo, AscendExOrderBookSnapshot,
+            AscendExSubscriptionResponse, AscendExTickerInfo, AscendExTrades,
         },
         bitstamp::model::{BitstampOrderBookSnapshot, BitstampSubscriptionResponse, BitstampTrade},
         coinex::model::{CoinExNetworkInfo, CoinExOrderBookSnapshot, CoinExTrade},
@@ -12,6 +13,7 @@ use crate::{
             ExmoNetworkInfo, KuCoinNetworkInfo, KuCoinOrderBookSnapshot, KuCoinTrade, KuCoinWsUrl,
         },
         okx::model::{OkxNetworkInfo, OkxOrderBookSnapshot, OkxSubscriptionResponse, OkxTrade},
+        phemex::model::{PhemexOrderBookUpdate, PhemexSubscriptionResponse, PhemexTickerInfo},
     },
     protocols::ws::ws_parser::{StreamParser, WebSocketParser},
     shared::de::de_str_u64_epoch_ms_as_datetime_utc,
@@ -33,27 +35,21 @@ use crate::{
     protocols::ws::{schedule_pings_to_exchange, PingInterval},
 };
 
-// "{\"id\":1,\"code\":0,\"message\":\"OK\"}"
-// "{\"id\":1,\"code\":20001,\"message\":\"invalid argument\"}"
-
-/*
-37823785454
-37823819988
-37823819989
-*/
-
 /*----- */
 // Test Ws
 /*----- */
 pub async fn test_ws() {
-    let url = "wss://ascendex.com/7/api/pro/v1/stream";
+    let url = "wss://ws.phemex.com";
 
     let payload = json!({
-        "op": "sub",
-        "id": uuid::Uuid::new_v4(),
-        "ch":"trades:ASD/USDT,BTC/USDT"
+      "id": rand::thread_rng().gen::<u64>(),
+      "method": "orderbook.subscribe",
+      "params": [
+        "sBTCUSDT",
+      ]
     });
 
+    // request: {"id":15354615839961262136,"method":"orderbook.subscribe","params":["sBTCUSDT"]}
     let (ws_stream, _) = connect_async(url).await.unwrap();
     let (mut write, mut read) = ws_stream.split();
     let _ = write.send(Message::text(payload.to_string())).await;
@@ -68,11 +64,11 @@ pub async fn test_ws() {
     // tokio::spawn(schedule_pings_to_exchange(write, ping_message));
 
     while let Some(msg) = read.next().await {
-        // println!("{:?}", msg);
-        // println!("###########");
+        println!("{:?}", msg);
+        println!("###########");
 
-        let test = WebSocketParser::parse::<AscendExTrades>(msg);
-        println!("{:?}", test);
+        // let test = WebSocketParser::parse::<PhemexSubscriptionResponse>(msg);
+        // println!("{:?}", test);
 
         // if let Message::Binary(bin) = msg.unwrap() {
         //     let mut decoder = GzDecoder::new(&bin[..]);
@@ -86,16 +82,22 @@ pub async fn test_ws() {
 
 /*
 conn success:
-Ok(Text("{\"m\":\"connected\",\"type\":\"unauth\"}"))
 
 succuss:
-Ok(Text("{\"m\":\"sub\",\"id\":\"abc123\",\"ch\":\"depth:ASD/USDT\",\"code\":0}"))
+Ok(Text("{\"error\":null,\"id\":0,\"result\":{\"status\":\"success\"}}"))
 
 error:
-Ok(Text("{\"m\":\"error\",\"id\":\"abc123\",\"code\":100005,\"reason\":\"INVALID_WS_REQUEST_DATA\",\"info\":\"Invalid channel: deh:ASD/USDT\"}"))
+Ok(Text("{\"error\":{\"code\":6001,\"message\":\"invalid argument\"},\"id\":null,\"result\":null}"))
+
+Ok(Text("{\"book\":{\"asks\":[[10181527000000,191900],[10181528000000,1809700]],\"bids\":[[10172467000000,2670000],[10172466000000,98300]]},\"depth\":30,\"sequence\":36104719812,\"symbol\":\"sBTCUSDT\",\"timestamp\":1737948576197618371,\"type\":\"snapshot\"}"))
+###########
+Ok(Text("{\"book\":{\"asks\":[[10188178000000,0],[10188380000000,2779500]],\"bids\":[]},\"depth\":30,\"sequence\":36104719838,\"symbol\":\"sBTCUSDT\",\"timestamp\":1737948576636759086,\"type\":\"incremental\"}"))
+Ok(Text("{\"book\":{\"asks\":[],\"bids\":[[10167822000000,1924300],[10160289000000,0]]},\"depth\":30,\"sequence\":36104719854,\"symbol\":\"sBTCUSDT\",\"timestamp\":1737948576649455801,\"type\":\"incremental\"}"))
+Ok(Text("{\"book\":{\"asks\":[[10181528000000,0],[10181926000000,2516900],[10182089000000,9539400],[10211372000000,0]],\"bids\":[]},\"depth\":30,\"sequence\":36104719861,\"symbol\":\"sBTCUSDT\",\"timestamp\":1737948576926996935,\"type\":\"incremental\"}"))
+Ok(Text("{\"book\":{\"asks\":[[10181527000000,0],[10211372000000,91000400]],\"bids\":[]},\"depth\":30,\"sequence\":36104719863,\"symbol\":\"sBTCUSDT\",\"timestamp\":1737948577008443430,\"type\":\"incremental\"}"))
+Ok(Text("{\"book\":{\"asks\":[],\"bids\":[[10164491000000,2703700],[10164037000000,0],[10148563000000,191465500],[10143456000000,66871400],[10130482000000,0],[10130000000000,0],[10130482000000,0]]},\"depth\":30,\"sequence\":36104719871,\"symbol\":\"sBTCUSDT\",\"timestamp\":1737948577171477701,\"type\":\"incremental\"}"))
 */
 
-// /api/v5/asset/currencies
 /*----- */
 // Test http
 /*----- */
@@ -104,8 +106,8 @@ pub async fn test_http() {
 
     // https://ascendex.com/api/pro/v1/depth?symbol=ASD/USDT
 
-    let base_url = "https://ascendex.com";
-    let request_path = "/api/pro/v2/assets";
+    let base_url = "https://api.phemex.com";
+    let request_path = "/public/products";
 
     let url = format!("{}{}", base_url, request_path);
     // let url = format!("{}{}", base_url, request_path);
@@ -113,11 +115,15 @@ pub async fn test_http() {
         .await
         .unwrap()
         // .text()
-        .json::<AscendExNetworkInfo>()
+        .json::<PhemexTickerInfo>()
         // .json::<serde_json::Value>()
         .await
         .unwrap();
-    println!("{:#?}", test);
+
+    println!("{:?}", test);
+
+    // let mut file = std::fs::File::create("./temppp.txt").unwrap();
+    // file.write_all(test.as_bytes());
 }
 
 pub async fn test_http_private() {

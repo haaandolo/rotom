@@ -6,6 +6,7 @@ pub mod exmo;
 pub mod htx;
 pub mod kucoin;
 pub mod okx;
+pub mod phemex;
 pub mod poloniex;
 pub mod woox;
 
