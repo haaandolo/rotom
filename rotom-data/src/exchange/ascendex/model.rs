@@ -149,6 +149,47 @@ impl Validator for AscendExSubscriptionResponse {
 }
 
 /*----- */
+// Network info
+/*----- */
+#[derive(Debug, Deserialize)]
+pub struct AscendExNetworkInfo {
+    pub code: u64,
+    pub data: Vec<AscendExNetworkInfoData>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AscendExNetworkInfoData {
+    #[serde(rename = "assetCode")]
+    pub asset_code: String,
+    #[serde(rename = "assetName")]
+    pub asset_name: String,
+    #[serde(rename = "precisionScale")]
+    pub precision_scale: i32,
+    #[serde(rename = "nativeScale")]
+    pub native_scale: i32,
+    #[serde(rename = "blockChain")]
+    pub block_chain: Vec<AscendExNetworkConfig>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AscendExNetworkConfig {
+    #[serde(rename = "chainName")]
+    pub chain_name: String,
+    #[serde(rename = "withdrawFee")]
+    pub withdraw_fee: String,
+    #[serde(rename = "allowDeposit")]
+    pub allow_deposit: bool,
+    #[serde(rename = "allowWithdraw")]
+    pub allow_withdraw: bool,
+    #[serde(rename = "minDepositAmt")]
+    pub min_deposit_amt: String,
+    #[serde(rename = "minWithdrawal")]
+    pub min_withdrawal: String,
+    #[serde(rename = "numConfirmations")]
+    pub num_confirmations: i32,
+}
+
+/*----- */
 // Ticker info
 /*----- */
 #[derive(Debug, Deserialize)]

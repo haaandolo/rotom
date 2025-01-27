@@ -3,8 +3,7 @@ use std::io::Read;
 use crate::{
     exchange::{
         ascendex::model::{
-            AscendExBookUpdate, AscendExOrderBookSnapshot, AscendExSubscriptionResponse,
-            AscendExTickerInfo, AscendExTrades,
+            AscendExBookUpdate, AscendExNetworkInfo, AscendExOrderBookSnapshot, AscendExSubscriptionResponse, AscendExTickerInfo, AscendExTrades
         },
         bitstamp::model::{BitstampOrderBookSnapshot, BitstampSubscriptionResponse, BitstampTrade},
         coinex::model::{CoinExNetworkInfo, CoinExOrderBookSnapshot, CoinExTrade},
@@ -106,22 +105,19 @@ pub async fn test_http() {
     // https://ascendex.com/api/pro/v1/depth?symbol=ASD/USDT
 
     let base_url = "https://ascendex.com";
-    let request_path = "/api/pro/v1/depth";
-    // let request_path = "/api/pro/v1/cash/products";
+    let request_path = "/api/pro/v2/assets";
 
-    let coin = "ASD/USDT";
-
-    let url = format!("{}{}?symbol={}", base_url, request_path, coin);
+    let url = format!("{}{}", base_url, request_path);
     // let url = format!("{}{}", base_url, request_path);
     let test = reqwest::get(url)
         .await
         .unwrap()
         // .text()
-        .json::<AscendExOrderBookSnapshot>()
+        .json::<AscendExNetworkInfo>()
         // .json::<serde_json::Value>()
         .await
         .unwrap();
-    println!("{:?}", test);
+    println!("{:#?}", test);
 }
 
 pub async fn test_http_private() {

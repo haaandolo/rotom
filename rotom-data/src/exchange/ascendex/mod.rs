@@ -3,8 +3,8 @@ use channel::AscendExChannel;
 use l2::AscendExSpotBookUpdater;
 use market::AscendExMarket;
 use model::{
-    AscendExBookUpdate, AscendExOrderBookSnapshot, AscendExSubscriptionResponse,
-    AscendExTickerInfo, AscendExTrades,
+    AscendExBookUpdate, AscendExNetworkInfo, AscendExOrderBookSnapshot,
+    AscendExSubscriptionResponse, AscendExTickerInfo, AscendExTrades,
 };
 use serde_json::json;
 
@@ -80,7 +80,7 @@ impl PublicHttpConnector for AscendExSpotPublicData {
 
     type BookSnapShot = AscendExOrderBookSnapshot;
     type ExchangeTickerInfo = AscendExTickerInfo;
-    type NetworkInfo = serde_json::Value;
+    type NetworkInfo = AscendExNetworkInfo;
 
     async fn get_book_snapshot(instrument: Instrument) -> Result<Self::BookSnapShot, SocketError> {
         let request_path = "/api/pro/v1/depth";
@@ -115,7 +115,14 @@ impl PublicHttpConnector for AscendExSpotPublicData {
     }
 
     async fn get_network_info() -> Result<Self::NetworkInfo, SocketError> {
-        unimplemented!()
+        let request_path = "/api/pro/v2/assets";
+        let network_info_url = format!("{}{}", ASCENDEX_BASE_HTTP_URL, request_path);
+        reqwest::get(network_info_url)
+            .await
+            .map_err(SocketError::Http)?
+            .json::<Self::NetworkInfo>()
+            .await
+            .map_err(SocketError::Http)
     }
 }
 
