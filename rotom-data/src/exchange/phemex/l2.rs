@@ -6,7 +6,10 @@ use crate::{
     error::SocketError,
     exchange::{phemex::PhemexSpotPublicData, PublicHttpConnector},
     model::event_book::EventOrderBook,
-    shared::subscription_models::{ExchangeId, Instrument},
+    shared::{
+        subscription_models::{ExchangeId, Instrument},
+        utils::number_to_precision,
+    },
     transformer::book::{InstrumentOrderBook, OrderBookUpdater},
     AssetFormatted,
 };
@@ -46,7 +49,7 @@ impl OrderBookUpdater for PhemexSpotBookUpdater {
 
         let tick_size = ticker_info.data.products.into_iter().find_map(|t| {
             if t.symbol == ticker_formatted.0 {
-                t.tick_size
+                Some(number_to_precision(t.price_precision as usize))
             } else {
                 None
             }
@@ -55,18 +58,19 @@ impl OrderBookUpdater for PhemexSpotBookUpdater {
         match tick_size {
             Some(tick_size) => {
                 let orderbook_init = OrderBook::new(tick_size);
-
                 Ok(InstrumentOrderBook {
                     instrument: instrument.clone(),
                     updater: Self::default(),
                     book: orderbook_init,
                 })
             }
-            None => Err(SocketError::TickSizeError {
-                base: instrument.base.clone(),
-                quote: instrument.quote.clone(),
-                exchange: ExchangeId::PhemexSpot,
-            }),
+            None => {
+                Err(SocketError::TickSizeError {
+                    base: instrument.base.clone(),
+                    quote: instrument.quote.clone(),
+                    exchange: ExchangeId::PhemexSpot,
+                })
+            }
         }
     }
 

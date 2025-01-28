@@ -164,7 +164,7 @@ pub struct PhemexTickerInfoProduct {
     #[serde(rename = "ratioScale")]
     pub ratio_scale: i32,
     #[serde(rename = "pricePrecision")]
-    pub price_precision: i32,
+    pub price_precision: u32,
     #[serde(rename = "minPriceEp")]
     pub min_price_ep: Option<i64>,
     #[serde(rename = "maxPriceEp")]

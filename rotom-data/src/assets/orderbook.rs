@@ -37,8 +37,6 @@ impl OrderBook {
 
     #[inline]
     pub fn process_lvl2(&mut self, bids: Vec<Level>, asks: Vec<Level>) {
-        // println!("### Bids ### \n {:?}", bids);
-        // println!("### Asks ### \n {:?}", asks);
         // Process bids
         bids.into_iter().for_each(|level| {
             let price_tick = self.price_ticks(level.price, self.inv_tick_size);

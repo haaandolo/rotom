@@ -52,6 +52,13 @@ where
                 stream
             }
             Err(error) => {
+                warn!(
+                    exchange = %exchange_id,
+                    error = %error,
+                    action = "Logging error",
+                    message = "Encountered error while atempting to initisailise websocket",
+                );
+
                 if error.is_terminal() {
                     continue;
                 }
@@ -61,8 +68,13 @@ where
                         "Subscription failed on first attempt: {}",
                         error
                     ));
-                } else {
-                    continue;
+                }
+
+                match error {
+                    e @ SocketError::TickSizeError { .. } => return e,
+                    _ => {
+                        continue;
+                    }
                 }
             }
         };

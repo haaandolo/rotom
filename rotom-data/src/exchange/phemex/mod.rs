@@ -28,7 +28,7 @@ pub struct PhemexSpotPublicData;
 // Stream connector
 /*----- */
 
-const PHEMEX_SPOT_WS_URL: &str = "wss://stream.binance.com:9443/ws";
+const PHEMEX_SPOT_WS_URL: &str = "wss://ws.phemex.com";
 
 impl PublicStreamConnector for PhemexSpotPublicData {
     const ID: ExchangeId = ExchangeId::PhemexSpot;
