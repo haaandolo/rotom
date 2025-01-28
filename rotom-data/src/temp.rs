@@ -13,7 +13,9 @@ use crate::{
             ExmoNetworkInfo, KuCoinNetworkInfo, KuCoinOrderBookSnapshot, KuCoinTrade, KuCoinWsUrl,
         },
         okx::model::{OkxNetworkInfo, OkxOrderBookSnapshot, OkxSubscriptionResponse, OkxTrade},
-        phemex::model::{PhemexOrderBookUpdate, PhemexSubscriptionResponse, PhemexTickerInfo},
+        phemex::model::{
+            PhemexOrderBookUpdate, PhemexSubscriptionResponse, PhemexTickerInfo, PhemexTradesUpdate,
+        },
     },
     protocols::ws::ws_parser::{StreamParser, WebSocketParser},
     shared::de::de_str_u64_epoch_ms_as_datetime_utc,
@@ -43,9 +45,9 @@ pub async fn test_ws() {
 
     let payload = json!({
       "id": rand::thread_rng().gen::<u64>(),
-      "method": "orderbook.subscribe",
+      "method": "trade.subscribe",
       "params": [
-        "sBTCUSDT",
+        "sADAUSDT",
       ]
     });
 
@@ -64,11 +66,11 @@ pub async fn test_ws() {
     // tokio::spawn(schedule_pings_to_exchange(write, ping_message));
 
     while let Some(msg) = read.next().await {
-        println!("{:?}", msg);
+        // println!("{:?}", msg);
         println!("###########");
 
-        // let test = WebSocketParser::parse::<PhemexSubscriptionResponse>(msg);
-        // println!("{:?}", test);
+        let test = WebSocketParser::parse::<PhemexTradesUpdate>(msg);
+        println!("{:?}", test);
 
         // if let Message::Binary(bin) = msg.unwrap() {
         //     let mut decoder = GzDecoder::new(&bin[..]);

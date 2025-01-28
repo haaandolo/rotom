@@ -10,7 +10,7 @@ use super::PhemexSpotPublicData;
 pub struct PhemexChannel(pub &'static str);
 
 impl PhemexChannel {
-    pub const TRADES: Self = Self("@trade");
+    pub const TRADES: Self = Self("trade.subscribe");
     pub const ORDER_BOOK_L2: Self = Self("orderbook.subscribe");
 }
 

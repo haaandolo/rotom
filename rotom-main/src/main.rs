@@ -33,7 +33,7 @@ pub async fn main() {
     init_logging();
     // test_http().await;
     // test_http_private().await
-    // test_ws().await;
+    test_ws().await;
 
     // let test = AscendExSpotPublicData::get_network_info().await;
     // println!("{:#?}", test);
@@ -41,23 +41,23 @@ pub async fn main() {
     ///////////
     // Dynamic stream
     ///////////
-    let streams = DynamicStreams::init([vec![
-        // (ExchangeId::ExmoSpot, "trx", "usdt", StreamKind::Snapshot),
-        // (ExchangeId::AscendExSpot, "btc", "usdt", StreamKind::Trades),
-        // (ExchangeId::AscendExSpot, "eth", "usdt", StreamKind::Trades),
-        (ExchangeId::PhemexSpot, "btc", "usdt", StreamKind::L2),
-        // (ExchangeId::ExmoSpot, "xrp", "usdt", StreamKind::Trades),
-        // (ExchangeId::KuCoinSpot, "btc", "usdt", StreamKind::Trade),
-        // (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Trades),
-    ]])
-    .await
-    .unwrap();
+    // let streams = DynamicStreams::init([vec![
+    //     // (ExchangeId::ExmoSpot, "trx", "usdt", StreamKind::Snapshot),
+    //     // (ExchangeId::AscendExSpot, "btc", "usdt", StreamKind::Trades),
+    //     // (ExchangeId::AscendExSpot, "eth", "usdt", StreamKind::Trades),
+    //     (ExchangeId::PhemexSpot, "btc", "usdt", StreamKind::L2),
+    //     // (ExchangeId::ExmoSpot, "xrp", "usdt", StreamKind::Trades),
+    //     // (ExchangeId::KuCoinSpot, "btc", "usdt", StreamKind::Trade),
+    //     // (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Trades),
+    // ]])
+    // .await
+    // .unwrap();
 
-    let mut merged = streams.select_all::<MarketEvent<DataKind>>();
-    while let Some(event) = merged.next().await {
-        println!("{:?}", event);
-        println!("###########");
-    }
+    // let mut merged = streams.select_all::<MarketEvent<DataKind>>();
+    // while let Some(event) = merged.next().await {
+    //     println!("{:?}", event);
+    //     println!("###########");
+    // }
 
     ///////////
     // Testing
@@ -91,6 +91,7 @@ fn init_logging() {
 // phmex
 // ascendex
 // bitstamp chain in
+// chnage exchanges with trades to have date for each trade
 // change instrument map key from market to stream key
 
 //////////////////////////////////////////////////////////////////////////////////////////////

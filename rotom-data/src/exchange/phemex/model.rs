@@ -4,8 +4,9 @@ use serde::Deserialize;
 use crate::assets::level::Level;
 use crate::error::SocketError;
 use crate::exchange::Identifier;
+use crate::model::event_trade::EventTrade;
 use crate::model::ticker_info::TickerInfo;
-use crate::shared::de::de_u64_epoch_ns_as_datetime_utc;
+use crate::shared::de::{datetime_utc_from_epoch_duration, de_u64_epoch_ns_as_datetime_utc};
 use crate::streams::validator::Validator;
 
 /*----- */
@@ -75,6 +76,40 @@ impl Validator for PhemexSubscriptionResponse {
     }
 }
 
+/*----- */
+// Trades
+/*----- */
+#[derive(Debug, Deserialize)]
+pub struct PhemexTradesUpdate {
+    pub sequence: u64,
+    pub symbol: String,
+    #[serde(deserialize_with = "de_trades_data_phemex")]
+    pub trades: Vec<EventTrade>,
+    #[serde(rename = "type")]
+    pub update_type: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PhemexTradesUpdateData(pub (u64, String, u64, u64));
+
+fn de_trades_data_phemex<'de, D>(deserializer: D) -> Result<Vec<EventTrade>, D::Error>
+where
+    D: serde::de::Deserializer<'de>,
+{
+    let raw_data: Vec<(u64, String, u128, u128)> = Vec::deserialize(deserializer)?;
+
+    Ok(raw_data
+        .into_iter()
+        .map(|(date, is_maker, price, quantity)| {
+            let _de_date = datetime_utc_from_epoch_duration(std::time::Duration::from_nanos(date)); // todo
+            let de_is_maker = is_maker == "Buy";
+            let de_price = (price as f64) / 100000000.0;
+            let de_quantity = (quantity as f64) / 100000000.0;
+
+            EventTrade::new(Level::new(de_price, de_quantity), de_is_maker)
+        })
+        .collect())
+}
 /*----- */
 // Ticker Info
 /*----- */
@@ -164,7 +199,7 @@ pub struct PhemexTickerInfoProduct {
     #[serde(rename = "ratioScale")]
     pub ratio_scale: i32,
     #[serde(rename = "pricePrecision")]
-    pub price_precision: u32,
+    pub price_precision: usize,
     #[serde(rename = "minPriceEp")]
     pub min_price_ep: Option<i64>,
     #[serde(rename = "maxPriceEp")]
