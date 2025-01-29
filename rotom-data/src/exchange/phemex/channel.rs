@@ -1,6 +1,6 @@
 use crate::{
     exchange::Identifier,
-    model::{event_book::OrderBookL2, event_trade::Trade},
+    model::{event_book::OrderBookL2, event_trade::Trades},
     shared::subscription_models::Subscription,
 };
 
@@ -26,8 +26,8 @@ impl Identifier<PhemexChannel> for Subscription<PhemexSpotPublicData, OrderBookL
     }
 }
 
-// impl Identifier<PhemexChannel> for Subscription<PhemexSpotPublicData, Trade> {
-//     fn id(&self) -> PhemexChannel {
-//         PhemexChannel::TRADES
-//     }
-// }
+impl Identifier<PhemexChannel> for Subscription<PhemexSpotPublicData, Trades> {
+    fn id(&self) -> PhemexChannel {
+        PhemexChannel::TRADES
+    }
+}

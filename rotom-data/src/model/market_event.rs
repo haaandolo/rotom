@@ -10,7 +10,7 @@ use super::{
 #[derive(Debug)]
 pub enum DataKind {
     Trade(EventTrade),
-    TradesVec(Vec<EventTrade>),
+    Trades(Vec<EventTrade>),
     OrderBook(EventOrderBook),
     OrderBookSnapshot(EventOrderBookSnapshot),
 }
@@ -43,7 +43,7 @@ impl From<MarketEvent<Vec<EventTrade>>> for MarketEvent<DataKind> {
             received_time: event.received_time,
             exchange: event.exchange,
             instrument: event.instrument,
-            event_data: DataKind::TradesVec(event.event_data),
+            event_data: DataKind::Trades(event.event_data),
         }
     }
 }

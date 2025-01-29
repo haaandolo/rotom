@@ -2,16 +2,18 @@ use async_trait::async_trait;
 use channel::PhemexChannel;
 use l2::PhemexSpotBookUpdater;
 use market::PhemexMarket;
-use model::{PhemexOrderBookUpdate, PhemexSubscriptionResponse, PhemexTickerInfo};
+use model::{
+    PhemexOrderBookUpdate, PhemexSubscriptionResponse, PhemexTickerInfo, PhemexTradesUpdate,
+};
 use rand::Rng;
 use serde_json::json;
 
 use crate::{
     error::SocketError,
-    model::event_book::OrderBookL2,
+    model::{event_book::OrderBookL2, event_trade::Trades},
     protocols::ws::WsMessage,
     shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
-    transformer::book::MultiBookTransformer,
+    transformer::{book::MultiBookTransformer, stateless_transformer::StatelessTransformer},
 };
 
 use super::{PublicHttpConnector, PublicStreamConnector, StreamSelector};
@@ -107,4 +109,9 @@ impl StreamSelector<PhemexSpotPublicData, OrderBookL2> for PhemexSpotPublicData 
     type Stream = PhemexOrderBookUpdate;
     type StreamTransformer =
         MultiBookTransformer<PhemexSpotPublicData, PhemexSpotBookUpdater, OrderBookL2>;
+}
+
+impl StreamSelector<PhemexSpotPublicData, Trades> for PhemexSpotPublicData {
+    type Stream = PhemexTradesUpdate;
+    type StreamTransformer = StatelessTransformer<PhemexSpotPublicData, Self::Stream, Trades>;
 }

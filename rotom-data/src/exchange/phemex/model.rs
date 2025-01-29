@@ -5,8 +5,10 @@ use crate::assets::level::Level;
 use crate::error::SocketError;
 use crate::exchange::Identifier;
 use crate::model::event_trade::EventTrade;
+use crate::model::market_event::MarketEvent;
 use crate::model::ticker_info::TickerInfo;
 use crate::shared::de::{datetime_utc_from_epoch_duration, de_u64_epoch_ns_as_datetime_utc};
+use crate::shared::subscription_models::{ExchangeId, Instrument};
 use crate::streams::validator::Validator;
 
 /*----- */
@@ -79,7 +81,7 @@ impl Validator for PhemexSubscriptionResponse {
 /*----- */
 // Trades
 /*----- */
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 pub struct PhemexTradesUpdate {
     pub sequence: u64,
     pub symbol: String,
@@ -89,8 +91,26 @@ pub struct PhemexTradesUpdate {
     pub update_type: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 pub struct PhemexTradesUpdateData(pub (u64, String, u64, u64));
+
+impl Identifier<String> for PhemexTradesUpdate {
+    fn id(&self) -> String {
+        self.symbol.clone()
+    }
+}
+
+impl From<(PhemexTradesUpdate, Instrument)> for MarketEvent<Vec<EventTrade>> {
+    fn from((event, instrument): (PhemexTradesUpdate, Instrument)) -> Self {
+        Self {
+            exchange_time: Utc::now(), // todo
+            received_time: Utc::now(),
+            exchange: ExchangeId::PhemexSpot,
+            instrument,
+            event_data: event.trades,
+        }
+    }
+}
 
 fn de_trades_data_phemex<'de, D>(deserializer: D) -> Result<Vec<EventTrade>, D::Error>
 where

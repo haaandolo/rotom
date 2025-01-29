@@ -439,14 +439,10 @@ impl DynamicStreams {
                     /*----- */
                     (ExchangeId::PhemexSpot, StreamKind::Snapshot) => {}
                     (ExchangeId::PhemexSpot, StreamKind::Trades) => {
-                        tokio::spawn(consume::<AscendExSpotPublicData, Trades>(
+                        tokio::spawn(consume::<PhemexSpotPublicData, Trades>(
                             subs.into_iter()
                                 .map(|sub| {
-                                    Subscription::new(
-                                        AscendExSpotPublicData,
-                                        sub.instrument,
-                                        Trades,
-                                    )
+                                    Subscription::new(PhemexSpotPublicData, sub.instrument, Trades)
                                 })
                                 .collect(),
                             channels.trades.entry(exchange).or_default().tx.clone(),
