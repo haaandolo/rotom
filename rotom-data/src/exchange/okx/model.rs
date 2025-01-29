@@ -50,7 +50,7 @@ pub struct OkxOrderBookSnapshotData {
 
 impl Identifier<String> for OkxOrderBookSnapshot {
     fn id(&self) -> String {
-        self.arg.channel.clone()
+        self.arg.inst_id.clone()
     }
 }
 

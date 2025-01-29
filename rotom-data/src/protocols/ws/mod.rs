@@ -55,7 +55,6 @@ impl WebSocketClient {
         Subscription<Exchange, StreamKind>:
             Identifier<Exchange::Channel> + Identifier<Exchange::Market> + Debug,
     {
-        println!("herer");
         // Convert subscription to internal subscription
         let exchange_id = Exchange::ID;
         let exchange_subs = subs
@@ -63,43 +62,35 @@ impl WebSocketClient {
             .map(|sub| ExchangeSubscription::new(sub))
             .collect::<Vec<_>>();
 
-        println!("here3");
         // Make stream connection
         let mut tasks = Vec::new();
         let ws = connect(Exchange::url().into()).await?;
 
-        println!("here4");
         // Split WS and make into read and write
         let (mut ws_write, ws_read) = ws.split();
 
-        println!("here5");
         // Handle subscription
         if let Some(subcription) = Exchange::requests(&exchange_subs) {
             let _ = ws_write.send(subcription).await;
         }
 
-        println!("here6");
         // Validate subscription
         let validated_stream = WebSocketValidator::validate(&exchange_subs, ws_read).await?;
 
-        println!("here7");
         // Spawn custom ping handle (application level ping)
         if let Some(ping_interval) = Exchange::ping_interval() {
             let ping_handler = tokio::spawn(schedule_pings_to_exchange(ws_write, ping_interval));
             tasks.push(ping_handler);
         }
 
-        println!("here8");
         // Make instruments to for transformer
         let instruments = subs
             .iter()
             .map(|sub| sub.instrument.clone())
             .collect::<Vec<_>>();
 
-        println!("here9");
         let transformer = Exchange::StreamTransformer::new(&exchange_subs).await?;
 
-        println!("here10");
         // Log connection success message
         info!(
             exchange = %exchange_id,

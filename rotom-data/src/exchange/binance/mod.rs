@@ -63,10 +63,7 @@ impl PublicStreamConnector for BinanceSpotPublicData {
 
     fn expected_responses(
         _subscriptions: &[ExchangeSubscription<Self, Self::Channel, Self::Market>],
-    ) -> usize
-    where
-        Self: Sized,
-    {
+    ) -> usize {
         1
     }
 }

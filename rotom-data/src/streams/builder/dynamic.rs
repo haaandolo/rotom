@@ -148,7 +148,7 @@ impl DynamicStreams {
                         unimplemented!()
                     }
                     (ExchangeId::PoloniexSpot, StreamKind::Trades) => {
-                        unimplemented!("Poloniex does not send multiple trades for the same symbol in one go like htx")
+                        unimplemented!()
                     }
                     /*----- */
                     // Htx Spot
@@ -184,10 +184,10 @@ impl DynamicStreams {
                         unimplemented!()
                     }
                     (ExchangeId::HtxSpot, StreamKind::Trade) => {
-                        unimplemented!("Htx only sends trades aggregated")
+                        unimplemented!()
                     }
                     /*----- */
-                    // Woox Spot
+                    // Woox Spot - one ws connection per ticker
                     /*----- */
                     (ExchangeId::WooxSpot, StreamKind::Snapshot) => {
                         tokio::spawn(consume::<WooxSpotPublicData, OrderBookSnapshot>(
@@ -221,7 +221,7 @@ impl DynamicStreams {
                         unimplemented!()
                     }
                     /*----- */
-                    // Bitstamp spot
+                    // Bitstamp spot - one ticker per connection
                     /*----- */
                     (ExchangeId::BitstampSpot, StreamKind::Snapshot) => {
                         tokio::spawn(consume::<BitstampSpotPublicData, OrderBookSnapshot>(
@@ -435,7 +435,7 @@ impl DynamicStreams {
                         unimplemented!()
                     }
                     /*----- */
-                    // Phemex Spot
+                    // Phemex Spot - can only have one connection per ticker
                     /*----- */
                     (ExchangeId::PhemexSpot, StreamKind::Snapshot) => {}
                     (ExchangeId::PhemexSpot, StreamKind::Trades) => {

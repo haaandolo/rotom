@@ -72,8 +72,6 @@ impl PublicStreamConnector for KuCoinSpotPublicData {
             "response": true
         });
 
-        println!("request: {:#?}", request);
-
         Some(WsMessage::text(request.to_string()))
     }
 

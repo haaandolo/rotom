@@ -11,7 +11,7 @@ use serde_json::json;
 use crate::{
     error::SocketError,
     model::{event_book::OrderBookL2, event_trade::Trades},
-    protocols::ws::WsMessage,
+    protocols::ws::{PingInterval, WsMessage},
     shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
     transformer::{book::MultiBookTransformer, stateless_transformer::StatelessTransformer},
 };
@@ -42,11 +42,9 @@ impl PublicStreamConnector for AscendExSpotPublicData {
         ASCENDEX_SPOT_WS_URL
     }
 
-    // Request for CoinEx is cooked. Add more if else statements here if you add more channels
     fn requests(
         subscriptions: &[ExchangeSubscription<Self, Self::Channel, Self::Market>],
     ) -> Option<WsMessage> {
-        // I think you can only sub to one type of channel for [ExchangeSubscription] so this index is fine
         let channel = &subscriptions[0].channel;
 
         let subs = subscriptions
@@ -63,9 +61,14 @@ impl PublicStreamConnector for AscendExSpotPublicData {
             "ch": request_param
         });
 
-        println!("request: {}", request);
-
         Some(WsMessage::text(request.to_string()))
+    }
+
+    fn ping_interval() -> Option<PingInterval> {
+        Some(PingInterval {
+            time: 15,
+            message: json!({"op": "ping"}),
+        })
     }
 }
 

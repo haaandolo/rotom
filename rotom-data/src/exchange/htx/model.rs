@@ -123,42 +123,27 @@ where
 // Subscription response
 /*----- */
 #[derive(Debug, Deserialize, PartialEq)]
-#[serde(untagged)]
-pub enum HtxSubscriptionResponse {
-    Success {
-        id: String,
-        status: String,
-        subbed: String,
-        ts: u64,
-    },
-    Error {
-        status: String,
-        ts: u64,
-        id: String,
-        #[serde(rename = "err-code")]
-        err_code: String,
-        #[serde(rename = "err-msg")]
-        err_msg: String,
-    },
+pub struct HtxSubscriptionResponse {
+    #[serde(skip)]
+    id: u128,
+    status: String,
+    #[serde(default)]
+    subbed: String,
+    ts: u64,
+    #[serde(rename = "err-code", default)]
+    err_code: String,
+    #[serde(rename = "err-msg", default)]
+    err_msg: String,
 }
 
 impl Validator for HtxSubscriptionResponse {
     fn validate(self) -> Result<Self, SocketError> {
-        match &self {
-            HtxSubscriptionResponse::Success { .. } => Ok(self),
-            HtxSubscriptionResponse::Error {
-                status,
-                ts,
-                id,
-                err_code,
-                err_msg,
-            } => Err(SocketError::Subscribe(format!(
-                "Error while subscribing to htx spot, status: {}, ts: {}, id: {}, err_code: {}, err_msg: {}",
-                status,
-                ts,
-                id,
-                err_code,
-                err_msg,
+        if self.status == *"ok" {
+            Ok(self)
+        } else {
+            Err(SocketError::Subscribe(format!(
+                "Error while subscribing to htx spot, error: {:#?}",
+                self.err_msg
             )))
         }
     }

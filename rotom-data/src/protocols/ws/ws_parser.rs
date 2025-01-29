@@ -94,7 +94,7 @@ where
     ExchangeMessage: DeserializeOwned,
 {
     let mut decoder = GzDecoder::new(&payload[..]);
-    let mut decoded = String::new();
+    let mut decoded = String::with_capacity(1000);
 
     if decoder.read_to_string(&mut decoded).is_ok() {
         // Sceario when compressed - use the decompressed string

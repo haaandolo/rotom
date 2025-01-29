@@ -1,5 +1,4 @@
 use std::fmt::Debug;
-
 use async_trait::async_trait;
 use futures::StreamExt;
 use tracing::{debug, error, info};
@@ -82,15 +81,11 @@ impl SubscriptionValidator for WebSocketValidator {
                         None => break Err(SocketError::Subscribe("WebSocket stream terminated unexpectedly".to_string()))
                     };
 
-                    println!("res: {:?}", response);
-                    println!("expected: {} | current: {}", expected_responses, success_responses);
-
                     match Self::Parser::parse::<Exchange::SubscriptionResponse>(response) {
                         Some(Ok(response)) => match response.validate() {
                             // Subscription success
                             Ok(response) => {
                                 success_responses += 1;
-                                println!("in sub success");
                                 debug!(
                                     exchange = %exchange_id,
                                     %success_responses,
@@ -102,7 +97,6 @@ impl SubscriptionValidator for WebSocketValidator {
 
                             // Subscription failure
                             Err(error) => {
-                                println!("in sub error");
                                 error!(
                                     exchange = %Exchange::ID,
                                     ?error,
@@ -112,7 +106,6 @@ impl SubscriptionValidator for WebSocketValidator {
                             }
                         }
                         Some(Err(SocketError::Deserialise { error, payload })) if success_responses >= 1 => {
-                            println!("in de error");
                             // Already active subscription payloads, so skip to next SubResponse
                             info!(
                                 exchange = %Exchange::ID,
@@ -125,16 +118,14 @@ impl SubscriptionValidator for WebSocketValidator {
                             continue
                         }
                         Some(Err(SocketError::Terminated(close_frame))) => {
-                            println!("in terminated errror");
                             break Err(SocketError::Subscribe(
                                 format!("received WebSocket CloseFrame: {close_frame}")
                             ))
                         }
                         Some(Err(SocketError::WebSocketDisconnected { error })) => {
-                            println!("in disconnected errror");
                             break Err(SocketError::WebSocketDisconnected { error })
                         }
-                        _ => {
+                        _  => {
                             // Pings, Pongs, Frames, etc.
                             continue
                         }

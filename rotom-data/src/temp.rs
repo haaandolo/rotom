@@ -9,6 +9,7 @@ use crate::{
         bitstamp::model::{BitstampOrderBookSnapshot, BitstampSubscriptionResponse, BitstampTrade},
         coinex::model::{CoinExNetworkInfo, CoinExOrderBookSnapshot, CoinExTrade},
         exmo::model::{ExmoOrderBookSnapshot, ExmoSubscriptionResponse, ExmoTrades},
+        htx::model::HtxSubscriptionResponse,
         kucoin::model::{
             ExmoNetworkInfo, KuCoinNetworkInfo, KuCoinOrderBookSnapshot, KuCoinTrade, KuCoinWsUrl,
         },
@@ -42,13 +43,14 @@ use crate::{
 // Test Ws
 /*----- */
 pub async fn test_ws() {
-    let url = "wss://ws.phemex.com";
+    let url = "wss://api-aws.huobi.pro/ws";
 
     let payload = json!({
       "id": rand::thread_rng().gen::<u64>(),
-      "method": "trade.subscribe",
-      "params": [
-        "sADAUSDT",
+      "sub": vec![
+        "market.btcusdt.mbp.refresh.5",
+        "market.ethusdt.mbp.refresh.5",
+        "market.adausdt.mbp.refresh.5",
       ]
     });
 
@@ -70,7 +72,7 @@ pub async fn test_ws() {
         // println!("{:?}", msg);
         println!("###########");
 
-        let test = WebSocketParser::parse::<PhemexTradesUpdate>(msg);
+        let test = WebSocketParser::parse::<HtxSubscriptionResponse>(msg);
         println!("{:?}", test);
 
         // if let Message::Binary(bin) = msg.unwrap() {
@@ -84,6 +86,9 @@ pub async fn test_ws() {
 }
 
 /*
+"{\"id\":10110522123195832575,\"status\":\"ok\",\"subbed\":\"market.btcusdt.mbp.refresh.5\",\"ts\":1738148629183}"
+"{\"status\":\"error\",\"ts\":1738148682256,\"id\":17650732822015568887,\"err-code\":\"bad-request\",\"err-msg\":\"invalid command\"}"
+
 conn success:
 
 succuss:

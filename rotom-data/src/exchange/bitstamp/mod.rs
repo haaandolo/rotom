@@ -48,8 +48,6 @@ impl PublicStreamConnector for BitstampSpotPublicData {
             }
         });
 
-        println!("requests: {:?}", request);
-
         Some(WsMessage::text(request.to_string()))
     }
 }

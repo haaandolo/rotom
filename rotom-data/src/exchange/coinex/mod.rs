@@ -78,6 +78,12 @@ impl PublicStreamConnector for CoinExSpotPublicData {
             Some(WsMessage::text(request.to_string()))
         }
     }
+
+    fn expected_responses(
+        _subscriptions: &[ExchangeSubscription<Self, Self::Channel, Self::Market>],
+    ) -> usize {
+        1
+    }
 }
 
 /*----- */

@@ -38,17 +38,17 @@ impl PublicStreamConnector for HtxSpotPublicData {
     fn requests(
         subscriptions: &[ExchangeSubscription<Self, Self::Channel, Self::Market>],
     ) -> Option<WsMessage> {
-        let htx_subs = subscriptions
+        let subs = subscriptions
             .iter()
             .map(|s| format!("market.{}.{}", s.market.as_ref(), s.channel.as_ref()))
             .collect::<Vec<_>>();
 
-        let htx_request = json!({
-            "sub": htx_subs,
+        let request = json!({
+            "sub": subs,
             "id": rand::thread_rng().gen::<u64>().to_string(),
         });
 
-        Some(WsMessage::text(htx_request.to_string()))
+        Some(WsMessage::text(request.to_string()))
     }
 
     fn ping_interval() -> Option<PingInterval> {
