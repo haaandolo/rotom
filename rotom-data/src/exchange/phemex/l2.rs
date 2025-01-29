@@ -49,7 +49,7 @@ impl OrderBookUpdater for PhemexSpotBookUpdater {
 
         let tick_size = ticker_info.data.products.into_iter().find_map(|t| {
             if t.symbol == ticker_formatted.0 {
-                Some(number_to_precision(t.price_precision as usize))
+                Some(number_to_precision(t.price_precision))
             } else {
                 None
             }
@@ -64,13 +64,11 @@ impl OrderBookUpdater for PhemexSpotBookUpdater {
                     book: orderbook_init,
                 })
             }
-            None => {
-                Err(SocketError::TickSizeError {
-                    base: instrument.base.clone(),
-                    quote: instrument.quote.clone(),
-                    exchange: ExchangeId::PhemexSpot,
-                })
-            }
+            None => Err(SocketError::TickSizeError {
+                base: instrument.base.clone(),
+                quote: instrument.quote.clone(),
+                exchange: ExchangeId::PhemexSpot,
+            }),
         }
     }
 

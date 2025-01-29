@@ -117,27 +117,17 @@ where
             }),
         )
     }
-    // Some(
-    //     serde_json::from_slice::<ExchangeMessage>(&payload).map_err(|error| {
-    //         SocketError::Deserialise {
-    //             error,
-    //             payload: String::from_utf8(payload).unwrap_or_else(|x| x.to_string()),
-    //         }
-    //     }),
-    // )
 }
 
 pub fn process_ping<ExchangeMessage>(
-    ping: Vec<u8>,
+    _ping: Vec<u8>,
 ) -> Option<Result<ExchangeMessage, SocketError>> {
-    format!("{:#?}", ping);
     None
 }
 
 pub fn process_pong<ExchangeMessage>(
-    pong: Vec<u8>,
+    _pong: Vec<u8>,
 ) -> Option<Result<ExchangeMessage, SocketError>> {
-    format!("{:#?}", pong);
     None
 }
 
@@ -149,9 +139,8 @@ pub fn process_close_frame<ExchangeMessage>(
 }
 
 pub fn process_frame<ExchangeMessage>(
-    frame: Frame,
+    _frame: Frame,
 ) -> Option<Result<ExchangeMessage, SocketError>> {
-    format!("{:?}", frame);
     None
 }
 

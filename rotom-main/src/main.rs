@@ -8,6 +8,7 @@ use rotom_data::{
         htx::HtxSpotPublicData,
         kucoin::KuCoinSpotPublicData,
         okx::OkxSpotPublicData,
+        phemex::PhemexSpotPublicData,
         woox::WooxSpotPublicData,
         PublicHttpConnector,
     },
@@ -35,12 +36,12 @@ pub async fn main() {
     // test_http_private().await
     // test_ws().await;
 
-    // let test = AscendExSpotPublicData::get_network_info().await;
+    // let test = PhemexSpotPublicData::get_network_info().await;
     // println!("{:#?}", test);
 
-    ///////////
+    /////////
     // Dynamic stream
-    ///////////
+    /////////
     let streams = DynamicStreams::init([vec![
         // (ExchangeId::ExmoSpot, "trx", "usdt", StreamKind::Snapshot),
         // (ExchangeId::AscendExSpot, "btc", "usdt", StreamKind::Trades),

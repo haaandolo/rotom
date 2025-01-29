@@ -3,10 +3,11 @@ use thiserror::Error;
 
 use super::{protocols::ws::WsError, shared::subscription_models::ExchangeId};
 
-pub const ACCEPTABLE_DE_ERROR_MESSAGES: [&str; 3] = [
+pub const ACCEPTABLE_DE_ERROR_MESSAGES: [&str; 4] = [
     "missing field `data` at line 1 column 16", // Poloniex custom ping response
     "missing field `topic` at line 1 column 35", // Woox custom ping response
     "missing field `ch` at line 1 column 22",   // Htx custom ping response
+    "missing field `sequence` at line 1 column 76", // Phemex custom ping response
 ];
 
 /*----- */

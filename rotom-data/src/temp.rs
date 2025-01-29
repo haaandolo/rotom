@@ -14,7 +14,8 @@ use crate::{
         },
         okx::model::{OkxNetworkInfo, OkxOrderBookSnapshot, OkxSubscriptionResponse, OkxTrade},
         phemex::model::{
-            PhemexOrderBookUpdate, PhemexSubscriptionResponse, PhemexTickerInfo, PhemexTradesUpdate,
+            PhemexNetworkInfo, PhemexOrderBookUpdate, PhemexSubscriptionResponse, PhemexTickerInfo,
+            PhemexTradesUpdate,
         },
     },
     protocols::ws::ws_parser::{StreamParser, WebSocketParser},
@@ -109,7 +110,8 @@ pub async fn test_http() {
     // https://ascendex.com/api/pro/v1/depth?symbol=ASD/USDT
 
     let base_url = "https://api.phemex.com";
-    let request_path = "/public/products";
+    // let request_path = "/exchange/public/cfg/chain-settings";
+    let request_path = "/exchange/public/cfg/chain-settings?currency=ETH";
 
     let url = format!("{}{}", base_url, request_path);
     // let url = format!("{}{}", base_url, request_path);
@@ -117,12 +119,12 @@ pub async fn test_http() {
         .await
         .unwrap()
         // .text()
-        .json::<PhemexTickerInfo>()
+        .json::<PhemexNetworkInfo>()
         // .json::<serde_json::Value>()
         .await
         .unwrap();
 
-    println!("{:?}", test);
+    println!("{:#?}", test);
 
     // let mut file = std::fs::File::create("./temppp.txt").unwrap();
     // file.write_all(test.as_bytes());

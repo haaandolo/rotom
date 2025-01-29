@@ -3,7 +3,8 @@ use channel::PhemexChannel;
 use l2::PhemexSpotBookUpdater;
 use market::PhemexMarket;
 use model::{
-    PhemexOrderBookUpdate, PhemexSubscriptionResponse, PhemexTickerInfo, PhemexTradesUpdate,
+    PhemexNetworkInfo, PhemexOrderBookUpdate, PhemexSubscriptionResponse, PhemexTickerInfo,
+    PhemexTradesUpdate,
 };
 use rand::Rng;
 use serde_json::json;
@@ -11,7 +12,7 @@ use serde_json::json;
 use crate::{
     error::SocketError,
     model::{event_book::OrderBookL2, event_trade::Trades},
-    protocols::ws::WsMessage,
+    protocols::ws::{PingInterval, WsMessage},
     shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
     transformer::{book::MultiBookTransformer, stateless_transformer::StatelessTransformer},
 };
@@ -60,9 +61,14 @@ impl PublicStreamConnector for PhemexSpotPublicData {
             "params": subs,
         });
 
-        println!("request: {}", request);
-
         Some(WsMessage::Text(request.to_string()))
+    }
+
+    fn ping_interval() -> Option<PingInterval> {
+        Some(PingInterval {
+            time: 25,
+            message: json!({"event": "ping"}),
+        })
     }
 }
 
@@ -77,7 +83,7 @@ impl PublicHttpConnector for PhemexSpotPublicData {
 
     type BookSnapShot = serde_json::Value;
     type ExchangeTickerInfo = PhemexTickerInfo;
-    type NetworkInfo = serde_json::Value;
+    type NetworkInfo = PhemexNetworkInfo;
 
     async fn get_book_snapshot(_instrument: Instrument) -> Result<Self::BookSnapShot, SocketError> {
         unimplemented!()
@@ -87,7 +93,7 @@ impl PublicHttpConnector for PhemexSpotPublicData {
         _instrument: Instrument,
     ) -> Result<Self::ExchangeTickerInfo, SocketError> {
         let request_path = "/public/products";
-        let ticker_info_url = format!("{}{}", PHEMEX_BASE_HTTP_URL, request_path,);
+        let ticker_info_url = format!("{}{}", PHEMEX_BASE_HTTP_URL, request_path);
 
         reqwest::get(ticker_info_url)
             .await
@@ -98,7 +104,15 @@ impl PublicHttpConnector for PhemexSpotPublicData {
     }
 
     async fn get_network_info() -> Result<Self::NetworkInfo, SocketError> {
-        unimplemented!()
+        let request_path = "/exchange/public/cfg/chain-settings?currency=ETH";
+        let ticker_info_url = format!("{}{}", PHEMEX_BASE_HTTP_URL, request_path);
+
+        reqwest::get(ticker_info_url)
+            .await
+            .map_err(SocketError::Http)?
+            .json::<Self::NetworkInfo>()
+            .await
+            .map_err(SocketError::Http)
     }
 }
 

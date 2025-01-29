@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
@@ -387,4 +389,47 @@ impl From<PhemexTickerInfo> for TickerInfo {
     fn from(_value: PhemexTickerInfo) -> Self {
         unimplemented!()
     }
+}
+
+/*----- */
+// Network info
+/*----- */
+#[derive(Debug, Deserialize)]
+pub struct PhemexNetworkInfo {
+    pub code: i32,
+    pub msg: String,
+    pub data: PhemexNetworkInfoData,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PhemexNetworkInfoData {
+    #[serde(flatten)]
+    pub currencies: HashMap<String, Vec<PhemexNetworkInfoChainInfo>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PhemexNetworkInfoChainInfo {
+    #[serde(rename = "currencyCode")]
+    pub currency_code: i32,
+    #[serde(rename = "currencyName")]
+    pub currency_name: String,
+    #[serde(rename = "chainName")]
+    pub chain_name: String,
+    #[serde(rename = "chainTxUrl")]
+    pub chain_tx_url: String,
+    #[serde(rename = "chainId")]
+    pub chain_id: i32,
+    #[serde(rename = "displayName")]
+    pub display_name: String,
+    #[serde(rename = "inUse")]
+    pub in_use: bool,
+    #[serde(rename = "isMetamask")]
+    pub is_metamask: i32,
+    #[serde(rename = "domainType")]
+    pub domain_type: i32,
+    #[serde(default)]
+    #[serde(rename = "domainSuffix")]
+    pub domain_suffix: Option<String>,
+    #[serde(rename = "permanentlyClosed")]
+    pub permanently_closed: i32,
 }
