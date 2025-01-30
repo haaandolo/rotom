@@ -1,0 +1,73 @@
+{
+  "code": 0,
+  "data": {
+    "ETH": [
+      {
+        "chainId": 4,
+        "chainName": "ETH",
+        "chainTxUrl": "https://etherscan.io/tx/",
+        "currencyCode": 4,
+        "currencyName": "ETH",
+        "displayName": "ERC20",
+        "domainSuffix": ".eth",
+        "domainType": 1,
+        "inUse": true,
+        "isMetamask": 1,
+        "permanentlyClosed": 0
+      },
+      {
+        "chainId": 61,
+        "chainName": "BNB",
+        "chainTxUrl": "https://bscscan.com/tx/",
+        "currencyCode": 4,
+        "currencyName": "ETH",
+        "displayName": "BSC(BEP20)",
+        "domainSuffix": ".bnb",
+        "domainType": 2,
+        "inUse": true,
+        "isMetamask": 1,
+        "permanentlyClosed": 0
+      },
+      {
+        "chainId": 261,
+        "chainName": "ARETH",
+        "chainTxUrl": "https://arbiscan.io/tx/",
+        "currencyCode": 4,
+        "currencyName": "ETH",
+        "displayName": "Arbitrum One",
+        "domainSuffix": ".arb",
+        "domainType": 2,
+        "inUse": true,
+        "isMetamask": 1,
+        "permanentlyClosed": 0
+      },
+      {
+        "chainId": 418,
+        "chainName": "ZKERAETH",
+        "chainTxUrl": "https://explorer.zksync.io/tx/",
+        "currencyCode": 4,
+        "currencyName": "ETH",
+        "displayName": "zkSync Era",
+        "domainSuffix": null,
+        "domainType": 0,
+        "inUse": true,
+        "isMetamask": 0,
+        "permanentlyClosed": 0
+      },
+      {
+        "chainId": 519,
+        "chainName": "BASEETH",
+        "chainTxUrl": "https://basescan.org/tx/",
+        "currencyCode": 4,
+        "currencyName": "ETH",
+        "displayName": "BASE",
+        "domainSuffix": null,
+        "domainType": 0,
+        "inUse": true,
+        "isMetamask": 0,
+        "permanentlyClosed": 0
+      }
+    ]
+  },
+  "msg": "OK"
+}

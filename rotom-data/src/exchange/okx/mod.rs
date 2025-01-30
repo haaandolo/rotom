@@ -105,7 +105,7 @@ impl PublicHttpConnector for OkxSpotPublicData {
             .send()
             .await
             .map_err(SocketError::Http)?
-            .json::<OkxNetworkInfo>()
+            .json::<Self::NetworkInfo>()
             .await
             .map_err(SocketError::Http)?)
     }

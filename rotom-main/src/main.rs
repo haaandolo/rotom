@@ -1,3 +1,5 @@
+use std::{fs::File, io::Write};
+
 use futures::StreamExt;
 use rotom_data::{
     exchange::{
@@ -36,8 +38,10 @@ pub async fn main() {
     // test_http_private().await
     // test_ws().await;
 
-    // let test = PhemexSpotPublicData::get_network_info().await;
-    // println!("{:#?}", test);
+    // let test = WooxSpotPublicData::get_network_info().await.unwrap();
+    // let mut file = File::create("./woox_network_info.json").unwrap();
+    // let json_string = serde_json::to_string_pretty(&test).unwrap();
+    // file.write_all(json_string.as_bytes()).unwrap();
 
     /////////
     // Dynamic stream
@@ -46,7 +50,7 @@ pub async fn main() {
         // (ExchangeId::ExmoSpot, "trx", "usdt", StreamKind::Snapshot),
         // (ExchangeId::AscendExSpot, "btc", "usdt", StreamKind::Trades),
         // (ExchangeId::AscendExSpot, "eth", "usdt", StreamKind::Trades),
-        (ExchangeId::WooxSpot, "eth", "usdt", StreamKind::Snapshot),
+        (ExchangeId::ExmoSpot, "eth", "usdt", StreamKind::Snapshot),
         // (ExchangeId::PhemexSpot, "btc", "usdt", StreamKind::Snapshot),
         // (ExchangeId::PhemexSpot, "ada", "usdt", StreamKind::Snapshot),
         // (ExchangeId::ExmoSpot, "xrp", "usdt", StreamKind::Trades),
@@ -91,9 +95,8 @@ fn init_logging() {
 }
 
 // Todo:
-// phmex
-// ascendex
-// bitstamp chain in
+// bitstamp chain info
+// Binance chanin info
 // chnage exchanges with trades to have date for each trade
 // change instrument map key from market to stream key
 

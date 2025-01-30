@@ -1,11 +1,10 @@
-use std::fmt::Debug;
-
 use futures::StreamExt;
+use std::fmt::Debug;
 use tokio::sync::mpsc::UnboundedSender;
 use tokio::{time::sleep, time::Duration};
 use tracing::{debug, error, info, warn};
 
-use crate::error::{SocketError, ACCEPTABLE_DE_ERROR_MESSAGES};
+use crate::error::SocketError;
 use crate::exchange::Identifier;
 use crate::protocols::ws::WebSocketClient;
 use crate::shared::subscription_models::Subscription;
@@ -112,18 +111,14 @@ where
                     SocketError::TransformerNone => continue,
                     // Some de errors are harmless so we dont want to log e.g poloniex exchange pings
                     SocketError::Deserialise { error, payload } => {
-                        if ACCEPTABLE_DE_ERROR_MESSAGES.contains(&error.to_string().as_str()) {
-                            continue;
-                        } else {
-                            warn!(
-                                exchange = %exchange_id,
-                                error = %error,
-                                payload = %payload,
-                                action = "Continuing...",
-                                message = "Encountered a non-terminal error",
-                            );
-                            continue;
-                        }
+                        debug!(
+                            exchange = %exchange_id,
+                            error = %error,
+                            payload = %payload,
+                            action = "Continuing...",
+                            message = "Encountered a non-terminal error",
+                        );
+                        continue;
                     }
                     // However other errors need logging
                     _ => {

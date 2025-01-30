@@ -97,7 +97,7 @@ impl PublicHttpConnector for CoinExSpotPublicData {
 
     type BookSnapShot = serde_json::Value;
     type ExchangeTickerInfo = serde_json::Value;
-    type NetworkInfo = CoinExNetworkInfo; // todo
+    type NetworkInfo = CoinExNetworkInfo;
 
     async fn get_book_snapshot(_instrument: Instrument) -> Result<Self::BookSnapShot, SocketError> {
         unimplemented!()
