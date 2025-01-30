@@ -340,6 +340,78 @@ impl From<BinanceSpotTickerInfo> for TickerInfo {
     }
 }
 
+/*----- */
+// Network Info
+/*----- */
+
+#[derive(Debug, Deserialize)]
+pub struct BinanceNetworkInfo {
+    pub coin: String,
+    #[serde(rename = "depositAllEnable")]
+    pub deposit_all_enable: bool,
+    pub free: String,
+    pub freeze: String,
+    pub ipoable: String,
+    pub ipoing: String,
+    #[serde(rename = "isLegalMoney")]
+    pub is_legal_money: bool,
+    pub locked: String,
+    pub name: String,
+    #[serde(rename = "networkList")]
+    pub network_list: Vec<BinanceNetworkList>,
+    pub storage: String,
+    pub trading: bool,
+    #[serde(rename = "withdrawAllEnable")]
+    pub withdraw_all_enable: bool,
+    pub withdrawing: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct BinanceNetworkList {
+    #[serde(rename = "addressRegex")]
+    pub address_regex: String,
+    pub coin: String,
+    #[serde(rename = "depositDesc")]
+    pub deposit_desc: String,
+    #[serde(rename = "depositEnable")]
+    pub deposit_enable: bool,
+    #[serde(rename = "isDefault")]
+    pub is_default: bool,
+    #[serde(rename = "memoRegex")]
+    pub memo_regex: String,
+    #[serde(rename = "minConfirm")]
+    pub min_confirm: i64,
+    pub name: String,
+    pub network: String,
+    #[serde(rename = "specialTips")]
+    pub special_tips: String,
+    #[serde(rename = "unLockConfirm")]
+    pub unlock_confirm: i64,
+    #[serde(rename = "withdrawDesc")]
+    pub withdraw_desc: String,
+    #[serde(rename = "withdrawEnable")]
+    pub withdraw_enable: bool,
+    #[serde(rename = "withdrawFee")]
+    pub withdraw_fee: String,
+    #[serde(rename = "withdrawIntegerMultiple")]
+    pub withdraw_integer_multiple: String,
+    #[serde(rename = "withdrawMax")]
+    pub withdraw_max: String,
+    #[serde(rename = "withdrawMin")]
+    pub withdraw_min: String,
+    #[serde(rename = "withdrawInternalMin")]
+    pub withdraw_internal_min: String,
+    #[serde(rename = "sameAddress")]
+    pub same_address: bool,
+    #[serde(rename = "estimatedArrivalTime")]
+    pub estimated_arrival_time: i64,
+    pub busy: bool,
+    #[serde(rename = "contractAddressUrl")]
+    pub contract_address_url: Option<String>,
+    #[serde(rename = "contractAddress")]
+    pub contract_address: Option<String>,
+}
+
 // /*----- */
 // // Tests
 // /*----- */

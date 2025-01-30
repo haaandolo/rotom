@@ -5,13 +5,16 @@ pub mod model;
 
 use async_trait::async_trait;
 use channel::BinanceChannel;
+use chrono::Utc;
+use hmac::{Hmac, Mac};
 use l2::BinanceSpotBookUpdater;
 use market::BinanceMarket;
 use model::{
-    BinanceAggTrade, BinanceSpotBookUpdate, BinanceSpotSnapshot, BinanceSpotTickerInfo,
-    BinanceSubscriptionResponse, BinanceTrade,
+    BinanceAggTrade, BinanceNetworkInfo, BinanceSpotBookUpdate, BinanceSpotSnapshot,
+    BinanceSpotTickerInfo, BinanceSubscriptionResponse, BinanceTrade,
 };
 use serde_json::json;
+use sha2::Sha256;
 
 use crate::{
     error::SocketError,
@@ -69,25 +72,6 @@ impl PublicStreamConnector for BinanceSpotPublicData {
 }
 
 /*----- */
-// Stream selector
-/*----- */
-impl StreamSelector<BinanceSpotPublicData, OrderBookL2> for BinanceSpotPublicData {
-    type Stream = BinanceSpotBookUpdate;
-    type StreamTransformer =
-        MultiBookTransformer<BinanceSpotPublicData, BinanceSpotBookUpdater, OrderBookL2>;
-}
-
-impl StreamSelector<BinanceSpotPublicData, Trade> for BinanceSpotPublicData {
-    type Stream = BinanceTrade;
-    type StreamTransformer = StatelessTransformer<BinanceSpotPublicData, Self::Stream, Trade>;
-}
-
-impl StreamSelector<BinanceSpotPublicData, AggTrades> for BinanceSpotPublicData {
-    type Stream = BinanceAggTrade;
-    type StreamTransformer = StatelessTransformer<BinanceSpotPublicData, Self::Stream, AggTrades>;
-}
-
-/*----- */
 // BinanceSpot HttpConnector
 /*----- */
 pub const BINANCE_BASE_HTTP_URL: &str = "https://api.binance.com";
@@ -99,7 +83,7 @@ impl PublicHttpConnector for BinanceSpotPublicData {
 
     type BookSnapShot = BinanceSpotSnapshot;
     type ExchangeTickerInfo = BinanceSpotTickerInfo;
-    type NetworkInfo = serde_json::Value; // todo
+    type NetworkInfo = Vec<BinanceNetworkInfo>;
 
     async fn get_book_snapshot(instrument: Instrument) -> Result<Self::BookSnapShot, SocketError> {
         let request_path = "/api/v3/depth";
@@ -140,6 +124,55 @@ impl PublicHttpConnector for BinanceSpotPublicData {
     }
 
     async fn get_network_info() -> Result<Self::NetworkInfo, SocketError> {
-        unimplemented!()
+        // Import secrets, key etc
+        let secret = env!("BINANCE_API_SECRET");
+        let key = env!("BINANCE_API_KEY");
+
+        // Define request params
+        let timestamp = Utc::now().timestamp_millis();
+        let request_path = "/sapi/v1/capital/config/getall";
+        let query_string = format!("timestamp={}", timestamp);
+
+        // Sign message
+        let mut mac = Hmac::<Sha256>::new_from_slice(secret.as_bytes())
+            .expect("Could not generate HMAC for Binance");
+        mac.update(query_string.as_bytes());
+        let signature = hex::encode(mac.finalize().into_bytes());
+
+        // Make url
+        let url = format!(
+            "{}{}?{}&signature={}",
+            BINANCE_BASE_HTTP_URL, request_path, query_string, signature
+        );
+
+        // Send request
+        Ok(reqwest::Client::new()
+            .get(url)
+            .header("X-MBX-APIKEY", key)
+            .send()
+            .await
+            .map_err(SocketError::Http)?
+            .json::<Self::NetworkInfo>()
+            .await
+            .map_err(SocketError::Http)?)
     }
+}
+
+/*----- */
+// Stream selector
+/*----- */
+impl StreamSelector<BinanceSpotPublicData, OrderBookL2> for BinanceSpotPublicData {
+    type Stream = BinanceSpotBookUpdate;
+    type StreamTransformer =
+        MultiBookTransformer<BinanceSpotPublicData, BinanceSpotBookUpdater, OrderBookL2>;
+}
+
+impl StreamSelector<BinanceSpotPublicData, Trade> for BinanceSpotPublicData {
+    type Stream = BinanceTrade;
+    type StreamTransformer = StatelessTransformer<BinanceSpotPublicData, Self::Stream, Trade>;
+}
+
+impl StreamSelector<BinanceSpotPublicData, AggTrades> for BinanceSpotPublicData {
+    type Stream = BinanceAggTrade;
+    type StreamTransformer = StatelessTransformer<BinanceSpotPublicData, Self::Stream, AggTrades>;
 }
