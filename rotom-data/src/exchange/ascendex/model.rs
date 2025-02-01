@@ -201,6 +201,7 @@ impl From<AscendExNetworkInfo> for NetworkSpecs {
                     .iter()
                     .map(|chain| ChainSpecs {
                         chain_name: chain.chain_name.clone(),
+                        fee_is_fixed: true,
                         fees: chain.withdraw_fee,
                         can_deposit: chain.allow_deposit,
                         can_withdraw: chain.allow_withdraw,

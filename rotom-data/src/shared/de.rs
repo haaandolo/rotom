@@ -122,7 +122,7 @@ where
 
 // Deserialise a optional str. For example value to deserialise is "69.69". This
 // de will return Some(69.69) if exists. If value to derserialise is "1000", it
-// will return Some(1000) if exists. None the value you are de has to be a string.
+// will return Some(1000.0) if exists. The value you are de has to be a string.
 // But the optional value you want to de can be anything
 pub fn de_str_optional<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
 where
@@ -160,4 +160,12 @@ where
         StringOrNumber::String(s) => s.parse::<i32>().map_err(serde::de::Error::custom),
         StringOrNumber::Number(n) => Ok(n),
     }
+}
+
+// Deserialise a value to uppercase
+pub fn de_uppercase<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    String::deserialize(deserializer).map(|s| s.to_uppercase())
 }

@@ -201,6 +201,7 @@ impl From<CoinExNetworkInfo> for NetworkSpecs {
                     .iter()
                     .map(|chain| ChainSpecs {
                         chain_name: chain.chain.clone(),
+                        fee_is_fixed: true,
                         fees: chain.withdrawal_fee,
                         can_deposit: chain.deposit_enabled,
                         can_withdraw: chain.withdraw_enabled,

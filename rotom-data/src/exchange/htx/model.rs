@@ -1,8 +1,9 @@
 use chrono::{DateTime, Utc};
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 
 use crate::model::event_trade::EventTrade;
-use crate::shared::de::de_u64_epoch_ms_as_datetime_utc;
+use crate::model::network_info::{ChainSpecs, NetworkSpecData, NetworkSpecs};
+use crate::shared::de::{de_str_optional, de_u64_epoch_ms_as_datetime_utc, de_uppercase};
 use crate::{
     assets::level::Level,
     error::SocketError,
@@ -152,49 +153,104 @@ impl Validator for HtxSubscriptionResponse {
 /*----- */
 // Wallet Info
 /*----- */
+// Ref: https://www.htx.com/en-us/opend/newApiPages/?id=7ec516fc-7773-11ed-9966-0242ac110003
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct HtxNetworkInfo {
-    pub data: Vec<HtxNetworkInfoData>,
-    pub full: i64,
-    pub status: String,
-    pub ts: String,
+    pub code: u32,
+    pub data: Vec<HtxNetworkCurrencyInfo>,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct HtxNetworkInfoData {
-    pub ac: String,
-    pub adt: bool,
-    pub ao: bool,
-    pub awt: bool,
-    pub ca: String,
-    pub cct: i64,
-    pub chain: String,
-    pub code: String,
-    pub ct: String,
+#[serde(rename_all = "camelCase")]
+pub struct HtxNetworkCurrencyInfo {
+    pub asset_type: i32,
+    pub chains: Vec<HtxChainInfo>,
+    #[serde(deserialize_with = "de_uppercase")]
     pub currency: String,
-    pub de: bool,
-    pub default: i64,
-    #[serde(rename = "deposit-desc")]
-    #[serde(default)]
-    pub deposit_desc: String,
-    pub dma: String,
-    pub dn: String,
-    pub fc: i64,
-    #[serde(rename = "fn")]
-    pub fn_name: String, // using fn_name since 'fn' is a reserved keyword in Rust
-    pub ft: String,
-    pub sc: i64,
-    pub sda: Option<String>,
-    #[serde(rename = "suspend-deposit-desc")]
-    pub suspend_deposit_desc: Option<String>,
-    #[serde(rename = "suspend-withdraw-desc")]
-    pub suspend_withdraw_desc: Option<String>,
-    pub swa: Option<String>,
-    pub v: bool,
-    pub we: bool,
-    #[serde(rename = "withdraw-desc")]
-    #[serde(default)]
-    pub withdraw_desc: String,
-    pub wma: String,
-    pub wp: i64,
+    pub inst_status: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HtxChainInfo {
+    pub addr_deposit_tag: bool,
+    pub addr_with_tag: bool,
+    pub base_chain: Option<String>,
+    pub base_chain_protocol: Option<String>,
+    pub chain: String,
+    #[serde(deserialize_with = "de_withdraw_deposit_status_htx")]
+    pub deposit_status: bool,
+    pub display_name: String,
+    pub full_name: String,
+    pub is_dynamic: Option<bool>,
+    pub max_withdraw_amt: String,
+    pub min_deposit_amt: String,
+    pub min_withdraw_amt: String,
+    pub num_of_confirmations: i32,
+    pub num_of_fast_confirmations: i32,
+    #[serde(deserialize_with = "de_str_optional", default)]
+    pub transact_fee_withdraw: Option<f64>,
+    #[serde(deserialize_with = "de_str_optional", default)]
+    pub transact_fee_rate_withdraw: Option<f64>,
+    pub withdraw_fee_type: String,
+    pub withdraw_precision: i32,
+    pub withdraw_quota_per_day: String,
+    pub withdraw_quota_per_year: Option<String>,
+    pub withdraw_quota_total: Option<String>,
+    #[serde(deserialize_with = "de_withdraw_deposit_status_htx")]
+    pub withdraw_status: bool,
+}
+
+impl From<HtxNetworkInfo> for NetworkSpecs {
+    fn from(value: HtxNetworkInfo) -> Self {
+        let network_spec_data = value
+            .data
+            .iter()
+            .map(|coin| {
+                let chain_specs = coin
+                    .chains
+                    .iter()
+                    .map(|chain|  {
+                        // Fill in chain spec info as much as possible
+                        let mut chain_spec = ChainSpecs {
+                            chain_name: chain.display_name.clone(),
+                            fee_is_fixed: true,
+                            fees: 0.0,
+                            can_deposit: chain.deposit_status,
+                            can_withdraw: chain.withdraw_status,
+                        };
+
+                        // Then based on if the fee type is fixed or not, fill in the fields
+                        if chain.withdraw_fee_type == "fixed" {
+                            chain_spec.fees = chain.transact_fee_withdraw
+                                .expect("Fee type is fixed but got a none value for transact_fee_withdraw, this should never happen"); // should never fail
+                        } else {
+                            chain_spec.fees = chain.transact_fee_rate_withdraw
+                                .expect("Fee type is fixed but got a none value for transact_fee_rate_withdraw, this should never happen"); // should never fail 
+                            chain_spec.fee_is_fixed = false;
+                        }
+
+                        chain_spec
+                    })
+                    .collect::<Vec<ChainSpecs>>();
+
+                NetworkSpecData {
+                    coin: coin.currency.clone(),
+                    exchange: ExchangeId::HtxSpot,
+                    chains: chain_specs,
+                }
+            })
+            .collect::<Vec<NetworkSpecData>>();
+
+        NetworkSpecs(network_spec_data)
+    }
+}
+
+fn de_withdraw_deposit_status_htx<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    <&str as Deserialize>::deserialize(deserializer)
+        .map(|withdraw_status| withdraw_status == "allowed")
 }

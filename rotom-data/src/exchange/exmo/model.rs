@@ -206,9 +206,12 @@ impl From<ExmoNetworkInfo> for NetworkSpecs {
         let mut network_specs = Vec::with_capacity(value.networks.len());
 
         for (coin_name, networks) in value.networks.into_iter() {
-            // Have to add to hashmap first as exmo sends deposit and withdraw data separately for tne same chain, fml
+            // Exmo sends deposit and withdraw data for a given chain separately, So we
+            // have to add to a hashmap first to aggregate it. Then edit the chain specs
+            // corresponding to the relevant data.
             let mut paired: HashMap<String, Vec<ExmoNetworkInfoData>> =
                 HashMap::with_capacity(networks.len());
+
             for chain_info in networks.into_iter() {
                 paired
                     .entry(chain_info.name.clone())
@@ -220,7 +223,10 @@ impl From<ExmoNetworkInfo> for NetworkSpecs {
             for (chain_name, chain_spec) in paired.into_iter() {
                 let mut chain_spec_default = ChainSpecs {
                     chain_name,
-                    ..ChainSpecs::default()
+                    fee_is_fixed: true,
+                    fees: 0.0,
+                    can_deposit: false,
+                    can_withdraw: false
                 };
 
                 for chain in chain_spec.into_iter() {

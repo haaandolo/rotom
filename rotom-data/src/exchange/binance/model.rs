@@ -422,6 +422,7 @@ impl From<Vec<BinanceNetworkInfo>> for NetworkSpecs {
                     .iter()
                     .map(|chain| ChainSpecs {
                         chain_name: chain.network.clone(),
+                        fee_is_fixed: true,
                         fees: chain.withdraw_fee,
                         can_deposit: chain.deposit_enable,
                         can_withdraw: chain.withdraw_enable,
