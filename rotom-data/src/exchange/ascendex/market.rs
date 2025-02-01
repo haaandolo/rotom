@@ -2,7 +2,6 @@ use crate::{exchange::Identifier, shared::subscription_models::Subscription};
 
 use super::AscendExSpotPublicData;
 
-
 #[derive(Debug)]
 pub struct AscendExMarket(pub String);
 

@@ -84,7 +84,9 @@ impl PublicHttpConnector for ExmoSpotPublicData {
         unimplemented!()
     }
 
-    async fn get_network_info() -> Result<Self::NetworkInfo, SocketError> {
+    async fn get_network_info(
+        _instruments: Vec<Instrument>,
+    ) -> Result<Self::NetworkInfo, SocketError> {
         let request_path = "/payments/providers/crypto/list";
         Ok(
             reqwest::get(format!("{}{}", EXMO_BASE_HTTP_URL, request_path))

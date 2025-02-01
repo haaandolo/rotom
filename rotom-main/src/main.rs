@@ -18,9 +18,9 @@ use rotom_data::{
         event_book_snapshot::OrderBookSnapshot,
         market_event::{DataKind, MarketEvent},
     },
+    playground::{test_http, test_http_private, test_ws},
     shared::subscription_models::{ExchangeId, Instrument, StreamKind},
     streams::builder::{dynamic::DynamicStreams, Streams},
-    temp::{test_http, test_http_private, test_ws},
 };
 use rotom_main::trader::spot_arb_trader::builder::stream_trades;
 use rotom_oms::exchange::{
@@ -38,8 +38,21 @@ pub async fn main() {
     // test_http_private().await
     // test_ws().await;
 
-    // let test = BinanceSpotPublicData::get_network_info().await.unwrap();
-    // println!("network {:#?}", test);
+    /////////
+    // Playground
+    /////////
+    let instruments = vec![
+        Instrument::new("btc", "usdt"),
+        Instrument::new("eth", "usdt"),
+        Instrument::new("ada", "usdt"),
+        Instrument::new("sol", "usdt"),
+        Instrument::new("icp", "usdt"),
+    ];
+
+    let test = PhemexSpotPublicData::get_network_info(instruments)
+        .await
+        .unwrap();
+    println!("network {:#?}", test);
     // let mut file = File::create("./binance_network_info.json").unwrap();
     // let json_string = serde_json::to_string_pretty(&test).unwrap();
     // file.write_all(json_string.as_bytes()).unwrap();

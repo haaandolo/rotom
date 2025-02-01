@@ -81,7 +81,9 @@ pub trait PublicHttpConnector {
         instrument: Instrument,
     ) -> Result<Self::ExchangeTickerInfo, SocketError>;
 
-    async fn get_network_info() -> Result<Self::NetworkInfo, SocketError>;
+    async fn get_network_info(
+        instruments: Vec<Instrument>,
+    ) -> Result<Self::NetworkInfo, SocketError>;
 }
 
 /*----- */

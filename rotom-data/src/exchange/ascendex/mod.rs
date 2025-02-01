@@ -117,7 +117,9 @@ impl PublicHttpConnector for AscendExSpotPublicData {
             .map_err(SocketError::Http)
     }
 
-    async fn get_network_info() -> Result<Self::NetworkInfo, SocketError> {
+    async fn get_network_info(
+        _instruments: Vec<Instrument>,
+    ) -> Result<Self::NetworkInfo, SocketError> {
         let request_path = "/api/pro/v2/assets";
         let network_info_url = format!("{}{}", ASCENDEX_BASE_HTTP_URL, request_path);
         reqwest::get(network_info_url)

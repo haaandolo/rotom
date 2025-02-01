@@ -9,7 +9,9 @@ use crate::exchange::Identifier;
 use crate::model::event_trade::EventTrade;
 use crate::model::market_event::MarketEvent;
 use crate::model::ticker_info::TickerInfo;
-use crate::shared::de::{datetime_utc_from_epoch_duration, de_u64_epoch_ns_as_datetime_utc};
+use crate::shared::de::{
+    datetime_utc_from_epoch_duration, de_string_or_i32, de_u64_epoch_ns_as_datetime_utc,
+};
 use crate::shared::subscription_models::{ExchangeId, Instrument};
 use crate::streams::validator::Validator;
 
@@ -396,19 +398,15 @@ impl From<PhemexTickerInfo> for TickerInfo {
 /*----- */
 #[derive(Debug, Deserialize)]
 pub struct PhemexNetworkInfo {
+    #[serde(deserialize_with = "de_string_or_i32")]
     pub code: i32,
     pub msg: String,
-    pub data: PhemexNetworkInfoData,
+    #[serde(deserialize_with = "phemex_flatten_network_data", default)]
+    pub data: Option<Vec<PhemexNetworkInfoData>>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct PhemexNetworkInfoData {
-    #[serde(flatten)]
-    pub currencies: HashMap<String, Vec<PhemexNetworkInfoChainInfo>>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct PhemexNetworkInfoChainInfo {
     #[serde(rename = "currencyCode")]
     pub currency_code: i32,
     #[serde(rename = "currencyName")]
@@ -432,4 +430,15 @@ pub struct PhemexNetworkInfoChainInfo {
     pub domain_suffix: Option<String>,
     #[serde(rename = "permanentlyClosed")]
     pub permanently_closed: i32,
+}
+
+fn phemex_flatten_network_data<'de, D>(
+    deserializer: D,
+) -> Result<Option<Vec<PhemexNetworkInfoData>>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let opt_map: Option<HashMap<String, Vec<PhemexNetworkInfoData>>> =
+        Option::deserialize(deserializer)?;
+    Ok(opt_map.map(|map| map.into_values().flatten().collect()))
 }

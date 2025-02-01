@@ -114,7 +114,9 @@ impl PublicHttpConnector for KuCoinSpotPublicData {
         unimplemented!()
     }
 
-    async fn get_network_info() -> Result<Self::NetworkInfo, SocketError> {
+    async fn get_network_info(
+        _instruments: Vec<Instrument>,
+    ) -> Result<Self::NetworkInfo, SocketError> {
         let request_path = "/api/v3/currencies";
         Ok(
             reqwest::get(format!("{}{}", KUCOIN_BASE_HTTP_URL, request_path))

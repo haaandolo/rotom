@@ -30,7 +30,7 @@ pub struct PoloniexSpotBookData {
         deserialize_with = "de_u64_epoch_ms_as_datetime_utc"
     )]
     pub timestamp: DateTime<Utc>,
-    pub asks:Vec<Level>,
+    pub asks: Vec<Level>,
     pub bids: Vec<Level>,
     #[serde(alias = "lastId")]
     pub last_id: u64,

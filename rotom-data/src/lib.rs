@@ -3,10 +3,10 @@ pub mod error;
 pub mod exchange;
 pub mod metric;
 pub mod model;
+pub mod playground;
 pub mod protocols;
 pub mod shared;
 pub mod streams;
-pub mod temp;
 pub mod transformer;
 
 use std::fmt::Display;

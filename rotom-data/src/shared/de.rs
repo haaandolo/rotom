@@ -144,3 +144,20 @@ where
 {
     serializer.serialize_str(&value.to_string().to_uppercase())
 }
+
+pub fn de_string_or_i32<'de, D>(deserializer: D) -> Result<i32, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum StringOrNumber {
+        String(String),
+        Number(i32),
+    }
+
+    match StringOrNumber::deserialize(deserializer)? {
+        StringOrNumber::String(s) => s.parse::<i32>().map_err(serde::de::Error::custom),
+        StringOrNumber::Number(n) => Ok(n),
+    }
+}

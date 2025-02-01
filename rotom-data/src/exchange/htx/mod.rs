@@ -82,7 +82,9 @@ impl PublicHttpConnector for HtxSpotPublicData {
         unimplemented!()
     }
 
-    async fn get_network_info() -> Result<Self::NetworkInfo, SocketError> {
+    async fn get_network_info(
+        _instruments: Vec<Instrument>,
+    ) -> Result<Self::NetworkInfo, SocketError> {
         let request_path = "/settings/common/chains";
         Ok(
             reqwest::get(format!("{}{}", HTX_BASE_HTTP_URL, request_path))

@@ -254,4 +254,3 @@ pub struct ExmoNetworkInfoData {
     pub commission_desc: String,
     pub currency_confirmations: u32,
 }
-

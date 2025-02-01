@@ -72,7 +72,7 @@ impl PublicHttpConnector for WooxSpotPublicData {
 
     type BookSnapShot = serde_json::Value;
     type ExchangeTickerInfo = serde_json::Value;
-    type NetworkInfo = WooxNetworkInfo; 
+    type NetworkInfo = WooxNetworkInfo;
 
     async fn get_book_snapshot(_instrument: Instrument) -> Result<Self::BookSnapShot, SocketError> {
         unimplemented!()
@@ -84,7 +84,9 @@ impl PublicHttpConnector for WooxSpotPublicData {
         unimplemented!()
     }
 
-    async fn get_network_info() -> Result<Self::NetworkInfo, SocketError> {
+    async fn get_network_info(
+        _instruments: Vec<Instrument>,
+    ) -> Result<Self::NetworkInfo, SocketError> {
         let request_path = "/v1/public/token_network";
         Ok(
             reqwest::get(format!("{}{}", WOOX_BASE_HTTP_URL, request_path))

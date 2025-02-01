@@ -60,7 +60,7 @@ impl OrderBookUpdater for PoloniexSpotBookUpdater {
         book: &mut Self::OrderBook,
         mut update: Self::UpdateEvent,
     ) -> Result<Option<EventOrderBook>, SocketError> {
-        let update_data = mem::take(&mut update.data[0]); 
+        let update_data = mem::take(&mut update.data[0]);
         if update.action == "snapshot" {
             book.reset();
             book.process_lvl2(update_data.bids, update_data.asks);

@@ -123,7 +123,9 @@ impl PublicHttpConnector for BinanceSpotPublicData {
             .map_err(SocketError::Http)
     }
 
-    async fn get_network_info() -> Result<Self::NetworkInfo, SocketError> {
+    async fn get_network_info(
+        _instruments: Vec<Instrument>,
+    ) -> Result<Self::NetworkInfo, SocketError> {
         // Import secrets, key etc
         let secret = env!("BINANCE_API_SECRET");
         let key = env!("BINANCE_API_KEY");

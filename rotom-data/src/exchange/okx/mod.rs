@@ -77,7 +77,9 @@ impl PublicHttpConnector for OkxSpotPublicData {
         unimplemented!()
     }
 
-    async fn get_network_info() -> Result<Self::NetworkInfo, SocketError> {
+    async fn get_network_info(
+        _instruments: Vec<Instrument>,
+    ) -> Result<Self::NetworkInfo, SocketError> {
         // Import secrets, keys, passpharase etc
         let secret = env!("OKX_API_SECRET");
         let key = env!("OKX_API_KEY");

@@ -115,7 +115,9 @@ impl PublicHttpConnector for PoloniexSpotPublicData {
             .remove(0))
     }
 
-    async fn get_network_info() -> Result<Self::NetworkInfo, SocketError> {
+    async fn get_network_info(
+        _instruments: Vec<Instrument>,
+    ) -> Result<Self::NetworkInfo, SocketError> {
         unimplemented!()
     }
 }
