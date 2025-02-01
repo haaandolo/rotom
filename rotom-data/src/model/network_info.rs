@@ -1,6 +1,12 @@
+use crate::shared::subscription_models::ExchangeId;
+
 #[derive(Debug)]
-pub struct NetworkSpecs {
+pub struct NetworkSpecs(pub Vec<NetworkSpecData>);
+
+#[derive(Debug)]
+pub struct NetworkSpecData {
     pub coin: String,
+    pub exchange: ExchangeId,
     pub chains: Vec<ChainSpecs>,
 }
 

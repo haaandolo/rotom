@@ -50,11 +50,11 @@ pub async fn main() {
         Instrument::new("icp", "usdt"),
     ];
 
-    let test = AscendExSpotPublicData::get_network_info(instruments)
+    let test = BinanceSpotPublicData::get_network_info(instruments)
         .await
         .unwrap();
 
-    let test2: Vec<NetworkSpecs> = test.into();
+    let test2: NetworkSpecs = test.into();
     println!("network {:#?}", test2);
 
     // let mut file = File::create("./binance_network_info.json").unwrap();

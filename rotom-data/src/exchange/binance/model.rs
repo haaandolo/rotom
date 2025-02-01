@@ -8,6 +8,7 @@ use crate::{
     model::{
         event_trade::EventTrade,
         market_event::MarketEvent,
+        network_info::{ChainSpecs, NetworkSpecData, NetworkSpecs},
         ticker_info::{TickerInfo, TickerSpecs},
     },
     shared::{
@@ -343,7 +344,6 @@ impl From<BinanceSpotTickerInfo> for TickerInfo {
 /*----- */
 // Network Info
 /*----- */
-
 #[derive(Debug, Deserialize)]
 pub struct BinanceNetworkInfo {
     pub coin: String,
@@ -391,8 +391,8 @@ pub struct BinanceNetworkList {
     pub withdraw_desc: String,
     #[serde(rename = "withdrawEnable")]
     pub withdraw_enable: bool,
-    #[serde(rename = "withdrawFee")]
-    pub withdraw_fee: String,
+    #[serde(rename = "withdrawFee", deserialize_with = "de_str")]
+    pub withdraw_fee: f64,
     #[serde(rename = "withdrawIntegerMultiple")]
     pub withdraw_integer_multiple: String,
     #[serde(rename = "withdrawMax")]
@@ -410,6 +410,34 @@ pub struct BinanceNetworkList {
     pub contract_address_url: Option<String>,
     #[serde(rename = "contractAddress")]
     pub contract_address: Option<String>,
+}
+
+impl From<Vec<BinanceNetworkInfo>> for NetworkSpecs {
+    fn from(value: Vec<BinanceNetworkInfo>) -> Self {
+        let network_spec_data = value
+            .iter()
+            .map(|coin| {
+                let chain_specs = coin
+                    .network_list
+                    .iter()
+                    .map(|chain| ChainSpecs {
+                        chain_name: chain.network.clone(),
+                        fees: chain.withdraw_fee,
+                        can_deposit: chain.deposit_enable,
+                        can_withdraw: chain.withdraw_enable,
+                    })
+                    .collect();
+
+                NetworkSpecData {
+                    coin: coin.coin.clone(),
+                    exchange: ExchangeId::BinanceSpot,
+                    chains: chain_specs,
+                }
+            })
+            .collect::<Vec<_>>();
+
+        NetworkSpecs(network_spec_data)
+    }
 }
 
 // /*----- */

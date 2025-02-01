@@ -6,7 +6,7 @@ use crate::error::SocketError;
 use crate::exchange::Identifier;
 use crate::model::event_trade::EventTrade;
 use crate::model::market_event::MarketEvent;
-use crate::model::network_info::{ChainSpecs, NetworkSpecs};
+use crate::model::network_info::{ChainSpecs, NetworkSpecData, NetworkSpecs};
 use crate::model::ticker_info::TickerInfo;
 use crate::shared::de::{de_str, de_u64_epoch_ms_as_datetime_utc};
 use crate::shared::subscription_models::{ExchangeId, Instrument};
@@ -190,9 +190,9 @@ pub struct AscendExNetworkConfig {
     pub num_confirmations: i32,
 }
 
-impl From<AscendExNetworkInfo> for Vec<NetworkSpecs> {
+impl From<AscendExNetworkInfo> for NetworkSpecs {
     fn from(value: AscendExNetworkInfo) -> Self {
-        value
+        let network_spec_data = value
             .data
             .iter()
             .map(|coin| {
@@ -207,12 +207,15 @@ impl From<AscendExNetworkInfo> for Vec<NetworkSpecs> {
                     })
                     .collect::<Vec<_>>();
 
-                NetworkSpecs {
+                NetworkSpecData {
                     coin: coin.asset_code.clone(),
+                    exchange: ExchangeId::AscendExSpot,
                     chains: chain_specs,
                 }
             })
-            .collect::<Vec<_>>()
+            .collect::<Vec<_>>();
+
+        NetworkSpecs(network_spec_data)
     }
 }
 
