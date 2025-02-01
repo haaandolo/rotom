@@ -7,6 +7,7 @@ use crate::exchange::Identifier;
 use crate::model::event_book_snapshot::EventOrderBookSnapshot;
 use crate::model::event_trade::EventTrade;
 use crate::model::market_event::MarketEvent;
+use crate::model::network_info::{ChainSpecs, NetworkSpecData, NetworkSpecs};
 use crate::shared::de::{de_str, de_u64_epoch_ms_as_datetime_utc};
 use crate::shared::subscription_models::{ExchangeId, Instrument};
 use crate::streams::validator::Validator;
@@ -181,9 +182,39 @@ pub struct CoinExNetworksAvailable {
     pub safe_confirmations: i32,
     pub irreversible_confirmations: i32,
     pub deflation_rate: String,
-    pub withdrawal_fee: String,
+    #[serde(deserialize_with = "de_str")]
+    pub withdrawal_fee: f64,
     pub withdrawal_precision: i32,
     pub memo: String,
     pub is_memo_required_for_deposit: bool,
     pub explorer_asset_url: String,
+}
+
+impl From<CoinExNetworkInfo> for NetworkSpecs {
+    fn from(value: CoinExNetworkInfo) -> Self {
+        let network_spec_data = value
+            .data
+            .iter()
+            .map(|coin| {
+                let chain_specs = coin
+                    .chains
+                    .iter()
+                    .map(|chain| ChainSpecs {
+                        chain_name: chain.chain.clone(),
+                        fees: chain.withdrawal_fee,
+                        can_deposit: chain.deposit_enabled,
+                        can_withdraw: chain.withdraw_enabled,
+                    })
+                    .collect();
+
+                NetworkSpecData {
+                    coin: coin.asset.ccy.clone(),
+                    exchange: ExchangeId::CoinExSpot,
+                    chains: chain_specs,
+                }
+            })
+            .collect::<Vec<_>>();
+
+        NetworkSpecs(network_spec_data)
+    }
 }

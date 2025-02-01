@@ -50,7 +50,7 @@ pub async fn main() {
         Instrument::new("icp", "usdt"),
     ];
 
-    let test = BinanceSpotPublicData::get_network_info(instruments)
+    let test =CoinExSpotPublicData::get_network_info(instruments)
         .await
         .unwrap();
 
