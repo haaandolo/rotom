@@ -50,14 +50,14 @@ pub async fn main() {
         Instrument::new("icp", "usdt"),
     ];
 
-    let test =CoinExSpotPublicData::get_network_info(instruments)
+    let test = ExmoSpotPublicData::get_network_info(instruments)
         .await
         .unwrap();
 
     let test2: NetworkSpecs = test.into();
     println!("network {:#?}", test2);
 
-    // let mut file = File::create("./binance_network_info.json").unwrap();
+    // let mut file = File::create("./exmo_network_info.json").unwrap();
     // let json_string = serde_json::to_string_pretty(&test).unwrap();
     // file.write_all(json_string.as_bytes()).unwrap();
 

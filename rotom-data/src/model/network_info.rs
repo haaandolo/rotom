@@ -10,7 +10,7 @@ pub struct NetworkSpecData {
     pub chains: Vec<ChainSpecs>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ChainSpecs {
     pub chain_name: String,
     // fee is denominated in the corresponding coin e.g the coin field in NetworkSpecs

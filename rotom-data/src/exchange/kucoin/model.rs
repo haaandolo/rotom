@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
@@ -230,27 +228,4 @@ pub struct KuCoinNetworkChain {
     pub need_tag: bool,
     #[serde(rename = "chainId")]
     pub chain_id: String,
-}
-
-/*----- */
-// Network info
-/*----- */
-#[derive(Debug, Deserialize)]
-pub struct ExmoNetworkInfo {
-    #[serde(flatten)]
-    pub networks: HashMap<String, Vec<ExmoNetworkInfoData>>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ExmoNetworkInfoData {
-    #[serde(rename = "type")]
-    pub transaction_type: String,
-    pub name: String,
-    pub currency_name: String,
-    pub min: String,
-    pub max: String,
-    pub enabled: bool,
-    pub comment: String,
-    pub commission_desc: String,
-    pub currency_confirmations: u32,
 }

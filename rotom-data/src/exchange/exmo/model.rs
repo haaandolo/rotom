@@ -1,13 +1,17 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
-use serde::Deserialize;
+use serde::{de, Deserialize, Deserializer};
 
 use crate::{
     assets::level::Level,
     error::SocketError,
     exchange::Identifier,
     model::{
-        event_book_snapshot::EventOrderBookSnapshot, event_trade::EventTrade,
+        event_book_snapshot::EventOrderBookSnapshot,
+        event_trade::EventTrade,
         market_event::MarketEvent,
+        network_info::{ChainSpecs, NetworkSpecData, NetworkSpecs},
     },
     shared::{
         de::{de_str, de_u64_epoch_ms_as_datetime_utc},
@@ -171,4 +175,94 @@ impl Validator for ExmoSubscriptionResponse {
             }
         }
     }
+}
+
+/*----- */
+// Network info
+/*----- */
+#[derive(Debug, Deserialize)]
+pub struct ExmoNetworkInfo {
+    #[serde(flatten)]
+    pub networks: HashMap<String, Vec<ExmoNetworkInfoData>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ExmoNetworkInfoData {
+    #[serde(rename = "type")]
+    pub transaction_type: String,
+    pub name: String,
+    pub currency_name: String,
+    pub min: String,
+    pub max: String,
+    pub enabled: bool,
+    pub comment: String,
+    #[serde(deserialize_with = "de_withdraw_amount_exmo")]
+    pub commission_desc: f64,
+    pub currency_confirmations: u32,
+}
+
+impl From<ExmoNetworkInfo> for NetworkSpecs {
+    fn from(value: ExmoNetworkInfo) -> Self {
+        let mut network_specs = Vec::with_capacity(value.networks.len());
+
+        for (coin_name, networks) in value.networks.into_iter() {
+            // Have to add to hashmap first as exmo sends deposit and withdraw data separately for tne same chain, fml
+            let mut paired: HashMap<String, Vec<ExmoNetworkInfoData>> =
+                HashMap::with_capacity(networks.len());
+            for chain_info in networks.into_iter() {
+                paired
+                    .entry(chain_info.name.clone())
+                    .or_default()
+                    .push(chain_info)
+            }
+
+            let mut chain_specs = Vec::new();
+            for (chain_name, chain_spec) in paired.into_iter() {
+                let mut chain_spec_default = ChainSpecs {
+                    chain_name,
+                    ..ChainSpecs::default()
+                };
+
+                for chain in chain_spec.into_iter() {
+                    if chain.transaction_type == "withdraw" {
+                        chain_spec_default.can_withdraw = chain.enabled;
+                        chain_spec_default.fees = chain.commission_desc;
+                    } else {
+                        chain_spec_default.can_deposit = chain.enabled;
+                    }
+                }
+
+                chain_specs.push(chain_spec_default)
+            }
+
+            network_specs.push(NetworkSpecData {
+                coin: coin_name,
+                exchange: ExchangeId::ExmoSpot,
+                chains: chain_specs,
+            })
+        }
+
+        NetworkSpecs(network_specs)
+    }
+}
+
+pub fn de_withdraw_amount_exmo<'de, D>(deserializer: D) -> Result<f64, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s: &str = serde::de::Deserialize::deserialize(deserializer)?;
+
+    // Deposit example: "0%" or ""
+    let trimmed = s.trim();
+    if trimmed.is_empty() || trimmed == "0%" {
+        return Ok(0.0);
+    }
+
+    // Withdraw example: "0.0001 trx"
+    let amount = s
+        .split_whitespace()
+        .next()
+        .ok_or_else(|| de::Error::custom("missing amount value"))?;
+
+    amount.parse::<f64>().map_err(de::Error::custom)
 }

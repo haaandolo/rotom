@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use channel::ExmoChannel;
 use market::ExmoMarket;
-use model::{ExmoOrderBookSnapshot, ExmoSubscriptionResponse, ExmoTrades};
+use model::{ExmoNetworkInfo, ExmoOrderBookSnapshot, ExmoSubscriptionResponse, ExmoTrades};
 use rand::Rng;
 use serde_json::json;
 
@@ -13,9 +13,7 @@ use crate::{
     transformer::stateless_transformer::StatelessTransformer,
 };
 
-use super::{
-    kucoin::model::ExmoNetworkInfo, PublicHttpConnector, PublicStreamConnector, StreamSelector,
-};
+use super::{PublicHttpConnector, PublicStreamConnector, StreamSelector};
 
 pub mod channel;
 pub mod market;

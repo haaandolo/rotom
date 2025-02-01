@@ -10,9 +10,7 @@ use crate::{
         coinex::model::{CoinExNetworkInfo, CoinExOrderBookSnapshot, CoinExTrade},
         exmo::model::{ExmoOrderBookSnapshot, ExmoSubscriptionResponse, ExmoTrades},
         htx::model::HtxSubscriptionResponse,
-        kucoin::model::{
-            ExmoNetworkInfo, KuCoinNetworkInfo, KuCoinOrderBookSnapshot, KuCoinTrade, KuCoinWsUrl,
-        },
+        kucoin::model::{KuCoinNetworkInfo, KuCoinOrderBookSnapshot, KuCoinTrade, KuCoinWsUrl},
         okx::model::{OkxNetworkInfo, OkxOrderBookSnapshot, OkxSubscriptionResponse, OkxTrade},
         phemex::model::{
             PhemexNetworkInfo, PhemexOrderBookUpdate, PhemexSubscriptionResponse, PhemexTickerInfo,

@@ -25,17 +25,6 @@
   ],
   "ACT": [
     {
-      "comment": "The minimum deposit amount is 2 ACT. We only support ACT deposits via the Solana network.",
-      "commission_desc": "",
-      "currency_confirmations": 1,
-      "currency_name": "ACT",
-      "enabled": true,
-      "max": "10000000",
-      "min": "2",
-      "name": "ACT(Solana)",
-      "type": "deposit"
-    },
-    {
       "comment": "We only support ACT withdrawals via the Solana network",
       "commission_desc": "0.5 ACT",
       "currency_confirmations": 1,
@@ -45,6 +34,17 @@
       "min": "10",
       "name": "ACT(Solana)",
       "type": "withdraw"
+    },
+    {
+      "comment": "The minimum deposit amount is 2 ACT. We only support ACT deposits via the Solana network.",
+      "commission_desc": "",
+      "currency_confirmations": 1,
+      "currency_name": "ACT",
+      "enabled": true,
+      "max": "10000000",
+      "min": "2",
+      "name": "ACT(Solana)",
+      "type": "deposit"
     }
   ],
   "ADA": [
@@ -73,17 +73,6 @@
   ],
   "AI16Z": [
     {
-      "comment": "We only support AI16Z withdrawals via the Solana network.",
-      "commission_desc": "0.5 AI16Z",
-      "currency_confirmations": 1,
-      "currency_name": "AI16Z",
-      "enabled": true,
-      "max": "1000000",
-      "min": "15",
-      "name": "AI16Z(Solana)",
-      "type": "withdraw"
-    },
-    {
       "comment": "The minimum deposit amount is 3 AI16Z. We only support AI16Z deposits via the Solana network.",
       "commission_desc": "",
       "currency_confirmations": 1,
@@ -93,6 +82,17 @@
       "min": "3",
       "name": "AI16Z(Solana)",
       "type": "deposit"
+    },
+    {
+      "comment": "We only support AI16Z withdrawals via the Solana network.",
+      "commission_desc": "0.5 AI16Z",
+      "currency_confirmations": 1,
+      "currency_name": "AI16Z",
+      "enabled": true,
+      "max": "1000000",
+      "min": "15",
+      "name": "AI16Z(Solana)",
+      "type": "withdraw"
     }
   ],
   "AIXBT": [
@@ -123,20 +123,20 @@
     {
       "comment": "",
       "commission_desc": "5 ALCH",
-      "currency_confirmations": 10,
+      "currency_confirmations": 1,
       "currency_name": "ALCH",
-      "enabled": false,
+      "enabled": true,
       "max": "1000000",
       "min": "15",
       "name": "ALCH",
       "type": "withdraw"
     },
     {
-      "comment": "",
+      "comment": "Contract address ends with NApump.",
       "commission_desc": "",
-      "currency_confirmations": 10,
+      "currency_confirmations": 1,
       "currency_name": "ALCH",
-      "enabled": false,
+      "enabled": true,
       "max": "10000000",
       "min": "10",
       "name": "ALCH",
@@ -144,17 +144,6 @@
     }
   ],
   "ALGO": [
-    {
-      "comment": "We support only Algorand network for ALGO deposits, please consider this when transferring funds.",
-      "commission_desc": "0%",
-      "currency_confirmations": 30,
-      "currency_name": "ALGO",
-      "enabled": true,
-      "max": "1000000",
-      "min": "1",
-      "name": "ALGO",
-      "type": "deposit"
-    },
     {
       "comment": "We support only Algorand network for ALGO withdrawals, please consider this when transferring funds.",
       "commission_desc": "0.01 ALGO",
@@ -165,6 +154,17 @@
       "min": "5",
       "name": "ALGO",
       "type": "withdraw"
+    },
+    {
+      "comment": "We support only Algorand network for ALGO deposits, please consider this when transferring funds.",
+      "commission_desc": "0%",
+      "currency_confirmations": 30,
+      "currency_name": "ALGO",
+      "enabled": true,
+      "max": "1000000",
+      "min": "1",
+      "name": "ALGO",
+      "type": "deposit"
     }
   ],
   "ANON": [
@@ -217,17 +217,6 @@
   ],
   "ATOM": [
     {
-      "comment": "We support only Cosmos network for ATOM withdrawals, please consider this when transferring funds.",
-      "commission_desc": "0.05 ATOM",
-      "currency_confirmations": 30,
-      "currency_name": "ATOM",
-      "enabled": true,
-      "max": "100000",
-      "min": "1",
-      "name": "ATOM",
-      "type": "withdraw"
-    },
-    {
       "comment": "We support only Cosmos network for ATOM deposits, please consider this when transferring funds.",
       "commission_desc": "0%",
       "currency_confirmations": 30,
@@ -237,20 +226,20 @@
       "min": "0.1",
       "name": "ATOM",
       "type": "deposit"
+    },
+    {
+      "comment": "We support only Cosmos network for ATOM withdrawals, please consider this when transferring funds.",
+      "commission_desc": "0.05 ATOM",
+      "currency_confirmations": 30,
+      "currency_name": "ATOM",
+      "enabled": true,
+      "max": "100000",
+      "min": "1",
+      "name": "ATOM",
+      "type": "withdraw"
     }
   ],
   "AXS": [
-    {
-      "comment": "The minimum deposit amount is 5 AXS. We support AXS deposits only through the Ethereum network. The contract address includes: 7B28b.",
-      "commission_desc": "",
-      "currency_confirmations": 30,
-      "currency_name": "AXS",
-      "enabled": true,
-      "max": "1000000",
-      "min": "5",
-      "name": "AXS",
-      "type": "deposit"
-    },
     {
       "comment": "We support only Ethereum network for AXS withdrawals. The contract address includes: 7B28b.",
       "commission_desc": "5 AXS",
@@ -261,20 +250,20 @@
       "min": "10",
       "name": "AXS",
       "type": "withdraw"
+    },
+    {
+      "comment": "The minimum deposit amount is 5 AXS. We support AXS deposits only through the Ethereum network. The contract address includes: 7B28b.",
+      "commission_desc": "",
+      "currency_confirmations": 30,
+      "currency_name": "AXS",
+      "enabled": true,
+      "max": "1000000",
+      "min": "5",
+      "name": "AXS",
+      "type": "deposit"
     }
   ],
   "BCH": [
-    {
-      "comment": "We support only Bitcoin Cash network for BCH deposits, please consider this when transferring funds.",
-      "commission_desc": "0%",
-      "currency_confirmations": 1,
-      "currency_name": "BCH",
-      "enabled": true,
-      "max": "0",
-      "min": "0.001",
-      "name": "BCH",
-      "type": "deposit"
-    },
     {
       "comment": "We support only Bitcoin Cash network for BCH withdrawals, please consider this when transferring funds.",
       "commission_desc": "0.001 BCH",
@@ -285,20 +274,20 @@
       "min": "0.01",
       "name": "BCH",
       "type": "withdraw"
+    },
+    {
+      "comment": "We support only Bitcoin Cash network for BCH deposits, please consider this when transferring funds.",
+      "commission_desc": "0%",
+      "currency_confirmations": 1,
+      "currency_name": "BCH",
+      "enabled": true,
+      "max": "0",
+      "min": "0.001",
+      "name": "BCH",
+      "type": "deposit"
     }
   ],
   "BETH": [
-    {
-      "comment": "We support only Binance Smart Chain (BEP-20) network for BETH withdrawals, please consider this when transferring funds.",
-      "commission_desc": "0.003 BETH",
-      "currency_confirmations": 30,
-      "currency_name": "BETH",
-      "enabled": false,
-      "max": "500",
-      "min": "0.0032",
-      "name": "BETH (BSC)",
-      "type": "withdraw"
-    },
     {
       "comment": "The minimum deposit amount is 0.01 BETH. If you want to deposit BETH via the BSC network, please make sure to use the BSC wallet address. Contract address: contains aa91b.",
       "commission_desc": "",
@@ -309,44 +298,44 @@
       "min": "0.01",
       "name": "BETH (BSC)",
       "type": "deposit"
+    },
+    {
+      "comment": "We support only Binance Smart Chain (BEP-20) network for BETH withdrawals, please consider this when transferring funds.",
+      "commission_desc": "0.003 BETH",
+      "currency_confirmations": 30,
+      "currency_name": "BETH",
+      "enabled": false,
+      "max": "500",
+      "min": "0.0032",
+      "name": "BETH (BSC)",
+      "type": "withdraw"
     }
   ],
   "BIO": [
     {
       "comment": "",
-      "commission_desc": "",
-      "currency_confirmations": 10,
-      "currency_name": "BIO",
-      "enabled": false,
-      "max": "10000000",
-      "min": "10",
-      "name": "BIO",
-      "type": "deposit"
-    },
-    {
-      "comment": "",
       "commission_desc": "10 BIO",
-      "currency_confirmations": 10,
+      "currency_confirmations": 30,
       "currency_name": "BIO",
-      "enabled": false,
+      "enabled": true,
       "max": "1000000",
       "min": "30",
       "name": "BIO",
       "type": "withdraw"
+    },
+    {
+      "comment": "The contract address ends with e5ffa.",
+      "commission_desc": "",
+      "currency_confirmations": 30,
+      "currency_name": "BIO",
+      "enabled": true,
+      "max": "10000000",
+      "min": "10",
+      "name": "BIO",
+      "type": "deposit"
     }
   ],
   "BLAST": [
-    {
-      "comment": "We support only BLAST network for BLAST withdrawals. Contract Address Ends with 88E2ad",
-      "commission_desc": "5 BLAST",
-      "currency_confirmations": 150,
-      "currency_name": "BLAST",
-      "enabled": true,
-      "max": "100000",
-      "min": "50",
-      "name": "BLAST",
-      "type": "withdraw"
-    },
     {
       "comment": "We support only BLAST network for BLAST deposits. Contract Address Ends with 88E2ad",
       "commission_desc": "",
@@ -357,6 +346,17 @@
       "min": "1",
       "name": "BLAST",
       "type": "deposit"
+    },
+    {
+      "comment": "We support only BLAST network for BLAST withdrawals. Contract Address Ends with 88E2ad",
+      "commission_desc": "5 BLAST",
+      "currency_confirmations": 150,
+      "currency_name": "BLAST",
+      "enabled": true,
+      "max": "100000",
+      "min": "50",
+      "name": "BLAST",
+      "type": "withdraw"
     }
   ],
   "BTC": [
@@ -409,17 +409,6 @@
   ],
   "CBBTC": [
     {
-      "comment": "We support only Base network for cbBTC deposits, please consider this when transferring funds.",
-      "commission_desc": "",
-      "currency_confirmations": 200,
-      "currency_name": "CBBTC",
-      "enabled": true,
-      "max": "350",
-      "min": "0.001",
-      "name": "cbBTC (Base)",
-      "type": "deposit"
-    },
-    {
       "comment": "We support only Base network for cbBTC withdrawals, please consider this when transferring funds.",
       "commission_desc": "0.0001 cbBTC",
       "currency_confirmations": 400,
@@ -429,6 +418,17 @@
       "min": "0.002",
       "name": "cbBTC (Base)",
       "type": "withdraw"
+    },
+    {
+      "comment": "We support only Base network for cbBTC deposits, please consider this when transferring funds.",
+      "commission_desc": "",
+      "currency_confirmations": 200,
+      "currency_name": "CBBTC",
+      "enabled": true,
+      "max": "350",
+      "min": "0.001",
+      "name": "cbBTC (Base)",
+      "type": "deposit"
     }
   ],
   "CBETH": [
@@ -529,17 +529,6 @@
   ],
   "DOGE": [
     {
-      "comment": "When depositing DOGE, please note that we support only the Dogecoin network. We do not support the Binance Smart Chain (BEP-20) network for DOGE deposits.",
-      "commission_desc": "0%",
-      "currency_confirmations": 6,
-      "currency_name": "DOGE",
-      "enabled": true,
-      "max": "0",
-      "min": "10",
-      "name": "DOGE",
-      "type": "deposit"
-    },
-    {
       "comment": "When withdrawing DOGE, please note that we support only the Dogecoin network. We do not support the Binance Smart Chain (BEP-20) network for DOGE withdrawals.",
       "commission_desc": "5 DOGE",
       "currency_confirmations": 12,
@@ -549,6 +538,17 @@
       "min": "30",
       "name": "DOGE",
       "type": "withdraw"
+    },
+    {
+      "comment": "When depositing DOGE, please note that we support only the Dogecoin network. We do not support the Binance Smart Chain (BEP-20) network for DOGE deposits.",
+      "commission_desc": "0%",
+      "currency_confirmations": 6,
+      "currency_name": "DOGE",
+      "enabled": true,
+      "max": "0",
+      "min": "10",
+      "name": "DOGE",
+      "type": "deposit"
     }
   ],
   "DOT": [
@@ -577,17 +577,6 @@
   ],
   "ENA": [
     {
-      "comment": "We support only Ethereum network for ENA withdrawals, please consider this when transferring funds.",
-      "commission_desc": "15 ENA",
-      "currency_confirmations": 30,
-      "currency_name": "ENA",
-      "enabled": true,
-      "max": "100000",
-      "min": "34",
-      "name": "Ethena",
-      "type": "withdraw"
-    },
-    {
       "comment": "We support only Ethereum network for ENA deposits, please consider this when transferring funds.",
       "commission_desc": "",
       "currency_confirmations": 30,
@@ -597,6 +586,17 @@
       "min": "10",
       "name": "Ethena",
       "type": "deposit"
+    },
+    {
+      "comment": "We support only Ethereum network for ENA withdrawals, please consider this when transferring funds.",
+      "commission_desc": "15 ENA",
+      "currency_confirmations": 30,
+      "currency_name": "ENA",
+      "enabled": true,
+      "max": "100000",
+      "min": "34",
+      "name": "Ethena",
+      "type": "withdraw"
     }
   ],
   "ENJ": [
@@ -605,7 +605,7 @@
       "commission_desc": "",
       "currency_confirmations": 30,
       "currency_name": "ENJ",
-      "enabled": true,
+      "enabled": false,
       "max": "1000000",
       "min": "50",
       "name": "ENJ",
@@ -625,17 +625,6 @@
   ],
   "EOS": [
     {
-      "comment": "We support only EOS network for EOS withdrawals, please consider this when transferring funds.",
-      "commission_desc": "0.05 EOS",
-      "currency_confirmations": 1,
-      "currency_name": "EOS",
-      "enabled": false,
-      "max": "1000000",
-      "min": "1",
-      "name": "EOS",
-      "type": "withdraw"
-    },
-    {
       "comment": "We support only EOS network for EOS deposits, please consider this when transferring funds.",
       "commission_desc": "0%",
       "currency_confirmations": 1,
@@ -645,20 +634,20 @@
       "min": "0.01",
       "name": "EOS",
       "type": "deposit"
+    },
+    {
+      "comment": "We support only EOS network for EOS withdrawals, please consider this when transferring funds.",
+      "commission_desc": "0.05 EOS",
+      "currency_confirmations": 1,
+      "currency_name": "EOS",
+      "enabled": false,
+      "max": "1000000",
+      "min": "1",
+      "name": "EOS",
+      "type": "withdraw"
     }
   ],
   "ETC": [
-    {
-      "comment": "When withdrawing ETC, please note that we support only the Ethereum Classic network. We do not support the Binance Smart Chain (BEP-20) network for ETC withdrawals.",
-      "commission_desc": "0.01 ETC",
-      "currency_confirmations": 500,
-      "currency_name": "ETC",
-      "enabled": true,
-      "max": "2000",
-      "min": "0.1",
-      "name": "ETC",
-      "type": "withdraw"
-    },
     {
       "comment": "When depositing ETC, please note that we support only the Ethereum Classic network. We do not support the Binance Smart Chain (BEP-20) network for ETC deposits.",
       "commission_desc": "0%",
@@ -669,20 +658,20 @@
       "min": "0.1",
       "name": "ETC",
       "type": "deposit"
+    },
+    {
+      "comment": "When withdrawing ETC, please note that we support only the Ethereum Classic network. We do not support the Binance Smart Chain (BEP-20) network for ETC withdrawals.",
+      "commission_desc": "0.01 ETC",
+      "currency_confirmations": 500,
+      "currency_name": "ETC",
+      "enabled": true,
+      "max": "2000",
+      "min": "0.1",
+      "name": "ETC",
+      "type": "withdraw"
     }
   ],
   "ETH": [
-    {
-      "comment": "If you want to deposit ETH via the Ethereum network, please make sure to use the Ethereum wallet address.",
-      "commission_desc": "0%",
-      "currency_confirmations": 15,
-      "currency_name": "ETH",
-      "enabled": true,
-      "max": "0",
-      "min": "0.01",
-      "name": "ETH",
-      "type": "deposit"
-    },
     {
       "comment": "When withdrawing ETH, please note that we support only the Ethereum network. We do not support the Binance Smart Chain (BEP-20) network for ETH withdrawals.",
       "commission_desc": "0.003 ETH",
@@ -693,6 +682,17 @@
       "min": "0.0032",
       "name": "ETH",
       "type": "withdraw"
+    },
+    {
+      "comment": "If you want to deposit ETH via the Ethereum network, please make sure to use the Ethereum wallet address.",
+      "commission_desc": "0%",
+      "currency_confirmations": 15,
+      "currency_name": "ETH",
+      "enabled": true,
+      "max": "0",
+      "min": "0.01",
+      "name": "ETH",
+      "type": "deposit"
     },
     {
       "comment": "The minimum deposit amount is 0.01 ETH. If you want to deposit ETH via the BSC network, please make sure to use the BSC wallet address. Contract address: contains 933F8.",
@@ -719,17 +719,6 @@
   ],
   "EURT": [
     {
-      "comment": "We support only Ethereum (ERC-20) network for EURT deposits, please consider this when transferring funds.",
-      "commission_desc": "0%",
-      "currency_confirmations": 30,
-      "currency_name": "EURT",
-      "enabled": true,
-      "max": "1000000",
-      "min": "10",
-      "name": "EURT (ERC20)",
-      "type": "deposit"
-    },
-    {
       "comment": "We support only Ethereum (ERC-20) network for EURT withdrawals, please consider this when transferring funds.",
       "commission_desc": "10 EURT",
       "currency_confirmations": 30,
@@ -739,20 +728,20 @@
       "min": "15",
       "name": "EURT (ERC20)",
       "type": "withdraw"
+    },
+    {
+      "comment": "We support only Ethereum (ERC-20) network for EURT deposits, please consider this when transferring funds.",
+      "commission_desc": "0%",
+      "currency_confirmations": 30,
+      "currency_name": "EURT",
+      "enabled": true,
+      "max": "1000000",
+      "min": "10",
+      "name": "EURT (ERC20)",
+      "type": "deposit"
     }
   ],
   "EXM": [
-    {
-      "comment": "The minimum deposit amount is 500 EXM. We support only Ethereum (ERC-20) network for EXM deposits, please consider this when transferring funds.",
-      "commission_desc": "0%",
-      "currency_confirmations": 30,
-      "currency_name": "EXM",
-      "enabled": true,
-      "max": "100000000",
-      "min": "500",
-      "name": "EXMO Coin",
-      "type": "deposit"
-    },
     {
       "comment": "The minimum withdrawal amount is 1200 EXM. We support only Ethereum (ERC-20) network for EXM withdrawals, please consider this when transferring funds.",
       "commission_desc": "1200 EXM",
@@ -763,6 +752,17 @@
       "min": "1200",
       "name": "EXMO Coin",
       "type": "withdraw"
+    },
+    {
+      "comment": "The minimum deposit amount is 500 EXM. We support only Ethereum (ERC-20) network for EXM deposits, please consider this when transferring funds.",
+      "commission_desc": "0%",
+      "currency_confirmations": 30,
+      "currency_name": "EXM",
+      "enabled": true,
+      "max": "100000000",
+      "min": "500",
+      "name": "EXMO Coin",
+      "type": "deposit"
     }
   ],
   "FARTCOIN": [
@@ -791,17 +791,6 @@
   ],
   "FLOKI": [
     {
-      "comment": "We support only Binance Smart Chain (BEP-20) network for FLOKI deposits, please consider this when transferring funds.",
-      "commission_desc": "0%",
-      "currency_confirmations": 15,
-      "currency_name": "FLOKI",
-      "enabled": true,
-      "max": "100000000",
-      "min": "100000",
-      "name": "FLOKI (BEP20)",
-      "type": "deposit"
-    },
-    {
       "comment": "We support only Binance Smart Chain (BEP-20) network for FLOKI withdrawals, please consider this when transferring funds.",
       "commission_desc": "50000 FLOKI",
       "currency_confirmations": 30,
@@ -811,20 +800,20 @@
       "min": "500000",
       "name": "FLOKI (BEP20)",
       "type": "withdraw"
+    },
+    {
+      "comment": "We support only Binance Smart Chain (BEP-20) network for FLOKI deposits, please consider this when transferring funds.",
+      "commission_desc": "0%",
+      "currency_confirmations": 15,
+      "currency_name": "FLOKI",
+      "enabled": true,
+      "max": "100000000",
+      "min": "100000",
+      "name": "FLOKI (BEP20)",
+      "type": "deposit"
     }
   ],
   "GAS": [
-    {
-      "comment": "",
-      "commission_desc": "0%",
-      "currency_confirmations": 5,
-      "currency_name": "GAS",
-      "enabled": false,
-      "max": "1000000",
-      "min": "0.001",
-      "name": "GAS",
-      "type": "deposit"
-    },
     {
       "comment": "",
       "commission_desc": "0%",
@@ -835,20 +824,20 @@
       "min": "0.01",
       "name": "GAS",
       "type": "withdraw"
+    },
+    {
+      "comment": "",
+      "commission_desc": "0%",
+      "currency_confirmations": 5,
+      "currency_name": "GAS",
+      "enabled": false,
+      "max": "1000000",
+      "min": "0.001",
+      "name": "GAS",
+      "type": "deposit"
     }
   ],
   "GME": [
-    {
-      "comment": "",
-      "commission_desc": "300 GME",
-      "currency_confirmations": 1,
-      "currency_name": "GME",
-      "enabled": true,
-      "max": "1000000",
-      "min": "1000",
-      "name": "GME",
-      "type": "withdraw"
-    },
     {
       "comment": "",
       "commission_desc": "",
@@ -859,6 +848,17 @@
       "min": "400",
       "name": "GME",
       "type": "deposit"
+    },
+    {
+      "comment": "",
+      "commission_desc": "300 GME",
+      "currency_confirmations": 1,
+      "currency_name": "GME",
+      "enabled": true,
+      "max": "1000000",
+      "min": "1000",
+      "name": "GME",
+      "type": "withdraw"
     }
   ],
   "GOAT": [
@@ -885,18 +885,31 @@
       "type": "withdraw"
     }
   ],
-  "GRT": [
+  "GRIFFAIN": [
     {
-      "comment": "We support only Polygon network for GRT deposits. The contract address includes: f5531.",
+      "comment": "The contract address ends with kYvEP.",
       "commission_desc": "",
-      "currency_confirmations": 450,
-      "currency_name": "GRT",
+      "currency_confirmations": 1,
+      "currency_name": "GRIFFAIN",
       "enabled": true,
       "max": "1000000",
       "min": "1",
-      "name": "GRT",
+      "name": "GRIFFAIN",
       "type": "deposit"
     },
+    {
+      "comment": "",
+      "commission_desc": "0.5 GRIFFAIN",
+      "currency_confirmations": 1,
+      "currency_name": "GRIFFAIN",
+      "enabled": true,
+      "max": "100000",
+      "min": "1.5",
+      "name": "GRIFFAIN",
+      "type": "withdraw"
+    }
+  ],
+  "GRT": [
     {
       "comment": "We support only Polygon network for GRT withdrawals. The contract address includes: f5531.",
       "commission_desc": "1 GRT",
@@ -907,6 +920,17 @@
       "min": "5",
       "name": "GRT",
       "type": "withdraw"
+    },
+    {
+      "comment": "We support only Polygon network for GRT deposits. The contract address includes: f5531.",
+      "commission_desc": "",
+      "currency_confirmations": 450,
+      "currency_name": "GRT",
+      "enabled": true,
+      "max": "1000000",
+      "min": "1",
+      "name": "GRT",
+      "type": "deposit"
     }
   ],
   "HMSTR": [
@@ -983,17 +1007,6 @@
   ],
   "JST": [
     {
-      "comment": "This address only supports JST deposits on the TRON network.",
-      "commission_desc": "",
-      "currency_confirmations": 20,
-      "currency_name": "JST",
-      "enabled": true,
-      "max": "100000000",
-      "min": "50",
-      "name": "JST(TRON)",
-      "type": "deposit"
-    },
-    {
       "comment": "JST withdrawals are only supported on the TRON network.",
       "commission_desc": "10 JST",
       "currency_confirmations": 20,
@@ -1003,6 +1016,17 @@
       "min": "100",
       "name": "JST(TRON)",
       "type": "withdraw"
+    },
+    {
+      "comment": "This address only supports JST deposits on the TRON network.",
+      "commission_desc": "",
+      "currency_confirmations": 20,
+      "currency_name": "JST",
+      "enabled": true,
+      "max": "100000000",
+      "min": "50",
+      "name": "JST(TRON)",
+      "type": "deposit"
     }
   ],
   "KMNO": [
@@ -1079,17 +1103,6 @@
   ],
   "LTC": [
     {
-      "comment": "When depositing LTC, please note that we support only the Litecoin network. We do not support the Binance Smart Chain (BEP-20) network for LTC deposits.",
-      "commission_desc": "0%",
-      "currency_confirmations": 1,
-      "currency_name": "LTC",
-      "enabled": true,
-      "max": "0",
-      "min": "0.001",
-      "name": "LTC",
-      "type": "deposit"
-    },
-    {
       "comment": "When withdrawing LTC, please note that we support only the Litecoin network. We do not support the Binance Smart Chain (BEP-20) network for LTC withdrawals.",
       "commission_desc": "0.01 LTC",
       "currency_confirmations": 4,
@@ -1099,20 +1112,20 @@
       "min": "0.5",
       "name": "LTC",
       "type": "withdraw"
+    },
+    {
+      "comment": "When depositing LTC, please note that we support only the Litecoin network. We do not support the Binance Smart Chain (BEP-20) network for LTC deposits.",
+      "commission_desc": "0%",
+      "currency_confirmations": 1,
+      "currency_name": "LTC",
+      "enabled": true,
+      "max": "0",
+      "min": "0.001",
+      "name": "LTC",
+      "type": "deposit"
     }
   ],
   "LUM": [
-    {
-      "comment": "We support only Base network for LUM withdrawals, please consider this when transferring funds.",
-      "commission_desc": "0.05 LUM",
-      "currency_confirmations": 400,
-      "currency_name": "LUM",
-      "enabled": true,
-      "max": "100000",
-      "min": "0.5",
-      "name": "LUM(Base)",
-      "type": "withdraw"
-    },
     {
       "comment": "We support only Base network for LUM deposits, please consider this when transferring funds.",
       "commission_desc": "",
@@ -1123,6 +1136,17 @@
       "min": "0.1",
       "name": "LUM(Base)",
       "type": "deposit"
+    },
+    {
+      "comment": "We support only Base network for LUM withdrawals, please consider this when transferring funds.",
+      "commission_desc": "0.05 LUM",
+      "currency_confirmations": 400,
+      "currency_name": "LUM",
+      "enabled": true,
+      "max": "100000",
+      "min": "0.5",
+      "name": "LUM(Base)",
+      "type": "withdraw"
     }
   ],
   "LUNA": [
@@ -1151,17 +1175,6 @@
   ],
   "MANA": [
     {
-      "comment": "The minimum deposit amount is 1 MANA. We only support MANA deposits via the Polygon network. The contract address includes 06fD4.",
-      "commission_desc": "",
-      "currency_confirmations": 450,
-      "currency_name": "MANA",
-      "enabled": true,
-      "max": "1000000",
-      "min": "1",
-      "name": "MANA (Polygon)",
-      "type": "deposit"
-    },
-    {
       "comment": "We only support MANA withdrawals via the Polygon network. The contract address includes 06fD4.",
       "commission_desc": "1 MANA",
       "currency_confirmations": 900,
@@ -1171,6 +1184,17 @@
       "min": "5",
       "name": "MANA (Polygon)",
       "type": "withdraw"
+    },
+    {
+      "comment": "The minimum deposit amount is 1 MANA. We only support MANA deposits via the Polygon network. The contract address includes 06fD4.",
+      "commission_desc": "",
+      "currency_confirmations": 450,
+      "currency_name": "MANA",
+      "enabled": true,
+      "max": "1000000",
+      "min": "1",
+      "name": "MANA (Polygon)",
+      "type": "deposit"
     }
   ],
   "MANEKI": [
@@ -1247,17 +1271,6 @@
   ],
   "NEAR": [
     {
-      "comment": "We support only NEAR Protocol network for NEAR withdrawals, please consider this when transferring funds.",
-      "commission_desc": "0.05 NEAR",
-      "currency_confirmations": 12,
-      "currency_name": "NEAR",
-      "enabled": true,
-      "max": "100000",
-      "min": "1",
-      "name": "NEAR",
-      "type": "withdraw"
-    },
-    {
       "comment": "We support only NEAR Protocol network for NEAR deposits, please consider this when transferring funds.",
       "commission_desc": "0%",
       "currency_confirmations": 6,
@@ -1267,6 +1280,17 @@
       "min": "0.1",
       "name": "NEAR",
       "type": "deposit"
+    },
+    {
+      "comment": "We support only NEAR Protocol network for NEAR withdrawals, please consider this when transferring funds.",
+      "commission_desc": "0.05 NEAR",
+      "currency_confirmations": 12,
+      "currency_name": "NEAR",
+      "enabled": true,
+      "max": "100000",
+      "min": "1",
+      "name": "NEAR",
+      "type": "withdraw"
     }
   ],
   "NEO": [
@@ -1319,17 +1343,6 @@
   ],
   "NOT": [
     {
-      "comment": "",
-      "commission_desc": "10 NOT",
-      "currency_confirmations": 1,
-      "currency_name": "NOT",
-      "enabled": true,
-      "max": "1000000",
-      "min": "1500",
-      "name": "NOT (Notcoin)",
-      "type": "withdraw"
-    },
-    {
       "comment": "We support only TonCoin network for NOT deposits, please consider this when transferring funds. Deposits made without an invoice will not be credited to your account.",
       "commission_desc": "",
       "currency_confirmations": 1,
@@ -1339,6 +1352,17 @@
       "min": "1000",
       "name": "NOT (Notcoin)",
       "type": "deposit"
+    },
+    {
+      "comment": "",
+      "commission_desc": "10 NOT",
+      "currency_confirmations": 1,
+      "currency_name": "NOT",
+      "enabled": true,
+      "max": "1000000",
+      "min": "1500",
+      "name": "NOT (Notcoin)",
+      "type": "withdraw"
     }
   ],
   "OMG": [
@@ -1367,17 +1391,6 @@
   ],
   "ONE": [
     {
-      "comment": "We support only Harmony network for ONE withdrawals, please consider this when transferring funds.",
-      "commission_desc": "1 ONE",
-      "currency_confirmations": 15,
-      "currency_name": "ONE",
-      "enabled": true,
-      "max": "1000000",
-      "min": "100",
-      "name": "ONE",
-      "type": "withdraw"
-    },
-    {
       "comment": "We support only Harmony network for ONE deposits, please consider this when transferring funds.",
       "commission_desc": "",
       "currency_confirmations": 15,
@@ -1387,20 +1400,20 @@
       "min": "10",
       "name": "ONE",
       "type": "deposit"
+    },
+    {
+      "comment": "We support only Harmony network for ONE withdrawals, please consider this when transferring funds.",
+      "commission_desc": "1 ONE",
+      "currency_confirmations": 15,
+      "currency_name": "ONE",
+      "enabled": true,
+      "max": "1000000",
+      "min": "100",
+      "name": "ONE",
+      "type": "withdraw"
     }
   ],
   "OP": [
-    {
-      "comment": "We support only Optimism network for OP deposits.",
-      "commission_desc": "",
-      "currency_confirmations": 200,
-      "currency_name": "OP",
-      "enabled": true,
-      "max": "1000000",
-      "min": "1",
-      "name": "OP",
-      "type": "deposit"
-    },
     {
       "comment": "We support only Optimism network for OP withdrawals.",
       "commission_desc": "0.5 OP",
@@ -1411,6 +1424,17 @@
       "min": "5",
       "name": "OP",
       "type": "withdraw"
+    },
+    {
+      "comment": "We support only Optimism network for OP deposits.",
+      "commission_desc": "",
+      "currency_confirmations": 200,
+      "currency_name": "OP",
+      "enabled": true,
+      "max": "1000000",
+      "min": "1",
+      "name": "OP",
+      "type": "deposit"
     }
   ],
   "PENGU": [
@@ -1439,17 +1463,6 @@
   ],
   "PEPE": [
     {
-      "comment": "We support only Ethereum (ERC-20) network for PEPE withdrawals, please consider this when transferring funds.",
-      "commission_desc": "700000 PEPE",
-      "currency_confirmations": 30,
-      "currency_name": "PEPE",
-      "enabled": true,
-      "max": "999999999.99999999",
-      "min": "10000000",
-      "name": "PEPE",
-      "type": "withdraw"
-    },
-    {
       "comment": "We support only Ethereum (ERC-20) network for PEPE deposits, please consider this when transferring funds.",
       "commission_desc": "0%",
       "currency_confirmations": 30,
@@ -1459,20 +1472,20 @@
       "min": "6000000",
       "name": "PEPE",
       "type": "deposit"
+    },
+    {
+      "comment": "We support only Ethereum (ERC-20) network for PEPE withdrawals, please consider this when transferring funds.",
+      "commission_desc": "700000 PEPE",
+      "currency_confirmations": 30,
+      "currency_name": "PEPE",
+      "enabled": true,
+      "max": "999999999.99999999",
+      "min": "10000000",
+      "name": "PEPE",
+      "type": "withdraw"
     }
   ],
   "POL": [
-    {
-      "comment": "We support POL withdrawals via the Polygon network only.",
-      "commission_desc": "0.5 MATIC",
-      "currency_confirmations": 900,
-      "currency_name": "POL",
-      "enabled": true,
-      "max": "100000",
-      "min": "1",
-      "name": "POL (ex MATIC Polygon)",
-      "type": "withdraw"
-    },
     {
       "comment": "The minimum deposit amount is 0.1 POL. We support POL deposits only via Polygon network.",
       "commission_desc": "",
@@ -1483,20 +1496,20 @@
       "min": "0.1",
       "name": "POL (ex MATIC Polygon)",
       "type": "deposit"
+    },
+    {
+      "comment": "We support POL withdrawals via the Polygon network only.",
+      "commission_desc": "0.5 MATIC",
+      "currency_confirmations": 900,
+      "currency_name": "POL",
+      "enabled": true,
+      "max": "100000",
+      "min": "1",
+      "name": "POL (ex MATIC Polygon)",
+      "type": "withdraw"
     }
   ],
   "PRQ": [
-    {
-      "comment": "We support only Ethereum (ERC-20) network for PRQ deposits, please consider this when transferring funds.",
-      "commission_desc": "0%",
-      "currency_confirmations": 30,
-      "currency_name": "PRQ",
-      "enabled": true,
-      "max": "1000000",
-      "min": "50",
-      "name": "PRQ",
-      "type": "deposit"
-    },
     {
       "comment": "We support only Ethereum (ERC-20) network for PRQ withdrawals, please consider this when transferring funds.",
       "commission_desc": "20 PRQ",
@@ -1507,6 +1520,17 @@
       "min": "100",
       "name": "PRQ",
       "type": "withdraw"
+    },
+    {
+      "comment": "We support only Ethereum (ERC-20) network for PRQ deposits, please consider this when transferring funds.",
+      "commission_desc": "0%",
+      "currency_confirmations": 30,
+      "currency_name": "PRQ",
+      "enabled": true,
+      "max": "1000000",
+      "min": "50",
+      "name": "PRQ",
+      "type": "deposit"
     }
   ],
   "QTUM": [
@@ -1557,18 +1581,31 @@
       "type": "withdraw"
     }
   ],
-  "SAND": [
+  "RIF": [
     {
-      "comment": "The minimum deposit amount is 5 SAND. We only support SAND deposits via the Polygon network. The contract address includes 95683.",
-      "commission_desc": "",
-      "currency_confirmations": 450,
-      "currency_name": "SAND",
+      "comment": "",
+      "commission_desc": "50 RIF",
+      "currency_confirmations": 1,
+      "currency_name": "RIF",
       "enabled": true,
       "max": "1000000",
-      "min": "5",
-      "name": "SAND (Polygon)",
-      "type": "deposit"
+      "min": "150",
+      "name": "RIF",
+      "type": "withdraw"
     },
+    {
+      "comment": "The contract address ends with qpump.",
+      "commission_desc": "",
+      "currency_confirmations": 1,
+      "currency_name": "RIF",
+      "enabled": true,
+      "max": "10000000",
+      "min": "100",
+      "name": "RIF",
+      "type": "deposit"
+    }
+  ],
+  "SAND": [
     {
       "comment": "We only support SAND withdrawals via the Polygon network. The contract address includes 95683.",
       "commission_desc": "5 SAND",
@@ -1579,6 +1616,17 @@
       "min": "10",
       "name": "SAND (Polygon)",
       "type": "withdraw"
+    },
+    {
+      "comment": "The minimum deposit amount is 5 SAND. We only support SAND deposits via the Polygon network. The contract address includes 95683.",
+      "commission_desc": "",
+      "currency_confirmations": 450,
+      "currency_name": "SAND",
+      "enabled": true,
+      "max": "1000000",
+      "min": "5",
+      "name": "SAND (Polygon)",
+      "type": "deposit"
     }
   ],
   "SHIB": [
@@ -1607,17 +1655,6 @@
   ],
   "SOL": [
     {
-      "comment": "We support only Solana network for SOL deposits, please consider this when transferring funds.",
-      "commission_desc": "",
-      "currency_confirmations": 1,
-      "currency_name": "SOL",
-      "enabled": true,
-      "max": "1000000",
-      "min": "0.01",
-      "name": "SOL",
-      "type": "deposit"
-    },
-    {
       "comment": "We support only Solana network for SOL withdrawals, please consider this when transferring funds.",
       "commission_desc": "0.01 SOL",
       "currency_confirmations": 1,
@@ -1627,20 +1664,20 @@
       "min": "0.1",
       "name": "SOL",
       "type": "withdraw"
+    },
+    {
+      "comment": "We support only Solana network for SOL deposits, please consider this when transferring funds.",
+      "commission_desc": "",
+      "currency_confirmations": 1,
+      "currency_name": "SOL",
+      "enabled": true,
+      "max": "1000000",
+      "min": "0.01",
+      "name": "SOL",
+      "type": "deposit"
     }
   ],
   "SUN": [
-    {
-      "comment": "HTX withdrawals are only supported on the TRON network.",
-      "commission_desc": "25 SUN",
-      "currency_confirmations": 20,
-      "currency_name": "SUN",
-      "enabled": true,
-      "max": "1000000",
-      "min": "150",
-      "name": "SUN",
-      "type": "withdraw"
-    },
     {
       "comment": "This address only supports SUN deposits on the TRON network.",
       "commission_desc": "",
@@ -1651,20 +1688,20 @@
       "min": "100",
       "name": "SUN",
       "type": "deposit"
+    },
+    {
+      "comment": "HTX withdrawals are only supported on the TRON network.",
+      "commission_desc": "25 SUN",
+      "currency_confirmations": 20,
+      "currency_name": "SUN",
+      "enabled": true,
+      "max": "1000000",
+      "min": "150",
+      "name": "SUN",
+      "type": "withdraw"
     }
   ],
   "TON": [
-    {
-      "comment": "We support only TonCoin network for TON withdrawals, please consider this when transferring funds. Use the new UQ... addresses instead of EQ... to withdraw to an inactive address.",
-      "commission_desc": "0.1 TON",
-      "currency_confirmations": 1,
-      "currency_name": "TON",
-      "enabled": true,
-      "max": "100000",
-      "min": "1",
-      "name": "TON",
-      "type": "withdraw"
-    },
     {
       "comment": "We support only TonCoin network for TON deposits, please consider this when transferring funds. Deposits made without an invoice will not be credited to your account.",
       "commission_desc": "0%",
@@ -1675,15 +1712,26 @@
       "min": "1",
       "name": "TON",
       "type": "deposit"
+    },
+    {
+      "comment": "We support only TonCoin network for TON withdrawals, please consider this when transferring funds. Use the new UQ... addresses instead of EQ... to withdraw to an inactive address.",
+      "commission_desc": "0.1 TON",
+      "currency_confirmations": 1,
+      "currency_name": "TON",
+      "enabled": true,
+      "max": "100000",
+      "min": "1",
+      "name": "TON",
+      "type": "withdraw"
     }
   ],
   "TRAC": [
     {
-      "comment": "",
+      "comment": "The contract address ends with f0a6f.",
       "commission_desc": "",
-      "currency_confirmations": 10,
+      "currency_confirmations": 30,
       "currency_name": "TRAC",
-      "enabled": false,
+      "enabled": true,
       "max": "10000000",
       "min": "10",
       "name": "TRAC",
@@ -1692,9 +1740,9 @@
     {
       "comment": "",
       "commission_desc": "10 TRAC",
-      "currency_confirmations": 10,
+      "currency_confirmations": 30,
       "currency_name": "TRAC",
-      "enabled": false,
+      "enabled": true,
       "max": "1000000",
       "min": "30",
       "name": "TRAC",
@@ -1773,6 +1821,30 @@
       "type": "deposit"
     }
   ],
+  "URO": [
+    {
+      "comment": "The contract address ends with Qpump.",
+      "commission_desc": "",
+      "currency_confirmations": 1,
+      "currency_name": "URO",
+      "enabled": true,
+      "max": "100000000",
+      "min": "100",
+      "name": "URO",
+      "type": "deposit"
+    },
+    {
+      "comment": "",
+      "commission_desc": "50 URO",
+      "currency_confirmations": 1,
+      "currency_name": "URO",
+      "enabled": true,
+      "max": "1000000",
+      "min": "150",
+      "name": "URO",
+      "type": "withdraw"
+    }
+  ],
   "USDC": [
     {
       "comment": "When withdrawing USDC, please note that we support only the Ethereum (ERC-20) network. We do not support Algorand, Solana and Stellar networks for USDC withdrawals.",
@@ -1810,17 +1882,6 @@
   ],
   "USDT": [
     {
-      "comment": "The minimum withdrawal amount is 10 USDT. If you want to withdraw USDT via the Arbitrum One network, please make sure to use the ARB wallet address.",
-      "commission_desc": "1 USDT",
-      "currency_confirmations": 10,
-      "currency_name": "USDT",
-      "enabled": false,
-      "max": "150000",
-      "min": "10",
-      "name": "USDT (Arbitrum)",
-      "type": "withdraw"
-    },
-    {
       "comment": "If you want to deposit USDT via the Arbitrum One network, please make sure to use the ARB wallet address.",
       "commission_desc": "0%",
       "currency_confirmations": 10,
@@ -1830,6 +1891,17 @@
       "min": "1",
       "name": "USDT (Arbitrum)",
       "type": "deposit"
+    },
+    {
+      "comment": "The minimum withdrawal amount is 10 USDT. If you want to withdraw USDT via the Arbitrum One network, please make sure to use the ARB wallet address.",
+      "commission_desc": "1 USDT",
+      "currency_confirmations": 10,
+      "currency_name": "USDT",
+      "enabled": false,
+      "max": "150000",
+      "min": "10",
+      "name": "USDT (Arbitrum)",
+      "type": "withdraw"
     },
     {
       "comment": "The minimum deposit amount is 1 USDT. If you want to deposit USDT via the BSC network, please make sure to use the BSC wallet address. Contract address: contains 97955.",
@@ -1865,17 +1937,6 @@
       "type": "deposit"
     },
     {
-      "comment": "Minimum deposit amount is 10 USDT",
-      "commission_desc": "0%",
-      "currency_confirmations": 10,
-      "currency_name": "USDT",
-      "enabled": false,
-      "max": "0",
-      "min": "10",
-      "name": "USDT (OMNI)",
-      "type": "deposit"
-    },
-    {
       "comment": "Do not withdraw directly to the Crowdfunding or ICO address as your account will not be credited with tokens from such sales.",
       "commission_desc": "5 USDT",
       "currency_confirmations": 10,
@@ -1885,6 +1946,17 @@
       "min": "10",
       "name": "USDT (OMNI)",
       "type": "withdraw"
+    },
+    {
+      "comment": "Minimum deposit amount is 10 USDT",
+      "commission_desc": "0%",
+      "currency_confirmations": 10,
+      "currency_name": "USDT",
+      "enabled": false,
+      "max": "0",
+      "min": "10",
+      "name": "USDT (OMNI)",
+      "type": "deposit"
     },
     {
       "comment": "The minimum deposit amount is 1 USDT. If you want to deposit USDT via the Optimism network, please make sure to use the Optimism wallet address.",
@@ -1942,17 +2014,6 @@
       "type": "withdraw"
     },
     {
-      "comment": "The minimum deposit amount is 1 USDT. If you want to deposit USDT via the Tron network, please make sure to use the TRC-20 wallet address.",
-      "commission_desc": "0%",
-      "currency_confirmations": 10,
-      "currency_name": "USDT",
-      "enabled": true,
-      "max": "100000",
-      "min": "1",
-      "name": "USDT (TRC20)",
-      "type": "deposit"
-    },
-    {
       "comment": "The minimum withdrawal amount is 10 USDT. If you want to withdraw USDT via the Tron network, please make sure to use the TRC-20 wallet address.",
       "commission_desc": "1.2 USDT",
       "currency_confirmations": 10,
@@ -1962,20 +2023,20 @@
       "min": "10",
       "name": "USDT (TRC20)",
       "type": "withdraw"
+    },
+    {
+      "comment": "The minimum deposit amount is 1 USDT. If you want to deposit USDT via the Tron network, please make sure to use the TRC-20 wallet address.",
+      "commission_desc": "0%",
+      "currency_confirmations": 10,
+      "currency_name": "USDT",
+      "enabled": true,
+      "max": "100000",
+      "min": "1",
+      "name": "USDT (TRC20)",
+      "type": "deposit"
     }
   ],
   "VIRTUAL": [
-    {
-      "comment": "We support only Base network for VIRTUAL deposits, please consider this when transferring funds.",
-      "commission_desc": "",
-      "currency_confirmations": 200,
-      "currency_name": "VIRTUAL",
-      "enabled": true,
-      "max": "1000000",
-      "min": "0.5",
-      "name": "VIRTUAL(Base)",
-      "type": "deposit"
-    },
     {
       "comment": "We support only Base network for VIRTUAL withdrawals, please consider this when transferring funds.",
       "commission_desc": "0.1 VIRTUAL",
@@ -1986,6 +2047,17 @@
       "min": "1",
       "name": "VIRTUAL(Base)",
       "type": "withdraw"
+    },
+    {
+      "comment": "We support only Base network for VIRTUAL deposits, please consider this when transferring funds.",
+      "commission_desc": "",
+      "currency_confirmations": 200,
+      "currency_name": "VIRTUAL",
+      "enabled": true,
+      "max": "1000000",
+      "min": "0.5",
+      "name": "VIRTUAL(Base)",
+      "type": "deposit"
     }
   ],
   "VLX": [
@@ -2038,17 +2110,6 @@
   ],
   "WIN10K": [
     {
-      "comment": "1 WIN10K = 10 000 WIN! WIN withdrawals are only supported on the TRON network.",
-      "commission_desc": "",
-      "currency_confirmations": 20,
-      "currency_name": "WIN10K",
-      "enabled": true,
-      "max": "1000000",
-      "min": "10",
-      "name": "WIN10K(TRON)",
-      "type": "withdraw"
-    },
-    {
       "comment": "1 WIN10K = 10 000 WIN! This address only supports WIN deposits on the TRON network.",
       "commission_desc": "",
       "currency_confirmations": 20,
@@ -2058,20 +2119,20 @@
       "min": "1",
       "name": "WIN10K(TRON)",
       "type": "deposit"
+    },
+    {
+      "comment": "1 WIN10K = 10 000 WIN! WIN withdrawals are only supported on the TRON network.",
+      "commission_desc": "",
+      "currency_confirmations": 20,
+      "currency_name": "WIN10K",
+      "enabled": true,
+      "max": "1000000",
+      "min": "10",
+      "name": "WIN10K(TRON)",
+      "type": "withdraw"
     }
   ],
   "XAUT": [
-    {
-      "comment": "We support only Ethereum (ERC-20) network for XAUT deposits, please consider this when transferring funds.",
-      "commission_desc": "",
-      "currency_confirmations": 30,
-      "currency_name": "XAUT",
-      "enabled": true,
-      "max": "100000",
-      "min": "0.005",
-      "name": "XAUT (ERC20)",
-      "type": "deposit"
-    },
     {
       "comment": "We support only Ethereum (ERC-20) network for XAUT withdrawals, please consider this when transferring funds.",
       "commission_desc": "0.005 XAUT",
@@ -2082,20 +2143,20 @@
       "min": "0.01",
       "name": "XAUT (ERC20)",
       "type": "withdraw"
+    },
+    {
+      "comment": "We support only Ethereum (ERC-20) network for XAUT deposits, please consider this when transferring funds.",
+      "commission_desc": "",
+      "currency_confirmations": 30,
+      "currency_name": "XAUT",
+      "enabled": true,
+      "max": "100000",
+      "min": "0.005",
+      "name": "XAUT (ERC20)",
+      "type": "deposit"
     }
   ],
   "XLM": [
-    {
-      "comment": "We support only Stellar network for XLM deposits, please consider this when transferring funds.",
-      "commission_desc": "0%",
-      "currency_confirmations": 1,
-      "currency_name": "XLM",
-      "enabled": true,
-      "max": "1000000",
-      "min": "1",
-      "name": "XLM",
-      "type": "deposit"
-    },
     {
       "comment": "We support only Stellar network for XLM withdrawals, please consider this when transferring funds.",
       "commission_desc": "0.01 XLM",
@@ -2106,6 +2167,17 @@
       "min": "21",
       "name": "XLM",
       "type": "withdraw"
+    },
+    {
+      "comment": "We support only Stellar network for XLM deposits, please consider this when transferring funds.",
+      "commission_desc": "0%",
+      "currency_confirmations": 1,
+      "currency_name": "XLM",
+      "enabled": true,
+      "max": "1000000",
+      "min": "1",
+      "name": "XLM",
+      "type": "deposit"
     }
   ],
   "XRP": [
@@ -2134,17 +2206,6 @@
   ],
   "XTZ": [
     {
-      "comment": "We support only Tezos network for XTZ deposits, please consider this when transferring funds.",
-      "commission_desc": "",
-      "currency_confirmations": 30,
-      "currency_name": "XTZ",
-      "enabled": true,
-      "max": "10000000",
-      "min": "1",
-      "name": "XTZ",
-      "type": "deposit"
-    },
-    {
       "comment": "We support only Tezos network for XTZ withdrawals, please consider this when transferring funds.",
       "commission_desc": "0.1 XTZ",
       "currency_confirmations": 90,
@@ -2154,6 +2215,17 @@
       "min": "1.5",
       "name": "XTZ",
       "type": "withdraw"
+    },
+    {
+      "comment": "We support only Tezos network for XTZ deposits, please consider this when transferring funds.",
+      "commission_desc": "",
+      "currency_confirmations": 30,
+      "currency_name": "XTZ",
+      "enabled": true,
+      "max": "10000000",
+      "min": "1",
+      "name": "XTZ",
+      "type": "deposit"
     }
   ],
   "XYM": [
@@ -2195,17 +2267,6 @@
   ],
   "ZEREBRO": [
     {
-      "comment": "The minimum deposit amount is 4 ZEREBRO. We only support ZEREBRO deposits via the Solana network.",
-      "commission_desc": "",
-      "currency_confirmations": 1,
-      "currency_name": "ZEREBRO",
-      "enabled": true,
-      "max": "10000000",
-      "min": "4",
-      "name": "ZEREBRO(Solana)",
-      "type": "deposit"
-    },
-    {
       "comment": "We only support ZEREBRO withdrawals via the Solana network.",
       "commission_desc": "1 ZEREBRO",
       "currency_confirmations": 1,
@@ -2215,6 +2276,17 @@
       "min": "20",
       "name": "ZEREBRO(Solana)",
       "type": "withdraw"
+    },
+    {
+      "comment": "The minimum deposit amount is 4 ZEREBRO. We only support ZEREBRO deposits via the Solana network.",
+      "commission_desc": "",
+      "currency_confirmations": 1,
+      "currency_name": "ZEREBRO",
+      "enabled": true,
+      "max": "10000000",
+      "min": "4",
+      "name": "ZEREBRO(Solana)",
+      "type": "deposit"
     }
   ],
   "ZK": [
@@ -2233,17 +2305,6 @@
   "ZRO": [
     {
       "comment": "",
-      "commission_desc": "0.05 ZRO",
-      "currency_confirmations": 10,
-      "currency_name": "ZRO",
-      "enabled": true,
-      "max": "1000000",
-      "min": "1",
-      "name": "ZRO (Arbitrum)",
-      "type": "withdraw"
-    },
-    {
-      "comment": "",
       "commission_desc": "",
       "currency_confirmations": 10,
       "currency_name": "ZRO",
@@ -2252,6 +2313,17 @@
       "min": "1",
       "name": "ZRO (Arbitrum)",
       "type": "deposit"
+    },
+    {
+      "comment": "",
+      "commission_desc": "0.05 ZRO",
+      "currency_confirmations": 10,
+      "currency_name": "ZRO",
+      "enabled": true,
+      "max": "1000000",
+      "min": "1",
+      "name": "ZRO (Arbitrum)",
+      "type": "withdraw"
     },
     {
       "comment": "",
