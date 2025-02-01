@@ -1,4 +1,4 @@
-use std::{fs::File, io::Write};
+use std::{ascii::AsciiExt, fs::File, io::Write};
 
 use futures::StreamExt;
 use rotom_data::{
@@ -17,6 +17,7 @@ use rotom_data::{
     model::{
         event_book_snapshot::OrderBookSnapshot,
         market_event::{DataKind, MarketEvent},
+        network_info::NetworkSpecs,
     },
     playground::{test_http, test_http_private, test_ws},
     shared::subscription_models::{ExchangeId, Instrument, StreamKind},
@@ -49,10 +50,13 @@ pub async fn main() {
         Instrument::new("icp", "usdt"),
     ];
 
-    let test = PhemexSpotPublicData::get_network_info(instruments)
+    let test = AscendExSpotPublicData::get_network_info(instruments)
         .await
         .unwrap();
-    println!("network {:#?}", test);
+
+    let test2: Vec<NetworkSpecs> = test.into();
+    println!("network {:#?}", test2);
+
     // let mut file = File::create("./binance_network_info.json").unwrap();
     // let json_string = serde_json::to_string_pretty(&test).unwrap();
     // file.write_all(json_string.as_bytes()).unwrap();

@@ -6,6 +6,7 @@ use crate::error::SocketError;
 use crate::exchange::Identifier;
 use crate::model::event_trade::EventTrade;
 use crate::model::market_event::MarketEvent;
+use crate::model::network_info::{ChainSpecs, NetworkSpecs};
 use crate::model::ticker_info::TickerInfo;
 use crate::shared::de::{de_str, de_u64_epoch_ms_as_datetime_utc};
 use crate::shared::subscription_models::{ExchangeId, Instrument};
@@ -175,8 +176,8 @@ pub struct AscendExNetworkInfoData {
 pub struct AscendExNetworkConfig {
     #[serde(rename = "chainName")]
     pub chain_name: String,
-    #[serde(rename = "withdrawFee")]
-    pub withdraw_fee: String,
+    #[serde(rename = "withdrawFee", deserialize_with = "de_str")]
+    pub withdraw_fee: f64,
     #[serde(rename = "allowDeposit")]
     pub allow_deposit: bool,
     #[serde(rename = "allowWithdraw")]
@@ -187,6 +188,32 @@ pub struct AscendExNetworkConfig {
     pub min_withdrawal: String,
     #[serde(rename = "numConfirmations")]
     pub num_confirmations: i32,
+}
+
+impl From<AscendExNetworkInfo> for Vec<NetworkSpecs> {
+    fn from(value: AscendExNetworkInfo) -> Self {
+        value
+            .data
+            .iter()
+            .map(|coin| {
+                let chain_specs = coin
+                    .block_chain
+                    .iter()
+                    .map(|chain| ChainSpecs {
+                        chain_name: chain.chain_name.clone(),
+                        fees: chain.withdraw_fee,
+                        can_deposit: chain.allow_deposit,
+                        can_withdraw: chain.allow_withdraw,
+                    })
+                    .collect::<Vec<_>>();
+
+                NetworkSpecs {
+                    coin: coin.asset_code.clone(),
+                    chains: chain_specs,
+                }
+            })
+            .collect::<Vec<_>>()
+    }
 }
 
 /*----- */
