@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
@@ -8,9 +6,10 @@ use crate::error::SocketError;
 use crate::exchange::Identifier;
 use crate::model::event_trade::EventTrade;
 use crate::model::market_event::MarketEvent;
+use crate::model::network_info::ChainSpecs;
 use crate::model::ticker_info::TickerInfo;
 use crate::shared::de::{
-    datetime_utc_from_epoch_duration, de_string_or_i32, de_u64_epoch_ns_as_datetime_utc,
+    datetime_utc_from_epoch_duration, de_str, de_u64_epoch_ns_as_datetime_utc,
 };
 use crate::shared::subscription_models::{ExchangeId, Instrument};
 use crate::streams::validator::Validator;
@@ -397,48 +396,104 @@ impl From<PhemexTickerInfo> for TickerInfo {
 // Network info
 /*----- */
 #[derive(Debug, Deserialize)]
-pub struct PhemexNetworkInfo {
-    #[serde(deserialize_with = "de_string_or_i32")]
+pub struct PhemexWithdraw {
     pub code: i32,
+    pub data: PhemexWithdrawData,
     pub msg: String,
-    #[serde(deserialize_with = "phemex_flatten_network_data", default)]
-    pub data: Option<Vec<PhemexNetworkInfoData>>,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct PhemexNetworkInfoData {
+pub struct PhemexWithdrawData {
+    #[serde(rename = "allAvailableBalanceRv")]
+    pub all_available_balance_rv: String,
+    #[serde(rename = "balanceRv")]
+    pub balance_rv: String,
+    #[serde(rename = "chainInfos")]
+    pub chain_infos: Vec<PhemexWithdrawChainInfo>,
+    #[serde(rename = "confirmAmountRv")]
+    pub confirm_amount_rv: String,
+    pub currency: String,
     #[serde(rename = "currencyCode")]
     pub currency_code: i32,
-    #[serde(rename = "currencyName")]
-    pub currency_name: String,
-    #[serde(rename = "chainName")]
-    pub chain_name: String,
-    #[serde(rename = "chainTxUrl")]
-    pub chain_tx_url: String,
-    #[serde(rename = "chainId")]
-    pub chain_id: i32,
-    #[serde(rename = "displayName")]
-    pub display_name: String,
-    #[serde(rename = "inUse")]
-    pub in_use: bool,
-    #[serde(rename = "isMetamask")]
-    pub is_metamask: i32,
-    #[serde(rename = "domainType")]
-    pub domain_type: i32,
-    #[serde(default)]
-    #[serde(rename = "domainSuffix")]
-    pub domain_suffix: Option<String>,
-    #[serde(rename = "permanentlyClosed")]
-    pub permanently_closed: i32,
 }
 
-fn phemex_flatten_network_data<'de, D>(
-    deserializer: D,
-) -> Result<Option<Vec<PhemexNetworkInfoData>>, D::Error>
-where
-    D: serde::Deserializer<'de>,
+#[derive(Debug, Deserialize, Clone)]
+pub struct PhemexWithdrawChainInfo {
+    #[serde(rename = "chainCode")]
+    pub chain_code: i32,
+    #[serde(rename = "chainName")]
+    pub chain_name: String,
+    #[serde(rename = "minWithdrawAmountRv")]
+    pub min_withdraw_amount_rv: String,
+    #[serde(rename = "minWithdrawAmountWithFeeRv")]
+    pub min_withdraw_amount_with_fee_rv: String,
+    #[serde(rename = "receiveAmountRv")]
+    pub receive_amount_rv: String,
+    #[serde(rename = "withdrawFeeRv", deserialize_with = "de_str")]
+    pub withdraw_fee_rv: f64,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PhemexDeposit {
+    pub code: i32,
+    pub data: Vec<PhemexDepositData>,
+    pub msg: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct PhemexDepositData {
+    #[serde(rename = "chainCode")]
+    pub chain_code: i32,
+    #[serde(rename = "chainName")]
+    pub chain_name: String,
+    pub confirmations: i32,
+    pub currency: String,
+    #[serde(rename = "currencyCode")]
+    pub currency_code: i32,
+    #[serde(rename = "minAmountRv")]
+    pub min_amount_rv: String,
+    #[serde(deserialize_with = "de_can_deposit_phemex")]
+    pub status: bool,
+}
+
+impl
+    From<(
+        String,
+        Option<PhemexWithdrawChainInfo>,
+        Option<PhemexDepositData>,
+    )> for ChainSpecs
 {
-    let opt_map: Option<HashMap<String, Vec<PhemexNetworkInfoData>>> =
-        Option::deserialize(deserializer)?;
-    Ok(opt_map.map(|map| map.into_values().flatten().collect()))
+    fn from(
+        (chain_name, withdraw, deposit): (
+            String,
+            Option<PhemexWithdrawChainInfo>,
+            Option<PhemexDepositData>,
+        ),
+    ) -> Self {
+        let mut chain_spec = ChainSpecs {
+            chain_name,
+            fee_is_fixed: false,
+            fees: 0.0,
+            can_deposit: false,
+            can_withdraw: false,
+        };
+
+        if let Some(withdraw) = withdraw {
+            chain_spec.can_withdraw = true;
+            chain_spec.fees = withdraw.withdraw_fee_rv;
+        }
+
+        if deposit.is_some() {
+            chain_spec.can_deposit = true;
+        }
+
+        chain_spec
+    }
+}
+
+fn de_can_deposit_phemex<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+    D: serde::de::Deserializer<'de>,
+{
+    <&str as Deserialize>::deserialize(deserializer).map(|can_deposit| can_deposit == "Active")
 }

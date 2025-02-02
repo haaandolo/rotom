@@ -1,4 +1,7 @@
-use std::io::{Read, Write};
+use std::{
+    io::{Read, Write},
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use crate::{
     exchange::{
@@ -13,8 +16,8 @@ use crate::{
         kucoin::model::{KuCoinNetworkInfo, KuCoinOrderBookSnapshot, KuCoinTrade, KuCoinWsUrl},
         okx::model::{OkxNetworkInfo, OkxOrderBookSnapshot, OkxSubscriptionResponse, OkxTrade},
         phemex::model::{
-            PhemexNetworkInfo, PhemexOrderBookUpdate, PhemexSubscriptionResponse, PhemexTickerInfo,
-            PhemexTradesUpdate,
+            PhemexDeposit, PhemexOrderBookUpdate, PhemexSubscriptionResponse,
+            PhemexTickerInfo, PhemexTradesUpdate, PhemexWithdraw,
         },
     },
     protocols::ws::ws_parser::{StreamParser, WebSocketParser},
@@ -114,15 +117,15 @@ pub async fn test_http() {
 
     let base_url = "https://api.phemex.com";
     // let request_path = "/exchange/public/cfg/chain-settings";
-    let request_path = "/exchange/public/cfg/chain-settings?currency=ETH";
+    let request_path = "/phemex-withdraw/wallets/api/asset/info";
 
     let url = format!("{}{}", base_url, request_path);
     // let url = format!("{}{}", base_url, request_path);
     let test = reqwest::get(url)
         .await
         .unwrap()
-        // .text()
-        .json::<PhemexNetworkInfo>()
+        .text()
+        // .json::<PhemexNetworkInfo>()
         // .json::<serde_json::Value>()
         .await
         .unwrap();
@@ -134,29 +137,36 @@ pub async fn test_http() {
 }
 
 pub async fn test_http_private() {
-    let secret = env!("OKX_API_SECRET");
-    let key = env!("OKX_API_KEY");
-    let passphrase = env!("OKX_PASSPHRASE");
+    let secret = env!("PHEMEX_API_SECRET");
+    let key = env!("PHEMEX_API_KEY");
+    let url = "https://api.phemex.com";
+    let curr = "currency=BTC";
 
-    let timestamp = Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
-    let method = "GET";
-    let request_path = "/api/v5/asset/currencies";
+    let expiry = Utc::now().timestamp() as u64 + 60;
 
-    let sign_message = format!("{}{}{}", timestamp, method, request_path);
+    // let request_path = "/phemex-withdraw/wallets/api/asset/info";
+    let request_path = "/phemex-deposit/wallets/api/chainCfg";
+
+    let sign_message = format!("{}{}{}", request_path, curr, expiry);
+
     let mut mac = Hmac::<Sha256>::new_from_slice(secret.as_bytes()).unwrap();
     mac.update(sign_message.as_bytes());
-    let signature = general_purpose::STANDARD.encode(mac.finalize().into_bytes());
+    let signature = hex::encode(mac.finalize().into_bytes());
+
+    let url = format!("{}{}?{}", url, request_path, curr);
+    println!("{}",url);
 
     let test = reqwest::Client::new()
-        .get("https://www.okx.com/api/v5/asset/currencies")
-        .header("OK-ACCESS-KEY", key)
-        .header("OK-ACCESS-SIGN", signature)
-        .header("OK-ACCESS-TIMESTAMP", timestamp)
-        .header("OK-ACCESS-PASSPHRASE", passphrase)
+        .get(url)
+        .header("x-phemex-access-token", key)
+        .header("x-phemex-request-signature", signature)
+        .header("x-phemex-request-expiry", expiry.to_string())
         .send()
         .await
         .unwrap()
-        .json::<OkxNetworkInfo>()
+        // .json::<PhemexWithdraw>()
+        .json::<PhemexDeposit>()
+        // .json::<serde_json::Value>()
         // .text()
         .await
         .unwrap();

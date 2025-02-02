@@ -36,7 +36,7 @@ pub async fn main() {
     ///////////
     init_logging();
     // test_http().await;
-    // test_http_private().await
+    // test_http_private().await;
     // test_ws().await;
 
     /////////
@@ -50,13 +50,13 @@ pub async fn main() {
         Instrument::new("icp", "usdt"),
     ];
 
-    let test = KuCoinSpotPublicData::get_network_info(instruments)
+    let test = PhemexSpotPublicData::get_network_info(instruments)
         .await
         .unwrap();
 
-    // println!("network {:#?}", test);
-    let test2: NetworkSpecs = test.into();
-    println!("network {:#?}", test2);
+    println!("network {:#?}", test);
+    // let test2: NetworkSpecs = test.into();
+    // println!("network {:#?}", test2);
 
     // let mut file = File::create("./htx_network_info.json").unwrap();
     // let json_string = serde_json::to_string_pretty(&test).unwrap();

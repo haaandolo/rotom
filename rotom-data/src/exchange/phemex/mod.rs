@@ -5,20 +5,28 @@ pub mod model;
 
 use async_trait::async_trait;
 use channel::PhemexChannel;
+use chrono::Utc;
+use futures::try_join;
+use hmac::{Hmac, Mac};
 use l2::PhemexSpotBookUpdater;
 use market::PhemexMarket;
 use model::{
-    PhemexNetworkInfo, PhemexNetworkInfoData, PhemexOrderBookUpdate, PhemexSubscriptionResponse,
-    PhemexTickerInfo, PhemexTradesUpdate,
+    PhemexDeposit, PhemexDepositData, PhemexOrderBookUpdate, PhemexSubscriptionResponse,
+    PhemexTickerInfo, PhemexTradesUpdate, PhemexWithdraw, PhemexWithdrawChainInfo,
 };
 use rand::Rng;
 use serde::Deserialize;
 use serde_json::json;
-use std::time::Duration;
+use sha2::Sha256;
+use std::collections::HashMap;
 
 use crate::{
     error::SocketError,
-    model::{event_book::OrderBookL2, event_trade::Trades},
+    model::{
+        event_book::OrderBookL2,
+        event_trade::Trades,
+        network_info::{ChainSpecs, NetworkSpecData, NetworkSpecs},
+    },
     protocols::ws::{PingInterval, WsMessage},
     shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
     transformer::{book::MultiBookTransformer, stateless_transformer::StatelessTransformer},
@@ -84,7 +92,7 @@ impl PublicHttpConnector for PhemexSpotPublicData {
 
     type BookSnapShot = serde_json::Value;
     type ExchangeTickerInfo = PhemexTickerInfo;
-    type NetworkInfo = Vec<PhemexNetworkInfoData>;
+    type NetworkInfo = NetworkSpecs;
 
     async fn get_book_snapshot(_instrument: Instrument) -> Result<Self::BookSnapShot, SocketError> {
         unimplemented!()
@@ -107,54 +115,111 @@ impl PublicHttpConnector for PhemexSpotPublicData {
     async fn get_network_info(
         instruments: Vec<Instrument>,
     ) -> Result<Self::NetworkInfo, SocketError> {
-        let mut network_info = Vec::with_capacity(instruments.len());
+        let secret = env!("PHEMEX_API_SECRET");
+        let key = env!("PHEMEX_API_KEY");
 
-        let instruments_chunked = instruments
-            .into_iter()
-            .collect::<Vec<_>>()
-            .chunks(5)
-            .map(|c| c.to_vec())
-            .collect::<Vec<Vec<_>>>();
+        let client = reqwest::Client::new();
+        let request_path_withdraw = "/phemex-withdraw/wallets/api/asset/info";
+        let request_path_deposit = "/phemex-deposit/wallets/api/chainCfg";
+        let expiry = Utc::now().timestamp() as u64 + 60;
+        let mut network_specs = Vec::new();
 
-        for chunk in instruments_chunked.into_iter() {
-            let network_info_futures = chunk
+        for instrument in instruments.into_iter() {
+            let coin = instrument.base.to_uppercase();
+            let query = format!("currency={}", &coin);
+
+            // Make withdraw future
+            let withdraw_message = format!("{}{}{}", request_path_withdraw, &query, expiry);
+            let signature = sign_message_phemex(withdraw_message, secret);
+
+            let withdraw_url = format!(
+                "{}{}?{}",
+                PHEMEX_BASE_HTTP_URL, request_path_withdraw, &query,
+            );
+
+            let withdraw_future = get_network_info_phemex::<PhemexWithdraw>(
+                client.clone(),
+                withdraw_url,
+                key,
+                signature,
+                expiry,
+            );
+
+            // Make deposit future
+            let deposit_message = format!("{}{}{}", request_path_deposit, &query, expiry);
+            let signature = sign_message_phemex(deposit_message, secret);
+
+            let deposit_url = format!(
+                "{}{}?{}",
+                PHEMEX_BASE_HTTP_URL, request_path_deposit, &query,
+            );
+
+            let deposit_future = get_network_info_phemex::<PhemexDeposit>(
+                client.clone(),
+                deposit_url,
+                key,
+                signature,
+                expiry,
+            );
+
+            // Join withdraw and deposit data for given coin
+            let (withdraw, deposit) = try_join!(withdraw_future, deposit_future)?;
+
+            // Group withdraw and deposit data
+            let mut grouped_data: HashMap<
+                String,
+                (Option<PhemexWithdrawChainInfo>, Option<PhemexDepositData>),
+            > = HashMap::new();
+
+            for withdraw_info in withdraw.data.chain_infos.into_iter() {
+                grouped_data
+                    .entry(withdraw_info.chain_name.clone())
+                    .and_modify(|(withdraw, _)| *withdraw = Some(withdraw_info.clone()))
+                    .or_insert((Some(withdraw_info), None));
+            }
+
+            for deposit_info in deposit.data.into_iter() {
+                grouped_data
+                    .entry(deposit_info.chain_name.clone())
+                    .and_modify(|(_, deposit)| *deposit = Some(deposit_info.clone()))
+                    .or_insert((None, Some(deposit_info)));
+            }
+
+            let chain_specs = grouped_data
                 .into_iter()
-                .map(|instrument| {
-                    let request_path = format!(
-                        "/exchange/public/cfg/chain-settings?currency={}",
-                        instrument.base.to_uppercase()
-                    );
-                    let ticker_info_url = format!("{}{}", PHEMEX_BASE_HTTP_URL, request_path);
-                    get_single_network_info::<PhemexNetworkInfo>(ticker_info_url)
-                })
-                .collect::<Vec<_>>();
+                .map(|(key, (withdraw, deposit))| ChainSpecs::from((key, withdraw, deposit)))
+                .collect::<Vec<ChainSpecs>>();
 
-            let network_info_result = futures::future::join_all(network_info_futures)
-                .await
-                .into_iter()
-                .filter_map(|result| result.ok())
-                .collect::<Vec<_>>();
-
-            network_info.push(network_info_result);
-            tokio::time::sleep(Duration::from_millis(1000)).await;
+            network_specs.push(NetworkSpecData {
+                coin: coin.clone(),
+                exchange: ExchangeId::PhemexSpot,
+                chains: chain_specs,
+            })
         }
 
-        Ok(network_info
-            .into_iter()
-            .flatten()
-            .filter_map(|network_info| network_info.data)
-            .collect::<Vec<Vec<PhemexNetworkInfoData>>>()
-            .into_iter()
-            .flatten()
-            .collect::<Vec<PhemexNetworkInfoData>>())
+        Ok(NetworkSpecs(network_specs))
     }
 }
 
-// Can't do async closures so this func is required
-async fn get_single_network_info<DeStruct: for<'de> Deserialize<'de>>(
+fn sign_message_phemex(message: String, secret: &str) -> String {
+    let mut mac = Hmac::<Sha256>::new_from_slice(secret.as_bytes()).unwrap();
+    mac.update(message.as_bytes());
+    hex::encode(mac.finalize().into_bytes())
+}
+
+async fn get_network_info_phemex<DeStruct: for<'de> Deserialize<'de>>(
+    client: reqwest::Client,
     url: String,
+    key: &str,
+    signature: String,
+    expiry: u64,
 ) -> Result<DeStruct, SocketError> {
-    reqwest::get(url)
+    client
+        .get(url)
+        .header("x-phemex-access-token", key)
+        .header("x-phemex-request-signature", signature)
+        .header("x-phemex-request-expiry", expiry.to_string())
+        .send()
         .await
         .map_err(SocketError::Http)?
         .json::<DeStruct>()
@@ -175,12 +240,3 @@ impl StreamSelector<PhemexSpotPublicData, Trades> for PhemexSpotPublicData {
     type Stream = PhemexTradesUpdate;
     type StreamTransformer = StatelessTransformer<PhemexSpotPublicData, Self::Stream, Trades>;
 }
-
-// let coins = Self::get_ticker_info(Instrument::default())
-//     .await?
-//     .data
-//     .currencies
-//     .into_iter()
-//     .filter(|currency| currency.status == "Listed")
-//     .map(|currency_filtered| currency_filtered.currency)
-//     .collect::<Vec<String>>();
