@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
@@ -6,8 +8,10 @@ use crate::{
     error::SocketError,
     exchange::Identifier,
     model::{
-        event_book_snapshot::EventOrderBookSnapshot, event_trade::EventTrade,
+        event_book_snapshot::EventOrderBookSnapshot,
+        event_trade::EventTrade,
         market_event::MarketEvent,
+        network_info::{ChainSpecs, NetworkSpecData, NetworkSpecs},
     },
     shared::{
         de::de_u64_epoch_ms_as_datetime_utc,
@@ -155,6 +159,42 @@ pub struct WooxNetworkInfoData {
     pub allow_deposit: bool,
     #[serde(rename = "allow_withdraw", deserialize_with = "de_network_info_woox")]
     pub allow_withdraw: bool,
+}
+
+impl From<WooxNetworkInfo> for NetworkSpecs {
+    fn from(value: WooxNetworkInfo) -> Self {
+        let mut grouped_data: HashMap<String, Vec<WooxNetworkInfoData>> = HashMap::new();
+        for coin in value.rows.into_iter() {
+            grouped_data
+                .entry(coin.token.clone())
+                .or_default()
+                .push(coin);
+        }
+
+        let network_spec_data = grouped_data
+            .into_iter()
+            .map(|(coin_name, coin_info)| {
+                let chain_specs = coin_info
+                    .into_iter()
+                    .map(|chain| ChainSpecs {
+                        chain_name: chain.protocol.clone(),
+                        fee_is_fixed: false,
+                        fees: chain.withdrawal_fee,
+                        can_deposit: chain.allow_deposit,
+                        can_withdraw: chain.allow_withdraw,
+                    })
+                    .collect::<Vec<ChainSpecs>>();
+
+                NetworkSpecData {
+                    coin: coin_name,
+                    exchange: ExchangeId::WooxSpot,
+                    chains: chain_specs,
+                }
+            })
+            .collect::<Vec<NetworkSpecData>>();
+
+        NetworkSpecs(network_spec_data)
+    }
 }
 
 pub fn de_network_info_woox<'de, D>(deserializer: D) -> Result<bool, D::Error>
