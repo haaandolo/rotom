@@ -7,8 +7,9 @@ use crate::exchange::Identifier;
 use crate::model::event_book_snapshot::EventOrderBookSnapshot;
 use crate::model::event_trade::EventTrade;
 use crate::model::market_event::MarketEvent;
+use crate::model::network_info::{ChainSpecs, NetworkSpecData, NetworkSpecs};
 use crate::shared::de::{
-    de_str, de_str_u64_epoch_ns_as_datetime_utc, de_u64_epoch_ms_as_datetime_utc,
+    de_str, de_str_optional, de_str_u64_epoch_ns_as_datetime_utc, de_u64_epoch_ms_as_datetime_utc,
 };
 use crate::shared::subscription_models::{ExchangeId, Instrument};
 use crate::streams::validator::Validator;
@@ -177,7 +178,7 @@ pub struct KuCoinNetworkInfo {
     #[serde(rename = "code")]
     pub code: String,
     #[serde(rename = "data")]
-    pub data: Option<Vec<KuCoinNetworkInfoData>>,
+    pub data: Vec<KuCoinNetworkInfoData>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -205,10 +206,14 @@ pub struct KuCoinNetworkChain {
     pub withdrawal_min_size: String,
     #[serde(rename = "depositMinSize")]
     pub deposit_min_size: Option<String>,
-    #[serde(rename = "withdrawFeeRate")]
-    pub withdraw_fee_rate: Option<String>,
-    #[serde(rename = "withdrawalMinFee")]
-    pub withdrawal_min_fee: String,
+    #[serde(
+        rename = "withdrawFeeRate",
+        deserialize_with = "de_str_optional",
+        default
+    )]
+    pub withdraw_fee_rate: Option<f64>,
+    #[serde(rename = "withdrawalMinFee", deserialize_with = "de_str")]
+    pub withdrawal_min_fee: f64,
     #[serde(rename = "isWithdrawEnabled")]
     pub is_withdraw_enabled: bool,
     #[serde(rename = "isDepositEnabled")]
@@ -228,4 +233,45 @@ pub struct KuCoinNetworkChain {
     pub need_tag: bool,
     #[serde(rename = "chainId")]
     pub chain_id: String,
+}
+
+impl From<KuCoinNetworkInfo> for NetworkSpecs {
+    fn from(value: KuCoinNetworkInfo) -> Self {
+        let network_spec_data = value
+            .data
+            .into_iter()
+            .map(|coin| {
+                let chain_specs = coin
+                    .chains
+                    .unwrap_or_default()
+                    .into_iter()
+                    .map(|chain| {
+                        let mut chain_spec = ChainSpecs {
+                            chain_name: chain.chain_name.clone(),
+                            fee_is_fixed: true,
+                            fees: chain.withdrawal_min_fee,
+                            can_deposit: chain.is_deposit_enabled,
+                            can_withdraw: chain.is_withdraw_enabled,
+                        };
+
+                        // If fee rate is not None change chain spec to reflect this
+                        if let Some(rate) = chain.withdraw_fee_rate {
+                            chain_spec.fees = rate;
+                            chain_spec.fee_is_fixed = false;
+                        }
+
+                        chain_spec
+                    })
+                    .collect::<Vec<ChainSpecs>>();
+
+                NetworkSpecData {
+                    coin: coin.currency,
+                    exchange: ExchangeId::KuCoinSpot,
+                    chains: chain_specs,
+                }
+            })
+            .collect::<Vec<NetworkSpecData>>();
+
+        NetworkSpecs(network_spec_data)
+    }
 }
