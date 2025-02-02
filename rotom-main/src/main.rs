@@ -54,9 +54,9 @@ pub async fn main() {
         .await
         .unwrap();
 
-    println!("network {:#?}", test);
-    // let test2: NetworkSpecs = test.into();
-    // println!("network {:#?}", test2);
+    // println!("network {:#?}", test);
+    let test2: NetworkSpecs = test.into();
+    println!("network {:#?}", test2);
 
     // let mut file = File::create("./htx_network_info.json").unwrap();
     // let json_string = serde_json::to_string_pretty(&test).unwrap();

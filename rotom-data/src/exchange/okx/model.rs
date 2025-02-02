@@ -1,11 +1,13 @@
-use std::mem;
+use std::{collections::HashMap, mem};
 
 use crate::{
     error::SocketError,
     exchange::Identifier,
     model::{
-        event_book_snapshot::EventOrderBookSnapshot, event_trade::EventTrade,
+        event_book_snapshot::EventOrderBookSnapshot,
+        event_trade::EventTrade,
         market_event::MarketEvent,
+        network_info::{ChainSpecs, NetworkSpecData, NetworkSpecs},
     },
     shared::{
         de::{de_str, de_str_u64_epoch_ms_as_datetime_utc},
@@ -248,4 +250,39 @@ pub struct OkxNetworkInfoData {
     pub withdraw_quota: String,
     #[serde(rename = "wdTickSz")]
     pub withdraw_tick_size: String,
+}
+
+impl From<OkxNetworkInfo> for NetworkSpecs {
+    fn from(value: OkxNetworkInfo) -> Self {
+        let mut grouped_data: HashMap<String, Vec<OkxNetworkInfoData>> =
+            HashMap::with_capacity(value.data.len());
+
+        for coin in value.data.into_iter() {
+            grouped_data.entry(coin.ccy.clone()).or_default().push(coin);
+        }
+
+        let network_spec_data = grouped_data
+            .into_iter()
+            .map(|(coin_name, chain_infos)| {
+                let chain_specs = chain_infos
+                    .into_iter()
+                    .map(|chain| ChainSpecs {
+                        chain_name: chain.chain.clone(),
+                        fee_is_fixed: true,
+                        fees: chain.fee,
+                        can_deposit: chain.can_deposit,
+                        can_withdraw: chain.can_withdraw,
+                    })
+                    .collect::<Vec<ChainSpecs>>();
+
+                NetworkSpecData {
+                    coin: coin_name,
+                    exchange: ExchangeId::OkxSpot,
+                    chains: chain_specs,
+                }
+            })
+            .collect::<Vec<NetworkSpecData>>();
+
+        NetworkSpecs(network_spec_data)
+    }
 }
