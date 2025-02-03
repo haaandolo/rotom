@@ -1,4 +1,4 @@
-use std::{ascii::AsciiExt, fs::File, io::Write};
+use std::{ascii::AsciiExt, collections::HashMap, fs::File, io::Write};
 
 use futures::StreamExt;
 use rotom_data::{
@@ -19,7 +19,6 @@ use rotom_data::{
         market_event::{DataKind, MarketEvent},
         network_info::NetworkSpecs,
     },
-    playground::{test_http, test_http_private, test_ws},
     shared::subscription_models::{ExchangeId, Instrument, StreamKind},
     streams::builder::{dynamic::DynamicStreams, Streams},
 };
@@ -35,9 +34,6 @@ pub async fn main() {
     // Main
     ///////////
     init_logging();
-    // test_http().await;
-    // test_http_private().await;
-    // test_ws().await;
 
     /////////
     // Playground
@@ -50,15 +46,25 @@ pub async fn main() {
         Instrument::new("icp", "usdt"),
     ];
 
-    let test = WooxSpotPublicData::get_network_info(instruments)
+    let test = OkxSpotPublicData::get_network_info(instruments)
         .await
         .unwrap();
 
-    // println!("network {:#?}", test);
-    let test2: NetworkSpecs = test.into();
-    println!("network {:#?}", test2);
+    // let test2: NetworkSpecs = test.into();
+    // println!("network {:#?}", test2);
 
-    // let mut file = File::create("./htx_network_info.json").unwrap();
+    // let mut test2 = Vec::new();
+    // for bin in test.into_iter() {
+    //     for network in bin.network_list.into_iter() {
+    //         test2.push((network.network, network.estimated_arrival_time));
+    //     }
+    // }
+
+    // test2.sort();
+    // test2.dedup();
+    // println!("{:#?}", test2);
+
+    // let mut file = File::create("./okx_network_info.json").unwrap();
     // let json_string = serde_json::to_string_pretty(&test).unwrap();
     // file.write_all(json_string.as_bytes()).unwrap();
 
@@ -114,9 +120,9 @@ fn init_logging() {
 }
 
 // Todo:
+// these exchanges have transfer times: binance, kucoin, okx, htx,
+// figure out scanner archtecture e.g. streaming in chain data every 10 mins
 // bitstamp chain info
-// Binance chanin info
-// chnage exchanges with trades to have date for each trade
 // change instrument map key from market to stream key
 
 //////////////////////////////////////////////////////////////////////////////////////////////
