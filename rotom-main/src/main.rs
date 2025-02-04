@@ -26,6 +26,7 @@ use rotom_main::trader::spot_arb_trader::builder::stream_trades;
 use rotom_oms::exchange::{
     binance::binance_client::BinanceExecution, poloniex::poloniex_client::PoloniexExecution,
 };
+use rotom_scanner::spot_arb_scanner::network_status_stream::NetworkStatusStream;
 use tracing_subscriber::fmt::init;
 
 #[tokio::main]
@@ -46,9 +47,22 @@ pub async fn main() {
         Instrument::new("icp", "usdt"),
     ];
 
-    let test = OkxSpotPublicData::get_network_info(instruments)
-        .await
-        .unwrap();
+    let mut network = NetworkStatusStream::new()
+        .add_exchange::<AscendExSpotPublicData>(instruments.clone())
+        .add_exchange::<BinanceSpotPublicData>(instruments.clone())
+        .add_exchange::<ExmoSpotPublicData>(instruments.clone())
+        .add_exchange::<HtxSpotPublicData>(instruments.clone())
+        .add_exchange::<KuCoinSpotPublicData>(instruments.clone())
+        .add_exchange::<OkxSpotPublicData>(instruments.clone())
+        .add_exchange::<WooxSpotPublicData>(instruments.clone());
+
+    while let Some(msg) = network.0.rx.recv().await {
+        println!("{:?}", msg);
+    }
+
+    // let test = OkxSpotPublicData::get_network_info(instruments)
+    //     .await
+    //     .unwrap();
 
     // let test2: NetworkSpecs = test.into();
     // println!("network {:#?}", test2);
@@ -120,6 +134,7 @@ fn init_logging() {
 }
 
 // Todo:
+// Http error handling for get network publichttpclient
 // these exchanges have transfer times: binance, kucoin, okx, htx,
 // figure out scanner archtecture e.g. streaming in chain data every 10 mins
 // bitstamp chain info

@@ -4,3 +4,15 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+rotom-data = { path = "../rotom-data" }
+
+# Async
+tokio = { workspace = true, features = ["sync", "macros", "rt-multi-thread"] }
+
+
+# Logging
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter", "json"] }
+
+# Error
+thiserror = { workspace = true }

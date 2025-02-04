@@ -1346,6 +1346,7 @@ dependencies = [
  "prettytable-rs",
  "rotom-data",
  "rotom-oms",
+ "rotom-scanner",
  "rotom-strategy",
  "serde",
  "serde_json",
@@ -1389,6 +1390,13 @@ dependencies = [
 [[package]]
 name = "rotom-scanner"
 version = "0.1.0"
+dependencies = [
+ "rotom-data",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
 
 [[package]]
 name = "rotom-strategy"
