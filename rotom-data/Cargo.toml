@@ -31,7 +31,7 @@ chrono = { workspace = true, features = ["serde"]}
 vecmap-rs = { workspace = true}
 itertools = { workspace = true}
 bytes = { workspace = true }
-flate2 = { version="1.0"}
+flate2 = { workspace = true }
 rand = { workspace =  true}
 uuid = { workspace = true }
 

@@ -1391,6 +1391,7 @@ dependencies = [
 name = "rotom-scanner"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "rotom-data",
  "thiserror",
  "tokio",

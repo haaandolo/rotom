@@ -43,6 +43,7 @@ vecmap-rs = "0.2.1"
 itertools = "0.13.0"
 bytes = { version = "1.5.0" }
 rand = { version = "0.8.5 " }
+flate2 = { version = "1.0"}
 
 # SerDe
 serde_json = { version = "1.0.120" }
