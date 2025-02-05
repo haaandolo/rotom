@@ -15,7 +15,7 @@ use crate::{
     },
     shared::{
         de::de_u64_epoch_ms_as_datetime_utc,
-        subscription_models::{ExchangeId, Instrument},
+        subscription_models::{Coin, ExchangeId, Instrument},
     },
     streams::validator::Validator,
 };
@@ -185,13 +185,12 @@ impl From<WooxNetworkInfo> for NetworkSpecs {
                     })
                     .collect::<Vec<ChainSpecs>>();
 
-                NetworkSpecData {
-                    coin: coin_name,
-                    exchange: ExchangeId::WooxSpot,
-                    chains: chain_specs,
-                }
+                (
+                    (ExchangeId::WooxSpot, Coin(coin_name)),
+                    NetworkSpecData(chain_specs),
+                )
             })
-            .collect::<Vec<NetworkSpecData>>();
+            .collect::<HashMap<_, _>>();
 
         NetworkSpecs(network_spec_data)
     }

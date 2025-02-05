@@ -1,14 +1,13 @@
-use crate::shared::subscription_models::ExchangeId;
+use std::collections::HashMap;
+
+use crate::shared::subscription_models::{Coin, ExchangeId};
 
 #[derive(Debug)]
-pub struct NetworkSpecs(pub Vec<NetworkSpecData>);
+pub struct NetworkSpecs(pub HashMap<(ExchangeId, Coin), NetworkSpecData>);
 
 #[derive(Debug)]
-pub struct NetworkSpecData {
-    pub coin: String,
-    pub exchange: ExchangeId,
-    pub chains: Vec<ChainSpecs>,
-}
+pub struct NetworkSpecData(pub Vec<ChainSpecs>);
+
 
 #[derive(Debug, Default)]
 pub struct ChainSpecs {

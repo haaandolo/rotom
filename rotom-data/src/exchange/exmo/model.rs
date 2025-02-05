@@ -15,7 +15,7 @@ use crate::{
     },
     shared::{
         de::{de_str, de_u64_epoch_ms_as_datetime_utc},
-        subscription_models::{ExchangeId, Instrument},
+        subscription_models::{Coin, ExchangeId, Instrument},
     },
     streams::validator::Validator,
 };
@@ -203,7 +203,7 @@ pub struct ExmoNetworkInfoData {
 
 impl From<ExmoNetworkInfo> for NetworkSpecs {
     fn from(value: ExmoNetworkInfo) -> Self {
-        let mut network_specs = Vec::with_capacity(value.networks.len());
+        let mut network_specs = HashMap::with_capacity(value.networks.len());
 
         for (coin_name, networks) in value.networks.into_iter() {
             // Exmo sends deposit and withdraw data for a given chain separately, So we
@@ -226,7 +226,7 @@ impl From<ExmoNetworkInfo> for NetworkSpecs {
                     fee_is_fixed: true,
                     fees: 0.0,
                     can_deposit: false,
-                    can_withdraw: false
+                    can_withdraw: false,
                 };
 
                 for chain in chain_spec.into_iter() {
@@ -241,11 +241,10 @@ impl From<ExmoNetworkInfo> for NetworkSpecs {
                 chain_specs.push(chain_spec_default)
             }
 
-            network_specs.push(NetworkSpecData {
-                coin: coin_name,
-                exchange: ExchangeId::ExmoSpot,
-                chains: chain_specs,
-            })
+            network_specs.insert(
+                (ExchangeId::ExmoSpot, Coin(coin_name)),
+                NetworkSpecData(chain_specs),
+            );
         }
 
         NetworkSpecs(network_specs)

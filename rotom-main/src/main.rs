@@ -134,6 +134,7 @@ fn init_logging() {
 }
 
 // Todo:
+// Change coin in NetworkSpecData to be a type not string
 // Http error handling for get network publichttpclient
 // these exchanges have transfer times: binance, kucoin, okx, htx,
 // figure out scanner archtecture e.g. streaming in chain data every 10 mins

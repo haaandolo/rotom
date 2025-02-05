@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
@@ -13,7 +15,7 @@ use crate::{
     },
     shared::{
         de::{de_str, de_u64_epoch_ms_as_datetime_utc},
-        subscription_models::{ExchangeId, Instrument},
+        subscription_models::{Coin, ExchangeId, Instrument},
         utils::snapshot_symbol_default_value,
     },
     streams::validator::Validator,
@@ -429,13 +431,12 @@ impl From<Vec<BinanceNetworkInfo>> for NetworkSpecs {
                     })
                     .collect();
 
-                NetworkSpecData {
-                    coin: coin.coin.clone(),
-                    exchange: ExchangeId::BinanceSpot,
-                    chains: chain_specs,
-                }
+                (
+                    (ExchangeId::BinanceSpot, Coin(coin.coin.clone())),
+                    NetworkSpecData(chain_specs),
+                )
             })
-            .collect::<Vec<_>>();
+            .collect::<HashMap<_, _>>();
 
         NetworkSpecs(network_spec_data)
     }

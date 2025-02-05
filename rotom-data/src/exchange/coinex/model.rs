@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use ::serde::Deserialize;
 use chrono::{DateTime, Utc};
 
@@ -9,7 +11,7 @@ use crate::model::event_trade::EventTrade;
 use crate::model::market_event::MarketEvent;
 use crate::model::network_info::{ChainSpecs, NetworkSpecData, NetworkSpecs};
 use crate::shared::de::{de_str, de_u64_epoch_ms_as_datetime_utc};
-use crate::shared::subscription_models::{ExchangeId, Instrument};
+use crate::shared::subscription_models::{Coin, ExchangeId, Instrument};
 use crate::streams::validator::Validator;
 
 /*----- */
@@ -207,14 +209,12 @@ impl From<CoinExNetworkInfo> for NetworkSpecs {
                         can_withdraw: chain.withdraw_enabled,
                     })
                     .collect();
-
-                NetworkSpecData {
-                    coin: coin.asset.ccy.clone(),
-                    exchange: ExchangeId::CoinExSpot,
-                    chains: chain_specs,
-                }
+                (
+                    (ExchangeId::CoinExSpot, Coin(coin.asset.ccy.clone())),
+                    NetworkSpecData(chain_specs),
+                )
             })
-            .collect::<Vec<_>>();
+            .collect::<HashMap<_, _>>();
 
         NetworkSpecs(network_spec_data)
     }

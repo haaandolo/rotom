@@ -1,9 +1,12 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Deserializer};
 
 use crate::model::event_trade::EventTrade;
 use crate::model::network_info::{ChainSpecs, NetworkSpecData, NetworkSpecs};
 use crate::shared::de::{de_str_optional, de_u64_epoch_ms_as_datetime_utc, de_uppercase};
+use crate::shared::subscription_models::Coin;
 use crate::{
     assets::level::Level,
     error::SocketError,
@@ -235,13 +238,12 @@ impl From<HtxNetworkInfo> for NetworkSpecs {
                     })
                     .collect::<Vec<ChainSpecs>>();
 
-                NetworkSpecData {
-                    coin: coin.currency.clone(),
-                    exchange: ExchangeId::HtxSpot,
-                    chains: chain_specs,
-                }
+                (
+                    (ExchangeId::HtxSpot, Coin(coin.currency.clone())),
+                    NetworkSpecData(chain_specs),
+                )
             })
-            .collect::<Vec<NetworkSpecData>>();
+            .collect::<HashMap<_, _>>();
 
         NetworkSpecs(network_spec_data)
     }

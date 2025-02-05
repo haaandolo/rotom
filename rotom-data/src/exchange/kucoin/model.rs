@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
@@ -11,7 +13,7 @@ use crate::model::network_info::{ChainSpecs, NetworkSpecData, NetworkSpecs};
 use crate::shared::de::{
     de_str, de_str_optional, de_str_u64_epoch_ns_as_datetime_utc, de_u64_epoch_ms_as_datetime_utc,
 };
-use crate::shared::subscription_models::{ExchangeId, Instrument};
+use crate::shared::subscription_models::{Coin, ExchangeId, Instrument};
 use crate::streams::validator::Validator;
 
 /*----- */
@@ -264,13 +266,12 @@ impl From<KuCoinNetworkInfo> for NetworkSpecs {
                     })
                     .collect::<Vec<ChainSpecs>>();
 
-                NetworkSpecData {
-                    coin: coin.currency,
-                    exchange: ExchangeId::KuCoinSpot,
-                    chains: chain_specs,
-                }
+                (
+                    (ExchangeId::KuCoinSpot, Coin(coin.currency)),
+                    NetworkSpecData(chain_specs),
+                )
             })
-            .collect::<Vec<NetworkSpecData>>();
+            .collect::<HashMap<_, _>>();
 
         NetworkSpecs(network_spec_data)
     }

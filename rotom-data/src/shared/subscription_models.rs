@@ -37,6 +37,13 @@ impl From<(String, String)> for Instrument {
 }
 
 /*----- */
+// Coin
+/*----- */
+// Example usage: Coin("ETH"), Coin("BTC")
+#[derive(Debug, PartialEq, Eq, Hash)]
+pub struct Coin(pub String); // smol
+
+/*----- */
 // Subscription model
 /*----- */
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]

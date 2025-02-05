@@ -3,6 +3,7 @@ use std::collections::{HashMap, VecDeque};
 use chrono::{DateTime, Duration, Utc};
 use rotom_data::{
     assets::level::Level,
+    model::network_info::NetworkSpecData,
     shared::subscription_models::{ExchangeId, Instrument},
 };
 
@@ -44,11 +45,33 @@ pub struct InstrumentMarketData {
     pub asks: Vec<Level>,
     pub average_trade_price: VecDequeTime<f64>,
     pub average_trade_quantity: VecDequeTime<f64>,
+}
+
+#[derive(Debug, Default)]
+pub struct SpreadHistory {
+    pub current_spread: f64,
     pub buy_illiquid_spreads: VecDequeTime<f64>,
     pub sell_illiquid_spreads: VecDequeTime<f64>,
     pub buy_liquid_spreads: VecDequeTime<f64>,
     pub sell_liquid_spreads: VecDequeTime<f64>,
 }
 
+#[derive(Debug, Default)]
+pub struct InstrumentMarketDataMap(pub HashMap<Instrument, InstrumentMarketData>);
+
+#[derive(Debug, Default)]
+pub struct ExchangeMarketDataMap(pub HashMap<ExchangeId, InstrumentMarketDataMap>);
+
+#[derive(Debug, Default)]
+pub struct SpreadHistoryMap(pub HashMap<(ExchangeId, ExchangeId, Instrument), SpreadHistory>);
+
+#[derive(Debug, Default)]
+pub struct NetworkStatusMap(pub HashMap<(ExchangeId, String), NetworkSpecData>);
+
 #[derive(Debug)]
-pub struct SpotArbMarketDataMap(pub HashMap<(ExchangeId, Instrument), InstrumentMarketData>);
+pub struct SpotArbMarketDataMaps {
+    pub current_usdt_price: f64,
+    pub exchange_data: ExchangeMarketDataMap,
+    pub network_status: NetworkStatusMap,
+    pub spreads: SpreadHistoryMap,
+}

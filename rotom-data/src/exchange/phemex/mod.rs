@@ -28,7 +28,7 @@ use crate::{
         network_info::{ChainSpecs, NetworkSpecData, NetworkSpecs},
     },
     protocols::ws::{PingInterval, WsMessage},
-    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
+    shared::subscription_models::{Coin, ExchangeId, ExchangeSubscription, Instrument},
     transformer::{book::MultiBookTransformer, stateless_transformer::StatelessTransformer},
 };
 
@@ -122,7 +122,7 @@ impl PublicHttpConnector for PhemexSpotPublicData {
         let request_path_withdraw = "/phemex-withdraw/wallets/api/asset/info";
         let request_path_deposit = "/phemex-deposit/wallets/api/chainCfg";
         let expiry = Utc::now().timestamp() as u64 + 60;
-        let mut network_specs = Vec::new();
+        let mut network_specs = HashMap::new();
 
         for instrument in instruments.into_iter() {
             let coin = instrument.base.to_uppercase();
@@ -190,11 +190,10 @@ impl PublicHttpConnector for PhemexSpotPublicData {
                 .map(|(key, (withdraw, deposit))| ChainSpecs::from((key, withdraw, deposit)))
                 .collect::<Vec<ChainSpecs>>();
 
-            network_specs.push(NetworkSpecData {
-                coin: coin.clone(),
-                exchange: ExchangeId::PhemexSpot,
-                chains: chain_specs,
-            })
+            network_specs.insert(
+                (ExchangeId::PhemexSpot, Coin(coin.clone())),
+                NetworkSpecData(chain_specs),
+            );
         }
 
         Ok(NetworkSpecs(network_specs))

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
@@ -9,7 +11,7 @@ use crate::model::market_event::MarketEvent;
 use crate::model::network_info::{ChainSpecs, NetworkSpecData, NetworkSpecs};
 use crate::model::ticker_info::TickerInfo;
 use crate::shared::de::{de_str, de_u64_epoch_ms_as_datetime_utc};
-use crate::shared::subscription_models::{ExchangeId, Instrument};
+use crate::shared::subscription_models::{Coin, ExchangeId, Instrument};
 use crate::streams::validator::Validator;
 
 /*----- */
@@ -208,13 +210,12 @@ impl From<AscendExNetworkInfo> for NetworkSpecs {
                     })
                     .collect::<Vec<_>>();
 
-                NetworkSpecData {
-                    coin: coin.asset_code.clone(),
-                    exchange: ExchangeId::AscendExSpot,
-                    chains: chain_specs,
-                }
+                (
+                    (ExchangeId::AscendExSpot, Coin(coin.asset_code.clone())),
+                    NetworkSpecData(chain_specs),
+                )
             })
-            .collect::<Vec<_>>();
+            .collect::<HashMap<_, _>>();
 
         NetworkSpecs(network_spec_data)
     }
