@@ -18,3 +18,4 @@ thiserror = { workspace = true }
 
 # Misc
 chrono = { workspace = true, features = ["serde"]}
+ordered-float = { workspace = true }

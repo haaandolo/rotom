@@ -1,9 +1,13 @@
-use std::collections::{HashMap, VecDeque};
+use std::{
+    cmp::Ordering,
+    collections::{BTreeMap, HashMap, VecDeque},
+};
 
 use chrono::{DateTime, Duration, Utc};
+use ordered_float::OrderedFloat;
 use rotom_data::{
     assets::level::Level,
-    model::network_info::NetworkSpecData,
+    model::network_info::NetworkSpecs,
     shared::subscription_models::{ExchangeId, Instrument},
 };
 
@@ -56,6 +60,30 @@ pub struct SpreadHistory {
     pub sell_liquid_spreads: VecDequeTime<f64>,
 }
 
+#[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Hash, Clone)]
+pub struct SpreadKey {
+    exchanges: (ExchangeId, ExchangeId),
+    instrument: Instrument,
+}
+
+impl SpreadKey {
+    pub fn new(e1: ExchangeId, e2: ExchangeId, instrument: Instrument) -> Self {
+        match e1.cmp(&e2) {
+            Ordering::Greater => SpreadKey {
+                exchanges: (e2, e1),
+                instrument,
+            },
+            _ => SpreadKey {
+                exchanges: (e1, e2),
+                instrument,
+            },
+        }
+    }
+}
+
+/*----- */
+// Maps
+/*----- */
 #[derive(Debug, Default)]
 pub struct InstrumentMarketDataMap(pub HashMap<Instrument, InstrumentMarketData>);
 
@@ -63,15 +91,82 @@ pub struct InstrumentMarketDataMap(pub HashMap<Instrument, InstrumentMarketData>
 pub struct ExchangeMarketDataMap(pub HashMap<ExchangeId, InstrumentMarketDataMap>);
 
 #[derive(Debug, Default)]
-pub struct SpreadHistoryMap(pub HashMap<(ExchangeId, ExchangeId, Instrument), SpreadHistory>);
+pub struct SpreadHistoryMap(pub HashMap<SpreadKey, SpreadHistory>);
 
 #[derive(Debug, Default)]
-pub struct NetworkStatusMap(pub HashMap<(ExchangeId, String), NetworkSpecData>);
+pub struct NetworkStatusMap(pub HashMap<ExchangeId, NetworkSpecs>);
 
+/*----- */
+// Data structure to hold sorted spread values
+/*----- */
+#[derive(Debug, Default)]
+pub struct SpreadsSorted {
+    by_key: BTreeMap<SpreadKey, OrderedFloat<f64>>,
+    by_value: BTreeMap<OrderedFloat<f64>, SpreadKey>,
+}
+
+impl SpreadsSorted {
+    pub fn new() -> Self {
+        Self {
+            by_key: BTreeMap::new(),
+            by_value: BTreeMap::new(),
+        }
+    }
+
+    pub fn insert(&mut self, spread_key: SpreadKey, new_spread: f64) {
+        match self.by_key.get_mut(&spread_key) {
+            // If key exists and the old_spread != new_spread, then modify the
+            // old spread to be new spread in the btreemap (by_key). And remove the
+            // old spread in the btreemap (by_value) and insert the new spread
+            Some(old_spread) => {
+                if old_spread != &new_spread {
+                    *old_spread = OrderedFloat(new_spread);
+                    self.by_value.remove(old_spread);
+                    self.by_value.insert(OrderedFloat(new_spread), spread_key);
+                }
+            }
+            // Else just insert the new spread and spread key in the both btreemaps
+            None => {
+                self.by_value
+                    .insert(OrderedFloat(new_spread), spread_key.clone());
+                self.by_key.insert(spread_key, OrderedFloat(new_spread));
+            }
+        }
+    }
+}
+
+/*----- */
+// Spot Arb Scanner
+/*----- */
 #[derive(Debug)]
-pub struct SpotArbMarketDataMaps {
-    pub current_usdt_price: f64,
+pub struct SpotArbScanner {
     pub exchange_data: ExchangeMarketDataMap,
     pub network_status: NetworkStatusMap,
-    pub spreads: SpreadHistoryMap,
+    pub spread_history: SpreadHistoryMap,
+    pub spreads_sorted: SpreadsSorted,
+}
+
+/*----- */
+// Test
+/*----- */
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn spread_key_test() {
+        let k1 = SpreadKey::new(
+            ExchangeId::AscendExSpot,
+            ExchangeId::BinanceSpot,
+            Instrument::new("btc", "usdt"),
+        );
+
+        let k2 = SpreadKey::new(
+            ExchangeId::BinanceSpot,
+            ExchangeId::AscendExSpot,
+            Instrument::new("btc", "usdt"),
+        );
+
+        assert_eq!(k1, k2)
+    }
 }
