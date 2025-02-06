@@ -97,6 +97,17 @@ pub struct SpreadHistoryMap(pub HashMap<SpreadKey, SpreadHistory>);
 pub struct NetworkStatusMap(pub HashMap<ExchangeId, NetworkSpecs>);
 
 /*----- */
+// Spot Arb Scanner
+/*----- */
+#[derive(Debug)]
+pub struct SpotArbScanner {
+    pub exchange_data: ExchangeMarketDataMap,
+    pub network_status: NetworkStatusMap,
+    pub spread_history: SpreadHistoryMap,
+    pub spreads_sorted: SpreadsSorted,
+}
+
+/*----- */
 // Data structure to hold sorted spread values
 /*----- */
 #[derive(Debug, Default)]
@@ -120,8 +131,8 @@ impl SpreadsSorted {
             // old spread in the btreemap (by_value) and insert the new spread
             Some(old_spread) => {
                 if old_spread != &new_spread {
-                    *old_spread = OrderedFloat(new_spread);
                     self.by_value.remove(old_spread);
+                    *old_spread = OrderedFloat(new_spread);
                     self.by_value.insert(OrderedFloat(new_spread), spread_key);
                 }
             }
@@ -133,17 +144,15 @@ impl SpreadsSorted {
             }
         }
     }
-}
 
-/*----- */
-// Spot Arb Scanner
-/*----- */
-#[derive(Debug)]
-pub struct SpotArbScanner {
-    pub exchange_data: ExchangeMarketDataMap,
-    pub network_status: NetworkStatusMap,
-    pub spread_history: SpreadHistoryMap,
-    pub spreads_sorted: SpreadsSorted,
+    pub fn snapshot(&self) -> Vec<(f64, SpreadKey)> {
+        self.by_value
+            .iter()
+            .rev()
+            .take(10)
+            .map(|(spread, spread_key)| (spread.0, spread_key.clone()))
+            .collect::<Vec<_>>()
+    }
 }
 
 /*----- */
@@ -152,6 +161,75 @@ pub struct SpotArbScanner {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn spread_sorted_test() {
+        // Init keys
+        let k1 = SpreadKey::new(
+            ExchangeId::AscendExSpot,
+            ExchangeId::BinanceSpot,
+            Instrument::new("btc", "usdt"),
+        );
+
+        let k2 = SpreadKey::new(
+            ExchangeId::BinanceSpot,
+            ExchangeId::AscendExSpot,
+            Instrument::new("btc", "usdt"),
+        );
+
+        let k3 = SpreadKey::new(
+            ExchangeId::BinanceSpot,
+            ExchangeId::ExmoSpot,
+            Instrument::new("eth", "usdt"),
+        );
+
+        let k4 = SpreadKey::new(
+            ExchangeId::WooxSpot,
+            ExchangeId::ExmoSpot,
+            Instrument::new("op", "usdt"),
+        );
+
+        // Init spreads
+        let s1 = 0.005; // 2
+        let s2 = 0.0005; // 3
+        let s3 = 0.01; // 1
+        let s4 = 0.000025; // 4
+
+        // Init spread map
+        let mut spread_map = SpreadsSorted::new();
+
+        // Insert keys with same exchange combo
+        spread_map.insert(k1.clone(), s1);
+        spread_map.insert(k2.clone(), s2);
+        let result = spread_map.snapshot();
+        let expected = vec![
+            (s2, k2.clone()),
+        ];
+        assert_eq!(result, expected);
+
+        // Insert other key that have different exchange combo to map
+        spread_map.insert(k3.clone(), s3);
+        spread_map.insert(k4.clone(), s4);
+
+        let result = spread_map.snapshot();
+        let expected = vec![
+            (s3, k3.clone()),
+            (s2, k2.clone()),
+            (s4, k4.clone()),
+        ];
+        assert_eq!(result, expected);
+
+        // Change exisiting key to be the top value
+        let s5 = 0.1;
+        spread_map.insert(k4.clone(), s5);
+        let result = spread_map.snapshot();
+        let expected = vec![
+            (s5, k4.clone()),
+            (s3, k3.clone()),
+            (s2, k2.clone()),
+        ];
+        assert_eq!(result, expected);
+    }
 
     #[test]
     fn spread_key_test() {
