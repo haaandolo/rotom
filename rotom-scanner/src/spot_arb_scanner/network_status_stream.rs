@@ -19,11 +19,20 @@ impl NetworkStatusStream {
         Exchange::NetworkInfo: Into<NetworkSpecs>,
     {
         let network_status_tx = self.0.tx.clone();
-        tokio::spawn(send_network_status_snapshots::<Exchange>(
-            instruments,
-            network_status_tx,
-        ));
+        tokio::spawn(async move {
+            send_network_status_snapshots::<Exchange>(instruments, network_status_tx).await
+        });
         self
+    }
+
+    pub fn build(mut self) -> mpsc::UnboundedReceiver<NetworkSpecs> {
+        let (network_tx, network_rx) = mpsc::unbounded_channel();
+        tokio::spawn(async move {
+            while let Some(network_status_data) = self.0.rx.recv().await {
+                let _ = network_tx.send(network_status_data);
+            }
+        });
+        network_rx
     }
 }
 

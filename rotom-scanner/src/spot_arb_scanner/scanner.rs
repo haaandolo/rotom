@@ -7,20 +7,38 @@ use chrono::{DateTime, Duration, Utc};
 use ordered_float::OrderedFloat;
 use rotom_data::{
     assets::level::Level,
-    model::network_info::NetworkSpecs,
-    shared::subscription_models::{ExchangeId, Instrument},
+    model::{
+        event_trade::EventTrade,
+        market_event::{DataKind, MarketEvent},
+        network_info::{NetworkSpecData, NetworkSpecs},
+    },
+    shared::subscription_models::{Coin, ExchangeId, Instrument},
 };
+use tokio::sync::mpsc;
+use tracing::warn;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct VecDequeTime<T> {
     pub data: VecDeque<(DateTime<Utc>, T)>,
     pub window: Duration,
 }
 
-impl<T> VecDequeTime<T> {
-    pub fn new() -> Self {
+impl<T> Default for VecDequeTime<T> {
+    fn default() -> Self {
         Self {
             data: VecDeque::with_capacity(1000),
+            window: Duration::minutes(10),
+        }
+    }
+}
+
+impl<T> VecDequeTime<T> {
+    pub fn new(time: DateTime<Utc>, value: T) -> Self {
+        let mut queue = VecDeque::<(DateTime<Utc>, T)>::with_capacity(1000);
+        queue.push_back((time, value));
+
+        Self {
+            data: queue,
             window: Duration::minutes(10),
         }
     }
@@ -43,12 +61,29 @@ impl<T> VecDequeTime<T> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct InstrumentMarketData {
     pub bids: Vec<Level>,
     pub asks: Vec<Level>,
-    pub average_trade_price: VecDequeTime<f64>,
-    pub average_trade_quantity: VecDequeTime<f64>,
+    pub trades: VecDequeTime<EventTrade>,
+}
+
+impl InstrumentMarketData {
+    pub fn new_orderbook(bids: Vec<Level>, asks: Vec<Level>) -> Self {
+        Self {
+            bids,
+            asks,
+            trades: VecDequeTime::default(),
+        }
+    }
+
+    pub fn new_trade(time: DateTime<Utc>, value: EventTrade) -> Self {
+        Self {
+            bids: Vec::with_capacity(10),
+            asks: Vec::with_capacity(10),
+            trades: VecDequeTime::new(time, value),
+        }
+    }
 }
 
 #[derive(Debug, Default)]
@@ -94,18 +129,7 @@ pub struct ExchangeMarketDataMap(pub HashMap<ExchangeId, InstrumentMarketDataMap
 pub struct SpreadHistoryMap(pub HashMap<SpreadKey, SpreadHistory>);
 
 #[derive(Debug, Default)]
-pub struct NetworkStatusMap(pub HashMap<ExchangeId, NetworkSpecs>);
-
-/*----- */
-// Spot Arb Scanner
-/*----- */
-#[derive(Debug)]
-pub struct SpotArbScanner {
-    pub exchange_data: ExchangeMarketDataMap,
-    pub network_status: NetworkStatusMap,
-    pub spread_history: SpreadHistoryMap,
-    pub spreads_sorted: SpreadsSorted,
-}
+pub struct NetworkStatusMap(pub HashMap<(ExchangeId, Coin), NetworkSpecData>);
 
 /*----- */
 // Data structure to hold sorted spread values
@@ -156,6 +180,173 @@ impl SpreadsSorted {
 }
 
 /*----- */
+// Spot Arb Scanner
+/*----- */
+#[derive(Debug)]
+pub struct SpotArbScanner {
+    pub exchange_data: ExchangeMarketDataMap,
+    pub network_status: NetworkStatusMap,
+    pub spread_history: SpreadHistoryMap,
+    pub spreads_sorted: SpreadsSorted,
+    pub network_status_stream: mpsc::UnboundedReceiver<NetworkSpecs>,
+    pub market_data_stream: mpsc::UnboundedReceiver<MarketEvent<DataKind>>,
+}
+
+impl SpotArbScanner {
+    pub fn new(
+        network_status_stream: mpsc::UnboundedReceiver<NetworkSpecs>,
+        market_data_stream: mpsc::UnboundedReceiver<MarketEvent<DataKind>>,
+    ) -> Self {
+        Self {
+            exchange_data: ExchangeMarketDataMap::default(),
+            network_status: NetworkStatusMap::default(),
+            spread_history: SpreadHistoryMap::default(),
+            spreads_sorted: SpreadsSorted::default(),
+            network_status_stream,
+            market_data_stream,
+        }
+    }
+
+    fn process_orderbook(
+        &mut self,
+        exchange: ExchangeId,
+        instrument: Instrument,
+        mut bids: Vec<Level>,
+        mut asks: Vec<Level>,
+    ) {
+        self.exchange_data
+            .0
+            .entry(exchange)
+            .or_default()
+            .0
+            .entry(instrument)
+            .and_modify(|market_data_state| {
+                std::mem::swap(&mut market_data_state.bids, &mut bids);
+                std::mem::swap(&mut market_data_state.asks, &mut asks);
+            })
+            .or_insert_with(|| InstrumentMarketData::new_orderbook(bids, asks));
+    }
+
+    fn process_trade(
+        &mut self,
+        exchange: ExchangeId,
+        instrument: Instrument,
+        time: DateTime<Utc>,
+        trade: EventTrade,
+    ) {
+        self.exchange_data
+            .0
+            .entry(exchange)
+            .or_default()
+            .0
+            .entry(instrument)
+            .and_modify(|market_data_state| {
+                market_data_state.trades.push(time, trade.clone());
+            })
+            .or_insert_with(|| InstrumentMarketData::new_trade(time, trade));
+    }
+
+    fn process_trades(
+        &mut self,
+        exchange: ExchangeId,
+        instrument: Instrument,
+        time: DateTime<Utc>,
+        trades: Vec<EventTrade>,
+    ) {
+        self.exchange_data
+            .0
+            .entry(exchange)
+            .or_default()
+            .0
+            .entry(instrument)
+            .and_modify(|market_data_state| {
+                trades
+                    .iter()
+                    .for_each(|trade| market_data_state.trades.push(time, trade.to_owned()));
+            })
+            .or_insert_with(|| {
+                let mut instrument_map = InstrumentMarketData::default();
+                trades
+                    .iter()
+                    .for_each(|trade| instrument_map.trades.push(time, trade.to_owned()));
+                instrument_map
+            });
+    }
+
+    fn process_network_status(&mut self, network_status: NetworkSpecs) {
+        for (key, value) in network_status.0.into_iter() {
+            self.network_status.0.insert(key, value);
+        }
+    }
+
+    pub fn run(mut self) {
+        'spot_arb_scanner: loop {
+            // Replace network status state
+            match self.network_status_stream.try_recv() {
+                Ok(network_status_update) => {
+                    self.process_network_status(network_status_update);
+                }
+                Err(error) => {
+                    if error == mpsc::error::TryRecvError::Disconnected {
+                        warn!(
+                            message = "Network status stream for spot arb scanner has disconnected",
+                            action = "Breaking Spot Arb Scanner",
+                        );
+                        break 'spot_arb_scanner;
+                    }
+                }
+            }
+
+            // Get Market Data update
+            match self.market_data_stream.try_recv() {
+                Ok(market_data) => {
+                    println!("### before update ### \n {:?}", market_data);
+                    match market_data.event_data {
+                        DataKind::OrderBook(orderbook) => self.process_orderbook(
+                            market_data.exchange,
+                            market_data.instrument,
+                            orderbook.bids,
+                            orderbook.asks,
+                        ),
+                        DataKind::OrderBookSnapshot(snapshot) => self.process_orderbook(
+                            market_data.exchange,
+                            market_data.instrument,
+                            snapshot.bids,
+                            snapshot.asks,
+                        ),
+                        DataKind::Trade(trade) => self.process_trade(
+                            market_data.exchange,
+                            market_data.instrument,
+                            market_data.received_time,
+                            trade,
+                        ),
+                        DataKind::Trades(trades) => self.process_trades(
+                            market_data.exchange,
+                            market_data.instrument,
+                            market_data.received_time,
+                            trades,
+                        ),
+                    }
+
+                    println!("$$$");
+                    println!("### after update ### \n {:?}", self.exchange_data.0);
+                    println!("###################################################")
+                }
+                Err(error) => {
+                    if error == mpsc::error::TryRecvError::Disconnected {
+                        warn!(
+                            message = "Network status stream for spot arb scanner has disconnected",
+                            action = "Breaking Spot Arb Scanner",
+                        );
+                        break 'spot_arb_scanner;
+                    }
+                }
+            };
+        }
+    }
+}
+
+/*----- */
 // Test
 /*----- */
 #[cfg(test)]
@@ -202,9 +393,7 @@ mod test {
         spread_map.insert(k1.clone(), s1);
         spread_map.insert(k2.clone(), s2);
         let result = spread_map.snapshot();
-        let expected = vec![
-            (s2, k2.clone()),
-        ];
+        let expected = vec![(s2, k2.clone())];
         assert_eq!(result, expected);
 
         // Insert other key that have different exchange combo to map
@@ -212,22 +401,14 @@ mod test {
         spread_map.insert(k4.clone(), s4);
 
         let result = spread_map.snapshot();
-        let expected = vec![
-            (s3, k3.clone()),
-            (s2, k2.clone()),
-            (s4, k4.clone()),
-        ];
+        let expected = vec![(s3, k3.clone()), (s2, k2.clone()), (s4, k4.clone())];
         assert_eq!(result, expected);
 
         // Change exisiting key to be the top value
         let s5 = 0.1;
         spread_map.insert(k4.clone(), s5);
         let result = spread_map.snapshot();
-        let expected = vec![
-            (s5, k4.clone()),
-            (s3, k3.clone()),
-            (s2, k2.clone()),
-        ];
+        let expected = vec![(s5, k4.clone()), (s3, k3.clone()), (s2, k2.clone())];
         assert_eq!(result, expected);
     }
 

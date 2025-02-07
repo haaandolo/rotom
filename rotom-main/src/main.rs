@@ -1,4 +1,4 @@
-use std::{ascii::AsciiExt, collections::HashMap, fs::File, io::Write};
+use std::{collections::HashMap, fs::File, io::Write};
 
 use futures::StreamExt;
 use rotom_data::{
@@ -21,12 +21,16 @@ use rotom_data::{
     },
     shared::subscription_models::{ExchangeId, Instrument, StreamKind},
     streams::builder::{dynamic::DynamicStreams, Streams},
+    MarketFeed,
 };
 use rotom_main::trader::spot_arb_trader::builder::stream_trades;
 use rotom_oms::exchange::{
     binance::binance_client::BinanceExecution, poloniex::poloniex_client::PoloniexExecution,
 };
-use rotom_scanner::spot_arb_scanner::network_status_stream::NetworkStatusStream;
+use rotom_scanner::spot_arb_scanner::{
+    network_status_stream::NetworkStatusStream, scanner::SpotArbScanner,
+};
+use tokio::sync::mpsc;
 use tracing_subscriber::fmt::init;
 
 #[tokio::main]
@@ -39,6 +43,7 @@ pub async fn main() {
     /////////
     // Playground
     /////////
+    // Temp instruments
     let instruments = vec![
         Instrument::new("btc", "usdt"),
         Instrument::new("eth", "usdt"),
@@ -47,18 +52,39 @@ pub async fn main() {
         Instrument::new("icp", "usdt"),
     ];
 
-    let mut network = NetworkStatusStream::new()
+    // Network status stream
+    let network = NetworkStatusStream::new()
         .add_exchange::<AscendExSpotPublicData>(instruments.clone())
         .add_exchange::<BinanceSpotPublicData>(instruments.clone())
         .add_exchange::<ExmoSpotPublicData>(instruments.clone())
         .add_exchange::<HtxSpotPublicData>(instruments.clone())
         .add_exchange::<KuCoinSpotPublicData>(instruments.clone())
         .add_exchange::<OkxSpotPublicData>(instruments.clone())
-        .add_exchange::<WooxSpotPublicData>(instruments.clone());
+        .add_exchange::<WooxSpotPublicData>(instruments.clone())
+        .build();
 
-    while let Some(msg) = network.0.rx.recv().await {
-        println!("{:?}", msg);
-    }
+    // Market data feed
+    let streams = DynamicStreams::init([vec![(
+        ExchangeId::HtxSpot,
+        "ada",
+        "usdt",
+        StreamKind::Trades,
+    )]])
+    .await
+    .unwrap();
+
+    let mut data = streams.select_all::<MarketEvent<DataKind>>();
+    let (market_data_tx, market_data_rx) = mpsc::unbounded_channel();
+    tokio::spawn(async move {
+        while let Some(event) = data.next().await {
+            // println!("{:?}", event);
+            let _ = market_data_tx.send(event);
+        }
+    });
+
+    // Scanner
+    let scanner = SpotArbScanner::new(network, market_data_rx);
+    scanner.run()
 
     // let test = OkxSpotPublicData::get_network_info(instruments)
     //     .await
