@@ -64,12 +64,14 @@ pub async fn main() {
         .build();
 
     // Market data feed
-    let streams = DynamicStreams::init([vec![(
-        ExchangeId::HtxSpot,
-        "ada",
-        "usdt",
-        StreamKind::Trades,
-    )]])
+    let streams = DynamicStreams::init([vec![
+        (ExchangeId::HtxSpot, "ada", "usdt", StreamKind::Trades),
+        (ExchangeId::HtxSpot, "ada", "usdt", StreamKind::Snapshot),
+        (ExchangeId::HtxSpot, "eth", "usdt", StreamKind::Trades),
+        (ExchangeId::HtxSpot, "eth", "usdt", StreamKind::Snapshot),
+        (ExchangeId::HtxSpot, "btc", "usdt", StreamKind::Trades),
+        (ExchangeId::HtxSpot, "btc", "usdt", StreamKind::Snapshot),
+    ]])
     .await
     .unwrap();
 
