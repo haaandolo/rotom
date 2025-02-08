@@ -329,7 +329,7 @@ impl SpotArbScanner {
             .entry(instrument.clone())
             .and_modify(|market_data_state| {
                 // Bid and ask data can be empty if trade data comes in before book data
-                // as the InstrumentMarketData::new_trades() sets the bid and ask fields 
+                // as the InstrumentMarketData::new_trades() sets the bid and ask fields
                 // as empty vecs. Hence, we need logic to handle this.
                 if market_data_state.bids.is_empty() {
                     std::mem::swap(&mut market_data_state.bids, &mut bids);
@@ -421,50 +421,86 @@ impl SpotArbScanner {
                 if let Some(market_data) = market_data_map.0.get(&spread_change.instrument) {
                     // We assume the exchange associated with the spread change is the buy exchange, so this is in the denominator.
                     // Hence, the sell exchange is the exchange correspoding to the market_data
+                    let mut take_take = None;
+                    let mut take_make = None;
+                    let mut make_take = None;
+                    let mut make_make = None;
                     let mut spread_array = [0.0; 4];
+
                     if let Some(spread_change_ask) = spread_change.ask {
                         // Calculate the spreads if best ask level has changed
-                        let take_take = (market_data.bids[0].price / spread_change_ask.price) - 1.0;
-                        let take_make = (market_data.asks[0].price / spread_change_ask.price) - 1.0;
+                        if !market_data.bids.is_empty() {
+                            let take_take_sub =
+                                (market_data.bids[0].price / spread_change_ask.price) - 1.0;
 
-                        // Insert into array
-                        spread_array[0] = take_take;
-                        spread_array[1] = take_make;
+                            if take_take_sub > 0.0 {
+                                spread_array[0] = take_take_sub;
+                            }
 
-                        // Update spread history
-                        market_data
-                            .spreads
-                            .borrow_mut()
-                            .0
-                            .entry(spread_change.exchange)
-                            .and_modify(|spread_history| {
-                                spread_history.take_take.push(Utc::now(), take_take);
-                                spread_history.take_make.push(Utc::now(), take_make);
-                            })
-                            .or_insert(SpreadHistory::new_ask(take_take, take_make));
+                            take_take = Some(take_take_sub)
+                        }
+
+                        if !market_data.asks.is_empty() {
+                            let take_make_sub =
+                                (market_data.asks[0].price / spread_change_ask.price) - 1.0;
+
+                            if take_make_sub > 0.0 {
+                                spread_array[1] = take_make_sub;
+                            }
+
+                            take_make = Some(take_make_sub)
+                        }
                     }
 
                     if let Some(spread_change_bid) = spread_change.bid {
                         // Calculate the spreads if best bid level has changed
-                        let make_take = (market_data.bids[0].price / spread_change_bid.price) - 1.0;
-                        let make_make = (market_data.asks[0].price / spread_change_bid.price) - 1.0;
+                        if !market_data.bids.is_empty() {
+                            let make_take_sub =
+                                (market_data.bids[0].price / spread_change_bid.price) - 1.0;
 
-                        // Insert into array
-                        spread_array[2] = make_take;
-                        spread_array[3] = make_make;
+                            if make_take_sub > 0.0 {
+                                spread_array[2] = make_take_sub;
+                            }
 
-                        // Update spread history
-                        market_data
-                            .spreads
-                            .borrow_mut()
-                            .0
-                            .entry(spread_change.exchange)
-                            .and_modify(|spread_history| {
-                                spread_history.take_take.push(Utc::now(), make_take);
-                                spread_history.take_make.push(Utc::now(), make_make);
-                            })
-                            .or_insert(SpreadHistory::new_bid(make_take, make_make));
+                            make_take = Some(make_take_sub)
+                        }
+
+                        if !market_data.asks.is_empty() {
+                            let make_make_sub =
+                                (market_data.asks[0].price / spread_change_bid.price) - 1.0;
+
+                            if make_make_sub > 0.0 {
+                                spread_array[3] = make_make_sub;
+                            }
+
+                            make_make = Some(make_make_sub)
+                        }
                     }
+
+                    // Update spread history
+                    market_data
+                        .spreads
+                        .borrow_mut()
+                        .0
+                        .entry(spread_change.exchange)
+                        .and_modify(|spread_history| {
+                            if let Some(take_take) = take_take {
+                                spread_history.take_take.push(Utc::now(), take_take);
+                            }
+
+                            if let Some(take_make) = take_make {
+                                spread_history.take_make.push(Utc::now(), take_make);
+                            }
+
+                            if let Some(make_take) = make_take {
+                                spread_history.make_take.push(Utc::now(), make_take);
+                            }
+
+                            if let Some(make_make) = make_make {
+                                spread_history.make_make.push(Utc::now(), make_make);
+                            }
+                        })
+                        .or_insert(SpreadHistory::default());
 
                     // Get max spread
                     let max_spread = spread_array[0]
@@ -545,11 +581,11 @@ impl SpotArbScanner {
 
             // Process spreads
             while let Some(spread_change) = self.spread_change_queue.pop_front() {
+                println!("###################");
+                // println!("{:?}", spread_change);
                 self.process_spread_change(spread_change);
+                println!("{:#?}", self.spreads_sorted.by_value);
             }
-
-            println!("###################");
-            println!("{:?}", self.exchange_data);
         }
     }
 }
