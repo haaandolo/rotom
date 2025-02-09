@@ -15,7 +15,7 @@ use sha2::Sha256;
 use crate::{
     error::SocketError,
     model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trade},
-    protocols::ws::WsMessage,
+    protocols::ws::{PingInterval, WsMessage},
     shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
     transformer::stateless_transformer::StatelessTransformer,
 };
@@ -51,6 +51,13 @@ impl PublicStreamConnector for OkxSpotPublicData {
         });
 
         Some(WsMessage::text(request.to_string()))
+    }
+
+    fn ping_interval() -> Option<PingInterval> {
+        Some(PingInterval {
+            time: 25,
+            message: json!({"event": "ping"}),
+        })
     }
 }
 

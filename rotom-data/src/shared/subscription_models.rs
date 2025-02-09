@@ -154,7 +154,7 @@ impl Display for ExchangeId {
 //*----- */
 // Stream kind
 //*----- */
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize, Default, Copy)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize, Default, Copy, Hash)]
 pub enum StreamKind {
     Trade,
     Trades,

@@ -95,7 +95,8 @@ impl WebSocketClient {
         info!(
             exchange = %exchange_id,
             message = "Subscribed to WebSocket",
-            instruments = ?instruments
+            instruments = ?instruments,
+            stream_kind =  ?StreamKind::EVENTKIND,
         );
 
         Ok(ExchangeStream::new(validated_stream, transformer, tasks))

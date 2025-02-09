@@ -9,8 +9,9 @@ use rotom_data::{
     assets::level::Level,
     model::{
         event_trade::EventTrade,
-        market_event::{DataKind, MarketEvent},
+        market_event::{DataKind, MarketEvent, WsStatus},
         network_info::{NetworkSpecData, NetworkSpecs},
+        EventKind,
     },
     shared::subscription_models::{Coin, ExchangeId, Instrument},
 };
@@ -67,13 +68,27 @@ impl<T> VecDequeTime<T> {
 /*----- */
 // Scanner market data
 /*----- */
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct InstrumentMarketData {
     pub bids: Vec<Level>,
     pub asks: Vec<Level>,
     pub trades: VecDequeTime<EventTrade>,
     pub spreads: RefCell<SpreadHistoryMap>,
-    pub updates: u64,
+    pub trades_ws_is_connected: bool,
+    pub orderbook_ws_is_connected: bool,
+}
+
+impl Default for InstrumentMarketData {
+    fn default() -> Self {
+        Self {
+            bids: Vec::new(),
+            asks: Vec::new(),
+            trades: VecDequeTime::default(),
+            spreads: RefCell::new(SpreadHistoryMap(HashMap::with_capacity(10))),
+            orderbook_ws_is_connected: false,
+            trades_ws_is_connected: false,
+        }
+    }
 }
 
 impl InstrumentMarketData {
@@ -83,7 +98,8 @@ impl InstrumentMarketData {
             asks,
             trades: VecDequeTime::default(),
             spreads: RefCell::new(SpreadHistoryMap(HashMap::with_capacity(10))),
-            updates: 1,
+            orderbook_ws_is_connected: true,
+            trades_ws_is_connected: false,
         }
     }
 
@@ -93,7 +109,8 @@ impl InstrumentMarketData {
             asks: Vec::with_capacity(10),
             trades: VecDequeTime::new(time, value),
             spreads: RefCell::new(SpreadHistoryMap(HashMap::with_capacity(10))),
-            updates: 1,
+            orderbook_ws_is_connected: false,
+            trades_ws_is_connected: true,
         }
     }
 }
@@ -522,6 +539,38 @@ impl SpotArbScanner {
         }
     }
 
+    fn process_ws_status(
+        &mut self,
+        exchange: ExchangeId,
+        instrument: Instrument,
+        ws_status: WsStatus,
+    ) {
+        self.exchange_data
+            .0
+            .entry(exchange)
+            .or_default()
+            .0
+            .entry(instrument)
+            .and_modify(|market_data_state| match ws_status.get_event_kind() {
+                EventKind::OrderBook => {
+                    market_data_state.orderbook_ws_is_connected = ws_status.is_connected()
+                }
+                EventKind::Trade => {
+                    market_data_state.trades_ws_is_connected = ws_status.is_connected()
+                }
+            })
+            .or_insert_with(|| match ws_status.get_event_kind() {
+                EventKind::OrderBook => InstrumentMarketData {
+                    orderbook_ws_is_connected: ws_status.is_connected(),
+                    ..InstrumentMarketData::default()
+                },
+                EventKind::Trade => InstrumentMarketData {
+                    trades_ws_is_connected: ws_status.is_connected(),
+                    ..InstrumentMarketData::default()
+                },
+            });
+    }
+
     pub fn run(mut self) {
         'spot_arb_scanner: loop {
             // Process network status update
@@ -542,33 +591,49 @@ impl SpotArbScanner {
 
             // Process market data update
             match self.market_data_stream.try_recv() {
-                Ok(market_data) => match market_data.event_data {
-                    DataKind::OrderBook(orderbook) => self.process_orderbook(
-                        market_data.exchange,
-                        market_data.instrument,
-                        orderbook.bids,
-                        orderbook.asks,
-                    ),
-                    DataKind::OrderBookSnapshot(snapshot) => self.process_orderbook(
-                        market_data.exchange,
-                        market_data.instrument,
-                        snapshot.bids,
-                        snapshot.asks,
-                    ),
-                    DataKind::Trade(trade) => self.process_trade(
-                        market_data.exchange,
-                        market_data.instrument,
-                        market_data.received_time,
-                        trade,
-                    ),
-                    DataKind::Trades(trades) => self.process_trades(
-                        market_data.exchange,
-                        market_data.instrument,
-                        market_data.received_time,
-                        trades,
-                    ),
-                    DataKind::ConnectionStatus(status) => println!("##### \n {:?}", status),
-                },
+                Ok(market_data) => {
+                    // println!(
+                    //     "###### before update ##### \n {:?} \n ###########",
+                    //     market_data
+                    // );
+
+                    match market_data.event_data {
+                        DataKind::OrderBook(orderbook) => self.process_orderbook(
+                            market_data.exchange,
+                            market_data.instrument,
+                            orderbook.bids,
+                            orderbook.asks,
+                        ),
+                        DataKind::OrderBookSnapshot(snapshot) => self.process_orderbook(
+                            market_data.exchange,
+                            market_data.instrument,
+                            snapshot.bids,
+                            snapshot.asks,
+                        ),
+                        DataKind::Trade(trade) => self.process_trade(
+                            market_data.exchange,
+                            market_data.instrument,
+                            market_data.received_time,
+                            trade,
+                        ),
+                        DataKind::Trades(trades) => self.process_trades(
+                            market_data.exchange,
+                            market_data.instrument,
+                            market_data.received_time,
+                            trades,
+                        ),
+                        DataKind::ConnectionStatus(ws_status) => self.process_ws_status(
+                            market_data.exchange,
+                            market_data.instrument,
+                            ws_status,
+                        ),
+                    }
+
+                    // println!(
+                    //     "##### after update ##### \n {:?} \n ###########",
+                    //     self.exchange_data
+                    // );
+                }
                 Err(error) => {
                     if error == mpsc::error::TryRecvError::Disconnected {
                         warn!(
@@ -587,6 +652,9 @@ impl SpotArbScanner {
                 self.process_spread_change(spread_change);
                 // println!("{:#?}", self.spreads_sorted.by_value);
             }
+
+            // println!("###################");
+            // println!("{:?}",self.exchange_data);
         }
     }
 }

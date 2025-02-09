@@ -16,6 +16,22 @@ pub enum WsStatus {
     Disconnected(EventKind),
 }
 
+impl WsStatus {
+    pub fn is_connected(&self) -> bool {
+        match self {
+            WsStatus::Connected(_) => true,
+            WsStatus::Disconnected(_) => false,
+        }
+    }
+
+    pub fn get_event_kind(&self) -> EventKind {
+        match self {
+            WsStatus::Connected(event_kind) => *event_kind,
+            WsStatus::Disconnected(event_kind) => *event_kind,
+        }
+    }
+}
+
 /*----- */
 // DataKind
 /*----- */

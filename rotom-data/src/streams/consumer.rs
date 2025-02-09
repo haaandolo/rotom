@@ -52,7 +52,13 @@ where
         connection_attempt += 1;
         backoff_ms *= 2;
 
+        println!(
+            "######## \n con attemps: {:?} || backoff: {:?} \n #########",
+            connection_attempt, backoff_ms
+        );
+
         // Attempt to connect to the stream
+        /*---------- Before Stream Initialises ---------- */
         let mut stream = match WebSocketClient::init(&exchange_sub).await {
             Ok(stream) => {
                 // Comment-out below if you want reconnection attempt to at each loop iteration
@@ -97,9 +103,13 @@ where
                 warn!(
                     exchange = %exchange_id,
                     error = %error,
-                    action = "Logging error",
+                    action = "Logging error then waiting for given backoff period before reconnection attempt",
                     message = "Encountered error while atempting to initisailise websocket",
+                    backoff_ms = backoff_ms,
+                    connection_attempts = connection_attempt
                 );
+
+                sleep(Duration::from_millis(backoff_ms)).await;
 
                 if error.is_terminal() {
                     continue;
@@ -114,6 +124,7 @@ where
             }
         };
 
+        /*---------- After Stream Initialises ---------- */
         // Read from stream and send via channel, but if error occurs, attempt reconnection
         while let Some(market_event) = stream.next().await {
             match market_event {

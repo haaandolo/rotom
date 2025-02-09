@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use chrono::Utc;
-use futures::try_join;
+// use futures::try_join;
 
 use crate::{
     assets::orderbook::OrderBook,
@@ -63,10 +63,16 @@ impl OrderBookUpdater for AscendExSpotBookUpdater {
     type UpdateEvent = AscendExBookUpdate;
 
     async fn init(instrument: &Instrument) -> Result<InstrumentOrderBook<Self>, SocketError> {
-        let (snapshot, ticker_infos) = try_join!(
-            AscendExSpotPublicData::get_book_snapshot(instrument.clone()),
-            AscendExSpotPublicData::get_ticker_info(instrument.clone()),
-        )?;
+        // let (snapshot, ticker_infos) = try_join!(
+        //     AscendExSpotPublicData::get_book_snapshot(instrument.clone()),
+        //     AscendExSpotPublicData::get_ticker_info(instrument.clone()),
+        // )?;
+
+        let ticker_infos = AscendExSpotPublicData::get_ticker_info(instrument.clone()).await?;
+        std::thread::sleep(std::time::Duration::from_millis(500));
+
+        let snapshot = AscendExSpotPublicData::get_book_snapshot(instrument.clone()).await?;
+        std::thread::sleep(std::time::Duration::from_millis(500));
 
         let ticker_formatted = AssetFormatted::from((&ExchangeId::AscendExSpot, instrument));
 

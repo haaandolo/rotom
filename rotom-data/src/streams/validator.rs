@@ -107,7 +107,7 @@ impl SubscriptionValidator for WebSocketValidator {
                         }
                         Some(Err(SocketError::Deserialise { error, payload })) if success_responses >= 1 => {
                             // Already active subscription payloads, so skip to next SubResponse
-                            info!(
+                            debug!(
                                 exchange = %Exchange::ID,
                                 ?error,
                                 %success_responses,

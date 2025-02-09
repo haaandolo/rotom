@@ -2,7 +2,6 @@ use futures::{
     stream::{select_all, SelectAll},
     Stream, StreamExt,
 };
-use itertools::Itertools;
 use std::{collections::HashMap, fmt::Debug};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
@@ -60,9 +59,15 @@ impl DynamicStreams {
             exchange_sub.dedup();
 
             // Group batches by exchange and stream kind
-            let grouped = exchange_sub
-                .into_iter()
-                .chunk_by(|sub| (sub.exchange, sub.stream_kind));
+            let mut grouped: HashMap<(ExchangeId, StreamKind), Vec<Subscription<_, _>>> =
+                HashMap::new();
+
+            for sub in exchange_sub.into_iter() {
+                grouped
+                    .entry((sub.exchange, sub.stream_kind))
+                    .or_insert_with(Vec::new)
+                    .push(sub)
+            }
 
             // Spawn the releveant streams for a specific exchange
             for ((exchange, stream_kind), subs) in grouped.into_iter() {
