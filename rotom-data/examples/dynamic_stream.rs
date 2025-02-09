@@ -3,7 +3,7 @@ use futures::StreamExt;
 use rotom_data::{
     model::market_event::{DataKind, MarketEvent},
     shared::subscription_models::{ExchangeId, StreamKind},
-    streams::builder::dynamic::DynamicStreams,
+    streams::dynamic_stream::DynamicStreams,
 };
 
 #[tokio::main]

@@ -20,7 +20,7 @@ use rotom_data::{
         network_info::NetworkSpecs,
     },
     shared::subscription_models::{ExchangeId, Instrument, StreamKind},
-    streams::builder::dynamic::DynamicStreams,
+    streams::dynamic_stream::DynamicStreams,
     MarketFeed,
 };
 use rotom_main::trader::spot_arb_trader::builder::stream_trades;

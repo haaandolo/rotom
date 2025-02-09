@@ -4,7 +4,7 @@ use futures::StreamExt;
 use rotom_data::{
     model::market_event::{DataKind, MarketEvent},
     shared::subscription_models::{Instrument, StreamKind},
-    streams::builder::dynamic,
+    streams::dynamic_stream,
     MarketFeed,
 };
 use rotom_oms::{
@@ -119,7 +119,7 @@ where
     let liquid_id = LiquidExchange::CLIENT;
     let illiquid_id = IlliquidExchange::CLIENT;
 
-    let streams = dynamic::DynamicStreams::init([vec![
+    let streams = dynamic_stream::DynamicStreams::init([vec![
         (
             liquid_id,
             market.base.clone(),
