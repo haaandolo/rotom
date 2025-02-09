@@ -205,6 +205,7 @@ impl PositionUpdater for Position {
             DataKind::Trade(event_trade) => event_trade.trade.price,
             DataKind::OrderBookSnapshot(_) => unimplemented!(),
             DataKind::Trades(_) => unimplemented!(),
+            DataKind::ConnectionStatus(_) => unimplemented!(),
         };
 
         self.meta.update_time = market.exchange_time;

@@ -20,7 +20,7 @@ use rotom_data::{
         network_info::NetworkSpecs,
     },
     shared::subscription_models::{ExchangeId, Instrument, StreamKind},
-    streams::builder::{dynamic::DynamicStreams, Streams},
+    streams::builder::dynamic::DynamicStreams,
     MarketFeed,
 };
 use rotom_main::trader::spot_arb_trader::builder::stream_trades;
@@ -54,8 +54,8 @@ pub async fn main() {
 
     // Network status stream
     let network = NetworkStatusStream::new()
-        .add_exchange::<AscendExSpotPublicData>(instruments.clone())
-        // .add_exchange::<BinanceSpotPublicData>(instruments.clone())
+        // .add_exchange::<AscendExSpotPublicData>(instruments.clone())
+        .add_exchange::<BinanceSpotPublicData>(instruments.clone())
         // .add_exchange::<ExmoSpotPublicData>(instruments.clone())
         // .add_exchange::<HtxSpotPublicData>(instruments.clone())
         // .add_exchange::<KuCoinSpotPublicData>(instruments.clone())
@@ -65,25 +65,25 @@ pub async fn main() {
 
     // Market data feed
     let streams = DynamicStreams::init([vec![
-        (ExchangeId::HtxSpot, "ada", "usdt", StreamKind::Trades),
-        (ExchangeId::HtxSpot, "ada", "usdt", StreamKind::Snapshot),
-        (ExchangeId::HtxSpot, "icp", "usdt", StreamKind::Trades),
-        (ExchangeId::HtxSpot, "icp", "usdt", StreamKind::Snapshot),
-        (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Trades),
-        (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Snapshot),
+        // (ExchangeId::HtxSpot, "ada", "usdt", StreamKind::Trades),
+        // (ExchangeId::HtxSpot, "ada", "usdt", StreamKind::Snapshot),
+        // (ExchangeId::HtxSpot, "icp", "usdt", StreamKind::Trades),
+        // (ExchangeId::HtxSpot, "icp", "usdt", StreamKind::Snapshot),
+        // (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Trades),
+        // (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Snapshot),
         //
-        (ExchangeId::OkxSpot, "ada", "usdt", StreamKind::Trade),
-        (ExchangeId::OkxSpot, "ada", "usdt", StreamKind::Snapshot),
-        (ExchangeId::OkxSpot, "icp", "usdt", StreamKind::Trade),
-        (ExchangeId::OkxSpot, "icp", "usdt", StreamKind::Snapshot),
-        (ExchangeId::OkxSpot, "sol", "usdt", StreamKind::Trade),
-        (ExchangeId::OkxSpot, "sol", "usdt", StreamKind::Snapshot),
+        // (ExchangeId::OkxSpot, "ada", "usdt", StreamKind::Trade),
+        // (ExchangeId::OkxSpot, "ada", "usdt", StreamKind::Snapshot),
+        // (ExchangeId::OkxSpot, "icp", "usdt", StreamKind::Trade),
+        // (ExchangeId::OkxSpot, "icp", "usdt", StreamKind::Snapshot),
+        // (ExchangeId::OkxSpot, "sol", "usdt", StreamKind::Trade),
+        // (ExchangeId::OkxSpot, "sol", "usdt", StreamKind::Snapshot),
         //
-        (ExchangeId::AscendExSpot, "ada", "usdt", StreamKind::Trades),
+        // (ExchangeId::AscendExSpot, "ada", "usdt", StreamKind::Trades),
         (ExchangeId::AscendExSpot, "ada", "usdt", StreamKind::L2),
-        (ExchangeId::AscendExSpot, "icp", "usdt", StreamKind::Trades),
+        // (ExchangeId::AscendExSpot, "icp", "usdt", StreamKind::Trades),
         (ExchangeId::AscendExSpot, "icp", "usdt", StreamKind::L2),
-        (ExchangeId::AscendExSpot, "sol", "usdt", StreamKind::Trades),
+        // (ExchangeId::AscendExSpot, "sol", "usdt", StreamKind::Trades),
         (ExchangeId::AscendExSpot, "sol", "usdt", StreamKind::L2),
     ]])
     .await

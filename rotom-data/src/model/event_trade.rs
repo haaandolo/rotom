@@ -2,19 +2,11 @@ use serde::Deserialize;
 
 use crate::assets::level::Level;
 
-use super::SubKind;
+use super::{EventKind, SubKind};
 
 /*----- */
-// Trades
+// Trade Event
 /*----- */
-
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize, Default)]
-pub struct Trade;
-
-impl SubKind for Trade {
-    type Event = EventTrade;
-}
-
 #[derive(Default, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize)]
 pub struct EventTrade {
     pub trade: Level,
@@ -28,12 +20,24 @@ impl EventTrade {
 }
 
 /*----- */
+// Trade
+/*----- */
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize, Default)]
+pub struct Trade;
+
+impl SubKind for Trade {
+    const EVENTKIND: EventKind = EventKind::Trade;
+    type Event = EventTrade;
+}
+
+/*----- */
 // Aggregated trades
 /*----- */
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize, Default)]
 pub struct AggTrades;
 
 impl SubKind for AggTrades {
+    const EVENTKIND: EventKind = EventKind::Trade;
     type Event = EventTrade;
 }
 
@@ -44,5 +48,6 @@ impl SubKind for AggTrades {
 pub struct Trades;
 
 impl SubKind for Trades {
+    const EVENTKIND: EventKind = EventKind::Trade;
     type Event = Vec<EventTrade>;
 }

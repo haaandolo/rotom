@@ -123,6 +123,7 @@ impl Position2 {
             DataKind::Trade(event_trade) => event_trade.trade.price,
             DataKind::OrderBookSnapshot(_) => unimplemented!(),
             DataKind::Trades(_) => unimplemented!(),
+            DataKind::ConnectionStatus(_) => unimplemented!(),
         };
 
         self.current_symbol_price = close;

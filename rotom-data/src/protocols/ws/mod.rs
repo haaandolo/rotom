@@ -83,7 +83,7 @@ impl WebSocketClient {
             tasks.push(ping_handler);
         }
 
-        // Make instruments to for transformer
+        // Make instruments for transformer
         let instruments = subs
             .iter()
             .map(|sub| sub.instrument.clone())

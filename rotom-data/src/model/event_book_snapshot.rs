@@ -1,11 +1,12 @@
 use crate::assets::level::Level;
 
-use super::SubKind;
+use super::{EventKind, SubKind};
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Default)]
 pub struct OrderBookSnapshot;
 
 impl SubKind for OrderBookSnapshot {
+    const EVENTKIND: EventKind = EventKind::OrderBook;
     type Event = EventOrderBookSnapshot;
 }
 

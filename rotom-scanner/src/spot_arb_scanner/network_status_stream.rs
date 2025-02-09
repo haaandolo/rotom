@@ -1,6 +1,6 @@
 use rotom_data::{
     exchange::PublicHttpConnector, model::network_info::NetworkSpecs,
-    shared::subscription_models::Instrument, streams::builder::single::ExchangeChannel,
+    shared::subscription_models::Instrument, streams::builder::dynamic::ExchangeChannel,
 };
 use tokio::{sync::mpsc, time::sleep, time::Duration};
 use tracing::warn;

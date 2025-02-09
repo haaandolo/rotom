@@ -4,10 +4,10 @@ use futures::{
 };
 use itertools::Itertools;
 use std::{collections::HashMap, fmt::Debug};
+use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use vecmap::VecMap;
 
-use super::single::ExchangeChannel;
 use crate::{
     error::SocketError,
     exchange::{
@@ -20,7 +20,7 @@ use crate::{
         event_book::{EventOrderBook, OrderBookL2},
         event_book_snapshot::{EventOrderBookSnapshot, OrderBookSnapshot},
         event_trade::{AggTrades, EventTrade, Trade, Trades},
-        market_event::MarketEvent,
+        market_event::{MarketEvent, WsStatus},
     },
     shared::subscription_models::{ExchangeId, StreamKind, Subscription},
     streams::consumer::consume,
@@ -35,6 +35,7 @@ pub struct DynamicStreams {
     pub trades: VecMap<ExchangeId, UnboundedReceiverStream<MarketEvent<Vec<EventTrade>>>>,
     pub l2s: VecMap<ExchangeId, UnboundedReceiverStream<MarketEvent<EventOrderBook>>>,
     pub snapshots: VecMap<ExchangeId, UnboundedReceiverStream<MarketEvent<EventOrderBookSnapshot>>>,
+    pub conn_status: VecMap<ExchangeId, UnboundedReceiverStream<MarketEvent<WsStatus>>>,
 }
 
 impl DynamicStreams {
@@ -81,6 +82,7 @@ impl DynamicStreams {
                                 })
                                 .collect(),
                             channels.l2s.entry(exchange).or_default().tx.clone(),
+                            channels.conn_status.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::BinanceSpot, StreamKind::Trade) => {
@@ -91,6 +93,7 @@ impl DynamicStreams {
                                 })
                                 .collect(),
                             channels.trade.entry(exchange).or_default().tx.clone(),
+                            channels.conn_status.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::BinanceSpot, StreamKind::AggTrades) => {
@@ -105,6 +108,7 @@ impl DynamicStreams {
                                 })
                                 .collect(),
                             channels.trade.entry(exchange).or_default().tx.clone(),
+                            channels.conn_status.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::BinanceSpot, StreamKind::Snapshot) => {
@@ -128,6 +132,7 @@ impl DynamicStreams {
                                 })
                                 .collect(),
                             channels.l2s.entry(exchange).or_default().tx.clone(),
+                            channels.conn_status.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::PoloniexSpot, StreamKind::Trade) => {
@@ -138,6 +143,7 @@ impl DynamicStreams {
                                 })
                                 .collect(),
                             channels.trade.entry(exchange).or_default().tx.clone(),
+                            channels.conn_status.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     // Poloniex's does not separate regular and aggregated trades
@@ -161,6 +167,7 @@ impl DynamicStreams {
                                 })
                                 .collect(),
                             channels.trades.entry(exchange).or_default().tx.clone(),
+                            channels.conn_status.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::HtxSpot, StreamKind::Snapshot) => {
@@ -175,6 +182,7 @@ impl DynamicStreams {
                                 })
                                 .collect(),
                             channels.snapshots.entry(exchange).or_default().tx.clone(),
+                            channels.conn_status.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::HtxSpot, StreamKind::L2) => {
@@ -201,6 +209,7 @@ impl DynamicStreams {
                                 })
                                 .collect(),
                             channels.snapshots.entry(exchange).or_default().tx.clone(),
+                            channels.conn_status.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::WooxSpot, StreamKind::Trade) => {
@@ -211,6 +220,7 @@ impl DynamicStreams {
                                 })
                                 .collect(),
                             channels.trade.entry(exchange).or_default().tx.clone(),
+                            channels.conn_status.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::WooxSpot, StreamKind::Trades) => {}
@@ -235,6 +245,7 @@ impl DynamicStreams {
                                 })
                                 .collect(),
                             channels.snapshots.entry(exchange).or_default().tx.clone(),
+                            channels.conn_status.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::BitstampSpot, StreamKind::Trade) => {
@@ -245,6 +256,7 @@ impl DynamicStreams {
                                 })
                                 .collect(),
                             channels.trade.entry(exchange).or_default().tx.clone(),
+                            channels.conn_status.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::BitstampSpot, StreamKind::Trades) => {
@@ -271,6 +283,7 @@ impl DynamicStreams {
                                 })
                                 .collect(),
                             channels.snapshots.entry(exchange).or_default().tx.clone(),
+                            channels.conn_status.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::CoinExSpot, StreamKind::Trades) => {
@@ -281,6 +294,7 @@ impl DynamicStreams {
                                 })
                                 .collect(),
                             channels.trades.entry(exchange).or_default().tx.clone(),
+                            channels.conn_status.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::CoinExSpot, StreamKind::Trade) => {
@@ -307,6 +321,7 @@ impl DynamicStreams {
                                 })
                                 .collect(),
                             channels.snapshots.entry(exchange).or_default().tx.clone(),
+                            channels.conn_status.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::OkxSpot, StreamKind::Trade) => {
@@ -317,6 +332,7 @@ impl DynamicStreams {
                                 })
                                 .collect(),
                             channels.trade.entry(exchange).or_default().tx.clone(),
+                            channels.conn_status.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::OkxSpot, StreamKind::Trades) => {
@@ -343,6 +359,7 @@ impl DynamicStreams {
                                 })
                                 .collect(),
                             channels.snapshots.entry(exchange).or_default().tx.clone(),
+                            channels.conn_status.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::KuCoinSpot, StreamKind::Trade) => {
@@ -353,6 +370,7 @@ impl DynamicStreams {
                                 })
                                 .collect(),
                             channels.trade.entry(exchange).or_default().tx.clone(),
+                            channels.conn_status.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::KuCoinSpot, StreamKind::Trades) => {
@@ -379,6 +397,7 @@ impl DynamicStreams {
                                 })
                                 .collect(),
                             channels.snapshots.entry(exchange).or_default().tx.clone(),
+                            channels.conn_status.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::ExmoSpot, StreamKind::Trades) => {
@@ -389,6 +408,7 @@ impl DynamicStreams {
                                 })
                                 .collect(),
                             channels.trades.entry(exchange).or_default().tx.clone(),
+                            channels.conn_status.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::ExmoSpot, StreamKind::Trade) => {}
@@ -414,6 +434,7 @@ impl DynamicStreams {
                                 })
                                 .collect(),
                             channels.trades.entry(exchange).or_default().tx.clone(),
+                            channels.conn_status.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::AscendExSpot, StreamKind::Trade) => {}
@@ -429,6 +450,7 @@ impl DynamicStreams {
                                 })
                                 .collect(),
                             channels.l2s.entry(exchange).or_default().tx.clone(),
+                            channels.conn_status.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::AscendExSpot, StreamKind::AggTrades) => {
@@ -446,6 +468,7 @@ impl DynamicStreams {
                                 })
                                 .collect(),
                             channels.trades.entry(exchange).or_default().tx.clone(),
+                            channels.conn_status.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::PhemexSpot, StreamKind::Trade) => {}
@@ -461,6 +484,7 @@ impl DynamicStreams {
                                 })
                                 .collect(),
                             channels.l2s.entry(exchange).or_default().tx.clone(),
+                            channels.conn_status.entry(exchange).or_default().tx.clone(),
                         ));
                     }
                     (ExchangeId::PhemexSpot, StreamKind::AggTrades) => {
@@ -488,6 +512,11 @@ impl DynamicStreams {
                 .collect(),
             snapshots: channels
                 .snapshots
+                .into_iter()
+                .map(|(exchange, channel)| (exchange, UnboundedReceiverStream::new(channel.rx)))
+                .collect(),
+            conn_status: channels
+                .conn_status
                 .into_iter()
                 .map(|(exchange, channel)| (exchange, UnboundedReceiverStream::new(channel.rx)))
                 .collect(),
@@ -527,12 +556,14 @@ impl DynamicStreams {
         MarketEvent<Vec<EventTrade>>: Into<Output>,
         MarketEvent<EventOrderBook>: Into<Output>,
         MarketEvent<EventOrderBookSnapshot>: Into<Output>,
+        MarketEvent<WsStatus>: Into<Output>,
     {
         let Self {
             trade,
             trades,
             l2s,
             snapshots,
+            conn_status,
         } = self;
         let trade = trade
             .into_values()
@@ -550,7 +581,15 @@ impl DynamicStreams {
             .into_values()
             .map(|stream| stream.map(MarketEvent::into).boxed());
 
-        let all = trade.chain(l2s).chain(snapshots).chain(trades);
+        let conn_status = conn_status
+            .into_values()
+            .map(|stream| stream.map(MarketEvent::into).boxed());
+
+        let all = trade
+            .chain(l2s)
+            .chain(snapshots)
+            .chain(trades)
+            .chain(conn_status);
 
         select_all(all)
     }
@@ -565,4 +604,27 @@ struct Channels {
     trade: HashMap<ExchangeId, ExchangeChannel<MarketEvent<EventTrade>>>,
     trades: HashMap<ExchangeId, ExchangeChannel<MarketEvent<Vec<EventTrade>>>>,
     snapshots: HashMap<ExchangeId, ExchangeChannel<MarketEvent<EventOrderBookSnapshot>>>,
+    conn_status: HashMap<ExchangeId, ExchangeChannel<MarketEvent<WsStatus>>>,
+}
+
+/*----- */
+// Exchange channels
+/*----- */
+#[derive(Debug)]
+pub struct ExchangeChannel<T> {
+    pub tx: mpsc::UnboundedSender<T>,
+    pub rx: mpsc::UnboundedReceiver<T>,
+}
+
+impl<T> ExchangeChannel<T> {
+    pub fn new() -> Self {
+        let (tx, rx) = mpsc::unbounded_channel();
+        Self { tx, rx }
+    }
+}
+
+impl<T> Default for ExchangeChannel<T> {
+    fn default() -> Self {
+        Self::new()
+    }
 }

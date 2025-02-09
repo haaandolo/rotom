@@ -1,3 +1,8 @@
+pub mod channel;
+pub mod l2;
+pub mod market;
+pub mod model;
+
 use async_trait::async_trait;
 use channel::AscendExChannel;
 use l2::AscendExSpotBookUpdater;
@@ -17,11 +22,6 @@ use crate::{
 };
 
 use super::{PublicHttpConnector, PublicStreamConnector, StreamSelector};
-
-pub mod channel;
-pub mod l2;
-pub mod market;
-pub mod model;
 
 const ASCENDEX_SPOT_WS_URL: &str = "wss://ascendex.com/7/api/pro/v1/stream";
 

@@ -567,6 +567,7 @@ impl SpotArbScanner {
                         market_data.received_time,
                         trades,
                     ),
+                    DataKind::ConnectionStatus(status) => println!("##### \n {:?}", status),
                 },
                 Err(error) => {
                     if error == mpsc::error::TryRecvError::Disconnected {
@@ -581,10 +582,10 @@ impl SpotArbScanner {
 
             // Process spreads
             while let Some(spread_change) = self.spread_change_queue.pop_front() {
-                println!("###################");
+                // println!("###################");
                 // println!("{:?}", spread_change);
                 self.process_spread_change(spread_change);
-                println!("{:#?}", self.spreads_sorted.by_value);
+                // println!("{:#?}", self.spreads_sorted.by_value);
             }
         }
     }
