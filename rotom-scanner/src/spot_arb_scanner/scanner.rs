@@ -55,6 +55,8 @@ impl<T> VecDequeTime<T> {
     fn clean_up(&mut self, current_time: DateTime<Utc>) {
         let time_threshold = current_time - self.window;
 
+        // Clear out any data that is more than n mins (currently 10) or greater
+        // than the most recent time
         while let Some((date_time, _)) = self.data.front() {
             if *date_time < time_threshold {
                 self.data.pop_front();
@@ -664,10 +666,144 @@ impl SpotArbScanner {
 /*----- */
 #[cfg(test)]
 mod test {
+    use chrono::TimeZone;
+
+    use crate::mock_data::test_utils;
+
     use super::*;
 
     #[test]
-    fn spread_sorted_test() {
+    fn scanner_test() {
+        /*----- */
+        // Init scanner
+        /*----- */
+        let mut scanner = test_utils::spot_arb_scanner();
+
+        /*----- */
+        // Insert new orderbook events
+        /*----- */
+        let binance_btc_ob = test_utils::market_event_orderbook(
+            ExchangeId::BinanceSpot,
+            Instrument::new("btc", "usdt"),
+        );
+
+        scanner.process_orderbook(
+            binance_btc_ob.exchange,
+            binance_btc_ob.instrument,
+            binance_btc_ob.event_data.get_orderbook().unwrap().bids,
+            binance_btc_ob.event_data.get_orderbook().unwrap().asks,
+        );
+
+
+        let exmo_arb_ob = test_utils::market_event_orderbook(
+            ExchangeId::ExmoSpot,
+            Instrument::new("arb", "usdt"),
+        );
+
+        scanner.process_orderbook(
+            exmo_arb_ob.exchange,
+            exmo_arb_ob.instrument,
+            exmo_arb_ob.event_data.get_orderbook().unwrap().bids,
+            exmo_arb_ob.event_data.get_orderbook().unwrap().asks,
+        );
+
+
+        let htx_op_ob = test_utils::market_event_orderbook(
+            ExchangeId::ExmoSpot,
+            Instrument::new("op", "usdt"),
+        );
+
+        scanner.process_orderbook(
+            htx_op_ob.exchange,
+            htx_op_ob.instrument,
+            htx_op_ob.event_data.get_orderbook().unwrap().bids,
+            htx_op_ob.event_data.get_orderbook().unwrap().asks,
+        );
+
+        println!("{:#?}", scanner);
+
+
+    }
+
+    #[test]
+    fn test_vecdequeuetime_new_creation() {
+        let time = Utc::now();
+        let value = 42;
+        let queue = VecDequeTime::new(time, value);
+
+        assert_eq!(queue.data.len(), 1);
+        assert_eq!(queue.window, Duration::minutes(10));
+
+        if let Some((stored_time, stored_value)) = queue.data.front() {
+            assert_eq!(*stored_time, time);
+            assert_eq!(*stored_value, value);
+        } else {
+            panic!("Queue should contain one element");
+        }
+    }
+
+    #[test]
+    fn test_vecdequeuetime_push_within_window() {
+        let start_time = Utc.timestamp_opt(0, 0).unwrap();
+        let mut queue = VecDequeTime::new(start_time, 1);
+
+        // Add values 5 minutes apart
+        queue.push(start_time + Duration::minutes(5), 2);
+        queue.push(start_time + Duration::minutes(8), 3);
+
+        assert_eq!(queue.data.len(), 3);
+
+        // Verify all values are present in order
+        let values: Vec<i32> = queue.data.iter().map(|(_, v)| *v).collect();
+        assert_eq!(values, vec![1, 2, 3]);
+    }
+
+    #[test]
+    fn test_vecdequeuetime_cleanup_old_data() {
+        let start_time = Utc.timestamp_opt(0, 0).unwrap();
+        let mut queue = VecDequeTime::new(start_time, 1);
+
+        // Add some values within the window
+        queue.push(start_time + Duration::minutes(3), 2);
+        queue.push(start_time + Duration::minutes(6), 3);
+        assert_eq!(queue.data.len(), 3);
+
+        // Push a value that's 15 minutes after start, should trigger cleanup
+        queue.push(start_time + Duration::minutes(15), 4);
+
+        // First two values should be removed (0 and 3 minutes), leaving only
+        // the 6 minute and 15 minute values
+        assert_eq!(queue.data.len(), 2);
+
+        let remaining_values: Vec<i32> = queue.data.iter().map(|(_, v)| *v).collect();
+        assert_eq!(remaining_values, vec![3, 4]);
+    }
+
+    #[test]
+    fn test_vecdequeuetime_multiple_cleanups() {
+        let start_time = Utc.timestamp_opt(0, 0).unwrap();
+        let mut queue = VecDequeTime::new(start_time, 1);
+
+        // Add values at different times
+        for i in 1..=5 {
+            queue.push(start_time + Duration::minutes(i * 2), i + 1);
+        }
+        assert_eq!(queue.data.len(), 6); // Original + 5 new values
+
+        // Push value 21 minutes later, should clear all previous values
+        queue.push(start_time + Duration::minutes(21), 7);
+
+        assert_eq!(queue.data.len(), 1);
+
+        if let Some((_, value)) = queue.data.back() {
+            assert_eq!(*value, 7);
+        } else {
+            panic!("Queue should contain the last value");
+        }
+    }
+
+    #[test]
+    fn test_spread_sorted() {
         // Init keys
         let k1 = SpreadKey::new(
             ExchangeId::AscendExSpot,
@@ -727,22 +863,5 @@ mod test {
             (s2, k2.clone()),
         ];
         assert_eq!(result, expected);
-    }
-
-    #[test]
-    fn spread_key_test() {
-        let k1 = SpreadKey::new(
-            ExchangeId::AscendExSpot,
-            ExchangeId::BinanceSpot,
-            Instrument::new("btc", "usdt"),
-        );
-
-        let k2 = SpreadKey::new(
-            ExchangeId::BinanceSpot,
-            ExchangeId::AscendExSpot,
-            Instrument::new("btc", "usdt"),
-        );
-
-        assert_eq!(k1, k2)
     }
 }

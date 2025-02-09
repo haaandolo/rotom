@@ -44,6 +44,35 @@ pub enum DataKind {
     ConnectionStatus(WsStatus),
 }
 
+impl DataKind {
+    // Used for testing in #[cfg(test)]
+    pub fn get_trade(&self) -> Option<EventTrade> {
+        if let DataKind::Trade(trade) = self {
+            Some(trade.to_owned())
+        } else {
+            None
+        }
+    }
+
+    // Used for testing in #[cfg(test)]
+    pub fn get_trades(&self) -> Option<Vec<EventTrade>> {
+        if let DataKind::Trades(trades) = self {
+            Some(trades.to_owned())
+        } else {
+            None
+        }
+    }
+
+    // Used for testing in #[cfg(test)]
+    pub fn get_orderbook(&self) -> Option<EventOrderBook> {
+        if let DataKind::OrderBook(orderbook) = self {
+            Some(orderbook.to_owned())
+        } else {
+            None
+        }
+    }
+}
+
 /*----- */
 // Market Event - Generic
 /*----- */
