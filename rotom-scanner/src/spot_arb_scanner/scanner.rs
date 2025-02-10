@@ -21,7 +21,7 @@ use tracing::warn;
 /*----- */
 // VecDeque - Time based
 /*----- */
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct VecDequeTime<T> {
     pub data: VecDeque<(DateTime<Utc>, T)>,
     pub window: Duration,
@@ -70,7 +70,7 @@ impl<T> VecDequeTime<T> {
 /*----- */
 // Scanner market data
 /*----- */
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct InstrumentMarketData {
     pub bids: Vec<Level>,
     pub asks: Vec<Level>,
@@ -115,18 +115,22 @@ impl InstrumentMarketData {
             trades_ws_is_connected: true,
         }
     }
+
+    pub fn bid_ask_has_no_data(&self) -> bool {
+        self.bids.is_empty() && self.asks.is_empty()
+    }
 }
 
 /*----- */
 // Maps - for convenience
 /*----- */
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq)]
 pub struct InstrumentMarketDataMap(pub HashMap<Instrument, InstrumentMarketData>);
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq)]
 pub struct ExchangeMarketDataMap(pub HashMap<ExchangeId, InstrumentMarketDataMap>);
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq)]
 pub struct SpreadHistoryMap(pub HashMap<ExchangeId, SpreadHistory>);
 
 #[derive(Debug, Default)]
@@ -135,7 +139,7 @@ pub struct NetworkStatusMap(pub HashMap<(ExchangeId, Coin), NetworkSpecData>);
 /*----- */
 // Spread History
 /*----- */
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq)]
 pub struct SpreadHistory {
     pub take_take: VecDequeTime<f64>,
     pub take_make: VecDequeTime<f64>,
@@ -248,8 +252,8 @@ impl SpreadsSorted {
 pub struct SpreadChange {
     pub exchange: ExchangeId,
     pub instrument: Instrument,
-    bid: Option<Level>,
-    ask: Option<Level>,
+    pub bid: Option<Level>,
+    pub ask: Option<Level>,
 }
 
 impl SpreadChange {
@@ -350,29 +354,34 @@ impl SpotArbScanner {
                 // Bid and ask data can be empty if trade data comes in before book data
                 // as the InstrumentMarketData::new_trades() sets the bid and ask fields
                 // as empty vecs. Hence, we need logic to handle this.
-                if market_data_state.bids.is_empty() {
+
+                // Swap with old data if bids is not a empty vec
+                if !bids.is_empty() {
                     std::mem::swap(&mut market_data_state.bids, &mut bids);
-                } else if market_data_state.asks.is_empty() {
+                }
+
+                // Swap with old data if asks is not a empty vec
+                if !asks.is_empty() {
                     std::mem::swap(&mut market_data_state.asks, &mut asks);
-                } else {
-                    // Check if bba is different
+                }
+
+                // If we swapped above and the bids and asks are not empty i.e., we
+                // haven't just initialised the InstrumentMarketData, then do calculate
+                // The spread else do nothing
+                if !bids.is_empty() && !asks.is_empty() {
                     let new_bba = Self::did_bba_change(
                         exchange,
                         instrument,
-                        market_data_state.bids[0],
-                        market_data_state.asks[0],
-                        bids[0],
-                        asks[0],
+                        bids[0], // We did a mem::swap above so reverse order
+                        asks[0], // We did a mem::swap above so reverse order
+                        market_data_state.bids[0], // We did a mem::swap above so reverse order
+                        market_data_state.asks[0], // We did a mem::swap above so reverse order
                     );
 
                     // Add to event queue if spread did change
                     if let Some(new_bba) = new_bba {
                         self.spread_change_queue.push_back(new_bba);
                     }
-
-                    // Update existing data via mem::swap
-                    std::mem::swap(&mut market_data_state.bids, &mut bids);
-                    std::mem::swap(&mut market_data_state.asks, &mut asks);
                 }
             })
             .or_insert_with(|| InstrumentMarketData::new_orderbook(bids, asks));
@@ -594,10 +603,10 @@ impl SpotArbScanner {
             // Process market data update
             match self.market_data_stream.try_recv() {
                 Ok(market_data) => {
-                    // println!(
-                    //     "###### before update ##### \n {:?} \n ###########",
-                    //     market_data
-                    // );
+                    println!(
+                        "###### before update ##### \n {:?} \n ###########",
+                        market_data
+                    );
 
                     match market_data.event_data {
                         DataKind::OrderBook(orderbook) => self.process_orderbook(
@@ -673,15 +682,126 @@ mod test {
     use super::*;
 
     #[test]
-    fn scanner_test() {
-        /*----- */
-        // Init scanner
-        /*----- */
+    fn test_scanner_spread() {
+        // Init
         let mut scanner = test_utils::spot_arb_scanner();
 
-        /*----- */
-        // Insert new orderbook events
-        /*----- */
+        // Init Binance market data state
+        let binance_btc_ob = test_utils::market_event_orderbook2(
+            ExchangeId::BinanceSpot,
+            Instrument::new("btc", "usdt"),
+            vec![Level::new(12.0, 10.0)],
+            vec![Level::new(13.0, 11.0)],
+        );
+
+        scanner.process_orderbook(
+            binance_btc_ob.exchange,
+            binance_btc_ob.instrument,
+            binance_btc_ob.event_data.get_orderbook().unwrap().bids,
+            binance_btc_ob.event_data.get_orderbook().unwrap().asks,
+        );
+
+        let binance_eth_ob = test_utils::market_event_orderbook2(
+            ExchangeId::BinanceSpot,
+            Instrument::new("eth", "usdt"),
+            vec![Level::new(20.0, 3.0)],
+            vec![Level::new(21.0, 12.0)],
+        );
+
+        scanner.process_orderbook(
+            binance_eth_ob.exchange,
+            binance_eth_ob.instrument,
+            binance_eth_ob.event_data.get_orderbook().unwrap().bids,
+            binance_eth_ob.event_data.get_orderbook().unwrap().asks,
+        );
+
+        // Init Binance market data state
+        let htx_btc_ob = test_utils::market_event_orderbook2(
+            ExchangeId::HtxSpot,
+            Instrument::new("btc", "usdt"),
+            vec![Level::new(13.5, 11.0)],
+            vec![Level::new(14.5, 13.0)],
+        );
+
+        scanner.process_orderbook(
+            htx_btc_ob.exchange,
+            htx_btc_ob.instrument,
+            htx_btc_ob.event_data.get_orderbook().unwrap().bids,
+            htx_btc_ob.event_data.get_orderbook().unwrap().asks,
+        );
+
+        let htx_eth_ob = test_utils::market_event_orderbook2(
+            ExchangeId::HtxSpot,
+            Instrument::new("eth", "usdt"),
+            vec![Level::new(19.22, 5.0)],
+            vec![Level::new(20.11, 17.0)],
+        );
+
+        scanner.process_orderbook(
+            htx_eth_ob.exchange,
+            htx_eth_ob.instrument,
+            htx_eth_ob.event_data.get_orderbook().unwrap().bids,
+            htx_eth_ob.event_data.get_orderbook().unwrap().asks,
+        );
+
+        // Binance spread change
+        let binance_btc_spread_change = test_utils::spread_change(
+            ExchangeId::BinanceSpot,
+            Instrument::new("btc", "usdt"),
+            Some(Level::new(12.22, 9.0)),
+            Some(Level::new(15.12, 18.03)),
+        );
+
+        let binance_eth_spread_change = test_utils::spread_change(
+            ExchangeId::BinanceSpot,
+            Instrument::new("eth", "usdt"),
+            Some(Level::new(20.78, 9.255)),
+            Some(Level::new(21.92, 18.78)),
+        );
+
+        // Htx spread change
+        let htx_btc_spread_change = test_utils::spread_change(
+            ExchangeId::HtxSpot,
+            Instrument::new("btc", "usdt"),
+            Some(Level::new(13.12, 3.0)),
+            Some(Level::new(18.02, 19.03)),
+        );
+
+        let htx_eth_spread_change = test_utils::spread_change(
+            ExchangeId::HtxSpot,
+            Instrument::new("eth", "usdt"),
+            Some(Level::new(20.0, 9.5)),
+            Some(Level::new(22.87, 11.78)),
+        );
+
+        // Expected Spreads
+        let binance_htx_btc_take_take = 0.0;
+        let binance_htx_btc_take_make = 0.0;
+        let binance_htx_btc_make_take = 0.0;
+        let binance_htx_btc_make_make = 0.0;
+
+        let binance_htx_eth_take_take = 0.0;
+        let binance_htx_eth_take_make = 0.0;
+        let binance_htx_eth_make_take = 0.0;
+        let binance_htx_eth_make_make = 0.0;
+
+        let htx_binance_btc_take_take = 0.0;
+        let htx_binance_btc_take_make = 0.0;
+        let htx_binance_btc_make_take = 0.0;
+        let htx_binance_btc_make_make = 0.0;
+
+        let htx_binance_eth_take_take = 0.0;
+        let htx_binance_eth_take_make = 0.0;
+        let htx_binance_eth_make_take = 0.0;
+        let htx_binance_eth_make_make = 0.0;
+    }
+
+    #[test]
+    fn test_scanner_swap_existing_data() {
+        let mut scanner = test_utils::spot_arb_scanner();
+        let mut exchange_data_map = ExchangeMarketDataMap::default();
+
+        // First orderbook update
         let binance_btc_ob = test_utils::market_event_orderbook(
             ExchangeId::BinanceSpot,
             Instrument::new("btc", "usdt"),
@@ -694,7 +814,147 @@ mod test {
             binance_btc_ob.event_data.get_orderbook().unwrap().asks,
         );
 
+        // Second orderbook update
+        let new_bids = test_utils::bids_random();
+        let new_asks = test_utils::asks_random();
 
+        let binance_btc_ob2 = test_utils::market_event_orderbook2(
+            ExchangeId::BinanceSpot,
+            Instrument::new("btc", "usdt"),
+            new_bids.clone(),
+            new_asks.clone(),
+        );
+
+        scanner.process_orderbook(
+            binance_btc_ob2.exchange,
+            binance_btc_ob2.instrument,
+            binance_btc_ob2.event_data.get_orderbook().unwrap().bids,
+            binance_btc_ob2.event_data.get_orderbook().unwrap().asks,
+        );
+
+        // Expect swapped data
+        let mut binance_instrument_map = InstrumentMarketDataMap::default();
+        let binance_instrument_data = InstrumentMarketData::new_orderbook(new_bids, new_asks);
+
+        binance_instrument_map
+            .0
+            .insert(Instrument::new("btc", "usdt"), binance_instrument_data);
+
+        exchange_data_map
+            .0
+            .insert(ExchangeId::BinanceSpot, binance_instrument_map);
+
+        assert_eq!(scanner.exchange_data, exchange_data_map);
+
+        // Try swap with empty vecs and should not work - I dont think there will ever be empty vecs for MarketEvents
+        let binance_btc_ob3 = test_utils::market_event_orderbook2(
+            ExchangeId::BinanceSpot,
+            Instrument::new("btc", "usdt"),
+            Vec::new(),
+            Vec::new(),
+        );
+
+        scanner.process_orderbook(
+            binance_btc_ob3.exchange,
+            binance_btc_ob3.instrument,
+            binance_btc_ob3.event_data.get_orderbook().unwrap().bids,
+            binance_btc_ob3.event_data.get_orderbook().unwrap().asks,
+        );
+
+        assert_eq!(scanner.exchange_data, exchange_data_map);
+
+        // Try swap with only bids data having empty vec - bids data should not swap
+        let new_asks2 = test_utils::asks_random();
+        let binance_btc_ob4 = test_utils::market_event_orderbook2(
+            ExchangeId::BinanceSpot,
+            Instrument::new("btc", "usdt"),
+            Vec::new(),
+            new_asks2.clone(),
+        );
+
+        scanner.process_orderbook(
+            binance_btc_ob4.exchange,
+            binance_btc_ob4.instrument,
+            binance_btc_ob4.event_data.get_orderbook().unwrap().bids,
+            binance_btc_ob4.event_data.get_orderbook().unwrap().asks,
+        );
+
+        let binance_market_data = exchange_data_map
+            .0
+            .get_mut(&ExchangeId::BinanceSpot)
+            .unwrap()
+            .0
+            .get_mut(&Instrument::new("btc", "usdt"))
+            .unwrap();
+
+        binance_market_data.asks = new_asks2;
+
+        assert_eq!(scanner.exchange_data, exchange_data_map);
+
+        // Try swap with only asks data having empty vec - asks data should not swap
+        let new_bids2 = test_utils::bids_random();
+        let binance_btc_ob5 = test_utils::market_event_orderbook2(
+            ExchangeId::BinanceSpot,
+            Instrument::new("btc", "usdt"),
+            new_bids2.clone(),
+            Vec::new(),
+        );
+
+        scanner.process_orderbook(
+            binance_btc_ob5.exchange,
+            binance_btc_ob5.instrument,
+            binance_btc_ob5.event_data.get_orderbook().unwrap().bids,
+            binance_btc_ob5.event_data.get_orderbook().unwrap().asks,
+        );
+
+        let binance_market_data = exchange_data_map
+            .0
+            .get_mut(&ExchangeId::BinanceSpot)
+            .unwrap()
+            .0
+            .get_mut(&Instrument::new("btc", "usdt"))
+            .unwrap();
+
+        binance_market_data.bids = new_bids2;
+
+        assert_eq!(scanner.exchange_data, exchange_data_map);
+    }
+
+    #[test]
+    fn test_scanner_insert() {
+        // Init
+        let mut scanner = test_utils::spot_arb_scanner();
+        let mut exchange_data_map = ExchangeMarketDataMap::default();
+
+        // Binance
+        let binance_btc_ob = test_utils::market_event_orderbook(
+            ExchangeId::BinanceSpot,
+            Instrument::new("btc", "usdt"),
+        );
+
+        scanner.process_orderbook(
+            binance_btc_ob.exchange,
+            binance_btc_ob.instrument,
+            binance_btc_ob.event_data.get_orderbook().unwrap().bids,
+            binance_btc_ob.event_data.get_orderbook().unwrap().asks,
+        );
+
+        let mut binance_instrument_map = InstrumentMarketDataMap::default();
+
+        let binance_instrument_data =
+            InstrumentMarketData::new_orderbook(test_utils::bids(), test_utils::asks());
+
+        binance_instrument_map
+            .0
+            .insert(Instrument::new("btc", "usdt"), binance_instrument_data);
+
+        exchange_data_map
+            .0
+            .insert(ExchangeId::BinanceSpot, binance_instrument_map);
+
+        assert_eq!(scanner.exchange_data, exchange_data_map);
+
+        // Exmo
         let exmo_arb_ob = test_utils::market_event_orderbook(
             ExchangeId::ExmoSpot,
             Instrument::new("arb", "usdt"),
@@ -707,11 +967,24 @@ mod test {
             exmo_arb_ob.event_data.get_orderbook().unwrap().asks,
         );
 
+        let mut exmo_instrument_map = InstrumentMarketDataMap::default();
 
-        let htx_op_ob = test_utils::market_event_orderbook(
-            ExchangeId::ExmoSpot,
-            Instrument::new("op", "usdt"),
-        );
+        let exmo_instrument_data =
+            InstrumentMarketData::new_orderbook(test_utils::bids(), test_utils::asks());
+
+        exmo_instrument_map
+            .0
+            .insert(Instrument::new("arb", "usdt"), exmo_instrument_data);
+
+        exchange_data_map
+            .0
+            .insert(ExchangeId::ExmoSpot, exmo_instrument_map);
+
+        assert_eq!(scanner.exchange_data, exchange_data_map);
+
+        // Htx
+        let htx_op_ob =
+            test_utils::market_event_orderbook(ExchangeId::HtxSpot, Instrument::new("op", "usdt"));
 
         scanner.process_orderbook(
             htx_op_ob.exchange,
@@ -720,9 +993,20 @@ mod test {
             htx_op_ob.event_data.get_orderbook().unwrap().asks,
         );
 
-        println!("{:#?}", scanner);
+        let mut htx_instrument_map = InstrumentMarketDataMap::default();
 
+        let htx_instrument_data =
+            InstrumentMarketData::new_orderbook(test_utils::bids(), test_utils::asks());
 
+        htx_instrument_map
+            .0
+            .insert(Instrument::new("op", "usdt"), htx_instrument_data);
+
+        exchange_data_map
+            .0
+            .insert(ExchangeId::HtxSpot, htx_instrument_map);
+
+        assert_eq!(scanner.exchange_data, exchange_data_map);
     }
 
     #[test]

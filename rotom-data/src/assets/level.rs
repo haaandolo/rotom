@@ -1,3 +1,4 @@
+use rand::Rng;
 use serde::Deserialize;
 use std::{cmp::Ordering, fmt::Display};
 
@@ -14,6 +15,17 @@ pub struct Level {
 impl Level {
     pub fn new(price: f64, size: f64) -> Self {
         Self { price, size }
+    }
+
+    // Used for testing
+    pub fn new_random() -> Self {
+        let price_random = rand::thread_rng().gen::<f64>();
+        let size_random = rand::thread_rng().gen::<f64>();
+
+        Self {
+            price: price_random,
+            size: size_random,
+        }
     }
 }
 
