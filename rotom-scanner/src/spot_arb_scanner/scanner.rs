@@ -310,14 +310,14 @@ impl SpreadChange {
 // Spread Change
 /*----- */
 #[derive(Debug)]
-pub struct SpreadChangeCalculated {
+pub struct SpreadsCalculated {
     pub sc_exchange: ExchangeId,
     pub other_exchange: ExchangeId,
     pub instrument: Instrument,
     pub spread_array: [Option<f64>; 4],
 }
 
-impl SpreadChangeCalculated {
+impl SpreadsCalculated {
     pub fn new(
         sc_exchange: ExchangeId,
         other_exchange: ExchangeId,
@@ -339,7 +339,7 @@ impl SpreadChangeCalculated {
 #[derive(Debug)]
 enum SpreadChangeProcess {
     SpreadChange(SpreadChange),
-    SpreadChangeCalculated(SpreadChangeCalculated),
+    SpreadsCalculated(SpreadsCalculated),
 }
 
 #[derive(Debug)]
@@ -548,22 +548,23 @@ impl SpotArbScanner {
                         }
                     }
 
-                    let spread_change_calculated = SpreadChangeCalculated::new(
+                    let spread_change_calculated = SpreadsCalculated::new(
                         spread_change.exchange,
                         *exchange,
                         spread_change.instrument.clone(),
                         spread_array,
                     );
 
-                    self.spread_change_queue.push_back(
-                        SpreadChangeProcess::SpreadChangeCalculated(spread_change_calculated),
-                    );
+                    self.spread_change_queue
+                        .push_back(SpreadChangeProcess::SpreadsCalculated(
+                            spread_change_calculated,
+                        ));
                 }
             }
         }
     }
 
-    fn process_calculated_spreads(&mut self, time: DateTime<Utc>, spreads: SpreadChangeCalculated) {
+    fn process_calculated_spreads(&mut self, time: DateTime<Utc>, spreads: SpreadsCalculated) {
         if let Some(sc_market_data_map) = self.exchange_data.0.get_mut(&spreads.sc_exchange) {
             if let Some(sc_market_data) = sc_market_data_map.0.get_mut(&spreads.instrument) {
                 sc_market_data
@@ -712,7 +713,7 @@ impl SpotArbScanner {
                     SpreadChangeProcess::SpreadChange(spread_change) => {
                         self.process_spread_change(spread_change)
                     }
-                    SpreadChangeProcess::SpreadChangeCalculated(calculated_spreads) => {
+                    SpreadChangeProcess::SpreadsCalculated(calculated_spreads) => {
                         self.process_calculated_spreads(Utc::now(), calculated_spreads);
                     }
                 }
@@ -736,6 +737,7 @@ mod test {
     fn test_scanner_spread() {
         // Init
         let mut scanner = test_utils::spot_arb_scanner();
+        let time = Utc::now();
 
         // Init Binance market data state
         let binance_btc_ob = test_utils::market_event_orderbook2(
@@ -850,25 +852,6 @@ mod test {
         let htx_binance_eth_make_take = (20.0 / 20.0) - 1.0; // 0.0
         let htx_binance_eth_make_make = (21.0 / 20.0) - 1.0; // 0.05 --> 2
 
-        // Spread history
-        let mut binance_btc_spread_history = SpreadHistory::default();
-
-        binance_btc_spread_history
-            .take_take
-            .push(Utc::now(), binance_htx_btc_take_take);
-
-        binance_btc_spread_history
-            .take_make
-            .push(Utc::now(), binance_htx_btc_take_make);
-
-        binance_btc_spread_history
-            .make_take
-            .push(Utc::now(), binance_htx_btc_make_take);
-
-        binance_btc_spread_history
-            .make_take
-            .push(Utc::now(), binance_htx_btc_make_make);
-
         // Expected spread
         let mut expected_spread = SpreadsSorted::new();
 
@@ -888,13 +871,154 @@ mod test {
         expected_spread.insert(htx_binance_eth, htx_binance_eth_make_make);
 
         // Trigger spread change queue manually
+        while let Some(spread_calculated) = scanner.spread_change_queue.pop_front() {
+            if let SpreadChangeProcess::SpreadsCalculated(spreads) = spread_calculated {
+                scanner.process_calculated_spreads(time, spreads);
+            }
+        }
+
+        // Check spreads are sorted in the expected order
         let result = scanner.spreads_sorted.snapshot();
         let expected = expected_spread.snapshot();
+        assert_eq!(result, expected);
 
-        // assert_eq!(result, expected);
+        // Check Binance btc spread history
+        let mut binance_btc_spread_history = SpreadHistory::default();
 
-        // println!("{:#?}", binance_btc_spread_history);
-        println!("{:#?}", scanner);
+        binance_btc_spread_history
+            .take_take
+            .push(time, binance_htx_btc_take_take);
+
+        binance_btc_spread_history
+            .take_make
+            .push(time, binance_htx_btc_take_make);
+
+        binance_btc_spread_history
+            .make_take
+            .push(time, binance_htx_btc_make_take);
+
+        binance_btc_spread_history
+            .make_make
+            .push(time, binance_htx_btc_make_make);
+
+        let result_map = scanner
+            .exchange_data
+            .0
+            .get(&ExchangeId::BinanceSpot)
+            .unwrap()
+            .0
+            .get(&Instrument::new("btc", "usdt"))
+            .unwrap()
+            .spreads
+            .borrow();
+
+        let result = result_map.0.get(&ExchangeId::HtxSpot).unwrap();
+        let expected = binance_btc_spread_history;
+        assert_eq!(result, &expected);
+
+        // Check Binance eth spread history
+        let mut binance_eth_spread_history = SpreadHistory::default();
+
+        binance_eth_spread_history
+            .take_take
+            .push(time, binance_htx_eth_take_take);
+
+        binance_eth_spread_history
+            .take_make
+            .push(time, binance_htx_eth_take_make);
+
+        binance_eth_spread_history
+            .make_take
+            .push(time, binance_htx_eth_make_take);
+
+        binance_eth_spread_history
+            .make_make
+            .push(time, binance_htx_eth_make_make);
+
+        let result_map = scanner
+            .exchange_data
+            .0
+            .get(&ExchangeId::BinanceSpot)
+            .unwrap()
+            .0
+            .get(&Instrument::new("eth", "usdt"))
+            .unwrap()
+            .spreads
+            .borrow();
+
+        let result = result_map.0.get(&ExchangeId::HtxSpot).unwrap();
+        let expected = binance_eth_spread_history;
+        assert_eq!(result, &expected);
+
+        // Check Htx btc spread history
+        let mut htx_btc_spread_history = SpreadHistory::default();
+
+        htx_btc_spread_history
+            .take_take
+            .push(time, htx_binance_btc_take_take);
+
+        htx_btc_spread_history
+            .take_make
+            .push(time, htx_binance_btc_take_make);
+
+        htx_btc_spread_history
+            .make_take
+            .push(time, htx_binance_btc_make_take);
+
+        htx_btc_spread_history
+            .make_make
+            .push(time, htx_binance_btc_make_make);
+
+        let result_map = scanner
+            .exchange_data
+            .0
+            .get(&ExchangeId::HtxSpot)
+            .unwrap()
+            .0
+            .get(&Instrument::new("btc", "usdt"))
+            .unwrap()
+            .spreads
+            .borrow();
+
+        let result = result_map.0.get(&ExchangeId::BinanceSpot).unwrap();
+        let expected = htx_btc_spread_history;
+        assert_eq!(result, &expected);
+
+        // Check Htx btc spread history
+        let mut htx_eth_spread_history = SpreadHistory::default();
+
+        htx_eth_spread_history
+            .take_take
+            .push(time, htx_binance_eth_take_take);
+
+        htx_eth_spread_history
+            .take_make
+            .push(time, htx_binance_eth_take_make);
+
+        htx_eth_spread_history
+            .make_take
+            .push(time, htx_binance_eth_make_take);
+
+        htx_eth_spread_history
+            .make_make
+            .push(time, htx_binance_eth_make_make);
+
+        let result_map = scanner
+            .exchange_data
+            .0
+            .get(&ExchangeId::HtxSpot)
+            .unwrap()
+            .0
+            .get(&Instrument::new("eth", "usdt"))
+            .unwrap()
+            .spreads
+            .borrow();
+
+        let result = result_map.0.get(&ExchangeId::BinanceSpot).unwrap();
+        let expected = htx_eth_spread_history;
+        assert_eq!(result, &expected);
+
+
     }
 
     #[test]
