@@ -984,7 +984,7 @@ mod test {
         let expected = htx_btc_spread_history;
         assert_eq!(result, &expected);
 
-        // Check Htx btc spread history
+        // Check eth btc spread history
         let mut htx_eth_spread_history = SpreadHistory::default();
 
         htx_eth_spread_history
@@ -1017,8 +1017,6 @@ mod test {
         let result = result_map.0.get(&ExchangeId::BinanceSpot).unwrap();
         let expected = htx_eth_spread_history;
         assert_eq!(result, &expected);
-
-
     }
 
     #[test]
