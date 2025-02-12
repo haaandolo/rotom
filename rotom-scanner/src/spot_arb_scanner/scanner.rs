@@ -177,6 +177,24 @@ impl SpreadHistory {
             make_make: make_make_queue,
         }
     }
+
+    pub fn insert(&mut self, time: DateTime<Utc>, spread_array: [Option<f64>; 4]) {
+        if let Some(take_take) = spread_array[0] {
+            self.take_take.push(time, take_take);
+        }
+
+        if let Some(take_make) = spread_array[1] {
+            self.take_make.push(time, take_make);
+        }
+
+        if let Some(make_take) = spread_array[2] {
+            self.make_take.push(time, make_take);
+        }
+
+        if let Some(make_make) = spread_array[3] {
+            self.make_make.push(time, make_make);
+        }
+    }
 }
 
 /*----- */
@@ -189,9 +207,13 @@ pub struct SpreadKey {
 }
 
 impl SpreadKey {
-    pub fn new(e1: ExchangeId, e2: ExchangeId, instrument: Instrument) -> Self {
+    pub fn new(
+        spread_change_exchange: ExchangeId,
+        existing_exchange: ExchangeId,
+        instrument: Instrument,
+    ) -> Self {
         Self {
-            exchanges: (e1, e2),
+            exchanges: (spread_change_exchange, existing_exchange),
             instrument,
         }
     }
@@ -285,14 +307,47 @@ impl SpreadChange {
 }
 
 /*----- */
+// Spread Change
+/*----- */
+#[derive(Debug)]
+pub struct SpreadChangeCalculated {
+    pub sc_exchange: ExchangeId,
+    pub other_exchange: ExchangeId,
+    pub instrument: Instrument,
+    pub spread_array: [Option<f64>; 4],
+}
+
+impl SpreadChangeCalculated {
+    pub fn new(
+        sc_exchange: ExchangeId,
+        other_exchange: ExchangeId,
+        instrument: Instrument,
+        spread_array: [Option<f64>; 4],
+    ) -> Self {
+        Self {
+            sc_exchange,
+            other_exchange,
+            instrument,
+            spread_array,
+        }
+    }
+}
+
+/*----- */
 // Spot Arb Scanner
 /*----- */
+#[derive(Debug)]
+enum SpreadChangeProcess {
+    SpreadChange(SpreadChange),
+    SpreadChangeCalculated(SpreadChangeCalculated),
+}
+
 #[derive(Debug)]
 pub struct SpotArbScanner {
     exchange_data: ExchangeMarketDataMap,
     network_status: NetworkStatusMap,
     spreads_sorted: SpreadsSorted,
-    spread_change_queue: VecDeque<SpreadChange>,
+    spread_change_queue: VecDeque<SpreadChangeProcess>,
     network_status_stream: mpsc::UnboundedReceiver<NetworkSpecs>,
     market_data_stream: mpsc::UnboundedReceiver<MarketEvent<DataKind>>,
 }
@@ -380,7 +435,8 @@ impl SpotArbScanner {
 
                     // Add to event queue if spread did change
                     if let Some(new_bba) = new_bba {
-                        self.spread_change_queue.push_back(new_bba);
+                        self.spread_change_queue
+                            .push_back(SpreadChangeProcess::SpreadChange(new_bba));
                     }
                 }
             })
@@ -443,109 +499,103 @@ impl SpotArbScanner {
         }
     }
 
+    fn sort_option_array(mut arr: [Option<f64>; 4]) -> [Option<f64>; 4] {
+        // Sort the array, placing None values at the end
+        arr.sort_by(|a, b| match (a, b) {
+            (None, None) => std::cmp::Ordering::Equal,
+            (None, _) => std::cmp::Ordering::Greater,
+            (_, None) => std::cmp::Ordering::Less,
+            (Some(x), Some(y)) => x.partial_cmp(y).unwrap_or(std::cmp::Ordering::Equal),
+        });
+        arr
+    }
+
     fn process_spread_change(&mut self, spread_change: SpreadChange) {
         for (exchange, market_data_map) in &self.exchange_data.0 {
             if *exchange != spread_change.exchange {
                 if let Some(market_data) = market_data_map.0.get(&spread_change.instrument) {
                     // We assume the exchange associated with the spread change is the buy exchange, so this is in the denominator.
                     // Hence, the sell exchange is the exchange correspoding to the market_data
-                    let mut take_take = None;
-                    let mut take_make = None;
-                    let mut make_take = None;
-                    let mut make_make = None;
-                    let mut spread_array = [0.0; 4];
+                    let mut spread_array = [None; 4];
 
                     if let Some(spread_change_ask) = spread_change.ask {
                         // Calculate the spreads if best ask level has changed
                         if !market_data.bids.is_empty() {
-                            let take_take_sub =
+                            let take_take =
                                 (market_data.bids[0].price / spread_change_ask.price) - 1.0;
-
-                            if take_take_sub > 0.0 {
-                                spread_array[0] = take_take_sub;
-                            }
-
-                            take_take = Some(take_take_sub)
+                            spread_array[0] = Some(take_take)
                         }
 
                         if !market_data.asks.is_empty() {
-                            let take_make_sub =
+                            let take_make =
                                 (market_data.asks[0].price / spread_change_ask.price) - 1.0;
-
-                            if take_make_sub > 0.0 {
-                                spread_array[1] = take_make_sub;
-                            }
-
-                            take_make = Some(take_make_sub)
+                            spread_array[1] = Some(take_make)
                         }
                     }
 
                     if let Some(spread_change_bid) = spread_change.bid {
                         // Calculate the spreads if best bid level has changed
                         if !market_data.bids.is_empty() {
-                            let make_take_sub =
+                            let make_take =
                                 (market_data.bids[0].price / spread_change_bid.price) - 1.0;
-
-                            if make_take_sub > 0.0 {
-                                spread_array[2] = make_take_sub;
-                            }
-
-                            make_take = Some(make_take_sub)
+                            spread_array[2] = Some(make_take)
                         }
 
                         if !market_data.asks.is_empty() {
-                            let make_make_sub =
+                            let make_make =
                                 (market_data.asks[0].price / spread_change_bid.price) - 1.0;
-
-                            if make_make_sub > 0.0 {
-                                spread_array[3] = make_make_sub;
-                            }
-
-                            make_make = Some(make_make_sub)
+                            spread_array[3] = Some(make_make)
                         }
                     }
 
-                    // Update spread history
-                    market_data
-                        .spreads
-                        .borrow_mut()
-                        .0
-                        .entry(spread_change.exchange)
-                        .and_modify(|spread_history| {
-                            if let Some(take_take) = take_take {
-                                spread_history.take_take.push(Utc::now(), take_take);
-                            }
+                    let spread_change_calculated = SpreadChangeCalculated::new(
+                        spread_change.exchange,
+                        *exchange,
+                        spread_change.instrument.clone(),
+                        spread_array,
+                    );
 
-                            if let Some(take_make) = take_make {
-                                spread_history.take_make.push(Utc::now(), take_make);
-                            }
-
-                            if let Some(make_take) = make_take {
-                                spread_history.make_take.push(Utc::now(), make_take);
-                            }
-
-                            if let Some(make_make) = make_make {
-                                spread_history.make_make.push(Utc::now(), make_make);
-                            }
-                        })
-                        .or_insert(SpreadHistory::default());
-
-                    // Get max spread
-                    let max_spread = spread_array[0]
-                        .max(spread_array[1])
-                        .max(spread_array[2])
-                        .max(spread_array[3]);
-
-                    // Insert into spreads_sorted
-                    self.spreads_sorted.insert(
-                        SpreadKey::new(
-                            *exchange,
-                            spread_change.exchange,
-                            spread_change.instrument.clone(),
-                        ),
-                        max_spread,
+                    self.spread_change_queue.push_back(
+                        SpreadChangeProcess::SpreadChangeCalculated(spread_change_calculated),
                     );
                 }
+            }
+        }
+    }
+
+    fn process_calculated_spreads(&mut self, time: DateTime<Utc>, spreads: SpreadChangeCalculated) {
+        if let Some(sc_market_data_map) = self.exchange_data.0.get_mut(&spreads.sc_exchange) {
+            if let Some(sc_market_data) = sc_market_data_map.0.get_mut(&spreads.instrument) {
+                sc_market_data
+                    .spreads
+                    .borrow_mut()
+                    .0
+                    .entry(spreads.other_exchange)
+                    .and_modify(|spread_history| {
+                        spread_history.insert(time, spreads.spread_array);
+                    })
+                    .or_insert_with(|| {
+                        let mut spread_default = SpreadHistory::default();
+                        spread_default.insert(time, spreads.spread_array);
+                        spread_default
+                    });
+            }
+        }
+
+        // Get max spread
+        let max_spread = Self::sort_option_array(spreads.spread_array)[3]; // 3 being that last value of the array
+
+        // Insert into spreads_sorted
+        if let Some(max_spread) = max_spread {
+            if max_spread > 0.0 {
+                self.spreads_sorted.insert(
+                    SpreadKey::new(
+                        spreads.sc_exchange,
+                        spreads.other_exchange,
+                        spreads.instrument.clone(),
+                    ),
+                    max_spread,
+                );
             }
         }
     }
@@ -656,16 +706,17 @@ impl SpotArbScanner {
                 }
             };
 
-            // Process spreads
-            while let Some(spread_change) = self.spread_change_queue.pop_front() {
-                // println!("###################");
-                // println!("{:?}", spread_change);
-                self.process_spread_change(spread_change);
-                // println!("{:#?}", self.spreads_sorted.by_value);
+            // Process spreads - Have to do queue with enums to avoid borrowing rule errors
+            while let Some(spread_change_process) = self.spread_change_queue.pop_front() {
+                match spread_change_process {
+                    SpreadChangeProcess::SpreadChange(spread_change) => {
+                        self.process_spread_change(spread_change)
+                    }
+                    SpreadChangeProcess::SpreadChangeCalculated(calculated_spreads) => {
+                        self.process_calculated_spreads(Utc::now(), calculated_spreads);
+                    }
+                }
             }
-
-            // println!("###################");
-            // println!("{:?}",self.exchange_data);
         }
     }
 }
@@ -744,13 +795,14 @@ mod test {
             htx_eth_ob.event_data.get_orderbook().unwrap().asks,
         );
 
-        // Binance spread change
+        // Process Binance spread change
         let binance_btc_spread_change = test_utils::spread_change(
             ExchangeId::BinanceSpot,
             Instrument::new("btc", "usdt"),
             Some(Level::new(12.22, 9.0)),
             Some(Level::new(15.12, 18.03)),
         );
+        scanner.process_spread_change(binance_btc_spread_change);
 
         let binance_eth_spread_change = test_utils::spread_change(
             ExchangeId::BinanceSpot,
@@ -758,14 +810,16 @@ mod test {
             Some(Level::new(20.78, 9.255)),
             Some(Level::new(21.92, 18.78)),
         );
+        scanner.process_spread_change(binance_eth_spread_change);
 
-        // Htx spread change
+        // Process Htx spread change
         let htx_btc_spread_change = test_utils::spread_change(
             ExchangeId::HtxSpot,
             Instrument::new("btc", "usdt"),
             Some(Level::new(13.12, 3.0)),
             Some(Level::new(18.02, 19.03)),
         );
+        scanner.process_spread_change(htx_btc_spread_change);
 
         let htx_eth_spread_change = test_utils::spread_change(
             ExchangeId::HtxSpot,
@@ -773,27 +827,74 @@ mod test {
             Some(Level::new(20.0, 9.5)),
             Some(Level::new(22.87, 11.78)),
         );
+        scanner.process_spread_change(htx_eth_spread_change);
 
-        // Expected Spreads
-        let binance_htx_btc_take_take = 0.0;
-        let binance_htx_btc_take_make = 0.0;
-        let binance_htx_btc_make_take = 0.0;
-        let binance_htx_btc_make_make = 0.0;
+        // Expected spread changes
+        let binance_htx_btc_take_take = (13.5 / 15.12) - 1.0; // -0.107
+        let binance_htx_btc_take_make = (14.5 / 15.12) - 1.0; // -0.0410
+        let binance_htx_btc_make_take = (13.5 / 12.22) - 1.0; // 0.1047 --> doesn't get inserted as not the best spread for given instrument
+        let binance_htx_btc_make_make = (14.5 / 12.22) - 1.0; // 0.1866 --> 1
 
-        let binance_htx_eth_take_take = 0.0;
-        let binance_htx_eth_take_make = 0.0;
-        let binance_htx_eth_make_take = 0.0;
-        let binance_htx_eth_make_make = 0.0;
+        let binance_htx_eth_take_take = (19.22 / 21.92) - 1.0; // -0.1231
+        let binance_htx_eth_take_make = (20.11 / 21.92) - 1.0; // -0.0826
+        let binance_htx_eth_make_take = (19.22 / 20.78) - 1.0; // -0.0751
+        let binance_htx_eth_make_make = (20.11 / 20.78) - 1.0; // -0.3224
 
-        let htx_binance_btc_take_take = 0.0;
-        let htx_binance_btc_take_make = 0.0;
-        let htx_binance_btc_make_take = 0.0;
-        let htx_binance_btc_make_make = 0.0;
+        let htx_binance_btc_take_take = (12.0 / 18.02) - 1.0; // -0.3340
+        let htx_binance_btc_take_make = (13.0 / 18.02) - 1.0; // -0.2786
+        let htx_binance_btc_make_take = (12.0 / 13.12) - 1.0; // -0.0853
+        let htx_binance_btc_make_make = (13.0 / 13.12) - 1.0; // -0.0091
 
-        let htx_binance_eth_take_take = 0.0;
-        let htx_binance_eth_take_make = 0.0;
-        let htx_binance_eth_make_take = 0.0;
-        let htx_binance_eth_make_make = 0.0;
+        let htx_binance_eth_take_take = (20.0 / 22.87) - 1.0; // -0.1255
+        let htx_binance_eth_take_make = (21.0 / 22.87) - 1.0; // -0.8177
+        let htx_binance_eth_make_take = (20.0 / 20.0) - 1.0; // 0.0
+        let htx_binance_eth_make_make = (21.0 / 20.0) - 1.0; // 0.05 --> 2
+
+        // Spread history
+        let mut binance_btc_spread_history = SpreadHistory::default();
+
+        binance_btc_spread_history
+            .take_take
+            .push(Utc::now(), binance_htx_btc_take_take);
+
+        binance_btc_spread_history
+            .take_make
+            .push(Utc::now(), binance_htx_btc_take_make);
+
+        binance_btc_spread_history
+            .make_take
+            .push(Utc::now(), binance_htx_btc_make_take);
+
+        binance_btc_spread_history
+            .make_take
+            .push(Utc::now(), binance_htx_btc_make_make);
+
+        // Expected spread
+        let mut expected_spread = SpreadsSorted::new();
+
+        let binance_htx_btc = SpreadKey::new(
+            ExchangeId::BinanceSpot,
+            ExchangeId::HtxSpot,
+            Instrument::new("btc", "usdt"),
+        );
+
+        let htx_binance_eth = SpreadKey::new(
+            ExchangeId::HtxSpot,
+            ExchangeId::BinanceSpot,
+            Instrument::new("eth", "usdt"),
+        );
+
+        expected_spread.insert(binance_htx_btc, binance_htx_btc_make_make);
+        expected_spread.insert(htx_binance_eth, htx_binance_eth_make_make);
+
+        // Trigger spread change queue manually
+        let result = scanner.spreads_sorted.snapshot();
+        let expected = expected_spread.snapshot();
+
+        // assert_eq!(result, expected);
+
+        // println!("{:#?}", binance_btc_spread_history);
+        println!("{:#?}", scanner);
     }
 
     #[test]

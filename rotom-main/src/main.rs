@@ -127,7 +127,7 @@ pub async fn main() {
 
     // Scanner
     let scanner = SpotArbScanner::new(network, market_data_rx);
-    scanner.run()
+    scanner.run();
 
     // let test = OkxSpotPublicData::get_network_info(instruments)
     //     .await
@@ -203,6 +203,7 @@ fn init_logging() {
 }
 
 // Todo:
+// Have to manually trigger event queue
 // Ascendex too many requests, need something to stop sending too many requests
 // write test
 // Change coin in NetworkSpecData to be a type not string
