@@ -21,7 +21,7 @@ use tracing::warn;
 /*----- */
 // VecDeque - Time based
 /*----- */
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct VecDequeTime<T> {
     pub data: VecDeque<(DateTime<Utc>, T)>,
     pub window: Duration,
@@ -70,7 +70,7 @@ impl<T> VecDequeTime<T> {
 /*----- */
 // Scanner market data
 /*----- */
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct InstrumentMarketData {
     pub bids: Vec<Level>,
     pub asks: Vec<Level>,
@@ -130,7 +130,7 @@ pub struct InstrumentMarketDataMap(pub HashMap<Instrument, InstrumentMarketData>
 #[derive(Debug, Default, PartialEq)]
 pub struct ExchangeMarketDataMap(pub HashMap<ExchangeId, InstrumentMarketDataMap>);
 
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default, PartialEq, Clone)]
 pub struct SpreadHistoryMap(pub HashMap<ExchangeId, SpreadHistory>);
 
 #[derive(Debug, Default)]
@@ -139,7 +139,7 @@ pub struct NetworkStatusMap(pub HashMap<(ExchangeId, Coin), NetworkSpecData>);
 /*----- */
 // Spread History
 /*----- */
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default, PartialEq, Clone)]
 pub struct SpreadHistory {
     pub take_take: VecDequeTime<f64>,
     pub take_make: VecDequeTime<f64>,
@@ -565,6 +565,7 @@ impl SpotArbScanner {
     }
 
     fn process_calculated_spreads(&mut self, time: DateTime<Utc>, spreads: SpreadsCalculated) {
+        // Update spread history of spread change exchange
         if let Some(sc_market_data_map) = self.exchange_data.0.get_mut(&spreads.sc_exchange) {
             if let Some(sc_market_data) = sc_market_data_map.0.get_mut(&spreads.instrument) {
                 sc_market_data
@@ -583,8 +584,8 @@ impl SpotArbScanner {
             }
         }
 
-        // Get max spread
-        let max_spread = Self::sort_option_array(spreads.spread_array)[3]; // 3 being that last value of the array
+        // Get max spread - index into 3 as it is the last value of the array
+        let max_spread = Self::sort_option_array(spreads.spread_array)[3];
 
         // Insert into spreads_sorted
         if let Some(max_spread) = max_spread {
@@ -728,18 +729,397 @@ impl SpotArbScanner {
 #[cfg(test)]
 mod test {
     use chrono::TimeZone;
+    use rotom_data::model::network_info::ChainSpecs;
 
     use crate::mock_data::test_utils;
 
     use super::*;
 
+    struct TestCase {
+        name: &'static str,
+        old_bid: Level,
+        old_ask: Level,
+        new_bid: Level,
+        new_ask: Level,
+        expected: Option<SpreadChange>,
+    }
+
+    #[test]
+    fn test_network_status() {
+        // Create a scanner instance
+        let mut scanner = test_utils::spot_arb_scanner(); // Adjust based on your constructor
+
+        // Create initial network status
+        let mut initial_network_specs = HashMap::new();
+        let initial_chain_spec = ChainSpecs {
+            chain_name: "Ethereum".to_string(),
+            fee_is_fixed: true,
+            fees: 0.001,
+            can_deposit: true,
+            can_withdraw: true,
+        };
+
+        initial_network_specs.insert(
+            (ExchangeId::BinanceSpot, Coin(String::from("btc"))),
+            NetworkSpecData(vec![initial_chain_spec]),
+        );
+        scanner.network_status = NetworkStatusMap(initial_network_specs);
+
+        // Create new network status to process
+        let mut new_network_specs = HashMap::new();
+
+        // Updated specs for existing entry
+        let updated_chain_spec = ChainSpecs {
+            chain_name: "Ethereum".to_string(),
+            fee_is_fixed: false, // Changed
+            fees: 0.002,         // Changed
+            can_deposit: true,
+            can_withdraw: false, // Changed
+        };
+        new_network_specs.insert(
+            (ExchangeId::BinanceSpot, Coin(String::from("btc"))),
+            NetworkSpecData(vec![updated_chain_spec.clone()]),
+        );
+
+        // New entry
+        let new_chain_spec = ChainSpecs {
+            chain_name: "Solana".to_string(),
+            fee_is_fixed: true,
+            fees: 0.0001,
+            can_deposit: true,
+            can_withdraw: true,
+        };
+        new_network_specs.insert(
+            (ExchangeId::HtxSpot, Coin(String::from("sol"))),
+            NetworkSpecData(vec![new_chain_spec.clone()]),
+        );
+
+        // Process the new network status
+        scanner.process_network_status(NetworkSpecs(new_network_specs));
+
+        // Verify the results
+        let network_status = &scanner.network_status.0;
+
+        // Check updated entry
+        let binance_btc = network_status
+            .get(&(ExchangeId::BinanceSpot, Coin(String::from("btc"))))
+            .unwrap();
+
+        assert_eq!(binance_btc.0.len(), 1);
+        assert_eq!(binance_btc.0[0].chain_name, "Ethereum");
+        assert!(!binance_btc.0[0].fee_is_fixed);
+        assert_eq!(binance_btc.0[0].fees, 0.002);
+        assert!(!binance_btc.0[0].can_withdraw);
+
+        // Check new entry
+        let htx_sol = network_status
+            .get(&(ExchangeId::HtxSpot, Coin(String::from("sol"))))
+            .unwrap();
+
+        assert_eq!(htx_sol.0.len(), 1);
+        assert_eq!(htx_sol.0[0].chain_name, "Solana");
+        assert!(htx_sol.0[0].fee_is_fixed);
+        assert_eq!(htx_sol.0[0].fees, 0.0001);
+        assert!(htx_sol.0[0].can_withdraw);
+    }
+
+    #[test]
+    fn test_ws_status() {
+        // Init
+        let mut scanner = test_utils::spot_arb_scanner();
+
+        // New orderbook connection success notification arrives for new exchange instrument combo
+        scanner.process_ws_status(
+            ExchangeId::BinanceSpot,
+            Instrument::new("btc", "usdt"),
+            WsStatus::Connected(EventKind::OrderBook),
+        );
+
+        let result = scanner
+            .exchange_data
+            .0
+            .get(&ExchangeId::BinanceSpot)
+            .unwrap()
+            .0
+            .get(&Instrument::new("btc", "usdt"))
+            .unwrap();
+
+        let expected = InstrumentMarketData {
+            orderbook_ws_is_connected: true,
+            ..InstrumentMarketData::default()
+        };
+
+        assert_eq!(result, &expected);
+
+        // Trade connection success notification arrives
+        scanner.process_ws_status(
+            ExchangeId::BinanceSpot,
+            Instrument::new("btc", "usdt"),
+            WsStatus::Connected(EventKind::Trade),
+        );
+
+        let result = scanner
+            .exchange_data
+            .0
+            .get(&ExchangeId::BinanceSpot)
+            .unwrap()
+            .0
+            .get(&Instrument::new("btc", "usdt"))
+            .unwrap();
+
+        let expected = InstrumentMarketData {
+            orderbook_ws_is_connected: true,
+            trades_ws_is_connected: true,
+            ..InstrumentMarketData::default()
+        };
+
+        assert_eq!(result, &expected);
+
+        // Disconnection connectoin notification for orderbook arrives
+        scanner.process_ws_status(
+            ExchangeId::BinanceSpot,
+            Instrument::new("btc", "usdt"),
+            WsStatus::Disconnected(EventKind::OrderBook),
+        );
+
+        let result = scanner
+            .exchange_data
+            .0
+            .get(&ExchangeId::BinanceSpot)
+            .unwrap()
+            .0
+            .get(&Instrument::new("btc", "usdt"))
+            .unwrap();
+
+        let expected = InstrumentMarketData {
+            orderbook_ws_is_connected: false,
+            trades_ws_is_connected: true,
+            ..InstrumentMarketData::default()
+        };
+
+        assert_eq!(result, &expected);
+
+        // New trade connection success notification arrives for new exchange instrument combo
+        scanner.process_ws_status(
+            ExchangeId::HtxSpot,
+            Instrument::new("eth", "usdt"),
+            WsStatus::Connected(EventKind::Trade),
+        );
+
+        let result = scanner
+            .exchange_data
+            .0
+            .get(&ExchangeId::HtxSpot)
+            .unwrap()
+            .0
+            .get(&Instrument::new("eth", "usdt"))
+            .unwrap();
+
+        let expected = InstrumentMarketData {
+            trades_ws_is_connected: true,
+            ..InstrumentMarketData::default()
+        };
+
+        assert_eq!(result, &expected);
+
+        // Orderbook connection success arrives
+        scanner.process_ws_status(
+            ExchangeId::HtxSpot,
+            Instrument::new("eth", "usdt"),
+            WsStatus::Connected(EventKind::OrderBook),
+        );
+
+        let result = scanner
+            .exchange_data
+            .0
+            .get(&ExchangeId::HtxSpot)
+            .unwrap()
+            .0
+            .get(&Instrument::new("eth", "usdt"))
+            .unwrap();
+
+        let expected = InstrumentMarketData {
+            orderbook_ws_is_connected: true,
+            trades_ws_is_connected: true,
+            ..InstrumentMarketData::default()
+        };
+
+        assert_eq!(result, &expected);
+    }
+
+    #[test]
+    fn test_did_bba_change() {
+        let exchange = ExchangeId::BinanceSpot;
+        let instrument = Instrument::new("BTC", "USDT");
+
+        let test_cases = vec![
+            // Case 1: No changes
+            TestCase {
+                name: "no_changes",
+                old_bid: Level {
+                    price: 50000.0,
+                    size: 1.0,
+                },
+                old_ask: Level {
+                    price: 50100.0,
+                    size: 1.0,
+                },
+                new_bid: Level {
+                    price: 50000.0,
+                    size: 1.0,
+                },
+                new_ask: Level {
+                    price: 50100.0,
+                    size: 1.0,
+                },
+                expected: None,
+            },
+            // Case 2: Only bid changed
+            TestCase {
+                name: "bid_change_only",
+                old_bid: Level {
+                    price: 50000.0,
+                    size: 1.0,
+                },
+                old_ask: Level {
+                    price: 50100.0,
+                    size: 1.0,
+                },
+                new_bid: Level {
+                    price: 50050.0,
+                    size: 1.5,
+                },
+                new_ask: Level {
+                    price: 50100.0,
+                    size: 1.0,
+                },
+                expected: Some(SpreadChange::new_bid(
+                    exchange,
+                    instrument.clone(),
+                    Level {
+                        price: 50050.0,
+                        size: 1.5,
+                    },
+                )),
+            },
+            // Case 3: Only ask changed
+            TestCase {
+                name: "ask_change_only",
+                old_bid: Level {
+                    price: 50000.0,
+                    size: 1.0,
+                },
+                old_ask: Level {
+                    price: 50100.0,
+                    size: 1.0,
+                },
+                new_bid: Level {
+                    price: 50000.0,
+                    size: 1.0,
+                },
+                new_ask: Level {
+                    price: 50090.0,
+                    size: 2.0,
+                },
+                expected: Some(SpreadChange::new_ask(
+                    exchange,
+                    instrument.clone(),
+                    Level {
+                        price: 50090.0,
+                        size: 2.0,
+                    },
+                )),
+            },
+            // Case 4: Both bid and ask changed
+            TestCase {
+                name: "both_changed",
+                old_bid: Level {
+                    price: 50000.0,
+                    size: 1.0,
+                },
+                old_ask: Level {
+                    price: 50100.0,
+                    size: 1.0,
+                },
+                new_bid: Level {
+                    price: 50050.0,
+                    size: 1.5,
+                },
+                new_ask: Level {
+                    price: 50090.0,
+                    size: 2.0,
+                },
+                expected: Some({
+                    let mut change = SpreadChange::new_bid(
+                        exchange,
+                        instrument.clone(),
+                        Level {
+                            price: 50050.0,
+                            size: 1.5,
+                        },
+                    );
+                    change.add_ask(Level {
+                        price: 50090.0,
+                        size: 2.0,
+                    });
+                    change
+                }),
+            },
+        ];
+
+        for case in test_cases {
+            let result = SpotArbScanner::did_bba_change(
+                exchange,
+                instrument.clone(),
+                case.old_bid,
+                case.old_ask,
+                case.new_bid,
+                case.new_ask,
+            );
+
+            match (result, case.expected) {
+                (None, None) => (),
+                (Some(result_change), Some(expected_change)) => {
+                    assert_eq!(
+                        result_change.exchange, expected_change.exchange,
+                        "Failed on case {}: exchange mismatch",
+                        case.name
+                    );
+                    assert_eq!(
+                        result_change.instrument, expected_change.instrument,
+                        "Failed on case {}: instrument mismatch",
+                        case.name
+                    );
+                    assert_eq!(
+                        result_change.bid, expected_change.bid,
+                        "Failed on case {}: bids mismatch",
+                        case.name
+                    );
+                    assert_eq!(
+                        result_change.ask, expected_change.ask,
+                        "Failed on case {}: asks mismatch",
+                        case.name
+                    );
+                }
+                _ => panic!(
+                    "Failed on case {}: result and expected variants don't match",
+                    case.name
+                ),
+            }
+        }
+    }
+
     #[test]
     fn test_scanner_spread() {
+        /*----- */
         // Init
+        /*----- */
         let mut scanner = test_utils::spot_arb_scanner();
         let time = Utc::now();
 
+        /*----- */
         // Init Binance market data state
+        /*----- */
         let binance_btc_ob = test_utils::market_event_orderbook2(
             ExchangeId::BinanceSpot,
             Instrument::new("btc", "usdt"),
@@ -768,7 +1148,9 @@ mod test {
             binance_eth_ob.event_data.get_orderbook().unwrap().asks,
         );
 
-        // Init Binance market data state
+        /*----- */
+        // Init Htx market data state
+        /*----- */
         let htx_btc_ob = test_utils::market_event_orderbook2(
             ExchangeId::HtxSpot,
             Instrument::new("btc", "usdt"),
@@ -797,41 +1179,87 @@ mod test {
             htx_eth_ob.event_data.get_orderbook().unwrap().asks,
         );
 
-        // Process Binance spread change
-        let binance_btc_spread_change = test_utils::spread_change(
+        /*----- */
+        // New orderbook snapshot arrives for binance triggering a spread change
+        /*----- */
+        let binance_btc_spread_change = test_utils::market_event_orderbook2(
             ExchangeId::BinanceSpot,
             Instrument::new("btc", "usdt"),
-            Some(Level::new(12.22, 9.0)),
-            Some(Level::new(15.12, 18.03)),
+            vec![Level::new(12.22, 9.0)],
+            vec![Level::new(15.12, 18.03)],
         );
-        scanner.process_spread_change(binance_btc_spread_change);
 
-        let binance_eth_spread_change = test_utils::spread_change(
+        scanner.process_orderbook(
+            binance_btc_spread_change.exchange,
+            binance_btc_spread_change.instrument,
+            binance_btc_spread_change
+                .event_data
+                .get_orderbook()
+                .unwrap()
+                .bids,
+            binance_btc_spread_change
+                .event_data
+                .get_orderbook()
+                .unwrap()
+                .asks,
+        );
+
+        let binance_eth_spread_change = test_utils::market_event_orderbook2(
             ExchangeId::BinanceSpot,
             Instrument::new("eth", "usdt"),
-            Some(Level::new(20.78, 9.255)),
-            Some(Level::new(21.92, 18.78)),
+            vec![Level::new(20.78, 9.255)],
+            vec![Level::new(21.92, 18.78)],
         );
-        scanner.process_spread_change(binance_eth_spread_change);
 
-        // Process Htx spread change
-        let htx_btc_spread_change = test_utils::spread_change(
-            ExchangeId::HtxSpot,
-            Instrument::new("btc", "usdt"),
-            Some(Level::new(13.12, 3.0)),
-            Some(Level::new(18.02, 19.03)),
+        scanner.process_orderbook(
+            binance_eth_spread_change.exchange,
+            binance_eth_spread_change.instrument,
+            binance_eth_spread_change
+                .event_data
+                .get_orderbook()
+                .unwrap()
+                .bids,
+            binance_eth_spread_change
+                .event_data
+                .get_orderbook()
+                .unwrap()
+                .asks,
         );
-        scanner.process_spread_change(htx_btc_spread_change);
 
-        let htx_eth_spread_change = test_utils::spread_change(
-            ExchangeId::HtxSpot,
-            Instrument::new("eth", "usdt"),
-            Some(Level::new(20.0, 9.5)),
-            Some(Level::new(22.87, 11.78)),
-        );
-        scanner.process_spread_change(htx_eth_spread_change);
+        // Manually trigger SpreadChangeProcess for Binance
+        let binance_spread_change = std::mem::take(&mut scanner.spread_change_queue);
+        let mut binance_spread_changes = binance_spread_change
+            .into_iter()
+            .filter_map(|spread_change_process| {
+                if let SpreadChangeProcess::SpreadChange(spread_change) = spread_change_process {
+                    Some(spread_change)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<SpreadChange>>();
 
-        // Expected spread changes
+        scanner.process_spread_change(binance_spread_changes.remove(0));
+        scanner.process_spread_change(binance_spread_changes.remove(0));
+
+        let binance_spread_changes_calculated = std::mem::take(&mut scanner.spread_change_queue);
+        let mut binance_spread_changes_calculated = binance_spread_changes_calculated
+            .into_iter()
+            .filter_map(|spread_change_process| {
+                if let SpreadChangeProcess::SpreadsCalculated(spread_change_calculated) =
+                    spread_change_process
+                {
+                    Some(spread_change_calculated)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<SpreadsCalculated>>();
+
+        scanner.process_calculated_spreads(time, binance_spread_changes_calculated.remove(0));
+        scanner.process_calculated_spreads(time, binance_spread_changes_calculated.remove(0));
+
+        // Expected spreads for Binance
         let binance_htx_btc_take_take = (13.5 / 15.12) - 1.0; // -0.107
         let binance_htx_btc_take_make = (14.5 / 15.12) - 1.0; // -0.0410
         let binance_htx_btc_make_take = (13.5 / 12.22) - 1.0; // 0.1047 --> doesn't get inserted as not the best spread for given instrument
@@ -841,46 +1269,6 @@ mod test {
         let binance_htx_eth_take_make = (20.11 / 21.92) - 1.0; // -0.0826
         let binance_htx_eth_make_take = (19.22 / 20.78) - 1.0; // -0.0751
         let binance_htx_eth_make_make = (20.11 / 20.78) - 1.0; // -0.3224
-
-        let htx_binance_btc_take_take = (12.0 / 18.02) - 1.0; // -0.3340
-        let htx_binance_btc_take_make = (13.0 / 18.02) - 1.0; // -0.2786
-        let htx_binance_btc_make_take = (12.0 / 13.12) - 1.0; // -0.0853
-        let htx_binance_btc_make_make = (13.0 / 13.12) - 1.0; // -0.0091
-
-        let htx_binance_eth_take_take = (20.0 / 22.87) - 1.0; // -0.1255
-        let htx_binance_eth_take_make = (21.0 / 22.87) - 1.0; // -0.8177
-        let htx_binance_eth_make_take = (20.0 / 20.0) - 1.0; // 0.0
-        let htx_binance_eth_make_make = (21.0 / 20.0) - 1.0; // 0.05 --> 2
-
-        // Expected spread
-        let mut expected_spread = SpreadsSorted::new();
-
-        let binance_htx_btc = SpreadKey::new(
-            ExchangeId::BinanceSpot,
-            ExchangeId::HtxSpot,
-            Instrument::new("btc", "usdt"),
-        );
-
-        let htx_binance_eth = SpreadKey::new(
-            ExchangeId::HtxSpot,
-            ExchangeId::BinanceSpot,
-            Instrument::new("eth", "usdt"),
-        );
-
-        expected_spread.insert(binance_htx_btc, binance_htx_btc_make_make);
-        expected_spread.insert(htx_binance_eth, htx_binance_eth_make_make);
-
-        // Trigger spread change queue manually
-        while let Some(spread_calculated) = scanner.spread_change_queue.pop_front() {
-            if let SpreadChangeProcess::SpreadsCalculated(spreads) = spread_calculated {
-                scanner.process_calculated_spreads(time, spreads);
-            }
-        }
-
-        // Check spreads are sorted in the expected order
-        let result = scanner.spreads_sorted.snapshot();
-        let expected = expected_spread.snapshot();
-        assert_eq!(result, expected);
 
         // Check Binance btc spread history
         let mut binance_btc_spread_history = SpreadHistory::default();
@@ -901,7 +1289,7 @@ mod test {
             .make_make
             .push(time, binance_htx_btc_make_make);
 
-        let result_map = scanner
+        let result_map = &scanner
             .exchange_data
             .0
             .get(&ExchangeId::BinanceSpot)
@@ -909,12 +1297,12 @@ mod test {
             .0
             .get(&Instrument::new("btc", "usdt"))
             .unwrap()
-            .spreads
-            .borrow();
+            .clone();
 
+        let result_map = result_map.spreads.borrow();
         let result = result_map.0.get(&ExchangeId::HtxSpot).unwrap();
-        let expected = binance_btc_spread_history;
-        assert_eq!(result, &expected);
+        let expected = &binance_btc_spread_history;
+        assert_eq!(result, expected);
 
         // Check Binance eth spread history
         let mut binance_eth_spread_history = SpreadHistory::default();
@@ -943,12 +1331,104 @@ mod test {
             .0
             .get(&Instrument::new("eth", "usdt"))
             .unwrap()
-            .spreads
-            .borrow();
+            .clone();
 
+        let expected = &binance_eth_spread_history;
+        let result_map = result_map.spreads.borrow();
         let result = result_map.0.get(&ExchangeId::HtxSpot).unwrap();
-        let expected = binance_eth_spread_history;
-        assert_eq!(result, &expected);
+        assert_eq!(expected, result);
+
+        /*----- */
+        // New orderbook snapshot arrives for binance triggering a spread change
+        /*----- */
+        // Process Htx spread change
+        let htx_btc_spread_change = test_utils::market_event_orderbook2(
+            ExchangeId::HtxSpot,
+            Instrument::new("btc", "usdt"),
+            vec![Level::new(13.12, 3.0)],
+            vec![Level::new(18.02, 19.03)],
+        );
+
+        scanner.process_orderbook(
+            htx_btc_spread_change.exchange,
+            htx_btc_spread_change.instrument,
+            htx_btc_spread_change
+                .event_data
+                .get_orderbook()
+                .unwrap()
+                .bids,
+            htx_btc_spread_change
+                .event_data
+                .get_orderbook()
+                .unwrap()
+                .asks,
+        );
+
+        let htx_eth_spread_change = test_utils::market_event_orderbook2(
+            ExchangeId::HtxSpot,
+            Instrument::new("eth", "usdt"),
+            vec![Level::new(20.0, 9.5)],
+            vec![Level::new(22.87, 11.78)],
+        );
+
+        scanner.process_orderbook(
+            htx_eth_spread_change.exchange,
+            htx_eth_spread_change.instrument,
+            htx_eth_spread_change
+                .event_data
+                .get_orderbook()
+                .unwrap()
+                .bids,
+            htx_eth_spread_change
+                .event_data
+                .get_orderbook()
+                .unwrap()
+                .asks,
+        );
+
+        // Manually trigger SpreadChangeProcess for Htx
+        let htx_spread_change = std::mem::take(&mut scanner.spread_change_queue);
+        let mut htx_spread_changes = htx_spread_change
+            .into_iter()
+            .filter_map(|spread_change_process| {
+                if let SpreadChangeProcess::SpreadChange(spread_change) = spread_change_process {
+                    Some(spread_change)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<SpreadChange>>();
+
+        scanner.process_spread_change(htx_spread_changes.remove(0));
+        scanner.process_spread_change(htx_spread_changes.remove(0));
+
+        let htx_spread_changes_calculated = std::mem::take(&mut scanner.spread_change_queue);
+        let mut htx_spread_changes_calculated = htx_spread_changes_calculated
+            .into_iter()
+            .filter_map(|spread_change_process| {
+                if let SpreadChangeProcess::SpreadsCalculated(spread_change_calculated) =
+                    spread_change_process
+                {
+                    Some(spread_change_calculated)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<SpreadsCalculated>>();
+
+        scanner.process_calculated_spreads(time, htx_spread_changes_calculated.remove(0));
+        scanner.process_calculated_spreads(time, htx_spread_changes_calculated.remove(0));
+
+        // Expected spread for htx
+        let htx_binance_btc_take_take = (12.22 / 18.02) - 1.0;
+        let htx_binance_btc_take_make = (15.12 / 18.02) - 1.0;
+        let htx_binance_btc_make_take = (12.22 / 13.12) - 1.0;
+        let htx_binance_btc_make_make = (15.12 / 13.12) - 1.0; // 0.1524
+
+        let htx_binance_eth_take_take = (20.78 / 22.87) - 1.0;
+        let htx_binance_eth_take_make = (21.92 / 22.87) - 1.0;
+        let htx_binance_eth_make_take = (20.78 / 20.0) - 1.0;
+        let htx_binance_eth_make_make = (21.92 / 20.0) - 1.0; // 0.096
 
         // Check Htx btc spread history
         let mut htx_btc_spread_history = SpreadHistory::default();
@@ -977,12 +1457,12 @@ mod test {
             .0
             .get(&Instrument::new("btc", "usdt"))
             .unwrap()
-            .spreads
-            .borrow();
+            .clone();
 
+        let result_map = result_map.spreads.borrow();
         let result = result_map.0.get(&ExchangeId::BinanceSpot).unwrap();
-        let expected = htx_btc_spread_history;
-        assert_eq!(result, &expected);
+        let expected = &htx_btc_spread_history;
+        assert_eq!(result, expected);
 
         // Check eth btc spread history
         let mut htx_eth_spread_history = SpreadHistory::default();
@@ -1011,12 +1491,43 @@ mod test {
             .0
             .get(&Instrument::new("eth", "usdt"))
             .unwrap()
-            .spreads
-            .borrow();
+            .clone();
 
+        let result_map = result_map.spreads.borrow();
         let result = result_map.0.get(&ExchangeId::BinanceSpot).unwrap();
-        let expected = htx_eth_spread_history;
-        assert_eq!(result, &expected);
+        let expected = &htx_eth_spread_history;
+        assert_eq!(result, expected);
+
+        /*----- */
+        // Expected spread
+        /*----- */
+        let mut expected_spread = SpreadsSorted::new();
+
+        let binance_htx_btc = SpreadKey::new(
+            ExchangeId::BinanceSpot,
+            ExchangeId::HtxSpot,
+            Instrument::new("btc", "usdt"),
+        );
+
+        let htx_binance_btc = SpreadKey::new(
+            ExchangeId::HtxSpot,
+            ExchangeId::BinanceSpot,
+            Instrument::new("btc", "usdt"),
+        );
+
+        let htx_binance_eth = SpreadKey::new(
+            ExchangeId::HtxSpot,
+            ExchangeId::BinanceSpot,
+            Instrument::new("eth", "usdt"),
+        );
+
+        expected_spread.insert(binance_htx_btc, binance_htx_btc_make_make);
+        expected_spread.insert(htx_binance_btc, htx_binance_btc_make_make);
+        expected_spread.insert(htx_binance_eth, htx_binance_eth_make_make);
+
+        let result = scanner.spreads_sorted.snapshot();
+        let expected = expected_spread.snapshot();
+        assert_eq!(result, expected);
     }
 
     #[test]

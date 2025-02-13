@@ -203,7 +203,7 @@ fn init_logging() {
 }
 
 // Todo:
-// Have to manually trigger event queue
+// change spread change to be new orderbook events instread so it gets added to queue and trigger manually
 // Ascendex too many requests, need something to stop sending too many requests
 // write test
 // Change coin in NetworkSpecData to be a type not string

@@ -5,11 +5,11 @@ use crate::shared::subscription_models::{Coin, ExchangeId};
 #[derive(Debug)]
 pub struct NetworkSpecs(pub HashMap<(ExchangeId, Coin), NetworkSpecData>);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct NetworkSpecData(pub Vec<ChainSpecs>);
 
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct ChainSpecs {
     pub chain_name: String,
     // Some exchanges have fixed or percentage fees, if this value is true, then fee is fixed
