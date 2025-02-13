@@ -8,7 +8,6 @@ pub struct NetworkSpecs(pub HashMap<(ExchangeId, Coin), NetworkSpecData>);
 #[derive(Debug, Clone)]
 pub struct NetworkSpecData(pub Vec<ChainSpecs>);
 
-
 #[derive(Debug, Default, Clone)]
 pub struct ChainSpecs {
     pub chain_name: String,

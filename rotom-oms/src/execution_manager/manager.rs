@@ -3,7 +3,9 @@ use std::{collections::HashMap, sync::Arc};
 use futures::{future::Either, stream::FuturesUnordered, StreamExt};
 
 use rotom_data::{
-    exchange::PublicHttpConnector, model::ticker_info::TickerInfo, shared::subscription_models::Instrument, streams::dynamic_stream::ExchangeChannel, AssetFormatted
+    exchange::PublicHttpConnector, model::ticker_info::TickerInfo,
+    shared::subscription_models::Instrument, streams::dynamic_stream::ExchangeChannel,
+    AssetFormatted,
 };
 use tokio::sync::mpsc;
 use tracing::{debug, error};
