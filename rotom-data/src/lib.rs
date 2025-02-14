@@ -1,8 +1,9 @@
 pub mod assets;
 pub mod error;
-pub mod model;
 pub mod exchange;
 pub mod metric;
+pub mod model;
+pub mod playground;
 pub mod protocols;
 pub mod shared;
 pub mod streams;
@@ -66,6 +67,35 @@ impl From<(&ExchangeId, &Instrument)> for AssetFormatted {
             ExchangeId::PoloniexSpot => {
                 AssetFormatted(format!("{}_{}", instrument.base, instrument.quote).to_uppercase())
             }
+            ExchangeId::HtxSpot => {
+                AssetFormatted(format!("{}{}", instrument.base, instrument.quote))
+            }
+            ExchangeId::WooxSpot => AssetFormatted(
+                format!("SPOT_{}_{}", instrument.base, instrument.quote).to_uppercase(),
+            ),
+            ExchangeId::BitstampSpot => {
+                AssetFormatted(format!("{}{}", instrument.base, instrument.quote))
+            }
+            ExchangeId::CoinExSpot => {
+                AssetFormatted(format!("{}{}", instrument.base, instrument.quote).to_uppercase())
+            }
+            ExchangeId::OkxSpot => {
+                AssetFormatted(format!("{}-{}", instrument.base, instrument.quote).to_uppercase())
+            }
+            ExchangeId::KuCoinSpot => {
+                AssetFormatted(format!("{}-{}", instrument.base, instrument.quote).to_uppercase())
+            }
+            ExchangeId::ExmoSpot => {
+                AssetFormatted(format!("{}_{}", instrument.base, instrument.quote).to_uppercase())
+            }
+            ExchangeId::AscendExSpot => {
+                AssetFormatted(format!("{}/{}", instrument.base, instrument.quote).to_uppercase())
+            }
+            ExchangeId::PhemexSpot => AssetFormatted(format!(
+                "s{}{}",
+                instrument.base.to_uppercase(),
+                instrument.quote.to_uppercase()
+            )),
         }
     }
 }
@@ -105,6 +135,60 @@ impl From<(&ExchangeId, &Instrument)> for ExchangeAssetId {
                 )
                 .to_uppercase(),
             ),
+            ExchangeId::HtxSpot => ExchangeAssetId(format!(
+                "{}_{}{}",
+                exchange.as_str(),
+                instrument.base,
+                instrument.quote
+            )),
+            ExchangeId::WooxSpot => ExchangeAssetId(format!(
+                "{}_SPOT_{}_{}",
+                exchange.as_str(),
+                instrument.base.to_uppercase(),
+                instrument.quote.to_uppercase()
+            )),
+            ExchangeId::BitstampSpot => ExchangeAssetId(format!(
+                "{}_{}{}",
+                exchange.as_str(),
+                instrument.base,
+                instrument.quote
+            )),
+            ExchangeId::CoinExSpot => ExchangeAssetId(format!(
+                "{}_{}{}",
+                exchange.as_str(),
+                instrument.base.to_uppercase(),
+                instrument.quote.to_uppercase()
+            )),
+            ExchangeId::OkxSpot => ExchangeAssetId(format!(
+                "{}_{}-{}",
+                exchange.as_str(),
+                instrument.base.to_uppercase(),
+                instrument.quote.to_uppercase()
+            )),
+            ExchangeId::KuCoinSpot => ExchangeAssetId(format!(
+                "{}_{}-{}",
+                exchange.as_str(),
+                instrument.base.to_uppercase(),
+                instrument.quote.to_uppercase()
+            )),
+            ExchangeId::ExmoSpot => ExchangeAssetId(format!(
+                "{}_{}_{}",
+                exchange.as_str(),
+                instrument.base.to_uppercase(),
+                instrument.quote.to_uppercase()
+            )),
+            ExchangeId::AscendExSpot => ExchangeAssetId(format!(
+                "{}_{}/{}",
+                exchange.as_str(),
+                instrument.base.to_uppercase(),
+                instrument.quote.to_uppercase()
+            )),
+            ExchangeId::PhemexSpot => ExchangeAssetId(format!(
+                "{}_s{}{}",
+                exchange.as_str(),
+                instrument.base.to_uppercase(),
+                instrument.quote.to_uppercase()
+            )),
         }
     }
 }

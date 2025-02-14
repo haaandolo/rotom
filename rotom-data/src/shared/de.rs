@@ -1,8 +1,4 @@
-use serde::{
-    de::{SeqAccess, Visitor},
-    Deserialize, Deserializer, Serializer,
-};
-use std::{fmt, marker::PhantomData};
+use serde::{Deserialize, Deserializer, Serializer};
 
 // Deserialize a `String` as the desired type.
 pub fn de_str<'de, D, T>(deserializer: D) -> Result<T, D::Error>
@@ -13,6 +9,24 @@ where
 {
     let data: &str = serde::de::Deserialize::deserialize(deserializer)?;
     data.parse::<T>().map_err(serde::de::Error::custom)
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum StrOrFloat<'a> {
+    Str(&'a str),
+    Float(f64),
+}
+
+pub fn de_flexi_float<'de, D>(deserializer: D) -> Result<f64, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = StrOrFloat::deserialize(deserializer)?;
+    match value {
+        StrOrFloat::Str(s) => s.parse().map_err(serde::de::Error::custom),
+        StrOrFloat::Float(f) => Ok(f),
+    }
 }
 
 // Deserialize a symbol to a be lowercase and non-snake or camel case
@@ -73,6 +87,27 @@ where
     })
 }
 
+// Deserialise string u64 to DateTime<Utc> in nanoseconds
+pub fn de_str_u64_epoch_ns_as_datetime_utc<'de, D>(
+    deserializer: D,
+) -> Result<chrono::DateTime<chrono::Utc>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    de_str(deserializer).map(chrono::DateTime::<chrono::Utc>::from_timestamp_nanos)
+}
+
+// Deserialise string u64 to DateTime<Utc> in nanoseconds
+pub fn de_u64_epoch_ns_as_datetime_utc<'de, D>(
+    deserializer: D,
+) -> Result<chrono::DateTime<chrono::Utc>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    serde::de::Deserialize::deserialize(deserializer)
+        .map(|epoch_ns| datetime_utc_from_epoch_duration(std::time::Duration::from_nanos(epoch_ns)))
+}
+
 // Deserialize a &str "f64" seconds value as `DateTime<Utc>`.
 pub fn de_str_f64_epoch_s_as_datetime_utc<'de, D>(
     deserializer: D,
@@ -85,48 +120,9 @@ where
     })
 }
 
-// Deserialize a non empty vec else return None
-pub fn deserialize_non_empty_vec<'de, D, T>(deserializer: D) -> Result<Option<Vec<T>>, D::Error>
-where
-    D: Deserializer<'de>,
-    T: Deserialize<'de>,
-{
-    struct NonEmptyVecVisitor<T>(PhantomData<T>);
-
-    impl<'de, T> Visitor<'de> for NonEmptyVecVisitor<T>
-    where
-        T: Deserialize<'de>,
-    {
-        type Value = Option<Vec<T>>;
-
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            formatter.write_str("a sequence")
-        }
-
-        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-        where
-            A: SeqAccess<'de>,
-        {
-            match seq.next_element()? {
-                Some(first) => {
-                    let mut vec = Vec::with_capacity(seq.size_hint().unwrap_or(4));
-                    vec.push(first);
-                    while let Some(element) = seq.next_element()? {
-                        vec.push(element);
-                    }
-                    Ok(Some(vec))
-                }
-                None => Ok(None),
-            }
-        }
-    }
-
-    deserializer.deserialize_seq(NonEmptyVecVisitor(PhantomData))
-}
-
 // Deserialise a optional str. For example value to deserialise is "69.69". This
 // de will return Some(69.69) if exists. If value to derserialise is "1000", it
-// will return Some(1000) if exists. None the value you are de has to be a string.
+// will return Some(1000.0) if exists. The value you are de has to be a string.
 // But the optional value you want to de can be anything
 pub fn de_str_optional<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
 where
@@ -147,4 +143,29 @@ where
     S: Serializer,
 {
     serializer.serialize_str(&value.to_string().to_uppercase())
+}
+
+pub fn de_string_or_i32<'de, D>(deserializer: D) -> Result<i32, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum StringOrNumber {
+        String(String),
+        Number(i32),
+    }
+
+    match StringOrNumber::deserialize(deserializer)? {
+        StringOrNumber::String(s) => s.parse::<i32>().map_err(serde::de::Error::custom),
+        StringOrNumber::Number(n) => Ok(n),
+    }
+}
+
+// Deserialise a value to uppercase
+pub fn de_uppercase<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    String::deserialize(deserializer).map(|s| s.to_uppercase())
 }

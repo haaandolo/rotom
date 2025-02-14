@@ -73,9 +73,9 @@ impl From<&Instrument> for BinanceSymbol {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all(deserialize = "SCREAMING_SNAKE_CASE"))]
 pub enum BinanceOrderStatus {
-    New, 
+    New,
     Canceled,
-    Rejected, 
+    Rejected,
     Expired,
     PendingNew,
     PartiallyFilled,

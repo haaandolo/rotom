@@ -6,8 +6,8 @@ use std::{collections::HashMap, fmt::Debug, marker::PhantomData};
 use crate::{
     assets::orderbook::OrderBook,
     error::SocketError,
+    exchange::{Identifier, PublicStreamConnector},
     model::{event_book::EventOrderBook, market_event::MarketEvent, SubKind},
-    exchange::{Connector, Identifier},
     shared::subscription_models::{ExchangeSubscription, Instrument},
 };
 
@@ -79,7 +79,7 @@ where
 impl<Exchange, Updater, StreamKind> ExchangeTransformer<Exchange, Updater::UpdateEvent, StreamKind>
     for MultiBookTransformer<Exchange, Updater, StreamKind>
 where
-    Exchange: Connector + Sync,
+    Exchange: PublicStreamConnector + Sync,
     Exchange::Market: AsRef<str>,
     StreamKind: SubKind<Event = EventOrderBook>,
     Updater: OrderBookUpdater<OrderBook = OrderBook> + Debug,
@@ -123,7 +123,7 @@ where
 impl<Exchange, Updater, StreamKind> Transformer
     for MultiBookTransformer<Exchange, Updater, StreamKind>
 where
-    Exchange: Connector,
+    Exchange: PublicStreamConnector,
     StreamKind: SubKind<Event = EventOrderBook>,
     Updater: OrderBookUpdater<OrderBook = OrderBook> + Debug,
     Updater::UpdateEvent: Identifier<String> + for<'de> Deserialize<'de>,

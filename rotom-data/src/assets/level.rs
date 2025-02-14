@@ -1,21 +1,30 @@
+use rand::Rng;
 use serde::Deserialize;
 use std::{cmp::Ordering, fmt::Display};
 
-use crate::shared::de::de_str;
+use crate::shared::de::de_flexi_float;
 
 #[derive(Default, Debug, Clone, Copy, Deserialize)]
 pub struct Level {
-    #[serde(deserialize_with = "de_str")]
+    #[serde(deserialize_with = "de_flexi_float")]
     pub price: f64,
-    #[serde(deserialize_with = "de_str")]
+    #[serde(deserialize_with = "de_flexi_float")]
     pub size: f64,
 }
 
 impl Level {
     pub fn new(price: f64, size: f64) -> Self {
+        Self { price, size }
+    }
+
+    // Used for testing
+    pub fn new_random() -> Self {
+        let price_random = rand::thread_rng().gen::<f64>();
+        let size_random = rand::thread_rng().gen::<f64>();
+
         Self {
-            price,
-            size
+            price: price_random,
+            size: size_random,
         }
     }
 }

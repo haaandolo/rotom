@@ -1,9 +1,22 @@
+pub mod ascendex;
 pub mod binance;
+pub mod bitstamp;
+pub mod coinex;
+pub mod exmo;
+pub mod htx;
+pub mod kucoin;
+pub mod okx;
+pub mod phemex;
 pub mod poloniex;
+pub mod woox;
 
+use async_trait::async_trait;
+use serde::de::DeserializeOwned;
 use std::{fmt::Debug, time::Duration};
 
-use serde::de::DeserializeOwned;
+use crate::{
+    error::SocketError, model::ticker_info::TickerInfo, shared::subscription_models::Instrument,
+};
 
 use super::{
     model::SubKind,
@@ -18,15 +31,14 @@ pub const DEFAULT_SUBSCRIPTION_TIMEOUT: Duration = Duration::from_secs(10);
 /*----- */
 // Exchange connector trait
 /*----- */
-pub trait Connector {
-    type ExchangeId;
+pub trait PublicStreamConnector {
+    const ID: ExchangeId;
+
     type Channel: Send + Sync;
     type Market: Send + Sync;
     type SubscriptionResponse: DeserializeOwned + Validator + Send + Debug;
 
-    const ID: ExchangeId;
-
-    fn url() -> &'static str;
+    fn url() -> impl Into<String>;
 
     fn ping_interval() -> Option<PingInterval> {
         None
@@ -53,11 +65,33 @@ pub trait Connector {
 }
 
 /*----- */
+// Exchange http connector
+/*----- */
+#[async_trait]
+pub trait PublicHttpConnector {
+    type BookSnapShot: Send + Debug;
+    type ExchangeTickerInfo: Into<TickerInfo> + Send + Debug;
+    type NetworkInfo: Send + Debug;
+
+    const ID: ExchangeId;
+
+    async fn get_book_snapshot(instrument: Instrument) -> Result<Self::BookSnapShot, SocketError>;
+
+    async fn get_ticker_info(
+        instrument: Instrument,
+    ) -> Result<Self::ExchangeTickerInfo, SocketError>;
+
+    async fn get_network_info(
+        instruments: Vec<Instrument>,
+    ) -> Result<Self::NetworkInfo, SocketError>;
+}
+
+/*----- */
 // Stream Selector
 /*----- */
 pub trait StreamSelector<Exchange, StreamKind>
 where
-    Exchange: Connector,
+    Exchange: PublicStreamConnector,
     StreamKind: SubKind,
 {
     type Stream;
@@ -69,4 +103,13 @@ where
 /*----- */
 pub trait Identifier<T> {
     fn id(&self) -> T;
+}
+
+/*----- */
+// DELETE - only here to satisfy trait req
+/*----- */
+impl From<serde_json::Value> for TickerInfo {
+    fn from(_value: serde_json::Value) -> Self {
+        unimplemented!()
+    }
 }

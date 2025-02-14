@@ -10,13 +10,15 @@ use futures::{
 use poll_next::ExchangeStream;
 use serde_json::Value;
 use tokio::{net::TcpStream, time::sleep, time::Duration};
-use tokio_tungstenite::{connect_async, tungstenite::client::IntoClientRequest, MaybeTlsStream, WebSocketStream};
+use tokio_tungstenite::{
+    connect_async, tungstenite::client::IntoClientRequest, MaybeTlsStream, WebSocketStream,
+};
 use tracing::{debug, info};
 
 use crate::{
     error::SocketError,
+    exchange::{Identifier, PublicStreamConnector, StreamSelector},
     model::SubKind,
-    exchange::{Connector, Identifier, StreamSelector},
     shared::subscription_models::{ExchangeSubscription, Subscription},
     streams::validator::{SubscriptionValidator, WebSocketValidator},
     transformer::ExchangeTransformer,
@@ -43,7 +45,12 @@ impl WebSocketClient {
     ) -> Result<ExchangeStream<Exchange::StreamTransformer>, SocketError>
     where
         StreamKind: SubKind,
-        Exchange: Connector + StreamSelector<Exchange, StreamKind> + Send + Clone + Debug + Sync,
+        Exchange: PublicStreamConnector
+            + StreamSelector<Exchange, StreamKind>
+            + Send
+            + Clone
+            + Debug
+            + Sync,
         Exchange::StreamTransformer: ExchangeTransformer<Exchange, Exchange::Stream, StreamKind>,
         Subscription<Exchange, StreamKind>:
             Identifier<Exchange::Channel> + Identifier<Exchange::Market> + Debug,
@@ -57,7 +64,7 @@ impl WebSocketClient {
 
         // Make stream connection
         let mut tasks = Vec::new();
-        let ws = connect(Exchange::url()).await?;
+        let ws = connect(Exchange::url().into()).await?;
 
         // Split WS and make into read and write
         let (mut ws_write, ws_read) = ws.split();
@@ -76,7 +83,7 @@ impl WebSocketClient {
             tasks.push(ping_handler);
         }
 
-        // Make instruments to for transformer
+        // Make instruments for transformer
         let instruments = subs
             .iter()
             .map(|sub| sub.instrument.clone())
@@ -88,7 +95,8 @@ impl WebSocketClient {
         info!(
             exchange = %exchange_id,
             message = "Subscribed to WebSocket",
-            instruments = ?instruments
+            instruments = ?instruments,
+            stream_kind =  ?StreamKind::EVENTKIND,
         );
 
         Ok(ExchangeStream::new(validated_stream, transformer, tasks))

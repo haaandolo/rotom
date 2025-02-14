@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use futures::StreamExt;
 use rotom_data::error::SocketError;
+use rotom_data::exchange::binance::BinanceSpotPublicData;
 use rotom_data::protocols::http::client::RestClient;
 use rotom_data::protocols::http::http_parser::StandardHttpParser;
 use rotom_data::protocols::ws::connect;
@@ -11,14 +12,15 @@ use crate::exchange::binance::requests::new_order::BinanceNewOrder;
 use crate::exchange::binance::requests::wallet_transfer::BinanceWalletTransfer;
 use crate::exchange::AccountDataWebsocket;
 use crate::exchange::ExecutionClient;
-use crate::model::order::CancelOrder;
-use crate::model::order::OpenOrder;
-use crate::model::order::WalletTransfer;
+use crate::model::execution_request::CancelOrder;
+use crate::model::execution_request::OpenOrder;
+use crate::model::execution_request::Order;
+use crate::model::execution_request::WalletTransfer;
+use crate::model::execution_response::AccountBalance;
 
 use super::request_builder::BinanceRequestBuilder;
 use super::requests::account_data::BinanceAccountEvents;
 use super::requests::balance::BinanceBalance;
-use super::requests::balance::BinanceBalanceResponse;
 use super::requests::cancel_order::BinanceCancelAllOrder;
 use super::requests::cancel_order::BinanceCancelOrderResponse;
 use super::requests::listening_key::BinanceListeningKey;
@@ -41,6 +43,7 @@ pub struct BinanceExecution {
 impl ExecutionClient for BinanceExecution {
     const CLIENT: ExchangeId = ExchangeId::BinanceSpot;
 
+    type PublicData = BinanceSpotPublicData;
     type CancelResponse = BinanceCancelOrderResponse;
     type CancelAllResponse = Vec<BinanceCancelOrderResponse>;
     type NewOrderResponse = BinanceNewOrderResponses;
@@ -70,24 +73,24 @@ impl ExecutionClient for BinanceExecution {
 
     async fn open_order(
         &self,
-        open_requests: OpenOrder,
+        open_requests: Order<OpenOrder>,
     ) -> Result<Self::NewOrderResponse, SocketError> {
         let response = self
             .http_client
-            .execute(BinanceNewOrder::new(&open_requests)?)
+            .execute(BinanceNewOrder::new(open_requests)?)
             .await?;
         Ok(response.0)
     }
 
     async fn cancel_order(
         &self,
-        cancel_request: CancelOrder,
+        cancel_request: Order<CancelOrder>,
     ) -> Result<Self::CancelResponse, SocketError> {
         let response = self
             .http_client
             .execute(BinanceCancelOrder::new(
-                cancel_request.id,
-                cancel_request.symbol,
+                cancel_request.cid.0,
+                cancel_request.request.symbol,
             )?)
             .await?;
         Ok(response.0)
@@ -95,56 +98,36 @@ impl ExecutionClient for BinanceExecution {
 
     async fn cancel_order_all(
         &self,
-        cancel_request: CancelOrder,
+        cancel_request: Order<CancelOrder>,
     ) -> Result<Self::CancelAllResponse, SocketError> {
         let response = self
             .http_client
-            .execute(BinanceCancelAllOrder::new(cancel_request.symbol)?)
+            .execute(BinanceCancelAllOrder::new(cancel_request.request.symbol)?)
             .await?;
         Ok(response.0)
     }
 
     async fn wallet_transfer(
         &self,
-        wallet_transfer_request: WalletTransfer,
+        wallet_transfer_request: Order<WalletTransfer>,
     ) -> Result<Self::WalletTransferResponse, SocketError> {
         let response = self
             .http_client
             .execute(BinanceWalletTransfer::new(
-                wallet_transfer_request.coin,
-                wallet_transfer_request.wallet_address,
-                wallet_transfer_request.network,
-                wallet_transfer_request.amount,
+                wallet_transfer_request.request.coin,
+                wallet_transfer_request.request.wallet_address,
+                wallet_transfer_request.request.network,
+                wallet_transfer_request.request.amount,
             )?)
             .await?;
         Ok(response.0)
     }
-}
 
-/*----- */
-// Binance Private Data
-/*----- */
-#[derive(Debug)]
-pub struct BinancePrivateData {
-    pub http_client: BinanceRestClient,
-}
-
-impl Default for BinancePrivateData {
-    fn default() -> Self {
-        BinancePrivateData::new()
-    }
-}
-
-impl BinancePrivateData {
-    pub fn new() -> Self {
+    async fn get_balances() -> Result<Vec<AccountBalance>, SocketError> {
         let http_client =
             RestClient::new(BINANCE_BASE_URL, StandardHttpParser, BinanceRequestBuilder);
-        Self { http_client }
-    }
-
-    #[inline]
-    pub async fn get_balance_all(&self) -> Result<BinanceBalanceResponse, SocketError> {
-        let response = self.http_client.execute(BinanceBalance::new()?).await?;
-        Ok(response.0)
+        let response = http_client.execute(BinanceBalance::new()?).await?;
+        let account_data: Vec<AccountBalance> = response.0.into();
+        Ok(account_data)
     }
 }

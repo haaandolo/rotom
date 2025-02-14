@@ -6,8 +6,8 @@ use uuid::Uuid;
 
 use crate::{
     model::{
-        account_data::{AccountDataBalance, AccountDataBalanceDelta},
         balance::{Balance, SpotBalanceId},
+        execution_response::{AccountBalance, AccountBalanceDelta},
     },
     portfolio::{
         position::{determine_position_id, Position, PositionId},
@@ -41,7 +41,7 @@ impl SpotInMemoryRepository {
         Ok(())
     }
 
-    pub fn update_balance(&mut self, balance_update: &AccountDataBalance) {
+    pub fn update_balance(&mut self, balance_update: &AccountBalance) {
         let balance_id = SpotBalanceId::from(balance_update);
         match self.current_balance.get_mut(&balance_id) {
             Some(balance) => {
@@ -57,7 +57,7 @@ impl SpotInMemoryRepository {
         }
     }
 
-    pub fn update_balance_delta(&mut self, balance_delta: &AccountDataBalanceDelta) {
+    pub fn update_balance_delta(&mut self, balance_delta: &AccountBalanceDelta) {
         let balance_id = SpotBalanceId::from(balance_delta);
         match self.current_balance.get_mut(&balance_id) {
             Some(balance) => {

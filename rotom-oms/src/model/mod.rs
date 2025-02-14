@@ -1,7 +1,11 @@
-pub mod account_data;
 pub mod balance;
+pub mod execution_request;
+pub mod execution_response;
 pub mod order;
 
+use chrono::{DateTime, Utc};
+use rand::seq::SliceRandom;
+use rotom_data::shared::subscription_models::ExchangeId;
 use rotom_strategy::Decision;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -9,11 +13,42 @@ use std::{
     fmt::{Display, Formatter},
 };
 
+use crate::execution_manager::builder::TraderId;
+
 /*----- */
 // Client Order Id
 /*----- */
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Deserialize, Serialize)]
-pub struct ClientOrderId(pub String); // can be smolstr probs
+pub struct ClientOrderId<T = String>(pub T); // can be smolstr probs
+
+impl ClientOrderId<String> {
+    pub fn new<S: Into<String>>(id: S) -> Self {
+        Self(id.into())
+    }
+
+    pub fn random() -> Self {
+        const LEN_URL_SAFE_SYMBOLS: usize = 64;
+        const URL_SAFE_SYMBOLS: [char; LEN_URL_SAFE_SYMBOLS] = [
+            '_', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e',
+            'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+            'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+            'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+        ];
+
+        const LEN_RANDOM_ID: usize = 23; // Kept same length for compatibility
+        let mut thread_rng = rand::thread_rng();
+        let random_utf8: [u8; LEN_RANDOM_ID] = std::array::from_fn(|_| {
+            let symbol = URL_SAFE_SYMBOLS
+                .choose(&mut thread_rng)
+                .expect("URL_SAFE_SYMBOLS slice is not empty");
+            *symbol as u8
+        });
+
+        let random_utf8_str =
+            std::str::from_utf8(&random_utf8).expect("URL_SAFE_SYMBOLS are valid utf8");
+        Self(random_utf8_str.to_string())
+    }
+}
 
 /*----- */
 // Order Id
@@ -71,11 +106,6 @@ impl std::fmt::Display for Side {
 pub enum OrderKind {
     Market,
     Limit,
-    StopLoss,
-    StopLossLimit,
-    TakeProfit,
-    TakeProfitLimit,
-    LimitMaker,
 }
 
 impl AsRef<str> for OrderKind {
@@ -83,11 +113,6 @@ impl AsRef<str> for OrderKind {
         match self {
             OrderKind::Market => "market",
             OrderKind::Limit => "limit",
-            OrderKind::LimitMaker => "limit maker",
-            OrderKind::StopLoss => "stop loss",
-            OrderKind::StopLossLimit => "stop loss limit",
-            OrderKind::TakeProfit => "take profit",
-            OrderKind::TakeProfitLimit => "take profit limit",
         }
     }
 }
@@ -100,11 +125,6 @@ impl Display for OrderKind {
             match self {
                 OrderKind::Market => "market",
                 OrderKind::Limit => "limit",
-                OrderKind::LimitMaker => "limit maker",
-                OrderKind::StopLoss => "stop loss",
-                OrderKind::StopLossLimit => "stop loss limit",
-                OrderKind::TakeProfit => "take profit",
-                OrderKind::TakeProfitLimit => "take profit limit",
             }
         )
     }

@@ -1,14 +1,15 @@
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::collections::HashMap;
+use std::fmt::Debug;
 use std::marker::PhantomData;
 
 use super::book::Map;
 use super::{ExchangeTransformer, Transformer};
 use crate::error::SocketError;
+use crate::exchange::{Identifier, PublicStreamConnector};
 use crate::model::market_event::MarketEvent;
 use crate::model::SubKind;
-use crate::exchange::{Connector, Identifier};
 use crate::shared::subscription_models::{ExchangeSubscription, Instrument};
 
 /*----- */
@@ -27,7 +28,7 @@ impl<Exchange, DeStruct, StreamKind> Transformer
     for StatelessTransformer<Exchange, DeStruct, StreamKind>
 where
     StreamKind: SubKind,
-    DeStruct: Send + for<'de> Deserialize<'de> + Identifier<String>,
+    DeStruct: Send + for<'de> Deserialize<'de> + Identifier<String> + Debug,
     MarketEvent<StreamKind::Event>: From<(DeStruct, Instrument)>,
 {
     type Error = SocketError;
@@ -53,9 +54,10 @@ impl<Exchange, DeStruct, StreamKind> ExchangeTransformer<Exchange, DeStruct, Str
     for StatelessTransformer<Exchange, DeStruct, StreamKind>
 where
     StreamKind: SubKind,
-    Exchange: Connector + Sync,
-    Exchange::Market: AsRef<str>,
-    DeStruct: Send + for<'de> Deserialize<'de> + Identifier<String>,
+    Exchange: PublicStreamConnector + Sync + Debug,
+    Exchange::Channel: Debug,
+    Exchange::Market: AsRef<str> + Debug,
+    DeStruct: Send + for<'de> Deserialize<'de> + Identifier<String> + Debug,
     MarketEvent<StreamKind::Event>: From<(DeStruct, Instrument)>,
 {
     async fn new(

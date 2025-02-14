@@ -3,17 +3,17 @@ name = "rotom-oms"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 # Internal
 rotom-data = { path = "../rotom-data" }
 rotom-strategy = { path = "../rotom-strategy" }
+rotom-scanner = { path = "../rotom-scanner" }
 
 # Async
 tokio = { workspace = true, features = ["sync", "macros", "rt-multi-thread"] }
 futures = { workspace = true }
 async-trait = { workspace = true }
+pin-project = { workspace = true }
 tokio-stream = { workspace = true, features = ["sync"] }
 
 # Protocols 
@@ -32,14 +32,12 @@ chrono = { workspace = true, features = ["serde"]}
 prettytable-rs = { workspace = true }
 uuid = { workspace = true, features = ["v4", "serde"]}
 parking_lot = { workspace = true }
+rand = { workspace = true }
 
 # SerDe
 serde_json = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_urlencoded = { workspace = true }
-
-# Persistence
-redis = { workspace = true }
 
 # Crytographic Signatures
 hmac = { workspace = true }

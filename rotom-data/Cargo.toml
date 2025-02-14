@@ -3,8 +3,6 @@ name = "rotom-data"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 # Async
 tokio = { workspace = true, features = ["sync", "macros", "rt-multi-thread"] }
@@ -16,7 +14,7 @@ pin-project = { workspace = true}
 async-trait = { workspace = true}
 
 # Protocol
-reqwest = { workspace = true, features = ["json"]}
+reqwest = { workspace = true, features = ["json", "blocking"]}
 
 # SerDe
 serde_json = { workspace = true }
@@ -33,6 +31,9 @@ chrono = { workspace = true, features = ["serde"]}
 vecmap-rs = { workspace = true}
 itertools = { workspace = true}
 bytes = { workspace = true }
+flate2 = { workspace = true }
+rand = { workspace =  true}
+uuid = { workspace = true }
 
 # Crytographic Signatures
 hmac = { workspace = true }

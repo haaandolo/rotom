@@ -12,7 +12,7 @@ pub type BalanceId = String;
 #[derive(Clone, Copy, PartialEq, PartialOrd, Debug, Serialize, Deserialize)]
 pub struct Balance {
     pub total: f64,
-    pub available: f64, // only used for margin will be zero if spot
+    pub available: f64,
 }
 
 impl Default for Balance {

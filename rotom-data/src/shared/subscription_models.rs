@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
-use crate::exchange::{Connector, Identifier};
+use crate::exchange::{Identifier, PublicStreamConnector};
 
 /*----- */
 // Instrument model
@@ -35,6 +35,13 @@ impl From<(String, String)> for Instrument {
         Self::new(base, quote)
     }
 }
+
+/*----- */
+// Coin
+/*----- */
+// Example usage: Coin("ETH"), Coin("BTC")
+#[derive(Debug, PartialEq, Eq, Hash)]
+pub struct Coin(pub String); // smol
 
 /*----- */
 // Subscription model
@@ -86,7 +93,7 @@ pub struct ExchangeSubscription<Exchange, Channel, Market> {
 
 impl<Exchange> ExchangeSubscription<Exchange, Exchange::Channel, Exchange::Market>
 where
-    Exchange: Connector + Clone,
+    Exchange: PublicStreamConnector + Clone,
 {
     pub fn new<StreamKind>(subs: &Subscription<Exchange, StreamKind>) -> Self
     where
@@ -109,6 +116,15 @@ where
 pub enum ExchangeId {
     BinanceSpot,
     PoloniexSpot,
+    HtxSpot,
+    WooxSpot,
+    BitstampSpot,
+    CoinExSpot,
+    OkxSpot,
+    KuCoinSpot,
+    ExmoSpot,
+    AscendExSpot,
+    PhemexSpot,
 }
 
 impl ExchangeId {
@@ -116,6 +132,15 @@ impl ExchangeId {
         match self {
             ExchangeId::BinanceSpot => "binancespot",
             ExchangeId::PoloniexSpot => "poloniexspot",
+            ExchangeId::HtxSpot => "htxspot",
+            ExchangeId::WooxSpot => "wooxspot",
+            ExchangeId::BitstampSpot => "bitstampspot",
+            ExchangeId::CoinExSpot => "coinexspot",
+            ExchangeId::OkxSpot => "okxspot",
+            ExchangeId::KuCoinSpot => "kucoinspot",
+            ExchangeId::ExmoSpot => "exmospot",
+            ExchangeId::AscendExSpot => "ascendexspot",
+            ExchangeId::PhemexSpot => "phemexspot",
         }
     }
 }
@@ -129,20 +154,24 @@ impl Display for ExchangeId {
 //*----- */
 // Stream kind
 //*----- */
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize, Default, Copy)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Deserialize, Default, Copy, Hash)]
 pub enum StreamKind {
+    Trade,
     Trades,
     #[default]
     L2,
     AggTrades,
+    Snapshot,
 }
 
 impl StreamKind {
     pub fn as_str(&self) -> &'static str {
         match self {
-            StreamKind::Trades => "trade",
+            StreamKind::Trade => "trade",
+            StreamKind::Trades => "trades",
             StreamKind::L2 => "l2",
             StreamKind::AggTrades => "agg_trade",
+            StreamKind::Snapshot => "snapshot",
         }
     }
 }

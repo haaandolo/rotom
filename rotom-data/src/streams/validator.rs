@@ -1,12 +1,11 @@
-use std::fmt::Debug;
-
 use async_trait::async_trait;
 use futures::StreamExt;
-use tracing::debug;
+use std::fmt::Debug;
+use tracing::{debug, error, info};
 
 use crate::{
     error::SocketError,
-    exchange::Connector,
+    exchange::PublicStreamConnector,
     protocols::ws::{
         ws_parser::{StreamParser, WebSocketParser},
         WsRead,
@@ -35,7 +34,7 @@ pub trait SubscriptionValidator {
         websocket: WsRead,
     ) -> Result<WsRead, SocketError>
     where
-        Exchange: Connector + Send + Sync,
+        Exchange: PublicStreamConnector + Send + Sync,
         Exchange::SubscriptionResponse: Validator + Send + Debug;
 }
 
@@ -50,13 +49,19 @@ impl SubscriptionValidator for WebSocketValidator {
         mut websocket: WsRead,
     ) -> Result<WsRead, SocketError>
     where
-        Exchange: Connector + Send + Sync,
+        Exchange: PublicStreamConnector + Send + Sync,
         Exchange::SubscriptionResponse: Validator + Send + Debug,
     {
         let exchange_id = Exchange::ID;
         let timeout = Exchange::subscription_validation_timeout();
         let expected_responses = Exchange::expected_responses(subscriptions);
         let mut success_responses: usize = 0;
+
+        info!(
+            message = "Validating ws stream",
+            exchange = %exchange_id,
+        );
+
         loop {
             if success_responses == expected_responses {
                 break Ok(websocket);
@@ -91,7 +96,14 @@ impl SubscriptionValidator for WebSocketValidator {
                             }
 
                             // Subscription failure
-                            Err(err) => break Err(err)
+                            Err(error) => {
+                                error!(
+                                    exchange = %Exchange::ID,
+                                    ?error,
+                                    message = "failed to validate stream"
+                                );
+                                break Err(error)
+                            }
                         }
                         Some(Err(SocketError::Deserialise { error, payload })) if success_responses >= 1 => {
                             // Already active subscription payloads, so skip to next SubResponse
@@ -110,13 +122,17 @@ impl SubscriptionValidator for WebSocketValidator {
                                 format!("received WebSocket CloseFrame: {close_frame}")
                             ))
                         }
-                        _ => {
+                        Some(Err(SocketError::WebSocketDisconnected { error })) => {
+                            break Err(SocketError::WebSocketDisconnected { error })
+                        }
+                        _  => {
                             // Pings, Pongs, Frames, etc.
                             continue
                         }
+
                     }
                 }
             }
-        } //
+        }
     }
 }

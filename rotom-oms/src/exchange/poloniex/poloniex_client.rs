@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use futures::{SinkExt, StreamExt};
 use rotom_data::{
     error::SocketError,
-    exchange::{poloniex::public_ws_stream::PoloniexSpot, Connector},
+    exchange::{poloniex::PoloniexSpotPublicData, PublicStreamConnector},
     protocols::{
         http::{client::RestClient, http_parser::StandardHttpParser},
         ws::{
@@ -17,14 +17,17 @@ use serde::Deserialize;
 
 use crate::{
     exchange::{AccountDataWebsocket, ExecutionClient},
-    model::order::{CancelOrder, OpenOrder, WalletTransfer},
+    model::{
+        execution_request::{CancelOrder, OpenOrder, Order, WalletTransfer},
+        execution_response::AccountBalance,
+    },
 };
 
 use super::{
     request_builder::PoloniexRequestBuilder,
     requests::{
         account_data::PoloniexAccountEvents,
-        balance::{PoloniexBalance, PoloniexBalanceResponse},
+        balance::PoloniexBalance,
         cancel_order::{PoloniexCancelAllOrder, PoloniexCancelOrder, PoloniexCancelOrderResponse},
         new_order::{PoloniexNewOrder, PoloniexNewOrderResponse},
         wallet_transfer::{PoloniexWalletTransfer, PoloniexWalletTransferResponse},
@@ -48,6 +51,7 @@ pub struct PoloniexExecution {
 impl ExecutionClient for PoloniexExecution {
     const CLIENT: ExchangeId = ExchangeId::PoloniexSpot;
 
+    type PublicData = PoloniexSpotPublicData;
     type CancelResponse = Vec<PoloniexCancelOrderResponse>;
     type CancelAllResponse = Vec<PoloniexCancelOrderResponse>;
     type NewOrderResponse = PoloniexNewOrderResponse;
@@ -114,7 +118,7 @@ impl ExecutionClient for PoloniexExecution {
 
         // Handle custom ping
         let mut tasks = Vec::new();
-        if let Some(ping_interval) = PoloniexSpot::ping_interval() {
+        if let Some(ping_interval) = PoloniexSpotPublicData::ping_interval() {
             let ping_handler =
                 tokio::spawn(schedule_pings_to_exchange(user_data_write, ping_interval));
             tasks.push(ping_handler)
@@ -138,82 +142,63 @@ impl ExecutionClient for PoloniexExecution {
 
     async fn open_order(
         &self,
-        open_request: OpenOrder,
+        open_request: Order<OpenOrder>,
     ) -> Result<Self::NewOrderResponse, SocketError> {
         let response = self
             .http_client
-            .execute(PoloniexNewOrder::new(&open_request)?)
+            .execute(PoloniexNewOrder::new(open_request)?)
             .await?;
         Ok(response.0)
     }
 
     async fn cancel_order(
         &self,
-        cancel_request: CancelOrder,
+        cancel_request: Order<CancelOrder>,
     ) -> Result<Self::CancelResponse, SocketError> {
         let response = self
             .http_client
-            .execute(PoloniexCancelOrder::new(cancel_request.id))
+            .execute(PoloniexCancelOrder::new(cancel_request.cid.0))
             .await?;
         Ok(response.0)
     }
 
     async fn cancel_order_all(
         &self,
-        cancel_request: CancelOrder,
+        cancel_request: Order<CancelOrder>,
     ) -> Result<Self::CancelAllResponse, SocketError> {
         let response = self
             .http_client
-            .execute(PoloniexCancelAllOrder::new(cancel_request.symbol))
+            .execute(PoloniexCancelAllOrder::new(cancel_request.request.symbol))
             .await?;
         Ok(response.0)
     }
 
     async fn wallet_transfer(
         &self,
-        wallet_transfer_request: WalletTransfer,
+        wallet_transfer_request: Order<WalletTransfer>,
     ) -> Result<Self::WalletTransferResponse, SocketError> {
         let response = self
             .http_client
             .execute(PoloniexWalletTransfer::new(
-                wallet_transfer_request.coin,
-                wallet_transfer_request.network,
-                wallet_transfer_request.amount,
-                wallet_transfer_request.wallet_address,
+                wallet_transfer_request.request.coin,
+                wallet_transfer_request.request.network,
+                wallet_transfer_request.request.amount,
+                wallet_transfer_request.request.wallet_address,
             ))
             .await?;
         Ok(response.0)
     }
-}
 
-/*----- */
-// Poloniex Private Data
-/*----- */
-#[derive(Debug)]
-pub struct PoloniexPrivateData {
-    pub http_client: PoloniexRestClient,
-}
-
-impl Default for PoloniexPrivateData {
-    fn default() -> Self {
-        PoloniexPrivateData::new()
-    }
-}
-
-impl PoloniexPrivateData {
-    pub fn new() -> Self {
-        let http_client = RestClient::new(
+    async fn get_balances() -> Result<Vec<AccountBalance>, SocketError> {
+        let http_client = PoloniexRestClient::new(
             POLONIEX_BASE_URL,
             StandardHttpParser,
             PoloniexRequestBuilder,
         );
-        Self { http_client }
-    }
 
-    #[inline]
-    pub async fn get_balance_all(&self) -> Result<PoloniexBalanceResponse, SocketError> {
-        let response = self.http_client.execute(PoloniexBalance).await?;
-        Ok(response.0)
+        let response = http_client.execute(PoloniexBalance).await?;
+        let account_data: Vec<AccountBalance> = response.0.into();
+        Ok(account_data)
     }
 }
 

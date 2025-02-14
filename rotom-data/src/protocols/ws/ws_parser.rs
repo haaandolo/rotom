@@ -1,3 +1,6 @@
+use std::io::Read;
+
+use flate2::read::GzDecoder;
 use futures::Stream;
 use serde::de::DeserializeOwned;
 use tokio_tungstenite::tungstenite::{
@@ -83,33 +86,48 @@ where
     )
 }
 
+// Todo: make this more performant
 pub fn process_binary<ExchangeMessage>(
     payload: Vec<u8>,
 ) -> Option<Result<ExchangeMessage, SocketError>>
 where
     ExchangeMessage: DeserializeOwned,
 {
-    Some(
-        serde_json::from_slice::<ExchangeMessage>(&payload).map_err(|error| {
-            SocketError::Deserialise {
-                error,
-                payload: String::from_utf8(payload).unwrap_or_else(|x| x.to_string()),
-            }
-        }),
-    )
+    let mut decoder = GzDecoder::new(&payload[..]);
+    let mut decoded = String::with_capacity(1000);
+
+    if decoder.read_to_string(&mut decoded).is_ok() {
+        // Sceario when compressed - use the decompressed string
+        Some(
+            serde_json::from_str::<ExchangeMessage>(decoded.as_str()).map_err(|error| {
+                SocketError::Deserialise {
+                    error,
+                    payload: String::from_utf8(payload).unwrap_or_else(|x| x.to_string()),
+                }
+            }),
+        )
+    } else {
+        // Scenario when is not compressed - use the original binary
+        Some(
+            serde_json::from_slice::<ExchangeMessage>(&payload).map_err(|error| {
+                SocketError::Deserialise {
+                    error,
+                    payload: String::from_utf8(payload).unwrap_or_else(|x| x.to_string()),
+                }
+            }),
+        )
+    }
 }
 
 pub fn process_ping<ExchangeMessage>(
-    ping: Vec<u8>,
+    _ping: Vec<u8>,
 ) -> Option<Result<ExchangeMessage, SocketError>> {
-    format!("{:#?}", ping);
     None
 }
 
 pub fn process_pong<ExchangeMessage>(
-    pong: Vec<u8>,
+    _pong: Vec<u8>,
 ) -> Option<Result<ExchangeMessage, SocketError>> {
-    format!("{:#?}", pong);
     None
 }
 
@@ -121,9 +139,8 @@ pub fn process_close_frame<ExchangeMessage>(
 }
 
 pub fn process_frame<ExchangeMessage>(
-    frame: Frame,
+    _frame: Frame,
 ) -> Option<Result<ExchangeMessage, SocketError>> {
-    format!("{:?}", frame);
     None
 }
 
@@ -131,7 +148,7 @@ pub fn is_websocket_disconnected(error: &WsError) -> bool {
     matches!(
         error,
         WsError::ConnectionClosed
-            // | WsError::AlreadyClosed
+            | WsError::AlreadyClosed
             | WsError::Io(_)
             | WsError::Protocol(ProtocolError::SendAfterClosing)
             | WsError::Protocol(ProtocolError::ResetWithoutClosingHandshake) // WsError::Protocol(_)

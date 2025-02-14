@@ -1,8 +1,8 @@
 use crate::{
     execution::FillEvent,
     model::{
-        account_data::{AccountDataBalance, AccountDataBalanceDelta, AccountDataOrder},
         balance::Balance,
+        execution_response::{AccountBalance, AccountBalanceDelta, OrderResponse},
         order::OrderEvent,
     },
     portfolio::position::{Position, PositionExit, PositionUpdate},
@@ -25,10 +25,10 @@ pub enum Event {
     PositionUpdate(PositionUpdate),
     PositionExit(PositionExit),
     Balance(Balance),
-    AccountDataOrder(AccountDataOrder),
-    AccountDataBalanceVec(Vec<AccountDataBalance>),
-    AccountDataBalance(AccountDataBalance),
-    AccountDataBalanceDelta(AccountDataBalanceDelta),
+    OrderResponse(OrderResponse),
+    AccountDataBalanceVec(Vec<AccountBalance>),
+    AccountBalance(AccountBalance),
+    AccountBalanceDelta(AccountBalanceDelta),
 }
 
 pub trait MessageTransmitter<Message> {

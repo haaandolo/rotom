@@ -3,7 +3,7 @@ use rotom_data::{
     error::SocketError,
     model::market_event::{DataKind, MarketEvent},
     shared::subscription_models::ExchangeId,
-    AssetFormatted, ExchangeAssetId,
+    ExchangeAssetId,
 };
 use rotom_strategy::{Decision, Signal, SignalForceExit, SignalStrength};
 use std::collections::HashMap;
@@ -12,19 +12,18 @@ use uuid::Uuid;
 use crate::{
     event::Event,
     exchange::{
-        binance::binance_client::BinancePrivateData, poloniex::poloniex_client::PoloniexPrivateData,
+        binance::binance_client::BinanceExecution, poloniex::poloniex_client::PoloniexExecution,
+        ExecutionClient,
     },
     execution::FillEvent,
     model::{
-        account_data::{
-            AccountDataBalance, AccountDataBalanceDelta, AccountDataOrder, OrderStatus,
-        },
         balance::{determine_balance_id, SpotBalanceId},
+        execution_response::{AccountBalance, AccountBalanceDelta},
         order::{OrderEvent, OrderState},
-        OrderKind, Side,
+        ClientOrderId, OrderKind, Side,
     },
     portfolio::{
-        allocator::{spot_arb_allocator::SpotArbAllocator, OrderAllocator},
+        allocator::spot_arb_allocator::SpotArbAllocator,
         error::PortfolioError,
         persistence::spot_in_memory::SpotInMemoryRepository,
         position::{
@@ -61,35 +60,46 @@ impl SpotPortfolio {
     }
 
     pub async fn init(mut self) -> Result<SpotPortfolio, SocketError> {
-        for exchange in self.exchanges.iter() {
-            let exchange_balance = match exchange {
-                ExchangeId::BinanceSpot => {
-                    let balance = BinancePrivateData::new().get_balance_all().await?;
-                    let asset_balance: Vec<AccountDataBalance> = balance.into();
-                    asset_balance
-                }
-                ExchangeId::PoloniexSpot => {
-                    let balance = PoloniexPrivateData::new().get_balance_all().await?;
-                    let asset_balance: Vec<AccountDataBalance> = balance.into();
-                    asset_balance
-                }
-            };
+        unimplemented!()
+        // for exchange in self.exchanges.iter() {
+        //     let exchange_balance = match exchange {
+        //         ExchangeId::BinanceSpot => {
+        //             let balance = BinanceExecution::get_balances().await?;
+        //             balance
+        //         }
+        //         ExchangeId::PoloniexSpot => {
+        //             let balance = PoloniexExecution::get_balances().await?;
+        //             balance
+        //         }
+        //         ExchangeId::HtxSpot => {
+        //             unimplemented!()
+        //         }
+        //         ExchangeId::WooxSpot => {
+        //             unimplemented!()
+        //         }
+        //         ExchangeId::BitstampSpot => {
+        //             unimplemented!()
+        //         }
+        //         ExchangeId::CoinExSpot => {
+        //             unimplemented!()
+        //         }
+        //     };
 
-            for asset_balance in exchange_balance.into_iter() {
-                self.repository
-                    .set_balance(SpotBalanceId::from(&asset_balance), asset_balance.balance)
-                    .unwrap(); // todo
-            }
-        }
+        //     for asset_balance in exchange_balance.into_iter() {
+        //         self.repository
+        //             .set_balance(SpotBalanceId::from(&asset_balance), asset_balance.balance)
+        //             .unwrap(); // todo
+        //     }
+        // }
 
-        Ok(self)
+        // Ok(self)
     }
 
-    pub fn update_balance(&mut self, balance_update: &AccountDataBalance) {
+    pub fn update_balance(&mut self, balance_update: &AccountBalance) {
         self.repository.update_balance(balance_update)
     }
 
-    pub fn update_balance_delta(&mut self, balance_update: &AccountDataBalanceDelta) {
+    pub fn update_balance_delta(&mut self, balance_update: &AccountBalanceDelta) {
         self.repository.update_balance_delta(balance_update)
     }
 
@@ -145,7 +155,7 @@ impl SpotPortfolio {
             order_request_time: Utc::now(),
             exchange: signal.exchange,
             instrument: signal.instrument.clone(),
-            client_order_id: None,
+            client_order_id: ClientOrderId::random(),
             market_meta: signal.market_meta,
             decision: *signal_decision,
             original_quantity: 0.0,

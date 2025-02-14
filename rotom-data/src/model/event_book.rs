@@ -2,12 +2,13 @@ use chrono::{DateTime, Utc};
 
 use crate::assets::level::Level;
 
-use super::SubKind;
+use super::{EventKind, SubKind};
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Default)]
 pub struct OrderBookL2;
 
 impl SubKind for OrderBookL2 {
+    const EVENTKIND: EventKind = EventKind::OrderBook;
     type Event = EventOrderBook;
 }
 

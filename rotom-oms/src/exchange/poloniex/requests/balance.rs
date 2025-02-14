@@ -6,8 +6,8 @@ use rotom_data::{
     protocols::http::rest_request::RestRequest, shared::subscription_models::ExchangeId,
 };
 
-use crate::model::account_data::AccountDataBalance;
 use crate::model::balance::Balance;
+use crate::model::execution_response::AccountBalance;
 
 /*----- */
 // Poloniex Balance
@@ -67,12 +67,12 @@ impl From<PoloniexBalanceResponseVec> for Balance {
     }
 }
 
-impl From<PoloniexBalanceResponse> for Vec<AccountDataBalance> {
+impl From<PoloniexBalanceResponse> for Vec<AccountBalance> {
     fn from(polo_balances: PoloniexBalanceResponse) -> Self {
         let mut asset_balances = Vec::new();
         for polo_balance in polo_balances.0.into_iter() {
             for mut sub_balance in polo_balance.balances.into_iter() {
-                asset_balances.push(AccountDataBalance {
+                asset_balances.push(AccountBalance {
                     asset: std::mem::take(&mut sub_balance.currency),
                     exchange: ExchangeId::PoloniexSpot,
                     balance: Balance::from(sub_balance),

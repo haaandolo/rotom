@@ -43,58 +43,41 @@ pub trait PositionExiter {
 pub struct Position {
     // Unique identifier for a [`Position`] generated from an engine_id, [`Exchange`] & [`Instrument`].
     pub position_id: PositionId,
-
     // Metadata detailing trace UUIDs, timestamps & equity associated with entering, updating & exiting.
     pub meta: PositionMeta,
-
     // [`Exchange`] associated with this [`Position`].
     pub exchange: ExchangeId,
-
     // [`Instrument`] associated with this [`Position`].
     pub instrument: Instrument,
-
     // Buy or Sell.
     // Notes:
     // - Side::Buy considered synonymous with Long.
     // - Side::Sell considered synonymous with Short.
     pub side: Side,
-
     // +ve or -ve quantity of symbol contracts opened.
     pub quantity: f64,
-
     // All fees types incurred from entering a [`Position`], and their associated [`FeeAmount`].
     pub enter_fees: Fees,
-
     // Total of enter_fees incurred. Sum of every [`FeeAmount`] in [`Fees`] when entering a [`Position`].
     pub enter_fees_total: FeeAmount,
-
     // Enter average price excluding the entry_fees_total.
     pub enter_avg_price_gross: f64,
-
     // abs(Quantity) * enter_avg_price_gross.
     pub enter_value_gross: f64,
-
     // All fees types incurred from exiting a [`Position`], and their associated [`FeeAmount`].
     pub exit_fees: Fees,
-
     // Total of exit_fees incurred. Sum of every [`FeeAmount`] in [`Fees`] when entering a [`Position`].
     pub exit_fees_total: FeeAmount,
-
     // Exit average price excluding the exit_fees_total.
     pub exit_avg_price_gross: f64,
-
     // abs(Quantity) * exit_avg_price_gross.
     pub exit_value_gross: f64,
-
     // Symbol current close price.
     pub current_symbol_price: f64,
-
     // abs(Quantity) * current_symbol_price.
     pub current_value_gross: f64,
-
     // Unrealised P&L whilst the [`Position`] is open.
     pub unrealised_profit_loss: f64,
-
     // Realised P&L after the [`Position`] has closed.
     pub realised_profit_loss: f64,
 }
@@ -220,6 +203,9 @@ impl PositionUpdater for Position {
         let close = match &market.event_data {
             DataKind::OrderBook(event_book) => event_book.weighted_midprice()?,
             DataKind::Trade(event_trade) => event_trade.trade.price,
+            DataKind::OrderBookSnapshot(_) => unimplemented!(),
+            DataKind::Trades(_) => unimplemented!(),
+            DataKind::ConnectionStatus(_) => unimplemented!(),
         };
 
         self.meta.update_time = market.exchange_time;

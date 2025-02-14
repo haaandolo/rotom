@@ -4,8 +4,15 @@ members = [
     "rotom-main",
     "rotom-data",
     "rotom-strategy",
-    "rotom-oms"
+    "rotom-oms", 
+    "rotom-scanner"
 ]
+
+[profile.release]
+panic = "abort"
+
+[profile.dev]
+panic = "abort"
 
 [workspace.dependencies]
 # Async
@@ -20,6 +27,7 @@ futures = "0.3.3"
 reqwest = { version="0.12.4" }
 tokio-tungstenite = { version = "0.23.1", features = ["native-tls"]}
 url = { version = "2.3.1 " }
+actix-web = { version = "4" }
 
 # Logging
 tracing = "0.1.40"
@@ -36,14 +44,14 @@ prettytable-rs = "0.10.0"
 vecmap-rs = "0.2.1"
 itertools = "0.13.0"
 bytes = { version = "1.5.0" }
+rand = { version = "0.8.5 " }
+flate2 = { version = "1.0"}
+ordered-float = { version = "4.6.0" }
 
 # SerDe
 serde_json = { version = "1.0.120" }
 serde = { version = "1.0.197", features = ["derive"] }
 serde_urlencoded = { version = "0.7.1" }
-
-# Persistence
-redis = "0.25.4"
 
 # Crytographic Signatures
 hmac = { version = "0.12.1" }

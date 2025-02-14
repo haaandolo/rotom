@@ -3,8 +3,6 @@ use thiserror::Error;
 
 use super::{protocols::ws::WsError, shared::subscription_models::ExchangeId};
 
-pub const ACCEPTABLE_DE_ERROR_MESSAGES: [&str; 1] = ["{\"event\":\"pong\"}"];
-
 /*----- */
 // WebSocketError
 /*----- */
@@ -58,6 +56,9 @@ pub enum SocketError {
 
     #[error("request authorisation invalid: {0}")]
     Unauthorised(String),
+
+    #[error("Timeout error, http request did not send within specified timeframe: {0}")]
+    TimeOut(tokio::time::error::Elapsed),
 
     #[error("{0}")]
     Misc(String), // Miscellaneous error

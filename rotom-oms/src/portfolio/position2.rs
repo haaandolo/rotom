@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use rotom_data::{
     model::market_event::{DataKind, MarketEvent},
-    shared::subscription_models::{ExchangeId, Instrument},
+    shared::subscription_models::ExchangeId,
     AssetFormatted, ExchangeAssetId,
 };
 use rotom_strategy::Decision;
@@ -10,12 +10,7 @@ use uuid::Uuid;
 
 use crate::{
     execution::{FeeAmount, Fees, FillEvent},
-    model::{
-        account_data::AccountDataOrder,
-        balance::Balance,
-        order::{OrderEvent, OrderState},
-        Side,
-    },
+    model::{balance::Balance, execution_response::OrderResponse, order::OrderEvent, Side},
 };
 
 use super::error::PortfolioError;
@@ -67,7 +62,7 @@ impl Position2 {
     }
 
     // Determine the [`Position`] entry [`Side`] by analysing the input [`FillEvent`].
-    pub fn parse_entry_side(fill: &FillEvent) -> Result<Side, PortfolioError> {
+    pub fn parse_entry_side(_fill: &FillEvent) -> Result<Side, PortfolioError> {
         unimplemented!()
     }
 
@@ -126,6 +121,9 @@ impl Position2 {
         let close = match &market.event_data {
             DataKind::OrderBook(event_book) => event_book.weighted_midprice()?,
             DataKind::Trade(event_trade) => event_trade.trade.price,
+            DataKind::OrderBookSnapshot(_) => unimplemented!(),
+            DataKind::Trades(_) => unimplemented!(),
+            DataKind::ConnectionStatus(_) => unimplemented!(),
         };
 
         self.current_symbol_price = close;
@@ -147,7 +145,7 @@ impl Position2 {
     // PositionExiter trait
     pub fn exit(
         &mut self,
-        account_data: &AccountDataOrder,
+        account_data: &OrderResponse,
         order: &OrderEvent,
     ) -> Result<PositionExit2, PortfolioError> {
         if order.is_order_complete() {

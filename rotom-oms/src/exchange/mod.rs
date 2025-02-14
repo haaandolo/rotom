@@ -2,34 +2,28 @@ pub mod binance;
 pub mod errors;
 pub mod poloniex;
 
-use std::{collections::HashMap, fmt::Debug, sync::Arc};
+use std::fmt::Debug;
 
 use async_trait::async_trait;
-use binance::binance_client::BinanceExecution;
 use futures::StreamExt;
 use hmac::Hmac;
-use parking_lot::Mutex;
-use poloniex::poloniex_client::PoloniexExecution;
 use rotom_data::{
     error::SocketError,
+    exchange::{PublicHttpConnector, PublicStreamConnector},
     protocols::ws::{
         ws_parser::{StreamParser, WebSocketParser},
         JoinHandle, WsRead,
     },
     shared::subscription_models::ExchangeId,
-    ExchangeAssetId,
 };
 use serde::Deserialize;
 use sha2::Sha256;
 use tokio::sync::mpsc;
 use tracing::{debug, error, info, warn};
 
-use crate::{
-    model::{
-        account_data::AccountData,
-        order::{CancelOrder, OpenOrder, WalletTransfer},
-    },
-    portfolio::portfolio_type::spot_portfolio::SpotPortfolio,
+use crate::model::{
+    execution_request::{CancelOrder, OpenOrder, Order, WalletTransfer},
+    execution_response::{AccountBalance, ExecutionResponse},
 };
 
 /*----- */
@@ -62,11 +56,15 @@ impl AccountDataWebsocket {
 pub trait ExecutionClient {
     const CLIENT: ExchangeId;
 
+    type PublicData: PublicStreamConnector + PublicHttpConnector;
     type CancelResponse: Send + Debug;
     type CancelAllResponse: Send + Debug;
     type NewOrderResponse: Send + Debug;
     type WalletTransferResponse: Send + Debug;
-    type AccountDataStreamResponse: Send + for<'de> Deserialize<'de> + Debug + Into<AccountData>;
+    type AccountDataStreamResponse: Send
+        + for<'de> Deserialize<'de>
+        + Debug
+        + Into<ExecutionResponse>;
 
     // Initialise a account data stream
     async fn init() -> Result<AccountDataWebsocket, SocketError>;
@@ -79,33 +77,36 @@ pub trait ExecutionClient {
     // Open order for single asset
     async fn open_order(
         &self,
-        open_request: OpenOrder,
+        open_request: Order<OpenOrder>,
     ) -> Result<Self::NewOrderResponse, SocketError>;
 
     // Cancel order for a single asset
     async fn cancel_order(
         &self,
-        cancel_request: CancelOrder,
+        cancel_request: Order<CancelOrder>,
     ) -> Result<Self::CancelResponse, SocketError>;
 
     // Cancel all orders for a single asset
     async fn cancel_order_all(
         &self,
-        cancel_request: CancelOrder,
+        cancel_request: Order<CancelOrder>,
     ) -> Result<Self::CancelAllResponse, SocketError>;
 
     // Transfer to another wallet
     async fn wallet_transfer(
         &self,
-        wallet_transfer_request: WalletTransfer,
+        wallet_transfer_request: Order<WalletTransfer>,
     ) -> Result<Self::WalletTransferResponse, SocketError>;
+
+    // Get all balance figure on a exchange
+    async fn get_balances() -> Result<Vec<AccountBalance>, SocketError>;
 }
 
 /*----- */
 // Account User Data Auto Reconnect
 /*----- */
 pub async fn consume_account_data_stream<Exchange>(
-    account_data_tx: mpsc::UnboundedSender<AccountData>,
+    account_data_tx: mpsc::UnboundedSender<ExecutionResponse>,
 ) -> Result<(), SocketError>
 where
     Exchange: ExecutionClient,
@@ -125,10 +126,10 @@ where
         _backoff_ms *= 2;
 
         while let Some(msg) = stream.user_data_ws.next().await {
-            println!("### Raw ###");
-            println!("{:#?}", msg);
             match WebSocketParser::parse::<Exchange::AccountDataStreamResponse>(msg) {
                 Some(Ok(exchange_message)) => {
+                    // println!("### Parsed  ###");
+                    // println!("{:#?}", exchange_message);
                     if let Err(error) = account_data_tx.send(exchange_message.into()) {
                         debug!(
                             payload = ?error.0,
@@ -162,92 +163,4 @@ where
             reconnection_attempts = connection_attempt,
         );
     }
-}
-
-/*----- */
-// Account Data Stream - Send to corresponding trader and portfolio
-/*----- */
-// Note: only balance updates are done here, order updates are don't in the corresponding SpotArbTrader
-pub async fn send_account_data_to_traders_and_portfolio(
-    trader_order_update_tx: HashMap<ExchangeAssetId, mpsc::Sender<AccountData>>,
-    mut account_data_stream: mpsc::UnboundedReceiver<AccountData>,
-    portfolio: Arc<Mutex<SpotPortfolio>>,
-) {
-    while let Some(message) = account_data_stream.recv().await {
-        println!("### Raw Acc data ###");
-        println!("{:#?}", message);
-        match message {
-            // Order updates does not require portfolio update, so send update straight to trader
-            AccountData::Order(order) => {
-                if let Some(trader_tx) = trader_order_update_tx.get(&ExchangeAssetId::from(&order))
-                {
-                    let _ = trader_tx.send(AccountData::Order(order)).await;
-                }
-            }
-            // Balance updates require portfolio update, so update then send to trader
-            AccountData::BalanceVec(balances) => {
-                for balance in balances.into_iter() {
-                    portfolio.lock().update_balance(&balance);
-                    if let Some(trader_tx) =
-                        trader_order_update_tx.get(&ExchangeAssetId::from(&balance))
-                    {
-                        let _ = trader_tx.send(AccountData::Balance(balance)).await;
-                    }
-                }
-            }
-            // Balance updates require portfolio update, so update then send to trader
-            AccountData::Balance(balance) => {
-                portfolio.lock().update_balance(&balance);
-                if let Some(trader_tx) =
-                    trader_order_update_tx.get(&ExchangeAssetId::from(&balance))
-                {
-                    let _ = trader_tx.send(AccountData::Balance(balance)).await;
-                }
-            }
-            // Balance updates require portfolio update, so update then send to trader
-            AccountData::BalanceDelta(balance_delta) => {
-                portfolio.lock().update_balance_delta(&balance_delta);
-                if let Some(trader_tx) =
-                    trader_order_update_tx.get(&ExchangeAssetId::from(&balance_delta))
-                {
-                    let _ = trader_tx
-                        .send(AccountData::BalanceDelta(balance_delta))
-                        .await;
-                }
-            }
-        }
-    }
-}
-
-/*----- */
-// Account Data Stream - combine streams together
-/*----- */
-pub async fn combine_account_data_stream(
-    exchange_ids: Vec<ExchangeId>,
-    trader_order_update_tx: HashMap<ExchangeAssetId, mpsc::Sender<AccountData>>,
-    portfolio: Arc<Mutex<SpotPortfolio>>,
-) {
-    // Init account data channels and combine
-    let (account_data_stream_tx, account_data_stream_rx) = mpsc::unbounded_channel();
-    for exchange in exchange_ids.into_iter() {
-        match exchange {
-            ExchangeId::BinanceSpot => {
-                tokio::spawn(consume_account_data_stream::<BinanceExecution>(
-                    account_data_stream_tx.clone(),
-                ));
-            }
-            ExchangeId::PoloniexSpot => {
-                tokio::spawn(consume_account_data_stream::<PoloniexExecution>(
-                    account_data_stream_tx.clone(),
-                ));
-            }
-        }
-    }
-
-    // Send order updates to corresponding trader pair for exchange
-    tokio::spawn(send_account_data_to_traders_and_portfolio(
-        trader_order_update_tx,
-        account_data_stream_rx,
-        portfolio,
-    ));
 }
