@@ -4,8 +4,9 @@ members = [
     "rotom-main",
     "rotom-data",
     "rotom-strategy",
-    "rotom-oms"
-, "rotom-scanner"]
+    "rotom-oms", 
+    "rotom-scanner"
+]
 
 [profile.release]
 panic = "abort"
@@ -26,6 +27,7 @@ futures = "0.3.3"
 reqwest = { version="0.12.4" }
 tokio-tungstenite = { version = "0.23.1", features = ["native-tls"]}
 url = { version = "2.3.1 " }
+actix-web = { version = "4" }
 
 # Logging
 tracing = "0.1.40"
