@@ -1,6 +1,8 @@
 use actix_web::{web, App, HttpServer};
 use rotom_scanner::{
-    data::data_streams::get_spot_arb_data_streams, scanner::SpotArbScanner, server::{handlers::handler, server_channels::make_http_channels}
+    data::data_streams::get_spot_arb_data_streams,
+    server::{handlers::handler, server_channels::make_http_channels},
+    spot_scanner::scanner::SpotArbScanner,
 };
 use tokio::sync::Mutex;
 
