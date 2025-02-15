@@ -44,7 +44,7 @@ pub async fn get_spot_arb_data_streams() -> (
     // Market data stream
     /*----- */
     let streams = DynamicStreams::init([vec![
-        (ExchangeId::BinanceSpot, "ada", "usdt", StreamKind::Trade),
+        (ExchangeId::BinanceSpot, "ada", "usdt", StreamKind::AggTrades),
         // (ExchangeId::BinanceSpot, "ada", "usdt", StreamKind::L2),
         // (ExchangeId::BinanceSpot, "icp", "usdt", StreamKind::Trade),
         // (ExchangeId::BinanceSpot, "icp", "usdt", StreamKind::L2),

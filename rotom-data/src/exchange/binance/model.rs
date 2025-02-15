@@ -59,7 +59,7 @@ pub struct BinanceTrade {
     pub price: f64,
     #[serde(alias = "q", deserialize_with = "de_str")]
     pub amount: f64,
-    #[serde(alias = "m")]
+    #[serde(alias = "m", deserialize_with = "de_side_from_buyer_is_maker_binance")]
     pub side: bool,
 }
 
@@ -94,7 +94,7 @@ pub struct BinanceAggTrade {
     pub price: f64,
     #[serde(alias = "q", deserialize_with = "de_str")]
     pub amount: f64,
-    #[serde(alias = "m")]
+    #[serde(alias = "m", deserialize_with = "de_side_from_buyer_is_maker_binance")]
     pub side: bool,
 }
 
@@ -114,6 +114,15 @@ impl From<(BinanceAggTrade, Instrument)> for MarketEvent<EventTrade> {
             event_data: EventTrade::new(Level::new(event.price, event.amount), event.side),
         }
     }
+}
+
+// For Binance trade, if the "m" field is true then the trade represents a market maker so it is
+// a sell trade. Hence, the is_buy should be false
+pub fn de_side_from_buyer_is_maker_binance<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+    D: serde::de::Deserializer<'de>,
+{
+    Deserialize::deserialize(deserializer).map(|buyer_is_maker: bool| !buyer_is_maker)
 }
 
 /*----- */
