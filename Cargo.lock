@@ -1780,6 +1780,8 @@ dependencies = [
  "futures",
  "ordered-float",
  "rotom-data",
+ "serde",
+ "serde_json",
  "thiserror",
  "tokio",
  "tracing",

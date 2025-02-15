@@ -21,3 +21,7 @@ thiserror = { workspace = true }
 # Misc
 chrono = { workspace = true, features = ["serde"]}
 ordered-float = { workspace = true }
+
+# SerDe
+serde_json = { workspace = true }
+serde = { workspace = true, features = ["derive"] }

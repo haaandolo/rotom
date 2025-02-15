@@ -1,4 +1,4 @@
-use actix_web::{App, HttpServer};
+use actix_web::{web, App, HttpServer};
 use futures::StreamExt;
 use rotom_data::{
     exchange::binance::BinanceSpotPublicData,
@@ -6,20 +6,19 @@ use rotom_data::{
     shared::subscription_models::{ExchangeId, Instrument, StreamKind},
     streams::dynamic_stream::DynamicStreams,
 };
-use rotom_scanner::{network_status_stream::NetworkStatusStream, scanner::SpotArbScanner};
-use tokio::sync::mpsc;
+use rotom_scanner::{
+    handlers::{handler, make_http_channels},
+    network_status_stream::NetworkStatusStream,
+    scanner::SpotArbScanner,
+};
+use tokio::sync::{mpsc, Mutex};
 
 // #[actix_web::main]
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    ///////////
-    // Main
-    ///////////
+    // Init
     init_logging();
 
-    /////////
-    // Playground
-    /////////
     // Temp instruments
     let instruments = vec![
         Instrument::new("btc", "usdt"),
@@ -43,11 +42,11 @@ async fn main() -> std::io::Result<()> {
     // Market data feed
     let streams = DynamicStreams::init([vec![
         (ExchangeId::BinanceSpot, "ada", "usdt", StreamKind::Trade),
-        (ExchangeId::BinanceSpot, "ada", "usdt", StreamKind::L2),
-        (ExchangeId::BinanceSpot, "icp", "usdt", StreamKind::Trade),
-        (ExchangeId::BinanceSpot, "icp", "usdt", StreamKind::L2),
-        (ExchangeId::BinanceSpot, "sol", "usdt", StreamKind::Trade),
-        (ExchangeId::BinanceSpot, "sol", "usdt", StreamKind::L2),
+        // (ExchangeId::BinanceSpot, "ada", "usdt", StreamKind::L2),
+        // (ExchangeId::BinanceSpot, "icp", "usdt", StreamKind::Trade),
+        // (ExchangeId::BinanceSpot, "icp", "usdt", StreamKind::L2),
+        // (ExchangeId::BinanceSpot, "sol", "usdt", StreamKind::Trade),
+        // (ExchangeId::BinanceSpot, "sol", "usdt", StreamKind::L2),
     ]])
     .await
     .unwrap();
@@ -56,26 +55,30 @@ async fn main() -> std::io::Result<()> {
     let (market_data_tx, market_data_rx) = mpsc::unbounded_channel();
     tokio::spawn(async move {
         while let Some(event) = data.next().await {
-            println!("{:?}", event);
+            // println!("{:?}", event);
             let _ = market_data_tx.send(event);
         }
     });
 
     // Http request for scanner
-    let (http_request_tx, http_request_rx) = mpsc::channel(10);
-    let (http_response_tx, http_response_rx) = mpsc::channel(10);
+    let (scanner_channel, server_channel) = make_http_channels();
+    let server_channel_converted = web::Data::new(Mutex::new(server_channel));
 
     // Scanner
-    let scanner = SpotArbScanner::new(network, market_data_rx, http_request_rx, http_response_tx);
+    let scanner = SpotArbScanner::new(network, market_data_rx, scanner_channel);
 
     // Spawn scanner
     tokio::spawn(async move { scanner.run().await });
 
     // Http server
-    HttpServer::new(|| App::new())
-        .bind(("127.0.0.1", 8080))?
-        .run()
-        .await
+    HttpServer::new(move || {
+        App::new()
+            .app_data(server_channel_converted.clone())
+            .service(handler)
+    })
+    .bind(("127.0.0.1", 8080))?
+    .run()
+    .await
 }
 
 /*----- */

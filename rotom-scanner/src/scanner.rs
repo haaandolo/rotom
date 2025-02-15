@@ -15,8 +15,11 @@ use rotom_data::{
     },
     shared::subscription_models::{Coin, ExchangeId, Instrument},
 };
+use serde::Serialize;
 use tokio::sync::mpsc;
 use tracing::warn;
+
+use crate::handlers::ScannerHttpChannel;
 
 /*----- */
 // VecDeque - Time based
@@ -342,7 +345,7 @@ enum SpreadChangeProcess {
     SpreadsCalculated(SpreadsCalculated),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub enum SpotArbScannerHttpRequests {
     TestRequest,
     TestResponse,
@@ -356,16 +359,14 @@ pub struct SpotArbScanner {
     spread_change_queue: VecDeque<SpreadChangeProcess>,
     network_status_stream: mpsc::UnboundedReceiver<NetworkSpecs>,
     market_data_stream: mpsc::UnboundedReceiver<MarketEvent<DataKind>>,
-    http_request_rx: mpsc::Receiver<SpotArbScannerHttpRequests>,
-    http_response_tx: mpsc::Sender<SpotArbScannerHttpRequests>,
+    http_channel: ScannerHttpChannel,
 }
 
 impl SpotArbScanner {
     pub fn new(
         network_status_stream: mpsc::UnboundedReceiver<NetworkSpecs>,
         market_data_stream: mpsc::UnboundedReceiver<MarketEvent<DataKind>>,
-        http_request_rx: mpsc::Receiver<SpotArbScannerHttpRequests>,
-        http_response_tx: mpsc::Sender<SpotArbScannerHttpRequests>,
+        http_channel: ScannerHttpChannel,
     ) -> Self {
         Self {
             exchange_data: ExchangeMarketDataMap::default(),
@@ -374,8 +375,7 @@ impl SpotArbScanner {
             spread_change_queue: VecDeque::with_capacity(10),
             network_status_stream,
             market_data_stream,
-            http_request_rx,
-            http_response_tx,
+            http_channel,
         }
     }
 
@@ -721,11 +721,13 @@ impl SpotArbScanner {
             }
 
             // Process http requests
-            match self.http_request_rx.try_recv() {
+            match self.http_channel.http_request_rx.try_recv() {
                 Ok(_request) => {
                     let _ = self
+                        .http_channel
                         .http_response_tx
-                        .send(SpotArbScannerHttpRequests::TestResponse);
+                        .send(SpotArbScannerHttpRequests::TestResponse)
+                        .await;
                 }
                 Err(error) => {
                     if error == mpsc::error::TryRecvError::Disconnected {
