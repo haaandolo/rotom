@@ -10,7 +10,7 @@ use rotom_data::{
 };
 use tokio::sync::mpsc;
 
-use crate::network_status_stream::NetworkStatusStream;
+use super::network_status_stream::NetworkStatusStream;
 
 pub async fn get_spot_arb_data_streams() -> (
     mpsc::UnboundedReceiver<MarketEvent<DataKind>>,
