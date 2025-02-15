@@ -1,3 +1,4 @@
+use actix_web::{App, HttpServer};
 use futures::StreamExt;
 use rotom_data::{
     exchange::binance::BinanceSpotPublicData,
@@ -5,15 +6,12 @@ use rotom_data::{
     shared::subscription_models::{ExchangeId, Instrument, StreamKind},
     streams::dynamic_stream::DynamicStreams,
 };
-use spot_arb_scanner::{network_status_stream::NetworkStatusStream, scanner::SpotArbScanner};
+use rotom_scanner::{network_status_stream::NetworkStatusStream, scanner::SpotArbScanner};
 use tokio::sync::mpsc;
-
-pub mod mock_data;
-pub mod spot_arb_scanner;
 
 // #[actix_web::main]
 #[tokio::main]
-async fn main() {
+async fn main() -> std::io::Result<()> {
     ///////////
     // Main
     ///////////
@@ -58,7 +56,7 @@ async fn main() {
     let (market_data_tx, market_data_rx) = mpsc::unbounded_channel();
     tokio::spawn(async move {
         while let Some(event) = data.next().await {
-            // println!("{:?}", event);
+            println!("{:?}", event);
             let _ = market_data_tx.send(event);
         }
     });
@@ -70,10 +68,14 @@ async fn main() {
     // Scanner
     let scanner = SpotArbScanner::new(network, market_data_rx, http_request_rx, http_response_tx);
 
-
-    // Run scanner
+    // Spawn scanner
     tokio::spawn(async move { scanner.run().await });
-    loop {}
+
+    // Http server
+    HttpServer::new(|| App::new())
+        .bind(("127.0.0.1", 8080))?
+        .run()
+        .await
 }
 
 /*----- */

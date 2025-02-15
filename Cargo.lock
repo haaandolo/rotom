@@ -1730,7 +1730,6 @@ dependencies = [
  "prettytable-rs",
  "rotom-data",
  "rotom-oms",
- "rotom-scanner",
  "rotom-strategy",
  "serde",
  "serde_json",

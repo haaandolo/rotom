@@ -17,7 +17,7 @@ pub mod test_utils {
     };
     use tokio::sync::mpsc;
 
-    use crate::spot_arb_scanner::scanner::{SpotArbScanner, SpreadChange};
+    use crate::scanner::{SpotArbScanner, SpreadChange};
 
     fn sort_by_price_ascending(levels: &mut [Level]) {
         levels.sort_by(|a, b| a.price.partial_cmp(&b.price).unwrap_or(Ordering::Equal));
