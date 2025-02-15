@@ -25,9 +25,12 @@ async fn main() -> std::io::Result<()> {
 
     // Scanner
     let scanner = SpotArbScanner::new(network_status_stream, market_data_stream, scanner_channel);
+    let scanner_wrapped = web::Data::new(scanner);
 
     // Spawn scanner
-    thread::spawn(move || scanner.run());
+    // thread::spawn(move || {
+    //     let mut scanner = scanner_wrapped.clone();
+    // });
 
     // Http server
     HttpServer::new(move || App::new().app_data(server_channel.clone()).service(handler))

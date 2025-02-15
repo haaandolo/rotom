@@ -326,7 +326,6 @@ impl SpotArbScanner {
             if let Some(sc_market_data) = sc_market_data_map.0.get_mut(&spreads.instrument) {
                 sc_market_data
                     .spreads
-                    .borrow_mut()
                     .0
                     .entry(spreads.other_exchange)
                     .and_modify(|spread_history| {
@@ -1059,7 +1058,7 @@ mod test {
             .make_make
             .push(time, binance_htx_btc_make_make);
 
-        let result_map = &scanner
+        let result = scanner
             .exchange_data
             .0
             .get(&ExchangeId::BinanceSpot)
@@ -1067,10 +1066,10 @@ mod test {
             .0
             .get(&Instrument::new("btc", "usdt"))
             .unwrap()
-            .clone();
-
-        let result_map = result_map.spreads.borrow();
-        let result = result_map.0.get(&ExchangeId::HtxSpot).unwrap();
+            .spreads
+            .0
+            .get(&ExchangeId::HtxSpot)
+            .unwrap();
         let expected = &binance_btc_spread_history;
         assert_eq!(result, expected);
 
@@ -1093,7 +1092,7 @@ mod test {
             .make_make
             .push(time, binance_htx_eth_make_make);
 
-        let result_map = scanner
+        let result = scanner
             .exchange_data
             .0
             .get(&ExchangeId::BinanceSpot)
@@ -1101,11 +1100,11 @@ mod test {
             .0
             .get(&Instrument::new("eth", "usdt"))
             .unwrap()
-            .clone();
-
+            .spreads
+            .0
+            .get(&ExchangeId::HtxSpot)
+            .unwrap();
         let expected = &binance_eth_spread_history;
-        let result_map = result_map.spreads.borrow();
-        let result = result_map.0.get(&ExchangeId::HtxSpot).unwrap();
         assert_eq!(expected, result);
 
         /*----- */
@@ -1219,7 +1218,7 @@ mod test {
             .make_make
             .push(time, htx_binance_btc_make_make);
 
-        let result_map = scanner
+        let result= scanner
             .exchange_data
             .0
             .get(&ExchangeId::HtxSpot)
@@ -1227,10 +1226,10 @@ mod test {
             .0
             .get(&Instrument::new("btc", "usdt"))
             .unwrap()
-            .clone();
-
-        let result_map = result_map.spreads.borrow();
-        let result = result_map.0.get(&ExchangeId::BinanceSpot).unwrap();
+            .spreads
+            .0
+            .get(&ExchangeId::BinanceSpot)
+            .unwrap();
         let expected = &htx_btc_spread_history;
         assert_eq!(result, expected);
 
@@ -1253,7 +1252,7 @@ mod test {
             .make_make
             .push(time, htx_binance_eth_make_make);
 
-        let result_map = scanner
+        let result = scanner
             .exchange_data
             .0
             .get(&ExchangeId::HtxSpot)
@@ -1261,10 +1260,10 @@ mod test {
             .0
             .get(&Instrument::new("eth", "usdt"))
             .unwrap()
-            .clone();
-
-        let result_map = result_map.spreads.borrow();
-        let result = result_map.0.get(&ExchangeId::BinanceSpot).unwrap();
+            .spreads
+            .0
+            .get(&ExchangeId::BinanceSpot)
+            .unwrap();
         let expected = &htx_eth_spread_history;
         assert_eq!(result, expected);
 

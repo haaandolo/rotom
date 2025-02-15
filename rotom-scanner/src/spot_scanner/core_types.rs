@@ -5,10 +5,7 @@ use rotom_data::{
     model::{event_trade::EventTrade, network_info::NetworkSpecData},
     shared::subscription_models::{Coin, ExchangeId, Instrument},
 };
-use std::{
-    cell::RefCell,
-    collections::{BTreeMap, HashMap, VecDeque},
-};
+use std::collections::{BTreeMap, HashMap, VecDeque};
 
 /*----- */
 // Maps
@@ -82,7 +79,7 @@ pub struct InstrumentMarketData {
     pub bids: Vec<Level>,
     pub asks: Vec<Level>,
     pub trades: VecDequeTime<EventTrade>,
-    pub spreads: RefCell<SpreadHistoryMap>,
+    pub spreads: SpreadHistoryMap,
     pub trades_ws_is_connected: bool,
     pub orderbook_ws_is_connected: bool,
 }
@@ -93,7 +90,7 @@ impl Default for InstrumentMarketData {
             bids: Vec::new(),
             asks: Vec::new(),
             trades: VecDequeTime::default(),
-            spreads: RefCell::new(SpreadHistoryMap(HashMap::with_capacity(10))),
+            spreads: SpreadHistoryMap(HashMap::with_capacity(10)),
             orderbook_ws_is_connected: false,
             trades_ws_is_connected: false,
         }
@@ -106,7 +103,7 @@ impl InstrumentMarketData {
             bids,
             asks,
             trades: VecDequeTime::default(),
-            spreads: RefCell::new(SpreadHistoryMap(HashMap::with_capacity(10))),
+            spreads: SpreadHistoryMap(HashMap::with_capacity(10)),
             orderbook_ws_is_connected: true,
             trades_ws_is_connected: false,
         }
@@ -117,7 +114,7 @@ impl InstrumentMarketData {
             bids: Vec::with_capacity(10),
             asks: Vec::with_capacity(10),
             trades: VecDequeTime::new(time, value),
-            spreads: RefCell::new(SpreadHistoryMap(HashMap::with_capacity(10))),
+            spreads: SpreadHistoryMap(HashMap::with_capacity(10)),
             orderbook_ws_is_connected: false,
             trades_ws_is_connected: true,
         }
