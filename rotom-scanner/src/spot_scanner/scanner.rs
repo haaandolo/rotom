@@ -390,7 +390,7 @@ impl SpotArbScanner {
             });
     }
 
-    pub async fn run(mut self) {
+    pub fn run(mut self) {
         'spot_arb_scanner: loop {
             // Process network status update
             match self.network_status_stream.try_recv() {
@@ -470,8 +470,7 @@ impl SpotArbScanner {
                     let _ = self
                         .http_channel
                         .http_response_tx
-                        .send(SpotArbScannerHttpRequests::TestResponse)
-                        .await;
+                        .send(SpotArbScannerHttpRequests::TestResponse);
                 }
                 Err(error) => {
                     if error == mpsc::error::TryRecvError::Disconnected {

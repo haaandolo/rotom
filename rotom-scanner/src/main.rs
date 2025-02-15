@@ -1,3 +1,5 @@
+use std::thread;
+
 use actix_web::{web, App, HttpServer};
 use rotom_scanner::{
     data::data_streams::get_spot_arb_data_streams,
@@ -25,7 +27,7 @@ async fn main() -> std::io::Result<()> {
     let scanner = SpotArbScanner::new(network_status_stream, market_data_stream, scanner_channel);
 
     // Spawn scanner
-    tokio::spawn(async move { scanner.run().await });
+    thread::spawn(move || scanner.run());
 
     // Http server
     HttpServer::new(move || App::new().app_data(server_channel.clone()).service(handler))
