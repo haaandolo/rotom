@@ -8,6 +8,8 @@ rotom-data = { path = "../rotom-data" }
 
 # Async
 tokio = { workspace = true, features = ["sync", "macros", "rt-multi-thread"] }
+futures = { workspace = true }
+actix-web ={ workspace = true }
 
 # Logging
 tracing = { workspace = true }

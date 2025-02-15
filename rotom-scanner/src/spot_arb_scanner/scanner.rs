@@ -343,6 +343,12 @@ enum SpreadChangeProcess {
 }
 
 #[derive(Debug)]
+pub enum SpotArbScannerHttpRequests {
+    TestRequest,
+    TestResponse,
+}
+
+#[derive(Debug)]
 pub struct SpotArbScanner {
     exchange_data: ExchangeMarketDataMap,
     network_status: NetworkStatusMap,
@@ -350,12 +356,16 @@ pub struct SpotArbScanner {
     spread_change_queue: VecDeque<SpreadChangeProcess>,
     network_status_stream: mpsc::UnboundedReceiver<NetworkSpecs>,
     market_data_stream: mpsc::UnboundedReceiver<MarketEvent<DataKind>>,
+    http_request_rx: mpsc::Receiver<SpotArbScannerHttpRequests>,
+    http_response_tx: mpsc::Sender<SpotArbScannerHttpRequests>,
 }
 
 impl SpotArbScanner {
     pub fn new(
         network_status_stream: mpsc::UnboundedReceiver<NetworkSpecs>,
         market_data_stream: mpsc::UnboundedReceiver<MarketEvent<DataKind>>,
+        http_request_rx: mpsc::Receiver<SpotArbScannerHttpRequests>,
+        http_response_tx: mpsc::Sender<SpotArbScannerHttpRequests>,
     ) -> Self {
         Self {
             exchange_data: ExchangeMarketDataMap::default(),
@@ -364,6 +374,8 @@ impl SpotArbScanner {
             spread_change_queue: VecDeque::with_capacity(10),
             network_status_stream,
             market_data_stream,
+            http_request_rx,
+            http_response_tx,
         }
     }
 
@@ -634,7 +646,7 @@ impl SpotArbScanner {
             });
     }
 
-    pub fn run(mut self) {
+    pub async fn run(mut self) {
         'spot_arb_scanner: loop {
             // Process network status update
             match self.network_status_stream.try_recv() {
@@ -645,7 +657,7 @@ impl SpotArbScanner {
                     if error == mpsc::error::TryRecvError::Disconnected {
                         warn!(
                             message = "Network status stream for spot arb scanner has disconnected",
-                            action = "Breaking Spot Arb Scanner",
+                            action = "Breaking Spot Arb Scanner loop",
                         );
                         break 'spot_arb_scanner;
                     }
@@ -654,54 +666,42 @@ impl SpotArbScanner {
 
             // Process market data update
             match self.market_data_stream.try_recv() {
-                Ok(market_data) => {
-                    println!(
-                        "###### before update ##### \n {:?} \n ###########",
-                        market_data
-                    );
-
-                    match market_data.event_data {
-                        DataKind::OrderBook(orderbook) => self.process_orderbook(
-                            market_data.exchange,
-                            market_data.instrument,
-                            orderbook.bids,
-                            orderbook.asks,
-                        ),
-                        DataKind::OrderBookSnapshot(snapshot) => self.process_orderbook(
-                            market_data.exchange,
-                            market_data.instrument,
-                            snapshot.bids,
-                            snapshot.asks,
-                        ),
-                        DataKind::Trade(trade) => self.process_trade(
-                            market_data.exchange,
-                            market_data.instrument,
-                            market_data.received_time,
-                            trade,
-                        ),
-                        DataKind::Trades(trades) => self.process_trades(
-                            market_data.exchange,
-                            market_data.instrument,
-                            market_data.received_time,
-                            trades,
-                        ),
-                        DataKind::ConnectionStatus(ws_status) => self.process_ws_status(
-                            market_data.exchange,
-                            market_data.instrument,
-                            ws_status,
-                        ),
-                    }
-
-                    // println!(
-                    //     "##### after update ##### \n {:?} \n ###########",
-                    //     self.exchange_data
-                    // );
-                }
+                Ok(market_data) => match market_data.event_data {
+                    DataKind::OrderBook(orderbook) => self.process_orderbook(
+                        market_data.exchange,
+                        market_data.instrument,
+                        orderbook.bids,
+                        orderbook.asks,
+                    ),
+                    DataKind::OrderBookSnapshot(snapshot) => self.process_orderbook(
+                        market_data.exchange,
+                        market_data.instrument,
+                        snapshot.bids,
+                        snapshot.asks,
+                    ),
+                    DataKind::Trade(trade) => self.process_trade(
+                        market_data.exchange,
+                        market_data.instrument,
+                        market_data.received_time,
+                        trade,
+                    ),
+                    DataKind::Trades(trades) => self.process_trades(
+                        market_data.exchange,
+                        market_data.instrument,
+                        market_data.received_time,
+                        trades,
+                    ),
+                    DataKind::ConnectionStatus(ws_status) => self.process_ws_status(
+                        market_data.exchange,
+                        market_data.instrument,
+                        ws_status,
+                    ),
+                },
                 Err(error) => {
                     if error == mpsc::error::TryRecvError::Disconnected {
                         warn!(
                             message = "Network status stream for spot arb scanner has disconnected",
-                            action = "Breaking Spot Arb Scanner",
+                            action = "Breaking Spot Arb Scanner loop",
                         );
                         break 'spot_arb_scanner;
                     }
@@ -716,6 +716,24 @@ impl SpotArbScanner {
                     }
                     SpreadChangeProcess::SpreadsCalculated(calculated_spreads) => {
                         self.process_calculated_spreads(Utc::now(), calculated_spreads);
+                    }
+                }
+            }
+
+            // Process http requests
+            match self.http_request_rx.try_recv() {
+                Ok(_request) => {
+                    let _ = self
+                        .http_response_tx
+                        .send(SpotArbScannerHttpRequests::TestResponse);
+                }
+                Err(error) => {
+                    if error == mpsc::error::TryRecvError::Disconnected {
+                        warn!(
+                            message = "Http request channel has disconnected",
+                            action = "Breaking Spot Arb Scanner loop",
+                        );
+                        break 'spot_arb_scanner;
                     }
                 }
             }

@@ -132,6 +132,14 @@ pub mod test_utils {
     pub fn spot_arb_scanner() -> SpotArbScanner {
         let (_, network_stream_rx) = mpsc::unbounded_channel::<NetworkSpecs>();
         let (_, market_data_stream_rx) = mpsc::unbounded_channel::<MarketEvent<DataKind>>();
-        SpotArbScanner::new(network_stream_rx, market_data_stream_rx)
+        let (_, http_request_rx) = mpsc::channel(10);
+        let (http_response_tx, _) = mpsc::channel(10);
+
+        SpotArbScanner::new(
+            network_stream_rx,
+            market_data_stream_rx,
+            http_request_rx,
+            http_response_tx,
+        )
     }
 }

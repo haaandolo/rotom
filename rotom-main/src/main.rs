@@ -1,6 +1,7 @@
-use std::{collections::HashMap, fs::File, io::Write};
+use std::{collections::HashMap, fs::File, io::Write, sync::Arc};
 
 use futures::StreamExt;
+use parking_lot::RwLock;
 use rotom_data::{
     exchange::{
         ascendex::AscendExSpotPublicData,
@@ -27,9 +28,6 @@ use rotom_main::trader::spot_arb_trader::builder::stream_trades;
 use rotom_oms::exchange::{
     binance::binance_client::BinanceExecution, poloniex::poloniex_client::PoloniexExecution,
 };
-use rotom_scanner::spot_arb_scanner::{
-    network_status_stream::NetworkStatusStream, scanner::SpotArbScanner,
-};
 use tokio::sync::mpsc;
 use tracing_subscriber::fmt::init;
 
@@ -39,95 +37,6 @@ pub async fn main() {
     // Main
     ///////////
     init_logging();
-
-    /////////
-    // Playground
-    /////////
-    // Temp instruments
-    let instruments = vec![
-        Instrument::new("btc", "usdt"),
-        Instrument::new("eth", "usdt"),
-        Instrument::new("ada", "usdt"),
-        Instrument::new("sol", "usdt"),
-        Instrument::new("icp", "usdt"),
-    ];
-
-    // Network status stream
-    let network = NetworkStatusStream::new()
-        // .add_exchange::<AscendExSpotPublicData>(instruments.clone())
-        .add_exchange::<BinanceSpotPublicData>(instruments.clone())
-        // .add_exchange::<ExmoSpotPublicData>(instruments.clone())
-        // .add_exchange::<HtxSpotPublicData>(instruments.clone())
-        // .add_exchange::<KuCoinSpotPublicData>(instruments.clone())
-        // .add_exchange::<OkxSpotPublicData>(instruments.clone())
-        // .add_exchange::<WooxSpotPublicData>(instruments.clone())
-        .build();
-
-    // Market data feed
-    let streams = DynamicStreams::init([
-        vec![
-            // (ExchangeId::HtxSpot, "ada", "usdt", StreamKind::Snapshot),
-            // (ExchangeId::HtxSpot, "icp", "usdt", StreamKind::Snapshot),
-            // (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Snapshot),
-            // (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Trades),
-            // (ExchangeId::HtxSpot, "ada", "usdt", StreamKind::Trades),
-            // (ExchangeId::HtxSpot, "icp", "usdt", StreamKind::Trades),
-            //
-            // (ExchangeId::OkxSpot, "ada", "usdt", StreamKind::Snapshot),
-            // (ExchangeId::OkxSpot, "icp", "usdt", StreamKind::Snapshot),
-            // (ExchangeId::OkxSpot, "sol", "usdt", StreamKind::Snapshot),
-            // (ExchangeId::OkxSpot, "sol", "usdt", StreamKind::Trade),
-            // (ExchangeId::OkxSpot, "ada", "usdt", StreamKind::Trade),
-            // (ExchangeId::OkxSpot, "icp", "usdt", StreamKind::Trade),
-            //
-            // (ExchangeId::BinanceSpot, "ada", "usdt", StreamKind::Trade),
-            // (ExchangeId::BinanceSpot, "ada", "usdt", StreamKind::L2),
-            // (ExchangeId::BinanceSpot, "icp", "usdt", StreamKind::Trade),
-            // (ExchangeId::BinanceSpot, "icp", "usdt", StreamKind::L2),
-            // (ExchangeId::BinanceSpot, "sol", "usdt", StreamKind::Trade),
-            // (ExchangeId::BinanceSpot, "sol", "usdt", StreamKind::L2),
-            //
-            (ExchangeId::AscendExSpot, "ada", "usdt", StreamKind::L2),
-            (ExchangeId::AscendExSpot, "icp", "usdt", StreamKind::L2),
-            (ExchangeId::AscendExSpot, "sol", "usdt", StreamKind::L2),
-            (ExchangeId::AscendExSpot, "eth", "usdt", StreamKind::L2),
-            // (ExchangeId::AscendExSpot, "ada", "usdt", StreamKind::Trades),
-            // (ExchangeId::AscendExSpot, "sol", "usdt", StreamKind::Trades),
-            // (ExchangeId::AscendExSpot, "icp", "usdt", StreamKind::Trades),
-        ],
-        vec![
-            // (ExchangeId::AscendExSpot, "ada", "usdt", StreamKind::L2),
-            // (ExchangeId::AscendExSpot, "icp", "usdt", StreamKind::L2),
-            // (ExchangeId::AscendExSpot, "sol", "usdt", StreamKind::L2),
-            // (ExchangeId::AscendExSpot, "btc", "usdt", StreamKind::L2),
-            // (ExchangeId::AscendExSpot, "ada", "usdt", StreamKind::Trades),
-            // (ExchangeId::AscendExSpot, "sol", "usdt", StreamKind::Trades),
-            // (ExchangeId::AscendExSpot, "icp", "usdt", StreamKind::Trades),
-            // (ExchangeId::OkxSpot, "ada", "usdt", StreamKind::Trade),
-            // (ExchangeId::OkxSpot, "icp", "usdt", StreamKind::Trade),
-            // (ExchangeId::OkxSpot, "sol", "usdt", StreamKind::Trade),
-            // //
-            // (ExchangeId::HtxSpot, "ada", "usdt", StreamKind::Trades),
-            // (ExchangeId::HtxSpot, "icp", "usdt", StreamKind::Trades),
-            // (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Trades),
-            //
-        ],
-    ])
-    .await
-    .unwrap();
-
-    let mut data = streams.select_all::<MarketEvent<DataKind>>();
-    let (market_data_tx, market_data_rx) = mpsc::unbounded_channel();
-    tokio::spawn(async move {
-        while let Some(event) = data.next().await {
-            // println!("{:?}", event);
-            let _ = market_data_tx.send(event);
-        }
-    });
-
-    // Scanner
-    let scanner = SpotArbScanner::new(network, market_data_rx);
-    scanner.run();
 
     // let test = OkxSpotPublicData::get_network_info(instruments)
     //     .await
