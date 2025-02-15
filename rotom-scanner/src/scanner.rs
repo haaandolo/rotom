@@ -15,11 +15,11 @@ use rotom_data::{
     },
     shared::subscription_models::{Coin, ExchangeId, Instrument},
 };
-use serde::Serialize;
+
 use tokio::sync::mpsc;
 use tracing::warn;
 
-use crate::handlers::ScannerHttpChannel;
+use crate::server::{server_channels::ScannerHttpChannel, SpotArbScannerHttpRequests};
 
 /*----- */
 // VecDeque - Time based
@@ -343,12 +343,6 @@ impl SpreadsCalculated {
 enum SpreadChangeProcess {
     SpreadChange(SpreadChange),
     SpreadsCalculated(SpreadsCalculated),
-}
-
-#[derive(Debug, Serialize)]
-pub enum SpotArbScannerHttpRequests {
-    TestRequest,
-    TestResponse,
 }
 
 #[derive(Debug)]

@@ -1,42 +1,10 @@
 use actix_web::{get, web::Data, HttpResponse, Responder};
 use tokio::{
-    sync::{mpsc, Mutex},
+    sync::Mutex,
     time::{timeout, Duration},
 };
 
-use crate::scanner::SpotArbScannerHttpRequests;
-
-/*----- */
-// Http Channels
-/*----- */
-#[derive(Debug)]
-pub struct ScannerHttpChannel {
-    pub http_request_rx: mpsc::Receiver<SpotArbScannerHttpRequests>,
-    pub http_response_tx: mpsc::Sender<SpotArbScannerHttpRequests>,
-}
-
-#[derive(Debug)]
-pub struct ServerHttpChannel {
-    pub http_request_tx: mpsc::Sender<SpotArbScannerHttpRequests>,
-    pub http_response_rx: mpsc::Receiver<SpotArbScannerHttpRequests>,
-}
-
-pub fn make_http_channels() -> (ScannerHttpChannel, ServerHttpChannel) {
-    let (http_request_tx, http_request_rx) = mpsc::channel(32);
-    let (http_response_tx, http_response_rx) = mpsc::channel(32);
-
-    let scanner_http_channel = ScannerHttpChannel {
-        http_request_rx,
-        http_response_tx,
-    };
-
-    let server_http_channel = ServerHttpChannel {
-        http_request_tx,
-        http_response_rx,
-    };
-
-    (scanner_http_channel, server_http_channel)
-}
+use crate::server::{server_channels::ServerHttpChannel, SpotArbScannerHttpRequests};
 
 /*----- */
 // Handler

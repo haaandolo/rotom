@@ -17,10 +17,7 @@ pub mod test_utils {
     };
     use tokio::sync::mpsc;
 
-    use crate::{
-        handlers::make_http_channels,
-        scanner::{SpotArbScanner, SpreadChange},
-    };
+    use crate::{scanner::{SpotArbScanner, SpreadChange}, server::server_channels::make_http_channels};
 
     fn sort_by_price_ascending(levels: &mut [Level]) {
         levels.sort_by(|a, b| a.price.partial_cmp(&b.price).unwrap_or(Ordering::Equal));

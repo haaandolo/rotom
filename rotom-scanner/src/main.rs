@@ -1,84 +1,33 @@
 use actix_web::{web, App, HttpServer};
-use futures::StreamExt;
-use rotom_data::{
-    exchange::binance::BinanceSpotPublicData,
-    model::market_event::{DataKind, MarketEvent},
-    shared::subscription_models::{ExchangeId, Instrument, StreamKind},
-    streams::dynamic_stream::DynamicStreams,
-};
-use rotom_scanner::{
-    handlers::{handler, make_http_channels},
-    network_status_stream::NetworkStatusStream,
-    scanner::SpotArbScanner,
-};
-use tokio::sync::{mpsc, Mutex};
+use rotom_scanner::{data_streams::get_spot_arb_data_streams, scanner::SpotArbScanner, server::{handlers::handler, server_channels::make_http_channels}};
+use tokio::sync::Mutex;
 
-// #[actix_web::main]
+/*----- */
+// Main
+/*----- */
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     // Init
     init_logging();
 
-    // Temp instruments
-    let instruments = vec![
-        Instrument::new("btc", "usdt"),
-        Instrument::new("eth", "usdt"),
-        Instrument::new("ada", "usdt"),
-        Instrument::new("sol", "usdt"),
-        Instrument::new("icp", "usdt"),
-    ];
-
-    // Network status stream
-    let network = NetworkStatusStream::new()
-        // .add_exchange::<AscendExSpotPublicData>(instruments.clone())
-        .add_exchange::<BinanceSpotPublicData>(instruments.clone())
-        // .add_exchange::<ExmoSpotPublicData>(instruments.clone())
-        // .add_exchange::<HtxSpotPublicData>(instruments.clone())
-        // .add_exchange::<KuCoinSpotPublicData>(instruments.clone())
-        // .add_exchange::<OkxSpotPublicData>(instruments.clone())
-        // .add_exchange::<WooxSpotPublicData>(instruments.clone())
-        .build();
-
-    // Market data feed
-    let streams = DynamicStreams::init([vec![
-        (ExchangeId::BinanceSpot, "ada", "usdt", StreamKind::Trade),
-        // (ExchangeId::BinanceSpot, "ada", "usdt", StreamKind::L2),
-        // (ExchangeId::BinanceSpot, "icp", "usdt", StreamKind::Trade),
-        // (ExchangeId::BinanceSpot, "icp", "usdt", StreamKind::L2),
-        // (ExchangeId::BinanceSpot, "sol", "usdt", StreamKind::Trade),
-        // (ExchangeId::BinanceSpot, "sol", "usdt", StreamKind::L2),
-    ]])
-    .await
-    .unwrap();
-
-    let mut data = streams.select_all::<MarketEvent<DataKind>>();
-    let (market_data_tx, market_data_rx) = mpsc::unbounded_channel();
-    tokio::spawn(async move {
-        while let Some(event) = data.next().await {
-            // println!("{:?}", event);
-            let _ = market_data_tx.send(event);
-        }
-    });
+    // Init streams
+    let (market_data_stream, network_status_stream) = get_spot_arb_data_streams().await;
 
     // Http request for scanner
     let (scanner_channel, server_channel) = make_http_channels();
-    let server_channel_converted = web::Data::new(Mutex::new(server_channel));
+    let server_channel = web::Data::new(Mutex::new(server_channel));
 
     // Scanner
-    let scanner = SpotArbScanner::new(network, market_data_rx, scanner_channel);
+    let scanner = SpotArbScanner::new(network_status_stream, market_data_stream, scanner_channel);
 
     // Spawn scanner
     tokio::spawn(async move { scanner.run().await });
 
     // Http server
-    HttpServer::new(move || {
-        App::new()
-            .app_data(server_channel_converted.clone())
-            .service(handler)
-    })
-    .bind(("127.0.0.1", 8080))?
-    .run()
-    .await
+    HttpServer::new(move || App::new().app_data(server_channel.clone()).service(handler))
+        .bind(("127.0.0.1", 8080))?
+        .run()
+        .await
 }
 
 /*----- */
