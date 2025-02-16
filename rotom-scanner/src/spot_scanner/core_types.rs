@@ -26,7 +26,7 @@ pub struct NetworkStatusMap(pub HashMap<(ExchangeId, Coin), NetworkSpecData>);
 /*----- */
 // VecDequeTime
 /*----- */
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize)]
 pub struct VecDequeTime<T> {
     pub data: VecDeque<(DateTime<Utc>, T)>,
     pub window: Duration,
@@ -164,7 +164,7 @@ pub struct LatestSpreads {
     pub make_make: f64,
 }
 
-#[derive(Debug, Default, PartialEq, Clone)]
+#[derive(Debug, Default, PartialEq, Clone, Serialize)]
 pub struct SpreadHistory {
     pub latest_spreads: LatestSpreads,
     pub take_take: VecDequeTime<f64>,

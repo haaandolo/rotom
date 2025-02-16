@@ -169,3 +169,11 @@ where
 {
     String::deserialize(deserializer).map(|s| s.to_uppercase())
 }
+
+// Deserialise a value to uppercase
+pub fn de_lowercase<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    String::deserialize(deserializer).map(|s| s.to_lowercase())
+}

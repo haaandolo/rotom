@@ -115,6 +115,17 @@ pub struct SpreadResponse {
 }
 
 /*----- */
+// Spread History Response - Response sent back from http request
+/*----- */
+#[derive(Debug, Serialize)]
+pub struct SpreadHistoryResponse {
+    pub base_exchange: ExchangeId,
+    pub quote_exchange: ExchangeId,
+    pub instrument: Instrument,
+    pub spread_history: SpreadHistory,
+}
+
+/*----- */
 // Spot Arb Scanner
 /*----- */
 #[derive(Debug)]
@@ -497,11 +508,42 @@ impl SpotArbScanner {
 
     fn process_get_spread_history_request(
         &mut self,
-        _base_exchange: ExchangeId,
-        _quote_exchange: ExchangeId,
-        _instrument: Instrument,
+        base_exchange: ExchangeId,
+        quote_exchange: ExchangeId,
+        instrument: Instrument,
     ) {
-        todo!()
+        let base_exchange_spread_history = self
+            .exchange_data
+            .0
+            .get(&base_exchange)
+            .and_then(|base_exchange_instrument_market_data| {
+                base_exchange_instrument_market_data.0.get(&instrument)
+            })
+            .and_then(|base_exchange_spread_history| {
+                base_exchange_spread_history.spreads.0.get(&quote_exchange)
+            });
+
+        match base_exchange_spread_history {
+            Some(base_exchange_spread_history_response) => {
+                let _ = self.http_channel.http_response_tx.send(
+                    SpotArbScannerHttpResponse::GetSpreadHistory(Box::new(SpreadHistoryResponse {
+                        base_exchange,
+                        quote_exchange,
+                        instrument,
+                        spread_history: base_exchange_spread_history_response.clone(),
+                    })),
+                );
+            }
+            None => {
+                let _ = self.http_channel.http_response_tx.send(
+                    SpotArbScannerHttpResponse::CouldNotFindSpreadHistory {
+                        base_exchange,
+                        quote_exchange,
+                        instrument,
+                    },
+                );
+            }
+        }
     }
 
     pub fn run(mut self) {

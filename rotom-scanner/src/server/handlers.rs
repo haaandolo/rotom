@@ -3,6 +3,7 @@ use actix_web::{
     web::{self, Data},
     HttpResponse, Responder,
 };
+use rotom_data::shared::de::de_lowercase;
 use rotom_data::shared::subscription_models::{ExchangeId, Instrument};
 use serde::Deserialize;
 use tokio::{
@@ -50,10 +51,13 @@ pub async fn get_top_spreads_handler(
 }
 
 #[derive(Deserialize)]
+// #[serde(rename_all = "snake_case")]
 struct SpreadHistoryQueryParams {
     base_exchange: ExchangeId,
     quote_exchange: ExchangeId,
+    #[serde(deserialize_with = "de_lowercase")]
     base_instrument: String,
+    #[serde(deserialize_with = "de_lowercase")]
     quote_instrument: String,
 }
 
