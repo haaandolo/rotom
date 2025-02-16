@@ -34,7 +34,7 @@ pub async fn get_spot_arb_data_streams() -> (
         // .add_exchange::<AscendExSpotPublicData>(instruments.clone())
         .add_exchange::<BinanceSpotPublicData>(instruments.clone())
         // .add_exchange::<ExmoSpotPublicData>(instruments.clone())
-        .add_exchange::<HtxSpotPublicData>(instruments.clone())
+        // .add_exchange::<HtxSpotPublicData>(instruments.clone())
         // .add_exchange::<KuCoinSpotPublicData>(instruments.clone())
         // .add_exchange::<OkxSpotPublicData>(instruments.clone())
         // .add_exchange::<WooxSpotPublicData>(instruments.clone())

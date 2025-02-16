@@ -78,7 +78,7 @@ impl<T> VecDequeTime<T> {
 #[derive(Debug, Serialize)]
 pub struct AverageTradeInfo {
     pub avg_price: f64,
-    pub avg_size: f64,
+    pub cum_size: f64,
     pub buy_sell_ratio: f64,
 }
 
@@ -143,7 +143,7 @@ impl InstrumentMarketData {
 
         AverageTradeInfo {
             avg_price: total_price / count,
-            avg_size: total_size / count,
+            cum_size: total_size,
             buy_sell_ratio: buy_count as f64 / count,
         }
     }
