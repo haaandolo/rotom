@@ -497,7 +497,8 @@ impl SpotArbScanner {
 
     fn process_get_spread_history_request(
         &mut self,
-        _exchange: ExchangeId,
+        _base_exchange: ExchangeId,
+        _quote_exchange: ExchangeId,
         _instrument: Instrument,
     ) {
         todo!()
@@ -527,9 +528,15 @@ impl SpotArbScanner {
                     SpotArbScannerHttpRequests::GetTopSpreads => {
                         self.process_get_top_spread_request()
                     }
-                    SpotArbScannerHttpRequests::GetSpreadHistory((exchange, instrument)) => {
-                        self.process_get_spread_history_request(exchange, instrument)
-                    }
+                    SpotArbScannerHttpRequests::GetSpreadHistory((
+                        base_exchange,
+                        quote_exchange,
+                        instrument,
+                    )) => self.process_get_spread_history_request(
+                        base_exchange,
+                        quote_exchange,
+                        instrument,
+                    ),
                 },
                 Err(error) => {
                     if error == mpsc::error::TryRecvError::Disconnected {

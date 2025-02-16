@@ -9,7 +9,7 @@ use crate::spot_scanner::scanner::SpreadResponse;
 #[derive(Debug, Serialize)]
 pub enum SpotArbScannerHttpRequests {
     GetTopSpreads,
-    GetSpreadHistory((ExchangeId, Instrument)),
+    GetSpreadHistory((ExchangeId, ExchangeId, Instrument)),
 }
 
 #[derive(Debug, Serialize)]
