@@ -1162,18 +1162,22 @@ mod test {
         // Check Binance btc spread history
         let mut binance_btc_spread_history = SpreadHistory::default();
 
+        binance_btc_spread_history.latest_spreads.take_take = binance_htx_btc_take_take;
         binance_btc_spread_history
             .take_take
             .push(time, binance_htx_btc_take_take);
 
+        binance_btc_spread_history.latest_spreads.take_make = binance_htx_btc_take_make;
         binance_btc_spread_history
             .take_make
             .push(time, binance_htx_btc_take_make);
 
+        binance_btc_spread_history.latest_spreads.make_take = binance_htx_btc_make_take;
         binance_btc_spread_history
             .make_take
             .push(time, binance_htx_btc_make_take);
 
+        binance_btc_spread_history.latest_spreads.make_make = binance_htx_btc_make_make;
         binance_btc_spread_history
             .make_make
             .push(time, binance_htx_btc_make_make);
@@ -1196,18 +1200,22 @@ mod test {
         // Check Binance eth spread history
         let mut binance_eth_spread_history = SpreadHistory::default();
 
+        binance_eth_spread_history.latest_spreads.take_take = binance_htx_eth_take_take;
         binance_eth_spread_history
             .take_take
             .push(time, binance_htx_eth_take_take);
 
+        binance_eth_spread_history.latest_spreads.take_make = binance_htx_eth_take_make;
         binance_eth_spread_history
             .take_make
             .push(time, binance_htx_eth_take_make);
 
+        binance_eth_spread_history.latest_spreads.make_take = binance_htx_eth_make_take;
         binance_eth_spread_history
             .make_take
             .push(time, binance_htx_eth_make_take);
 
+        binance_eth_spread_history.latest_spreads.make_make = binance_htx_eth_make_make;
         binance_eth_spread_history
             .make_make
             .push(time, binance_htx_eth_make_make);
@@ -1322,18 +1330,22 @@ mod test {
         // Check Htx btc spread history
         let mut htx_btc_spread_history = SpreadHistory::default();
 
+        htx_btc_spread_history.latest_spreads.take_take = htx_binance_btc_take_take;
         htx_btc_spread_history
             .take_take
             .push(time, htx_binance_btc_take_take);
 
+        htx_btc_spread_history.latest_spreads.take_make = htx_binance_btc_take_make;
         htx_btc_spread_history
             .take_make
             .push(time, htx_binance_btc_take_make);
 
+        htx_btc_spread_history.latest_spreads.make_take = htx_binance_btc_make_take;
         htx_btc_spread_history
             .make_take
             .push(time, htx_binance_btc_make_take);
 
+        htx_btc_spread_history.latest_spreads.make_make = htx_binance_btc_make_make;
         htx_btc_spread_history
             .make_make
             .push(time, htx_binance_btc_make_make);
@@ -1356,18 +1368,22 @@ mod test {
         // Check eth btc spread history
         let mut htx_eth_spread_history = SpreadHistory::default();
 
+        htx_eth_spread_history.latest_spreads.take_take = htx_binance_eth_take_take;
         htx_eth_spread_history
             .take_take
             .push(time, htx_binance_eth_take_take);
 
+        htx_eth_spread_history.latest_spreads.take_make = htx_binance_eth_take_make;
         htx_eth_spread_history
             .take_make
             .push(time, htx_binance_eth_take_make);
 
+        htx_eth_spread_history.latest_spreads.make_take = htx_binance_eth_make_take;
         htx_eth_spread_history
             .make_take
             .push(time, htx_binance_eth_make_take);
 
+        htx_eth_spread_history.latest_spreads.make_make = htx_binance_eth_make_make;
         htx_eth_spread_history
             .make_make
             .push(time, htx_binance_eth_make_make);
