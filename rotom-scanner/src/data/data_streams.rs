@@ -1,6 +1,6 @@
 use futures::StreamExt;
 use rotom_data::{
-    exchange::binance::BinanceSpotPublicData,
+    exchange::{binance::BinanceSpotPublicData, htx::HtxSpotPublicData},
     model::{
         market_event::{DataKind, MarketEvent},
         network_info::NetworkSpecs,
@@ -34,7 +34,7 @@ pub async fn get_spot_arb_data_streams() -> (
         // .add_exchange::<AscendExSpotPublicData>(instruments.clone())
         .add_exchange::<BinanceSpotPublicData>(instruments.clone())
         // .add_exchange::<ExmoSpotPublicData>(instruments.clone())
-        // .add_exchange::<HtxSpotPublicData>(instruments.clone())
+        .add_exchange::<HtxSpotPublicData>(instruments.clone())
         // .add_exchange::<KuCoinSpotPublicData>(instruments.clone())
         // .add_exchange::<OkxSpotPublicData>(instruments.clone())
         // .add_exchange::<WooxSpotPublicData>(instruments.clone())
@@ -44,12 +44,20 @@ pub async fn get_spot_arb_data_streams() -> (
     // Market data stream
     /*----- */
     let streams = DynamicStreams::init([vec![
+        // Binance
         (ExchangeId::BinanceSpot, "ada", "usdt", StreamKind::AggTrades),
-        // (ExchangeId::BinanceSpot, "ada", "usdt", StreamKind::L2),
-        // (ExchangeId::BinanceSpot, "icp", "usdt", StreamKind::Trade),
-        // (ExchangeId::BinanceSpot, "icp", "usdt", StreamKind::L2),
-        // (ExchangeId::BinanceSpot, "sol", "usdt", StreamKind::Trade),
-        // (ExchangeId::BinanceSpot, "sol", "usdt", StreamKind::L2),
+        (ExchangeId::BinanceSpot, "ada", "usdt", StreamKind::L2),
+        (ExchangeId::BinanceSpot, "icp", "usdt", StreamKind::AggTrades),
+        (ExchangeId::BinanceSpot, "icp", "usdt", StreamKind::L2),
+        (ExchangeId::BinanceSpot, "sol", "usdt", StreamKind::AggTrades),
+        (ExchangeId::BinanceSpot, "sol", "usdt", StreamKind::L2),
+        // Htx
+        (ExchangeId::HtxSpot, "ada", "usdt", StreamKind::Trades),
+        (ExchangeId::HtxSpot, "ada", "usdt", StreamKind::Snapshot),
+        (ExchangeId::HtxSpot, "icp", "usdt", StreamKind::Trades),
+        (ExchangeId::HtxSpot, "icp", "usdt", StreamKind::Snapshot),
+        (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Trades),
+        (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Snapshot),
     ]])
     .await
     .unwrap();
@@ -58,7 +66,7 @@ pub async fn get_spot_arb_data_streams() -> (
     let (market_data_tx, market_data_rx) = mpsc::unbounded_channel();
     tokio::spawn(async move {
         while let Some(event) = data.next().await {
-            println!("{:?}", event);
+            // println!("{:?}", event);
             let _ = market_data_tx.send(event);
         }
     });

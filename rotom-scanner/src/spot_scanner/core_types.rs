@@ -5,6 +5,7 @@ use rotom_data::{
     model::{event_trade::EventTrade, network_info::NetworkSpecData},
     shared::subscription_models::{Coin, ExchangeId, Instrument},
 };
+use serde::Serialize;
 use std::collections::{BTreeMap, HashMap, VecDeque};
 
 /*----- */
@@ -74,6 +75,13 @@ impl<T> VecDequeTime<T> {
 /*----- */
 // Scanner market data
 /*----- */
+#[derive(Debug, Serialize)]
+pub struct AverageTradeInfo {
+    pub avg_price: f64,
+    pub avg_size: f64,
+    pub buy_sell_ratio: f64,
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct InstrumentMarketData {
     pub bids: Vec<Level>,
@@ -120,16 +128,41 @@ impl InstrumentMarketData {
         }
     }
 
-    pub fn bid_ask_has_no_data(&self) -> bool {
-        self.bids.is_empty() && self.asks.is_empty()
+    pub fn get_average_trades(&self) -> AverageTradeInfo {
+        let (total_price, total_size, buy_count, count) = self.trades.data.iter().fold(
+            (0.0, 0.0, 0, 0.0),
+            |(price_sum, size_sum, buy_count, count), (_, trade)| {
+                (
+                    price_sum + trade.trade.price,
+                    size_sum + trade.trade.size,
+                    buy_count + trade.is_buy as usize,
+                    count + 1.0,
+                )
+            },
+        );
+
+        AverageTradeInfo {
+            avg_price: total_price / count,
+            avg_size: total_size / count,
+            buy_sell_ratio: buy_count as f64 / count,
+        }
     }
 }
 
 /*----- */
 // Spread History
 /*----- */
+#[derive(Debug, Default, Clone, Copy, PartialEq, Serialize)]
+pub struct LatestSpreads {
+    pub take_take: f64,
+    pub take_make: f64,
+    pub make_take: f64,
+    pub make_make: f64,
+}
+
 #[derive(Debug, Default, PartialEq, Clone)]
 pub struct SpreadHistory {
+    pub latest_spreads: LatestSpreads,
     pub take_take: VecDequeTime<f64>,
     pub take_make: VecDequeTime<f64>,
     pub make_take: VecDequeTime<f64>,
@@ -144,7 +177,14 @@ impl SpreadHistory {
         take_take_queue.push(Utc::now(), take_take);
         take_make_queue.push(Utc::now(), take_make);
 
+        let latest_spreads = LatestSpreads {
+            take_take,
+            take_make,
+            ..LatestSpreads::default()
+        };
+
         Self {
+            latest_spreads,
             take_take: take_take_queue,
             take_make: take_make_queue,
             make_take: VecDequeTime::default(),
@@ -159,7 +199,14 @@ impl SpreadHistory {
         make_take_queue.push(Utc::now(), make_take);
         make_make_queue.push(Utc::now(), make_make);
 
+        let latest_spreads = LatestSpreads {
+            make_take,
+            make_make,
+            ..LatestSpreads::default()
+        };
+
         Self {
+            latest_spreads,
             take_take: VecDequeTime::default(),
             take_make: VecDequeTime::default(),
             make_take: make_take_queue,
@@ -169,18 +216,22 @@ impl SpreadHistory {
 
     pub fn insert(&mut self, time: DateTime<Utc>, spread_array: [Option<f64>; 4]) {
         if let Some(take_take) = spread_array[0] {
+            self.latest_spreads.take_take = take_take;
             self.take_take.push(time, take_take);
         }
 
         if let Some(take_make) = spread_array[1] {
+            self.latest_spreads.take_make = take_make;
             self.take_make.push(time, take_make);
         }
 
         if let Some(make_take) = spread_array[2] {
+            self.latest_spreads.make_take = make_take;
             self.make_take.push(time, make_take);
         }
 
         if let Some(make_make) = spread_array[3] {
+            self.latest_spreads.make_make = make_make;
             self.make_make.push(time, make_make);
         }
     }
@@ -191,8 +242,8 @@ impl SpreadHistory {
 /*----- */
 #[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Hash, Clone)]
 pub struct SpreadKey {
-    exchanges: (ExchangeId, ExchangeId),
-    instrument: Instrument,
+    pub exchanges: (ExchangeId, ExchangeId),
+    pub instrument: Instrument,
 }
 
 impl SpreadKey {

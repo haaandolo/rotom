@@ -4,20 +4,23 @@ use rotom_data::{
     model::{
         event_trade::EventTrade,
         market_event::{DataKind, MarketEvent, WsStatus},
-        network_info::NetworkSpecs,
+        network_info::{NetworkSpecData, NetworkSpecs},
         EventKind,
     },
-    shared::subscription_models::{ExchangeId, Instrument},
+    shared::subscription_models::{Coin, ExchangeId, Instrument},
 };
+use serde::Serialize;
 use std::collections::VecDeque;
 use tokio::sync::mpsc;
 use tracing::warn;
 
-use crate::server::{server_channels::ScannerHttpChannel, SpotArbScannerHttpRequests};
+use crate::server::{
+    server_channels::ScannerHttpChannel, SpotArbScannerHttpRequests, SpotArbScannerHttpResponse,
+};
 
 use super::core_types::{
-    ExchangeMarketDataMap, InstrumentMarketData, NetworkStatusMap, SpreadHistory, SpreadKey,
-    SpreadsSorted,
+    AverageTradeInfo, ExchangeMarketDataMap, InstrumentMarketData, LatestSpreads, NetworkStatusMap,
+    SpreadHistory, SpreadKey, SpreadsSorted,
 };
 
 /*----- */
@@ -90,6 +93,22 @@ impl SpreadsCalculated {
 enum SpreadChangeProcess {
     SpreadChange(SpreadChange),
     SpreadsCalculated(SpreadsCalculated),
+}
+
+/*----- */
+// Spread Response - Response sent back from http request
+/*----- */
+#[derive(Debug, Serialize)]
+pub struct SpreadResponse {
+    pub base_exchange: ExchangeId,
+    pub quote_exchange: ExchangeId,
+    pub instrument: Instrument,
+    pub avg_trade_info: AverageTradeInfo,
+    pub spreads: LatestSpreads,
+    pub base_exchange_network_info: Option<NetworkSpecData>,
+    pub quote_exchange_network_info: Option<NetworkSpecData>,
+    pub trades_ws_is_connected: bool,
+    pub orderbook_ws_is_connected: bool,
 }
 
 /*----- */
@@ -389,6 +408,76 @@ impl SpotArbScanner {
             });
     }
 
+    fn process_get_top_spread_request(&mut self) {
+        // Get top spreads
+        let top_spreads = self
+            .spreads_sorted
+            .snapshot()
+            .into_iter()
+            .map(|(_, spread_key)| {
+                // Note: unwraps here should never fail as before this step everything should have a value
+                let (base_exchange, quote_exchange) = spread_key.exchanges;
+                let instrument = spread_key.instrument;
+                let coin = Coin::new(instrument.base.as_str());
+
+                let base_exchange_data = self
+                    .exchange_data
+                    .0
+                    .get(&base_exchange)
+                    .unwrap() // Should never fail
+                    .0
+                    .get(&instrument)
+                    .unwrap(); // Should never fail
+
+                let spreads = base_exchange_data
+                    .spreads
+                    .0
+                    .get(&quote_exchange)
+                    .unwrap() // Should never fail
+                    .latest_spreads;
+
+                let base_exchange_network_info = self
+                    .network_status
+                    .0
+                    .get(&(base_exchange, coin.clone()))
+                    .cloned();
+
+                let quote_exchange_network_info =
+                    self.network_status.0.get(&(quote_exchange, coin)).cloned();
+
+                let trades_ws_is_connected = base_exchange_data.trades_ws_is_connected;
+                let orderbook_ws_is_connected = base_exchange_data.orderbook_ws_is_connected;
+                let avg_trade_info = base_exchange_data.get_average_trades();
+
+                SpreadResponse {
+                    base_exchange,
+                    quote_exchange,
+                    instrument,
+                    avg_trade_info,
+                    spreads,
+                    base_exchange_network_info,
+                    quote_exchange_network_info,
+                    trades_ws_is_connected,
+                    orderbook_ws_is_connected,
+                }
+            })
+            .collect::<Vec<SpreadResponse>>();
+
+        // Send response via channel
+        let _ = self
+            .http_channel
+            .http_response_tx
+            .send(SpotArbScannerHttpResponse::GetTopSpreads(top_spreads));
+    }
+
+    fn process_get_spread_history_request(
+        &mut self,
+        _exchange: ExchangeId,
+        _instrument: Instrument,
+    ) {
+        todo!()
+    }
+
     pub fn run(mut self) {
         'spot_arb_scanner: loop {
             // Process network status update
@@ -400,6 +489,27 @@ impl SpotArbScanner {
                     if error == mpsc::error::TryRecvError::Disconnected {
                         warn!(
                             message = "Network status stream for spot arb scanner has disconnected",
+                            action = "Breaking Spot Arb Scanner loop",
+                        );
+                        break 'spot_arb_scanner;
+                    }
+                }
+            }
+
+            // Process http requests
+            match self.http_channel.http_request_rx.try_recv() {
+                Ok(request) => match request {
+                    SpotArbScannerHttpRequests::GetTopSpreads => {
+                        self.process_get_top_spread_request()
+                    }
+                    SpotArbScannerHttpRequests::GetSpreadHistory((exchange, instrument)) => {
+                        self.process_get_spread_history_request(exchange, instrument)
+                    }
+                },
+                Err(error) => {
+                    if error == mpsc::error::TryRecvError::Disconnected {
+                        warn!(
+                            message = "Http request channel has disconnected",
                             action = "Breaking Spot Arb Scanner loop",
                         );
                         break 'spot_arb_scanner;
@@ -451,6 +561,8 @@ impl SpotArbScanner {
                 }
             };
 
+            // println!("######### \n {:#?}", self.market_data_stream.len());
+
             // Process spreads - Have to do queue with enums to avoid borrowing rule errors
             while let Some(spread_change_process) = self.spread_change_queue.pop_front() {
                 match spread_change_process {
@@ -461,25 +573,8 @@ impl SpotArbScanner {
                         self.process_calculated_spreads(Utc::now(), calculated_spreads);
                     }
                 }
-            }
 
-            // Process http requests
-            match self.http_channel.http_request_rx.try_recv() {
-                Ok(_request) => {
-                    let _ = self
-                        .http_channel
-                        .http_response_tx
-                        .send(SpotArbScannerHttpRequests::TestResponse);
-                }
-                Err(error) => {
-                    if error == mpsc::error::TryRecvError::Disconnected {
-                        warn!(
-                            message = "Http request channel has disconnected",
-                            action = "Breaking Spot Arb Scanner loop",
-                        );
-                        break 'spot_arb_scanner;
-                    }
-                }
+                // println!("{:#?}", self.spreads_sorted);
             }
         }
     }
@@ -1218,7 +1313,7 @@ mod test {
             .make_make
             .push(time, htx_binance_btc_make_make);
 
-        let result= scanner
+        let result = scanner
             .exchange_data
             .0
             .get(&ExchangeId::HtxSpot)

@@ -16,7 +16,7 @@ pub async fn handler(channel_data: Data<Mutex<ServerHttpChannel>>) -> impl Respo
     // Send the request
     if data
         .http_request_tx
-        .send(SpotArbScannerHttpRequests::TestRequest)
+        .send(SpotArbScannerHttpRequests::GetTopSpreads)
         .is_err()
     {
         return HttpResponse::InternalServerError().json(serde_json::json!({

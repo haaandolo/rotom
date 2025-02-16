@@ -1,6 +1,6 @@
 use tokio::sync::mpsc;
 
-use super::SpotArbScannerHttpRequests;
+use super::{SpotArbScannerHttpRequests, SpotArbScannerHttpResponse};
 
 /*----- */
 // Http Channels
@@ -8,13 +8,13 @@ use super::SpotArbScannerHttpRequests;
 #[derive(Debug)]
 pub struct ScannerHttpChannel {
     pub http_request_rx: mpsc::UnboundedReceiver<SpotArbScannerHttpRequests>,
-    pub http_response_tx: mpsc::UnboundedSender<SpotArbScannerHttpRequests>,
+    pub http_response_tx: mpsc::UnboundedSender<SpotArbScannerHttpResponse>,
 }
 
 #[derive(Debug)]
 pub struct ServerHttpChannel {
     pub http_request_tx: mpsc::UnboundedSender<SpotArbScannerHttpRequests>,
-    pub http_response_rx: mpsc::UnboundedReceiver<SpotArbScannerHttpRequests>,
+    pub http_response_rx: mpsc::UnboundedReceiver<SpotArbScannerHttpResponse>,
 }
 
 pub fn make_http_channels() -> (ScannerHttpChannel, ServerHttpChannel) {
