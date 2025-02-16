@@ -34,7 +34,7 @@ pub async fn get_spot_arb_data_streams() -> (
         // .add_exchange::<AscendExSpotPublicData>(instruments.clone())
         .add_exchange::<BinanceSpotPublicData>(instruments.clone())
         // .add_exchange::<ExmoSpotPublicData>(instruments.clone())
-        // .add_exchange::<HtxSpotPublicData>(instruments.clone())
+        .add_exchange::<HtxSpotPublicData>(instruments.clone())
         // .add_exchange::<KuCoinSpotPublicData>(instruments.clone())
         // .add_exchange::<OkxSpotPublicData>(instruments.clone())
         // .add_exchange::<WooxSpotPublicData>(instruments.clone())
@@ -58,6 +58,13 @@ pub async fn get_spot_arb_data_streams() -> (
         (ExchangeId::HtxSpot, "icp", "usdt", StreamKind::Snapshot),
         (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Trades),
         (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Snapshot),
+        // CoinEx
+        // (ExchangeId::CoinExSpot, "ada", "usdt", StreamKind::Trades),
+        // (ExchangeId::CoinExSpot, "ada", "usdt", StreamKind::Snapshot),
+        // (ExchangeId::CoinExSpot, "icp", "usdt", StreamKind::Trades),
+        // (ExchangeId::CoinExSpot, "icp", "usdt", StreamKind::Snapshot),
+        // (ExchangeId::CoinExSpot, "sol", "usdt", StreamKind::Trades),
+        // (ExchangeId::CoinExSpot, "sol", "usdt", StreamKind::Snapshot),
     ]])
     .await
     .unwrap();

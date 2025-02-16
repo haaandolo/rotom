@@ -25,7 +25,7 @@ pub async fn handler(channel_data: Data<Mutex<ServerHttpChannel>>) -> impl Respo
     }
 
     // Wait for response with timeout
-    match timeout(Duration::from_secs(5), data.http_response_rx.recv()).await {
+    match timeout(Duration::from_millis(100), data.http_response_rx.recv()).await {
         Ok(Some(response)) => HttpResponse::Ok().json(serde_json::to_value(&response).unwrap()),
         Ok(None) => HttpResponse::InternalServerError().json(serde_json::json!({
             "error": "Scanner channel closed unexpectedly"

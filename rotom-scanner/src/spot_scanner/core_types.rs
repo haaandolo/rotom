@@ -75,7 +75,7 @@ impl<T> VecDequeTime<T> {
 /*----- */
 // Scanner market data
 /*----- */
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Default)]
 pub struct AverageTradeInfo {
     pub avg_price: f64,
     pub cum_size: f64,
@@ -129,6 +129,10 @@ impl InstrumentMarketData {
     }
 
     pub fn get_average_trades(&self) -> AverageTradeInfo {
+        if self.trades.data.is_empty() {
+            return AverageTradeInfo::default();
+        }
+
         let (total_price, total_size, buy_count, count) = self.trades.data.iter().fold(
             (0.0, 0.0, 0, 0.0),
             |(price_sum, size_sum, buy_count, count), (_, trade)| {

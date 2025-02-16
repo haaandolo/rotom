@@ -103,12 +103,15 @@ pub struct SpreadResponse {
     pub base_exchange: ExchangeId,
     pub quote_exchange: ExchangeId,
     pub instrument: Instrument,
-    pub avg_trade_info: AverageTradeInfo,
     pub spreads: LatestSpreads,
+    pub base_exchange_avg_trade_info: AverageTradeInfo,
+    pub quote_exchange_avg_trade_info: AverageTradeInfo,
     pub base_exchange_network_info: Option<NetworkSpecData>,
     pub quote_exchange_network_info: Option<NetworkSpecData>,
-    pub trades_ws_is_connected: bool,
-    pub orderbook_ws_is_connected: bool,
+    pub base_exchange_trades_ws_is_connected: bool,
+    pub base_exchange_orderbook_ws_is_connected: bool,
+    pub quote_exchange_trades_ws_is_connected: bool,
+    pub quote_exchange_orderbook_ws_is_connected: bool,
 }
 
 /*----- */
@@ -420,6 +423,7 @@ impl SpotArbScanner {
                 let instrument = spread_key.instrument;
                 let coin = Coin::new(instrument.base.as_str());
 
+                // Get relevant base exchange info
                 let base_exchange_data = self
                     .exchange_data
                     .0
@@ -442,23 +446,44 @@ impl SpotArbScanner {
                     .get(&(base_exchange, coin.clone()))
                     .cloned();
 
+                let base_exchange_trades_ws_is_connected =
+                    base_exchange_data.trades_ws_is_connected;
+                let base_exchange_orderbook_ws_is_connected =
+                    base_exchange_data.orderbook_ws_is_connected;
+                let base_exchange_avg_trade_info = base_exchange_data.get_average_trades();
+
+                // Get relevant quote exchange info
+                let quote_exchange_data = self
+                    .exchange_data
+                    .0
+                    .get(&quote_exchange)
+                    .unwrap() // Should never fail
+                    .0
+                    .get(&instrument)
+                    .unwrap(); // Should never fail
+
                 let quote_exchange_network_info =
                     self.network_status.0.get(&(quote_exchange, coin)).cloned();
 
-                let trades_ws_is_connected = base_exchange_data.trades_ws_is_connected;
-                let orderbook_ws_is_connected = base_exchange_data.orderbook_ws_is_connected;
-                let avg_trade_info = base_exchange_data.get_average_trades();
+                let quote_exchange_trades_ws_is_connected =
+                    quote_exchange_data.trades_ws_is_connected;
+                let quote_exchange_orderbook_ws_is_connected =
+                    quote_exchange_data.orderbook_ws_is_connected;
+                let quote_exchange_avg_trade_info = quote_exchange_data.get_average_trades();
 
                 SpreadResponse {
                     base_exchange,
                     quote_exchange,
                     instrument,
-                    avg_trade_info,
                     spreads,
+                    base_exchange_avg_trade_info,
+                    quote_exchange_avg_trade_info,
                     base_exchange_network_info,
                     quote_exchange_network_info,
-                    trades_ws_is_connected,
-                    orderbook_ws_is_connected,
+                    base_exchange_trades_ws_is_connected,
+                    base_exchange_orderbook_ws_is_connected,
+                    quote_exchange_trades_ws_is_connected,
+                    quote_exchange_orderbook_ws_is_connected,
                 }
             })
             .collect::<Vec<SpreadResponse>>();
