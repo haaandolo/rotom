@@ -16,6 +16,7 @@ use tokio::sync::Mutex;
 /*----- */
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
+    // async fn main() {
     // Init
     init_logging();
 

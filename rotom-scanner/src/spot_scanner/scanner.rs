@@ -593,37 +593,45 @@ impl SpotArbScanner {
 
             // Process market data update
             match self.market_data_stream.try_recv() {
-                Ok(market_data) => match market_data.event_data {
-                    DataKind::OrderBook(orderbook) => self.process_orderbook(
-                        market_data.exchange,
-                        market_data.instrument,
-                        orderbook.bids,
-                        orderbook.asks,
-                    ),
-                    DataKind::OrderBookSnapshot(snapshot) => self.process_orderbook(
-                        market_data.exchange,
-                        market_data.instrument,
-                        snapshot.bids,
-                        snapshot.asks,
-                    ),
-                    DataKind::Trade(trade) => self.process_trade(
-                        market_data.exchange,
-                        market_data.instrument,
-                        market_data.received_time,
-                        trade,
-                    ),
-                    DataKind::Trades(trades) => self.process_trades(
-                        market_data.exchange,
-                        market_data.instrument,
-                        market_data.received_time,
-                        trades,
-                    ),
-                    DataKind::ConnectionStatus(ws_status) => self.process_ws_status(
-                        market_data.exchange,
-                        market_data.instrument,
-                        ws_status,
-                    ),
-                },
+                Ok(market_data) => {
+                    // Del
+                    if !self.market_data_stream.is_empty() {
+                        println!("{}", self.market_data_stream.len());
+                    }
+                    // Del
+
+                    match market_data.event_data {
+                        DataKind::OrderBook(orderbook) => self.process_orderbook(
+                            market_data.exchange,
+                            market_data.instrument,
+                            orderbook.bids,
+                            orderbook.asks,
+                        ),
+                        DataKind::OrderBookSnapshot(snapshot) => self.process_orderbook(
+                            market_data.exchange,
+                            market_data.instrument,
+                            snapshot.bids,
+                            snapshot.asks,
+                        ),
+                        DataKind::Trade(trade) => self.process_trade(
+                            market_data.exchange,
+                            market_data.instrument,
+                            market_data.received_time,
+                            trade,
+                        ),
+                        DataKind::Trades(trades) => self.process_trades(
+                            market_data.exchange,
+                            market_data.instrument,
+                            market_data.received_time,
+                            trades,
+                        ),
+                        DataKind::ConnectionStatus(ws_status) => self.process_ws_status(
+                            market_data.exchange,
+                            market_data.instrument,
+                            ws_status,
+                        ),
+                    }
+                }
                 Err(error) => {
                     if error == mpsc::error::TryRecvError::Disconnected {
                         warn!(

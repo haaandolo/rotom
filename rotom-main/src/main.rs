@@ -20,6 +20,7 @@ use rotom_data::{
         market_event::{DataKind, MarketEvent},
         network_info::NetworkSpecs,
     },
+    playground::test_http,
     shared::subscription_models::{ExchangeId, Instrument, StreamKind},
     streams::dynamic_stream::DynamicStreams,
     MarketFeed,
@@ -37,6 +38,9 @@ pub async fn main() {
     // Main
     ///////////
     init_logging();
+
+    let res = HtxSpotPublicData::get_usdt_pair().await;
+    println!("{:#?}", res);
 
     // let test = OkxSpotPublicData::get_network_info(instruments)
     //     .await

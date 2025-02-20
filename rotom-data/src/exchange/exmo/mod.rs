@@ -95,6 +95,10 @@ impl PublicHttpConnector for ExmoSpotPublicData {
                 .map_err(SocketError::Http)?,
         )
     }
+
+    async fn get_usdt_pair() -> Result<Vec<String>, SocketError> {
+        unimplemented!()
+    }
 }
 
 /*----- */

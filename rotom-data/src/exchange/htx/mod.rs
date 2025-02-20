@@ -95,6 +95,38 @@ impl PublicHttpConnector for HtxSpotPublicData {
                 .map_err(SocketError::Http)?,
         )
     }
+
+    async fn get_usdt_pair() -> Result<Vec<String>, SocketError> {
+        let request_path = "/v1/settings/common/market-symbols";
+
+        let response = reqwest::get(format!("{}{}", HTX_BASE_HTTP_URL, request_path))
+            .await
+            .map_err(SocketError::Http)?
+            .json::<serde_json::Value>()
+            .await
+            .map_err(SocketError::Http)?;
+
+        let tickers = response["data"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|item| {
+                if item["qc"].as_str().unwrap().to_lowercase() == "usdt"
+                    && item["state"] == "online"
+                {
+                    Some(format!(
+                        "{}_{}",
+                        item["bc"].as_str().unwrap().to_lowercase(),
+                        item["qc"].as_str().unwrap().to_lowercase()
+                    ))
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<String>>();
+
+        Ok(tickers)
+    }
 }
 
 /*----- */
