@@ -8,7 +8,6 @@ edition = "2021"
 rotom-data = { path = "../rotom-data" }
 rotom-strategy = { path = "../rotom-strategy" }
 rotom-oms = { path = "../rotom-oms"}
-rotom-scanner = { path = "../rotom-scanner" }
 
 # Async
 tokio = { workspace = true, features = ["sync", "macros", "rt-multi-thread"] }

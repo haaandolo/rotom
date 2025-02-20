@@ -17,7 +17,10 @@ pub mod test_utils {
     };
     use tokio::sync::mpsc;
 
-    use crate::spot_arb_scanner::scanner::{SpotArbScanner, SpreadChange};
+    use crate::{
+        server::server_channels::make_http_channels,
+        spot_scanner::scanner::{SpotArbScanner, SpreadChange},
+    };
 
     fn sort_by_price_ascending(levels: &mut [Level]) {
         levels.sort_by(|a, b| a.price.partial_cmp(&b.price).unwrap_or(Ordering::Equal));
@@ -132,6 +135,8 @@ pub mod test_utils {
     pub fn spot_arb_scanner() -> SpotArbScanner {
         let (_, network_stream_rx) = mpsc::unbounded_channel::<NetworkSpecs>();
         let (_, market_data_stream_rx) = mpsc::unbounded_channel::<MarketEvent<DataKind>>();
-        SpotArbScanner::new(network_stream_rx, market_data_stream_rx)
+        let (scanner_channel, _) = make_http_channels();
+
+        SpotArbScanner::new(network_stream_rx, market_data_stream_rx, scanner_channel)
     }
 }

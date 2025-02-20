@@ -120,4 +120,8 @@ impl PublicHttpConnector for PoloniexSpotPublicData {
     ) -> Result<Self::NetworkInfo, SocketError> {
         unimplemented!()
     }
+
+    async fn get_usdt_pair() -> Result<Vec<String>, SocketError> {
+        unimplemented!()
+    }
 }

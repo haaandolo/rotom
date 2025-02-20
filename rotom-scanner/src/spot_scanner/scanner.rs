@@ -1,10 +1,4 @@
-use std::{
-    cell::RefCell,
-    collections::{BTreeMap, HashMap, VecDeque},
-};
-
-use chrono::{DateTime, Duration, Utc};
-use ordered_float::OrderedFloat;
+use chrono::{DateTime, Utc};
 use rotom_data::{
     assets::level::Level,
     model::{
@@ -15,257 +9,19 @@ use rotom_data::{
     },
     shared::subscription_models::{Coin, ExchangeId, Instrument},
 };
+use serde::Serialize;
+use std::collections::VecDeque;
 use tokio::sync::mpsc;
 use tracing::warn;
 
-/*----- */
-// VecDeque - Time based
-/*----- */
-#[derive(Debug, PartialEq, Clone)]
-pub struct VecDequeTime<T> {
-    pub data: VecDeque<(DateTime<Utc>, T)>,
-    pub window: Duration,
-}
+use crate::server::{
+    server_channels::ScannerHttpChannel, SpotArbScannerHttpRequests, SpotArbScannerHttpResponse,
+};
 
-impl<T> Default for VecDequeTime<T> {
-    fn default() -> Self {
-        Self {
-            data: VecDeque::with_capacity(1000),
-            window: Duration::minutes(10),
-        }
-    }
-}
-
-impl<T> VecDequeTime<T> {
-    pub fn new(time: DateTime<Utc>, value: T) -> Self {
-        let mut queue = VecDeque::<(DateTime<Utc>, T)>::with_capacity(1000);
-        queue.push_back((time, value));
-
-        Self {
-            data: queue,
-            window: Duration::minutes(10),
-        }
-    }
-
-    pub fn push(&mut self, current_time: DateTime<Utc>, value: T) {
-        self.clean_up(current_time);
-        self.data.push_back((current_time, value));
-    }
-
-    fn clean_up(&mut self, current_time: DateTime<Utc>) {
-        let time_threshold = current_time - self.window;
-
-        // Clear out any data that is more than n mins (currently 10) or greater
-        // than the most recent time
-        while let Some((date_time, _)) = self.data.front() {
-            if *date_time < time_threshold {
-                self.data.pop_front();
-            } else {
-                break;
-            }
-        }
-    }
-}
-
-/*----- */
-// Scanner market data
-/*----- */
-#[derive(Debug, PartialEq, Clone)]
-pub struct InstrumentMarketData {
-    pub bids: Vec<Level>,
-    pub asks: Vec<Level>,
-    pub trades: VecDequeTime<EventTrade>,
-    pub spreads: RefCell<SpreadHistoryMap>,
-    pub trades_ws_is_connected: bool,
-    pub orderbook_ws_is_connected: bool,
-}
-
-impl Default for InstrumentMarketData {
-    fn default() -> Self {
-        Self {
-            bids: Vec::new(),
-            asks: Vec::new(),
-            trades: VecDequeTime::default(),
-            spreads: RefCell::new(SpreadHistoryMap(HashMap::with_capacity(10))),
-            orderbook_ws_is_connected: false,
-            trades_ws_is_connected: false,
-        }
-    }
-}
-
-impl InstrumentMarketData {
-    pub fn new_orderbook(bids: Vec<Level>, asks: Vec<Level>) -> Self {
-        Self {
-            bids,
-            asks,
-            trades: VecDequeTime::default(),
-            spreads: RefCell::new(SpreadHistoryMap(HashMap::with_capacity(10))),
-            orderbook_ws_is_connected: true,
-            trades_ws_is_connected: false,
-        }
-    }
-
-    pub fn new_trade(time: DateTime<Utc>, value: EventTrade) -> Self {
-        Self {
-            bids: Vec::with_capacity(10),
-            asks: Vec::with_capacity(10),
-            trades: VecDequeTime::new(time, value),
-            spreads: RefCell::new(SpreadHistoryMap(HashMap::with_capacity(10))),
-            orderbook_ws_is_connected: false,
-            trades_ws_is_connected: true,
-        }
-    }
-
-    pub fn bid_ask_has_no_data(&self) -> bool {
-        self.bids.is_empty() && self.asks.is_empty()
-    }
-}
-
-/*----- */
-// Maps - for convenience
-/*----- */
-#[derive(Debug, Default, PartialEq)]
-pub struct InstrumentMarketDataMap(pub HashMap<Instrument, InstrumentMarketData>);
-
-#[derive(Debug, Default, PartialEq)]
-pub struct ExchangeMarketDataMap(pub HashMap<ExchangeId, InstrumentMarketDataMap>);
-
-#[derive(Debug, Default, PartialEq, Clone)]
-pub struct SpreadHistoryMap(pub HashMap<ExchangeId, SpreadHistory>);
-
-#[derive(Debug, Default)]
-pub struct NetworkStatusMap(pub HashMap<(ExchangeId, Coin), NetworkSpecData>);
-
-/*----- */
-// Spread History
-/*----- */
-#[derive(Debug, Default, PartialEq, Clone)]
-pub struct SpreadHistory {
-    pub take_take: VecDequeTime<f64>,
-    pub take_make: VecDequeTime<f64>,
-    pub make_take: VecDequeTime<f64>,
-    pub make_make: VecDequeTime<f64>,
-}
-
-impl SpreadHistory {
-    pub fn new_ask(take_take: f64, take_make: f64) -> Self {
-        let mut take_take_queue = VecDequeTime::default();
-        let mut take_make_queue = VecDequeTime::default();
-
-        take_take_queue.push(Utc::now(), take_take);
-        take_make_queue.push(Utc::now(), take_make);
-
-        Self {
-            take_take: take_take_queue,
-            take_make: take_make_queue,
-            make_take: VecDequeTime::default(),
-            make_make: VecDequeTime::default(),
-        }
-    }
-
-    pub fn new_bid(make_take: f64, make_make: f64) -> Self {
-        let mut make_take_queue = VecDequeTime::default();
-        let mut make_make_queue = VecDequeTime::default();
-
-        make_take_queue.push(Utc::now(), make_take);
-        make_make_queue.push(Utc::now(), make_make);
-
-        Self {
-            take_take: VecDequeTime::default(),
-            take_make: VecDequeTime::default(),
-            make_take: make_take_queue,
-            make_make: make_make_queue,
-        }
-    }
-
-    pub fn insert(&mut self, time: DateTime<Utc>, spread_array: [Option<f64>; 4]) {
-        if let Some(take_take) = spread_array[0] {
-            self.take_take.push(time, take_take);
-        }
-
-        if let Some(take_make) = spread_array[1] {
-            self.take_make.push(time, take_make);
-        }
-
-        if let Some(make_take) = spread_array[2] {
-            self.make_take.push(time, make_take);
-        }
-
-        if let Some(make_make) = spread_array[3] {
-            self.make_make.push(time, make_make);
-        }
-    }
-}
-
-/*----- */
-// Spread Key
-/*----- */
-#[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Hash, Clone)]
-pub struct SpreadKey {
-    exchanges: (ExchangeId, ExchangeId),
-    instrument: Instrument,
-}
-
-impl SpreadKey {
-    pub fn new(
-        spread_change_exchange: ExchangeId,
-        existing_exchange: ExchangeId,
-        instrument: Instrument,
-    ) -> Self {
-        Self {
-            exchanges: (spread_change_exchange, existing_exchange),
-            instrument,
-        }
-    }
-}
-
-/*----- */
-// Spread Sorted
-/*----- */
-#[derive(Debug, Default)]
-pub struct SpreadsSorted {
-    by_key: BTreeMap<SpreadKey, OrderedFloat<f64>>,
-    by_value: BTreeMap<OrderedFloat<f64>, SpreadKey>,
-}
-
-impl SpreadsSorted {
-    pub fn new() -> Self {
-        Self {
-            by_key: BTreeMap::new(),
-            by_value: BTreeMap::new(),
-        }
-    }
-
-    pub fn insert(&mut self, spread_key: SpreadKey, new_spread: f64) {
-        match self.by_key.get_mut(&spread_key) {
-            // If key exists and the old_spread != new_spread, then modify the
-            // old spread to be new spread in the btreemap (by_key). And remove the
-            // old spread in the btreemap (by_value) and insert the new spread
-            Some(old_spread) => {
-                if old_spread != &new_spread {
-                    self.by_value.remove(old_spread);
-                    *old_spread = OrderedFloat(new_spread);
-                    self.by_value.insert(OrderedFloat(new_spread), spread_key);
-                }
-            }
-            // Else just insert the new spread and spread key in the both btreemaps
-            None => {
-                self.by_value
-                    .insert(OrderedFloat(new_spread), spread_key.clone());
-                self.by_key.insert(spread_key, OrderedFloat(new_spread));
-            }
-        }
-    }
-
-    pub fn snapshot(&self) -> Vec<(f64, SpreadKey)> {
-        self.by_value
-            .iter()
-            .rev()
-            .take(10)
-            .map(|(spread, spread_key)| (spread.0, spread_key.clone()))
-            .collect::<Vec<_>>()
-    }
-}
+use super::core_types::{
+    AverageTradeInfo, ExchangeMarketDataMap, InstrumentMarketData, LatestSpreads, NetworkStatusMap,
+    SpreadHistory, SpreadKey, SpreadsSorted,
+};
 
 /*----- */
 // Spread Change
@@ -333,15 +89,45 @@ impl SpreadsCalculated {
     }
 }
 
-/*----- */
-// Spot Arb Scanner
-/*----- */
 #[derive(Debug)]
 enum SpreadChangeProcess {
     SpreadChange(SpreadChange),
     SpreadsCalculated(SpreadsCalculated),
 }
 
+/*----- */
+// Spread Response - Response sent back from http request
+/*----- */
+#[derive(Debug, Serialize)]
+pub struct SpreadResponse {
+    pub base_exchange: ExchangeId,
+    pub quote_exchange: ExchangeId,
+    pub instrument: Instrument,
+    pub spreads: LatestSpreads,
+    pub base_exchange_avg_trade_info: AverageTradeInfo,
+    pub quote_exchange_avg_trade_info: AverageTradeInfo,
+    pub base_exchange_network_info: Option<NetworkSpecData>,
+    pub quote_exchange_network_info: Option<NetworkSpecData>,
+    pub base_exchange_trades_ws_is_connected: bool,
+    pub base_exchange_orderbook_ws_is_connected: bool,
+    pub quote_exchange_trades_ws_is_connected: bool,
+    pub quote_exchange_orderbook_ws_is_connected: bool,
+}
+
+/*----- */
+// Spread History Response - Response sent back from http request
+/*----- */
+#[derive(Debug, Serialize)]
+pub struct SpreadHistoryResponse {
+    pub base_exchange: ExchangeId,
+    pub quote_exchange: ExchangeId,
+    pub instrument: Instrument,
+    pub spread_history: SpreadHistory,
+}
+
+/*----- */
+// Spot Arb Scanner
+/*----- */
 #[derive(Debug)]
 pub struct SpotArbScanner {
     exchange_data: ExchangeMarketDataMap,
@@ -350,12 +136,14 @@ pub struct SpotArbScanner {
     spread_change_queue: VecDeque<SpreadChangeProcess>,
     network_status_stream: mpsc::UnboundedReceiver<NetworkSpecs>,
     market_data_stream: mpsc::UnboundedReceiver<MarketEvent<DataKind>>,
+    http_channel: ScannerHttpChannel,
 }
 
 impl SpotArbScanner {
     pub fn new(
         network_status_stream: mpsc::UnboundedReceiver<NetworkSpecs>,
         market_data_stream: mpsc::UnboundedReceiver<MarketEvent<DataKind>>,
+        http_channel: ScannerHttpChannel,
     ) -> Self {
         Self {
             exchange_data: ExchangeMarketDataMap::default(),
@@ -364,6 +152,7 @@ impl SpotArbScanner {
             spread_change_queue: VecDeque::with_capacity(10),
             network_status_stream,
             market_data_stream,
+            http_channel,
         }
     }
 
@@ -570,7 +359,6 @@ impl SpotArbScanner {
             if let Some(sc_market_data) = sc_market_data_map.0.get_mut(&spreads.instrument) {
                 sc_market_data
                     .spreads
-                    .borrow_mut()
                     .0
                     .entry(spreads.other_exchange)
                     .and_modify(|spread_history| {
@@ -634,6 +422,130 @@ impl SpotArbScanner {
             });
     }
 
+    fn process_get_top_spread_request(&mut self) {
+        // Get top spreads
+        let top_spreads = self
+            .spreads_sorted
+            .snapshot()
+            .into_iter()
+            .map(|(_, spread_key)| {
+                // Note: unwraps here should never fail as before this step everything should have a value
+                let (base_exchange, quote_exchange) = spread_key.exchanges;
+                let instrument = spread_key.instrument;
+                let coin = Coin::new(instrument.base.as_str());
+
+                // Get relevant base exchange info
+                let base_exchange_data = self
+                    .exchange_data
+                    .0
+                    .get(&base_exchange)
+                    .unwrap() // Should never fail
+                    .0
+                    .get(&instrument)
+                    .unwrap(); // Should never fail
+
+                let spreads = base_exchange_data
+                    .spreads
+                    .0
+                    .get(&quote_exchange)
+                    .unwrap() // Should never fail
+                    .latest_spreads;
+
+                let base_exchange_network_info = self
+                    .network_status
+                    .0
+                    .get(&(base_exchange, coin.clone()))
+                    .cloned();
+
+                let base_exchange_trades_ws_is_connected =
+                    base_exchange_data.trades_ws_is_connected;
+                let base_exchange_orderbook_ws_is_connected =
+                    base_exchange_data.orderbook_ws_is_connected;
+                let base_exchange_avg_trade_info = base_exchange_data.get_average_trades();
+
+                // Get relevant quote exchange info
+                let quote_exchange_data = self
+                    .exchange_data
+                    .0
+                    .get(&quote_exchange)
+                    .unwrap() // Should never fail
+                    .0
+                    .get(&instrument)
+                    .unwrap(); // Should never fail
+
+                let quote_exchange_network_info =
+                    self.network_status.0.get(&(quote_exchange, coin)).cloned();
+
+                let quote_exchange_trades_ws_is_connected =
+                    quote_exchange_data.trades_ws_is_connected;
+                let quote_exchange_orderbook_ws_is_connected =
+                    quote_exchange_data.orderbook_ws_is_connected;
+                let quote_exchange_avg_trade_info = quote_exchange_data.get_average_trades();
+
+                SpreadResponse {
+                    base_exchange,
+                    quote_exchange,
+                    instrument,
+                    spreads,
+                    base_exchange_avg_trade_info,
+                    quote_exchange_avg_trade_info,
+                    base_exchange_network_info,
+                    quote_exchange_network_info,
+                    base_exchange_trades_ws_is_connected,
+                    base_exchange_orderbook_ws_is_connected,
+                    quote_exchange_trades_ws_is_connected,
+                    quote_exchange_orderbook_ws_is_connected,
+                }
+            })
+            .collect::<Vec<SpreadResponse>>();
+
+        // Send response via channel
+        let _ = self
+            .http_channel
+            .http_response_tx
+            .send(SpotArbScannerHttpResponse::GetTopSpreads(top_spreads));
+    }
+
+    fn process_get_spread_history_request(
+        &mut self,
+        base_exchange: ExchangeId,
+        quote_exchange: ExchangeId,
+        instrument: Instrument,
+    ) {
+        let base_exchange_spread_history = self
+            .exchange_data
+            .0
+            .get(&base_exchange)
+            .and_then(|base_exchange_instrument_market_data| {
+                base_exchange_instrument_market_data.0.get(&instrument)
+            })
+            .and_then(|base_exchange_spread_history| {
+                base_exchange_spread_history.spreads.0.get(&quote_exchange)
+            });
+
+        match base_exchange_spread_history {
+            Some(base_exchange_spread_history_response) => {
+                let _ = self.http_channel.http_response_tx.send(
+                    SpotArbScannerHttpResponse::GetSpreadHistory(Box::new(SpreadHistoryResponse {
+                        base_exchange,
+                        quote_exchange,
+                        instrument,
+                        spread_history: base_exchange_spread_history_response.clone(),
+                    })),
+                );
+            }
+            None => {
+                let _ = self.http_channel.http_response_tx.send(
+                    SpotArbScannerHttpResponse::CouldNotFindSpreadHistory {
+                        base_exchange,
+                        quote_exchange,
+                        instrument,
+                    },
+                );
+            }
+        }
+    }
+
     pub fn run(mut self) {
         'spot_arb_scanner: loop {
             // Process network status update
@@ -645,7 +557,34 @@ impl SpotArbScanner {
                     if error == mpsc::error::TryRecvError::Disconnected {
                         warn!(
                             message = "Network status stream for spot arb scanner has disconnected",
-                            action = "Breaking Spot Arb Scanner",
+                            action = "Breaking Spot Arb Scanner loop",
+                        );
+                        break 'spot_arb_scanner;
+                    }
+                }
+            }
+
+            // Process http requests
+            match self.http_channel.http_request_rx.try_recv() {
+                Ok(request) => match request {
+                    SpotArbScannerHttpRequests::GetTopSpreads => {
+                        self.process_get_top_spread_request()
+                    }
+                    SpotArbScannerHttpRequests::GetSpreadHistory((
+                        base_exchange,
+                        quote_exchange,
+                        instrument,
+                    )) => self.process_get_spread_history_request(
+                        base_exchange,
+                        quote_exchange,
+                        instrument,
+                    ),
+                },
+                Err(error) => {
+                    if error == mpsc::error::TryRecvError::Disconnected {
+                        warn!(
+                            message = "Http request channel has disconnected",
+                            action = "Breaking Spot Arb Scanner loop",
                         );
                         break 'spot_arb_scanner;
                     }
@@ -655,10 +594,11 @@ impl SpotArbScanner {
             // Process market data update
             match self.market_data_stream.try_recv() {
                 Ok(market_data) => {
-                    println!(
-                        "###### before update ##### \n {:?} \n ###########",
-                        market_data
-                    );
+                    // Del
+                    if !self.market_data_stream.is_empty() {
+                        println!("{}", self.market_data_stream.len());
+                    }
+                    // Del
 
                     match market_data.event_data {
                         DataKind::OrderBook(orderbook) => self.process_orderbook(
@@ -691,22 +631,19 @@ impl SpotArbScanner {
                             ws_status,
                         ),
                     }
-
-                    // println!(
-                    //     "##### after update ##### \n {:?} \n ###########",
-                    //     self.exchange_data
-                    // );
                 }
                 Err(error) => {
                     if error == mpsc::error::TryRecvError::Disconnected {
                         warn!(
                             message = "Network status stream for spot arb scanner has disconnected",
-                            action = "Breaking Spot Arb Scanner",
+                            action = "Breaking Spot Arb Scanner loop",
                         );
                         break 'spot_arb_scanner;
                     }
                 }
             };
+
+            // println!("######### \n {:#?}", self.market_data_stream.len());
 
             // Process spreads - Have to do queue with enums to avoid borrowing rule errors
             while let Some(spread_change_process) = self.spread_change_queue.pop_front() {
@@ -718,6 +655,8 @@ impl SpotArbScanner {
                         self.process_calculated_spreads(Utc::now(), calculated_spreads);
                     }
                 }
+
+                // println!("{:#?}", self.spreads_sorted);
             }
         }
     }
@@ -728,10 +667,17 @@ impl SpotArbScanner {
 /*----- */
 #[cfg(test)]
 mod test {
-    use chrono::TimeZone;
-    use rotom_data::model::network_info::ChainSpecs;
+    use chrono::{Duration, TimeZone};
+    use rotom_data::{
+        model::network_info::{ChainSpecs, NetworkSpecData},
+        shared::subscription_models::Coin,
+    };
+    use std::collections::HashMap;
 
-    use crate::mock_data::test_utils;
+    use crate::spot_scanner::{
+        core_types::{InstrumentMarketDataMap, VecDequeTime},
+        mock_data::test_utils,
+    };
 
     use super::*;
 
@@ -1273,23 +1219,27 @@ mod test {
         // Check Binance btc spread history
         let mut binance_btc_spread_history = SpreadHistory::default();
 
+        binance_btc_spread_history.latest_spreads.take_take = binance_htx_btc_take_take;
         binance_btc_spread_history
             .take_take
             .push(time, binance_htx_btc_take_take);
 
+        binance_btc_spread_history.latest_spreads.take_make = binance_htx_btc_take_make;
         binance_btc_spread_history
             .take_make
             .push(time, binance_htx_btc_take_make);
 
+        binance_btc_spread_history.latest_spreads.make_take = binance_htx_btc_make_take;
         binance_btc_spread_history
             .make_take
             .push(time, binance_htx_btc_make_take);
 
+        binance_btc_spread_history.latest_spreads.make_make = binance_htx_btc_make_make;
         binance_btc_spread_history
             .make_make
             .push(time, binance_htx_btc_make_make);
 
-        let result_map = &scanner
+        let result = scanner
             .exchange_data
             .0
             .get(&ExchangeId::BinanceSpot)
@@ -1297,33 +1247,37 @@ mod test {
             .0
             .get(&Instrument::new("btc", "usdt"))
             .unwrap()
-            .clone();
-
-        let result_map = result_map.spreads.borrow();
-        let result = result_map.0.get(&ExchangeId::HtxSpot).unwrap();
+            .spreads
+            .0
+            .get(&ExchangeId::HtxSpot)
+            .unwrap();
         let expected = &binance_btc_spread_history;
         assert_eq!(result, expected);
 
         // Check Binance eth spread history
         let mut binance_eth_spread_history = SpreadHistory::default();
 
+        binance_eth_spread_history.latest_spreads.take_take = binance_htx_eth_take_take;
         binance_eth_spread_history
             .take_take
             .push(time, binance_htx_eth_take_take);
 
+        binance_eth_spread_history.latest_spreads.take_make = binance_htx_eth_take_make;
         binance_eth_spread_history
             .take_make
             .push(time, binance_htx_eth_take_make);
 
+        binance_eth_spread_history.latest_spreads.make_take = binance_htx_eth_make_take;
         binance_eth_spread_history
             .make_take
             .push(time, binance_htx_eth_make_take);
 
+        binance_eth_spread_history.latest_spreads.make_make = binance_htx_eth_make_make;
         binance_eth_spread_history
             .make_make
             .push(time, binance_htx_eth_make_make);
 
-        let result_map = scanner
+        let result = scanner
             .exchange_data
             .0
             .get(&ExchangeId::BinanceSpot)
@@ -1331,11 +1285,11 @@ mod test {
             .0
             .get(&Instrument::new("eth", "usdt"))
             .unwrap()
-            .clone();
-
+            .spreads
+            .0
+            .get(&ExchangeId::HtxSpot)
+            .unwrap();
         let expected = &binance_eth_spread_history;
-        let result_map = result_map.spreads.borrow();
-        let result = result_map.0.get(&ExchangeId::HtxSpot).unwrap();
         assert_eq!(expected, result);
 
         /*----- */
@@ -1433,23 +1387,27 @@ mod test {
         // Check Htx btc spread history
         let mut htx_btc_spread_history = SpreadHistory::default();
 
+        htx_btc_spread_history.latest_spreads.take_take = htx_binance_btc_take_take;
         htx_btc_spread_history
             .take_take
             .push(time, htx_binance_btc_take_take);
 
+        htx_btc_spread_history.latest_spreads.take_make = htx_binance_btc_take_make;
         htx_btc_spread_history
             .take_make
             .push(time, htx_binance_btc_take_make);
 
+        htx_btc_spread_history.latest_spreads.make_take = htx_binance_btc_make_take;
         htx_btc_spread_history
             .make_take
             .push(time, htx_binance_btc_make_take);
 
+        htx_btc_spread_history.latest_spreads.make_make = htx_binance_btc_make_make;
         htx_btc_spread_history
             .make_make
             .push(time, htx_binance_btc_make_make);
 
-        let result_map = scanner
+        let result = scanner
             .exchange_data
             .0
             .get(&ExchangeId::HtxSpot)
@@ -1457,33 +1415,37 @@ mod test {
             .0
             .get(&Instrument::new("btc", "usdt"))
             .unwrap()
-            .clone();
-
-        let result_map = result_map.spreads.borrow();
-        let result = result_map.0.get(&ExchangeId::BinanceSpot).unwrap();
+            .spreads
+            .0
+            .get(&ExchangeId::BinanceSpot)
+            .unwrap();
         let expected = &htx_btc_spread_history;
         assert_eq!(result, expected);
 
         // Check eth btc spread history
         let mut htx_eth_spread_history = SpreadHistory::default();
 
+        htx_eth_spread_history.latest_spreads.take_take = htx_binance_eth_take_take;
         htx_eth_spread_history
             .take_take
             .push(time, htx_binance_eth_take_take);
 
+        htx_eth_spread_history.latest_spreads.take_make = htx_binance_eth_take_make;
         htx_eth_spread_history
             .take_make
             .push(time, htx_binance_eth_take_make);
 
+        htx_eth_spread_history.latest_spreads.make_take = htx_binance_eth_make_take;
         htx_eth_spread_history
             .make_take
             .push(time, htx_binance_eth_make_take);
 
+        htx_eth_spread_history.latest_spreads.make_make = htx_binance_eth_make_make;
         htx_eth_spread_history
             .make_make
             .push(time, htx_binance_eth_make_make);
 
-        let result_map = scanner
+        let result = scanner
             .exchange_data
             .0
             .get(&ExchangeId::HtxSpot)
@@ -1491,10 +1453,10 @@ mod test {
             .0
             .get(&Instrument::new("eth", "usdt"))
             .unwrap()
-            .clone();
-
-        let result_map = result_map.spreads.borrow();
-        let result = result_map.0.get(&ExchangeId::BinanceSpot).unwrap();
+            .spreads
+            .0
+            .get(&ExchangeId::BinanceSpot)
+            .unwrap();
         let expected = &htx_eth_spread_history;
         assert_eq!(result, expected);
 

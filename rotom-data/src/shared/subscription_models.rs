@@ -40,8 +40,14 @@ impl From<(String, String)> for Instrument {
 // Coin
 /*----- */
 // Example usage: Coin("ETH"), Coin("BTC")
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct Coin(pub String); // smol
+
+impl Coin {
+    pub fn new(coin: &str) -> Coin {
+        Coin(coin.to_uppercase())
+    }
+}
 
 /*----- */
 // Subscription model

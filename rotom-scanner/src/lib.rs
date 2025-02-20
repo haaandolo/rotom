@@ -1,2 +1,3 @@
-pub mod mock_data;
-pub mod spot_arb_scanner;
+pub mod data;
+pub mod server;
+pub mod spot_scanner;

@@ -1,14 +1,16 @@
 use std::collections::HashMap;
 
+use serde::Serialize;
+
 use crate::shared::subscription_models::{Coin, ExchangeId};
 
 #[derive(Debug)]
 pub struct NetworkSpecs(pub HashMap<(ExchangeId, Coin), NetworkSpecData>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct NetworkSpecData(pub Vec<ChainSpecs>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize)]
 pub struct ChainSpecs {
     pub chain_name: String,
     // Some exchanges have fixed or percentage fees, if this value is true, then fee is fixed

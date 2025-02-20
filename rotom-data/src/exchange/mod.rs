@@ -84,6 +84,8 @@ pub trait PublicHttpConnector {
     async fn get_network_info(
         instruments: Vec<Instrument>,
     ) -> Result<Self::NetworkInfo, SocketError>;
+
+    async fn get_usdt_pair() -> Result<Vec<String>, SocketError>;
 }
 
 /*----- */
