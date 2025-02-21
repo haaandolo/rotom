@@ -130,8 +130,34 @@ impl PublicHttpConnector for AscendExSpotPublicData {
             .map_err(SocketError::Http)
     }
 
-    async fn get_usdt_pair() -> Result<Vec<String>, SocketError> {
-        unimplemented!()
+    async fn get_usdt_pair() -> Result<Vec<(String, String)>, SocketError> {
+        let request_path = "/api/pro/v1/spot/ticker";
+
+        let response = reqwest::get(format!("{}{}", ASCENDEX_BASE_HTTP_URL, request_path))
+            .await
+            .map_err(SocketError::Http)?
+            .json::<serde_json::Value>()
+            .await
+            .map_err(SocketError::Http)?;
+
+        let tickers = response["data"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|ticker| {
+                let ticker_lower = ticker["symbol"].as_str().unwrap().to_lowercase();
+                let mut ticker_split = ticker_lower.split("/");
+                let base = ticker_split.next().unwrap_or("").to_string();
+                let quote = ticker_split.next().unwrap_or("").to_string();
+                if quote == "usdt" {
+                    Some((base, quote))
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        Ok(tickers)
     }
 }
 

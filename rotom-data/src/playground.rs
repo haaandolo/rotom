@@ -97,38 +97,35 @@ pub async fn test_ws() {
 pub async fn test_http() {
     // https://ascendex.com/api/pro/v1/depth?symbol=ASD/USDT
 
-    let base_url = "https://api-aws.huobi.pro";
-    let request_path = "/v1/settings/common/market-symbols";
-
+    let base_url = "https://ascendex.com";
+    let request_path = "/api/pro/v1/spot/ticker";
     let url = format!("{}{}", base_url, request_path);
-    // let url = format!("{}{}", base_url, request_path);
+
     let test = reqwest::get(url)
         .await
         .unwrap()
-        // .text()
-        // .json::<PhemexNetworkInfo>()
         .json::<serde_json::Value>()
         .await
         .unwrap();
 
-    let ok = test["data"]
+    let test = test["data"]
         .as_array()
         .unwrap()
         .iter()
-        .filter_map(|item| {
-            if item["qc"].as_str().unwrap().to_lowercase() == "usdt" && item["state"] == "online" {
-                Some(format!(
-                    "{}_{}",
-                    item["bc"].as_str().unwrap().to_lowercase(),
-                    item["qc"].as_str().unwrap().to_lowercase()
-                ))
+        .filter_map(|ticker| {
+            let ticker_lower = ticker["symbol"].as_str().unwrap().to_lowercase();
+            let mut ticker_split = ticker_lower.split("/");
+            let base =   ticker_split.next().unwrap_or("").to_string();
+            let quote = ticker_split.next().unwrap_or("").to_string();
+            if quote == "usdt" {
+                Some((base, quote))
             } else {
                 None
             }
         })
         .collect::<Vec<_>>();
 
-    println!("{:#?}", ok);
+    println!("{:#?}", test);
 
     // let mut file = std::fs::File::create("./temppp.txt").unwrap();
     // file.write_all(test.as_bytes());

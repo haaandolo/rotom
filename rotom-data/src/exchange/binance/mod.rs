@@ -159,7 +159,7 @@ impl PublicHttpConnector for BinanceSpotPublicData {
             .map_err(SocketError::Http)?)
     }
 
-    async fn get_usdt_pair() -> Result<Vec<String>, SocketError> {
+    async fn get_usdt_pair() -> Result<Vec<(String, String)>, SocketError> {
         unimplemented!()
     }
 }
