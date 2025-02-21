@@ -96,7 +96,7 @@ impl PublicHttpConnector for HtxSpotPublicData {
         )
     }
 
-    async fn get_usdt_pair() -> Result<Vec<String>, SocketError> {
+    async fn get_usdt_pair() -> Result<Vec<(String, String)>, SocketError> {
         let request_path = "/v1/settings/common/market-symbols";
 
         let response = reqwest::get(format!("{}{}", HTX_BASE_HTTP_URL, request_path))
@@ -108,22 +108,21 @@ impl PublicHttpConnector for HtxSpotPublicData {
 
         let tickers = response["data"]
             .as_array()
-            .unwrap()
+            .unwrap() // unwrap allowed
             .iter()
-            .filter_map(|item| {
-                if item["qc"].as_str().unwrap().to_lowercase() == "usdt"
-                    && item["state"] == "online"
+            .filter_map(|ticker| {
+                if ticker["qc"].as_str().unwrap().to_lowercase() == "usdt"
+                    && ticker["state"] == "online"
                 {
-                    Some(format!(
-                        "{}_{}",
-                        item["bc"].as_str().unwrap().to_lowercase(),
-                        item["qc"].as_str().unwrap().to_lowercase()
+                    Some((
+                        ticker["bc"].as_str().unwrap().to_lowercase(), // unwrap allowed
+                        ticker["qc"].as_str().unwrap().to_lowercase(), // unwrap allowed
                     ))
                 } else {
                     None
                 }
             })
-            .collect::<Vec<String>>();
+            .collect::<Vec<_>>();
 
         Ok(tickers)
     }

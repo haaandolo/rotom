@@ -128,7 +128,7 @@ impl PublicHttpConnector for KuCoinSpotPublicData {
         )
     }
 
-    async fn get_usdt_pair() -> Result<Vec<String>, SocketError> {
+    async fn get_usdt_pair() -> Result<Vec<(String, String)>, SocketError> {
         unimplemented!()
     }
 }
