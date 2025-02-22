@@ -1,3 +1,4 @@
+use actix_web::dev::ResourceDef;
 use chrono::{DateTime, Utc};
 use rotom_data::{
     assets::level::Level,
@@ -12,7 +13,7 @@ use rotom_data::{
 use serde::Serialize;
 use std::collections::VecDeque;
 use tokio::sync::mpsc;
-use tracing::warn;
+use tracing::{instrument, warn};
 
 use crate::server::{
     server_channels::ScannerHttpChannel, SpotArbScannerHttpRequests, SpotArbScannerHttpResponse,
@@ -122,7 +123,30 @@ pub struct SpreadHistoryResponse {
     pub base_exchange: ExchangeId,
     pub quote_exchange: ExchangeId,
     pub instrument: Instrument,
-    pub spread_history: SpreadHistory,
+    pub spread_history: Option<SpreadHistory>,
+    pub base_exchange_bids: Option<Vec<Level>>,
+    pub base_exchange_asks: Option<Vec<Level>>,
+    pub quote_exchange_bids: Option<Vec<Level>>,
+    pub quote_exchange_asks: Option<Vec<Level>>,
+}
+
+impl SpreadHistoryResponse {
+    pub fn new(
+        base_exchange: ExchangeId,
+        quote_exchange: ExchangeId,
+        instrument: Instrument,
+    ) -> Self {
+        Self {
+            base_exchange,
+            quote_exchange,
+            instrument,
+            spread_history: None,
+            base_exchange_bids: None,
+            base_exchange_asks: None,
+            quote_exchange_bids: None,
+            quote_exchange_asks: None,
+        }
+    }
 }
 
 /*----- */
@@ -512,27 +536,28 @@ impl SpotArbScanner {
         quote_exchange: ExchangeId,
         instrument: Instrument,
     ) {
-        let base_exchange_spread_history = self
-            .exchange_data
-            .0
-            .get(&base_exchange)
-            .and_then(|base_exchange_instrument_market_data| {
-                base_exchange_instrument_market_data.0.get(&instrument)
-            })
-            .and_then(|base_exchange_spread_history| {
-                base_exchange_spread_history.spreads.0.get(&quote_exchange)
-            });
+        // Init response
+        let mut response =
+            SpreadHistoryResponse::new(base_exchange, quote_exchange, instrument.clone());
 
-        match base_exchange_spread_history {
-            Some(base_exchange_spread_history_response) => {
-                let _ = self.http_channel.http_response_tx.send(
-                    SpotArbScannerHttpResponse::GetSpreadHistory(Box::new(SpreadHistoryResponse {
-                        base_exchange,
-                        quote_exchange,
-                        instrument,
-                        spread_history: base_exchange_spread_history_response.clone(),
-                    })),
-                );
+        // Try get base instrument market data info
+        let base_exchange_instrument_data = self.exchange_data.0.get(&base_exchange).and_then(
+            |base_exchange_instrument_market_data| {
+                base_exchange_instrument_market_data.0.get(&instrument)
+            },
+        );
+
+        // Else send error message and return or update response info
+        match base_exchange_instrument_data {
+            Some(instrument_data) => {
+                // Set bid and ask for base exchange
+                response.base_exchange_bids = Some(instrument_data.bids.clone());
+                response.base_exchange_asks = Some(instrument_data.asks.clone());
+
+                // Set spread history
+                if let Some(spread_history) = instrument_data.spreads.0.get(&quote_exchange) {
+                    response.spread_history = Some(spread_history.clone());
+                }
             }
             None => {
                 let _ = self.http_channel.http_response_tx.send(
@@ -542,8 +567,43 @@ impl SpotArbScanner {
                         instrument,
                     },
                 );
+                return;
             }
         }
+
+        // Try get quote instrument market data info
+        let quote_exchange_instrument_data = self.exchange_data.0.get(&quote_exchange).and_then(
+            |base_exchange_instrument_market_data| {
+                base_exchange_instrument_market_data.0.get(&instrument)
+            },
+        );
+
+        // Else send error message and return or update response info
+        match quote_exchange_instrument_data {
+            Some(instrument_data) => {
+                // Set bid and ask for base exchange
+                response.quote_exchange_bids = Some(instrument_data.bids.clone());
+                response.quote_exchange_asks = Some(instrument_data.asks.clone());
+            }
+            None => {
+                let _ = self.http_channel.http_response_tx.send(
+                    SpotArbScannerHttpResponse::CouldNotFindSpreadHistory {
+                        base_exchange,
+                        quote_exchange,
+                        instrument,
+                    },
+                );
+                return;
+            }
+        }
+
+        // If successful, send response back
+        let _ =
+            self.http_channel
+                .http_response_tx
+                .send(SpotArbScannerHttpResponse::GetSpreadHistory(Box::new(
+                    response,
+                )));
     }
 
     pub fn run(mut self) {
@@ -596,7 +656,7 @@ impl SpotArbScanner {
                 Ok(market_data) => {
                     // Del
                     if !self.market_data_stream.is_empty() {
-                        println!("{}", self.market_data_stream.len());
+                        // println!("{}", self.market_data_stream.len());
                     }
                     // Del
 

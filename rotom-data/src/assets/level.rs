@@ -1,10 +1,10 @@
 use rand::Rng;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::{cmp::Ordering, fmt::Display};
 
 use crate::shared::de::de_flexi_float;
 
-#[derive(Default, Debug, Clone, Copy, Deserialize)]
+#[derive(Default, Debug, Clone, Copy, Deserialize, Serialize)]
 pub struct Level {
     #[serde(deserialize_with = "de_flexi_float")]
     pub price: f64,
