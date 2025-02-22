@@ -48,6 +48,7 @@ impl DynamicStreams {
     {
         let mut channels = Channels::default();
         for batch in subscription_batchs {
+            std::thread::sleep(std::time::Duration::from_millis(2000));
             // Convert to Subscriptions struct
             let mut exchange_sub = batch
                 .into_iter()

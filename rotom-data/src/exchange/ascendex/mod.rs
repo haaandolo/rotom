@@ -140,16 +140,26 @@ impl PublicHttpConnector for AscendExSpotPublicData {
             .await
             .map_err(SocketError::Http)?;
 
-        let tickers = response["data"]
+        println!("{}", response);
+
+        let volume_threshold = Self::get_volume_threshold();
+        let tickers: Vec<(String, String)> = response["data"]
             .as_array()
             .unwrap()
             .iter()
             .filter_map(|ticker| {
                 let ticker_lower = ticker["symbol"].as_str().unwrap().to_lowercase();
+                let volume = ticker["volume"]
+                    .as_str()
+                    .unwrap_or("0")
+                    .trim_matches('"') // This removes quotation marks
+                    .parse::<u64>()
+                    .unwrap_or(0);
+
                 let mut ticker_split = ticker_lower.split("/");
                 let base = ticker_split.next().unwrap_or("").to_string();
                 let quote = ticker_split.next().unwrap_or("").to_string();
-                if quote == "usdt" {
+                if quote == "usdt" && volume > volume_threshold {
                     Some((base, quote))
                 } else {
                     None

@@ -59,45 +59,55 @@ pub async fn get_spot_arb_data_streams() -> (
 
     let streams = DynamicStreams::init([
         /*----- */
-        // Htx
+        // Ascendex
         /*----- */
         vec![
-            // Binance
-            (
-                ExchangeId::BinanceSpot,
-                "ada",
-                "usdt",
-                StreamKind::AggTrades,
-            ),
-            (ExchangeId::BinanceSpot, "ada", "usdt", StreamKind::L2),
-            (
-                ExchangeId::BinanceSpot,
-                "icp",
-                "usdt",
-                StreamKind::AggTrades,
-            ),
-            (ExchangeId::BinanceSpot, "icp", "usdt", StreamKind::L2),
-            (
-                ExchangeId::BinanceSpot,
-                "sol",
-                "usdt",
-                StreamKind::AggTrades,
-            ),
-            (ExchangeId::BinanceSpot, "sol", "usdt", StreamKind::L2),
-            // Htx
-            (ExchangeId::HtxSpot, "ada", "usdt", StreamKind::Trades),
-            (ExchangeId::HtxSpot, "ada", "usdt", StreamKind::Snapshot),
-            (ExchangeId::HtxSpot, "icp", "usdt", StreamKind::Trades),
-            (ExchangeId::HtxSpot, "icp", "usdt", StreamKind::Snapshot),
-            (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Trades),
-            (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Snapshot),
-            // Okx
-            (ExchangeId::OkxSpot, "ada", "usdt", StreamKind::Trade),
-            (ExchangeId::OkxSpot, "ada", "usdt", StreamKind::Snapshot),
-            (ExchangeId::OkxSpot, "icp", "usdt", StreamKind::Trade),
-            (ExchangeId::OkxSpot, "icp", "usdt", StreamKind::Snapshot),
-            (ExchangeId::OkxSpot, "sol", "usdt", StreamKind::Snapshot),
-            (ExchangeId::OkxSpot, "sol", "usdt", StreamKind::Trade),
+            (ExchangeId::AscendExSpot, "zeta", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "zyn", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "maps", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "turbo", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "powsche", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "trumpsol", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "wtf", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "popdog", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "ath", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "beeg", "usdt", StreamKind::L2),
+        ],
+        vec![
+            (ExchangeId::AscendExSpot, "bnbxbt", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "lester", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "doge", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "fight", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "zee", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "piin", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "move", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "syrup", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "niox", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "lfgo", "usdt", StreamKind::L2),
+        ],
+        vec![
+            (ExchangeId::AscendExSpot, "spore", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "geeq", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "chz", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "fullsend", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "kango", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "xec", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "sqid", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "siren", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "deepseek", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "scuba", "usdt", StreamKind::L2),
+        ],
+        vec![
+            (ExchangeId::AscendExSpot, "$cult", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "sophon", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "blur", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "ai", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "sfp", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "bets", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "bturbo", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "kekius", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "elonsol", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "aixbt", "usdt", StreamKind::L2),
         ],
     ])
     .await

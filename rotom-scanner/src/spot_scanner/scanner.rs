@@ -658,6 +658,8 @@ impl SpotArbScanner {
                     if !self.market_data_stream.is_empty() {
                         // println!("{}", self.market_data_stream.len());
                     }
+
+                    // println!("{:?}", market_data);
                     // Del
 
                     match market_data.event_data {

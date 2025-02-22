@@ -27,6 +27,7 @@ use super::{
 };
 
 pub const DEFAULT_SUBSCRIPTION_TIMEOUT: Duration = Duration::from_secs(10);
+const VOLUME_THRESHOLD: u64 = 100000;
 
 /*----- */
 // Exchange connector trait
@@ -86,6 +87,10 @@ pub trait PublicHttpConnector {
     ) -> Result<Self::NetworkInfo, SocketError>;
 
     async fn get_usdt_pair() -> Result<Vec<(String, String)>, SocketError>;
+
+    fn get_volume_threshold() -> u64 {
+        VOLUME_THRESHOLD
+    }
 }
 
 /*----- */
