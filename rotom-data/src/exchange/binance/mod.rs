@@ -160,7 +160,31 @@ impl PublicHttpConnector for BinanceSpotPublicData {
     }
 
     async fn get_usdt_pair() -> Result<Vec<(String, String)>, SocketError> {
-        unimplemented!()
+        let request_path = "/api/v3/exchangeInfo";
+
+        let response = reqwest::get(format!("{}{}", BINANCE_BASE_HTTP_URL, request_path))
+            .await
+            .map_err(SocketError::Http)?
+            .json::<serde_json::Value>()
+            .await
+            .map_err(SocketError::Http)?;
+
+        let tickers = response["symbols"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|ticker| {
+                let base = ticker["baseAsset"].as_str().unwrap().to_lowercase();
+                let quote = ticker["quoteAsset"].as_str().unwrap().to_lowercase();
+                if quote == "usdt" {
+                    Some((base, quote))
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        Ok(tickers)
     }
 }
 

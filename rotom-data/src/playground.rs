@@ -95,10 +95,8 @@ pub async fn test_ws() {
 // Test http
 /*----- */
 pub async fn test_http() {
-    // https://ascendex.com/api/pro/v1/depth?symbol=ASD/USDT
-
-    let base_url = "https://ascendex.com";
-    let request_path = "/api/pro/v1/spot/ticker";
+    let base_url = "https://api.woox.io";
+    let request_path = "/v1/public/info";
     let url = format!("{}{}", base_url, request_path);
 
     let test = reqwest::get(url)
@@ -108,16 +106,20 @@ pub async fn test_http() {
         .await
         .unwrap();
 
-    let test = test["data"]
+    let test = test["rows"]
         .as_array()
         .unwrap()
         .iter()
         .filter_map(|ticker| {
-            let ticker_lower = ticker["symbol"].as_str().unwrap().to_lowercase();
-            let mut ticker_split = ticker_lower.split("/");
-            let base =   ticker_split.next().unwrap_or("").to_string();
+            let status = ticker["status"].as_str().unwrap().to_string();
+            let symbol = ticker["symbol"].as_str().unwrap().to_lowercase();
+
+            let mut ticker_split = symbol.split("_"); // comes like SPOT_BTC_USDT or PERP_BTC_USDT
+            let ticker_kind = ticker_split.next().unwrap_or("").to_string();
+            let base = ticker_split.next().unwrap_or("").to_string();
             let quote = ticker_split.next().unwrap_or("").to_string();
-            if quote == "usdt" {
+
+            if ticker_kind == "spot" && status == "TRADING" && quote == "usdt" {
                 Some((base, quote))
             } else {
                 None

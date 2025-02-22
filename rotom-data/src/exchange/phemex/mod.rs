@@ -200,7 +200,32 @@ impl PublicHttpConnector for PhemexSpotPublicData {
     }
 
     async fn get_usdt_pair() -> Result<Vec<(String, String)>, SocketError> {
-        unimplemented!()
+        let request_path = "/md/spot/ticker/24hr/all";
+
+        let response = reqwest::get(format!("{}{}", PHEMEX_BASE_HTTP_URL, request_path))
+            .await
+            .map_err(SocketError::Http)?
+            .json::<serde_json::Value>()
+            .await
+            .map_err(SocketError::Http)?;
+
+        let tickers = response["result"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|ticker| {
+                let quote = String::from("usdt");
+                let symbol = ticker["symbol"].as_str().unwrap().to_lowercase();
+                if symbol.contains(quote.as_str()) {
+                    let base = symbol.replace(quote.as_str(), "");
+                    Some((base, quote))
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        Ok(tickers)
     }
 }
 

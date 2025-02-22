@@ -39,9 +39,16 @@ pub async fn main() {
     ///////////
     init_logging();
 
-    let res = test_http().await;
-    // let res = AscendExSpotPublicData::get_usdt_pair().await;
+    // let res = test_http().await;
+    // // let res = AscendExSpotPublicData::get_usdt_pair().await;
     // let res = HtxSpotPublicData::get_usdt_pair().await;
+    // let res = BinanceSpotPublicData::get_usdt_pair().await;
+    // let res = CoinExSpotPublicData::get_usdt_pair().await;
+    // let res = ExmoSpotPublicData::get_usdt_pair().await;
+    // let res = KuCoinSpotPublicData::get_usdt_pair().await;
+    // let res = PhemexSpotPublicData::get_usdt_pair().await;
+    // let res = WooxSpotPublicData::get_usdt_pair().await;
+
     println!("{:#?}", res);
 
     // let test = OkxSpotPublicData::get_network_info(instruments)
