@@ -120,7 +120,31 @@ impl PublicHttpConnector for OkxSpotPublicData {
     }
 
     async fn get_usdt_pair() -> Result<Vec<(String, String)>, SocketError> {
-        unimplemented!()
+        let request_path = "/api/v5/public/instruments?instType=SPOT"; 
+
+        let response = reqwest::get(format!("{}{}", OKX_BASE_HTTP_URL, request_path))
+            .await
+            .map_err(SocketError::Http)?
+            .json::<serde_json::Value>()
+            .await
+            .map_err(SocketError::Http)?;
+
+        let tickers = response["data"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|ticker| {
+                let base_asset = ticker["baseCcy"].as_str().unwrap().to_lowercase();
+                let quote_asset = ticker["quoteCcy"].as_str().unwrap().to_lowercase();
+                if quote_asset == "usdt" {
+                    Some((base_asset, quote_asset))
+                } else {
+                    None 
+                }
+            })
+            .collect::<Vec<_>>();
+
+        Ok(tickers)
     }
 }
 
