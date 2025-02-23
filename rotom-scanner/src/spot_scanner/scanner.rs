@@ -1,4 +1,3 @@
-use actix_web::dev::ResourceDef;
 use chrono::{DateTime, Utc};
 use rotom_data::{
     assets::level::Level,
@@ -13,7 +12,7 @@ use rotom_data::{
 use serde::Serialize;
 use std::collections::VecDeque;
 use tokio::sync::mpsc;
-use tracing::{instrument, warn};
+use tracing::warn;
 
 use crate::server::{
     server_channels::ScannerHttpChannel, SpotArbScannerHttpRequests, SpotArbScannerHttpResponse,
@@ -606,6 +605,30 @@ impl SpotArbScanner {
                 )));
     }
 
+    fn process_get_ws_connection_status(&mut self) {
+        let mut snapshot_successful_ws_connection_count: u32 = 0;
+        let mut trade_successful_ws_connection_count: u32 = 0;
+
+        for (_, instrument_data_map) in self.exchange_data.0.iter() {
+            for (_, instrument_data) in instrument_data_map.0.iter() {
+                if instrument_data.orderbook_ws_is_connected {
+                    snapshot_successful_ws_connection_count += 1;
+                }
+
+                if instrument_data.trades_ws_is_connected {
+                    trade_successful_ws_connection_count += 1;
+                }
+            }
+        }
+
+        let _ = self.http_channel.http_response_tx.send(
+            SpotArbScannerHttpResponse::GetWsConnectionStatus {
+                snapshot: snapshot_successful_ws_connection_count,
+                trade: trade_successful_ws_connection_count,
+            },
+        );
+    }
+
     pub fn run(mut self) {
         'spot_arb_scanner: loop {
             // Process network status update
@@ -639,6 +662,9 @@ impl SpotArbScanner {
                         quote_exchange,
                         instrument,
                     ),
+                    SpotArbScannerHttpRequests::GetWsConnectionStatus => {
+                        self.process_get_ws_connection_status()
+                    }
                 },
                 Err(error) => {
                     if error == mpsc::error::TryRecvError::Disconnected {
@@ -656,9 +682,8 @@ impl SpotArbScanner {
                 Ok(market_data) => {
                     // Del
                     if !self.market_data_stream.is_empty() {
-                        // println!("{}", self.market_data_stream.len());
+                        println!("{}", self.market_data_stream.len());
                     }
-
                     // println!("{:?}", market_data);
                     // Del
 

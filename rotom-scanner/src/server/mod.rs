@@ -10,12 +10,17 @@ use crate::spot_scanner::scanner::{SpreadHistoryResponse, SpreadResponse};
 pub enum SpotArbScannerHttpRequests {
     GetTopSpreads,
     GetSpreadHistory((ExchangeId, ExchangeId, Instrument)),
+    GetWsConnectionStatus,
 }
 
 #[derive(Debug, Serialize)]
 pub enum SpotArbScannerHttpResponse {
     GetTopSpreads(Vec<SpreadResponse>),
     GetSpreadHistory(Box<SpreadHistoryResponse>),
+    GetWsConnectionStatus {
+        snapshot: u32,
+        trade: u32,
+    },
     CouldNotFindSpreadHistory {
         base_exchange: ExchangeId,
         quote_exchange: ExchangeId,
