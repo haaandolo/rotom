@@ -41,14 +41,14 @@ pub async fn main() {
 
     // let res = test_http().await;
     // let res = AscendExSpotPublicData::get_usdt_pair().await;
-    let res = HtxSpotPublicData::get_usdt_pair().await;
+    // let res = HtxSpotPublicData::get_usdt_pair().await;
     // let res = BinanceSpotPublicData::get_usdt_pair().await;
     // let res = OkxSpotPublicData::get_usdt_pair().await;
     // let res = CoinExSpotPublicData::get_usdt_pair().await;
     // let res = ExmoSpotPublicData::get_usdt_pair().await;
     // let res = KuCoinSpotPublicData::get_usdt_pair().await;
     // let res = PhemexSpotPublicData::get_usdt_pair().await;
-    // let res = WooxSpotPublicData::get_usdt_pair().await;
+    let res = WooxSpotPublicData::get_usdt_pair().await;
 
     // println!("{:#?}", res);
 
@@ -126,7 +126,6 @@ fn init_logging() {
 }
 
 // Todo:
-// Now to send http request to scanner?
 // Ascendex too many requests, need something to stop sending too many requests
 // write test
 // Change coin in NetworkSpecData to be a type not string

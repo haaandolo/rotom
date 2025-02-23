@@ -49,7 +49,7 @@ impl From<(WooxOrderBookSnapshot, Instrument)> for MarketEvent<EventOrderBookSna
         Self {
             exchange_time: value.ts,
             received_time: Utc::now(),
-            exchange: ExchangeId::HtxSpot,
+            exchange: ExchangeId::WooxSpot,
             instrument,
             event_data: EventOrderBookSnapshot {
                 bids: value.data.bids,
