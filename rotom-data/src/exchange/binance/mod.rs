@@ -176,7 +176,8 @@ impl PublicHttpConnector for BinanceSpotPublicData {
             .filter_map(|ticker| {
                 let base = ticker["baseAsset"].as_str().unwrap().to_lowercase();
                 let quote = ticker["quoteAsset"].as_str().unwrap().to_lowercase();
-                if quote == "usdt" {
+                let status = ticker["status"].as_str().unwrap().to_string();
+                if quote == "usdt" && status == "TRADING" {
                     Some((base, quote))
                 } else {
                     None

@@ -109,6 +109,30 @@ pub async fn get_spot_arb_data_streams() -> (
             (ExchangeId::AscendExSpot, "elonsol", "usdt", StreamKind::L2),
             (ExchangeId::AscendExSpot, "aixbt", "usdt", StreamKind::L2),
         ],
+        vec![
+            (ExchangeId::AscendExSpot, "rowan", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "xrp", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "froc", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "proud", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "bario", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "khan", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "atr", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "sweat", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "dogesol", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "degen", "usdt", StreamKind::L2),
+        ],
+        vec![
+            (ExchangeId::AscendExSpot, "$x", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "cat", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "neiroinu", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "wen", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "monk", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "rat", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "byn", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "ban", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "tsotchke", "usdt", StreamKind::L2),
+            (ExchangeId::AscendExSpot, "hosky", "usdt", StreamKind::L2),
+        ],
     ])
     .await
     .unwrap();

@@ -39,8 +39,8 @@ pub async fn main() {
     ///////////
     init_logging();
 
-    // let res = test_http().await;
-    let res = AscendExSpotPublicData::get_usdt_pair().await;
+    let res = test_http().await;
+    // let res = AscendExSpotPublicData::get_usdt_pair().await;
     // let res = HtxSpotPublicData::get_usdt_pair().await;
     // let res = BinanceSpotPublicData::get_usdt_pair().await;
     // let res = OkxSpotPublicData::get_usdt_pair().await;
