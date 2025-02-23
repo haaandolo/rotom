@@ -44,11 +44,11 @@ pub async fn main() {
     // let res = HtxSpotPublicData::get_usdt_pair().await;
     // let res = BinanceSpotPublicData::get_usdt_pair().await;
     // let res = OkxSpotPublicData::get_usdt_pair().await;
-    // let res = CoinExSpotPublicData::get_usdt_pair().await;
+    let res = CoinExSpotPublicData::get_usdt_pair().await;
     // let res = ExmoSpotPublicData::get_usdt_pair().await;
     // let res = KuCoinSpotPublicData::get_usdt_pair().await;
     // let res = PhemexSpotPublicData::get_usdt_pair().await;
-    let res = WooxSpotPublicData::get_usdt_pair().await;
+    // let res = WooxSpotPublicData::get_usdt_pair().await;
 
     // println!("{:#?}", res);
 
