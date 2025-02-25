@@ -120,33 +120,6 @@ impl PublicHttpConnector for OkxSpotPublicData {
     }
 
     async fn get_usdt_pair() -> Result<Vec<(String, String)>, SocketError> {
-        let request_path1 = "/api/v5/public/instruments?instType=SPOT";
-        let response1 = reqwest::get(format!("{}{}", OKX_BASE_HTTP_URL, request_path1))
-            .await
-            .map_err(SocketError::Http)?
-            .json::<serde_json::Value>()
-            .await
-            .map_err(SocketError::Http)?;
-
-        let tickers_online = response1["data"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .filter_map(|ticker| {
-                let base_asset = ticker["baseCcy"].as_str().unwrap().to_lowercase();
-                let quote_asset = ticker["quoteCcy"].as_str().unwrap().to_lowercase();
-                let status = ticker["state"].as_str().unwrap().to_lowercase();
-                if quote_asset == "usdt" && status == "live" {
-                    Some((base_asset, quote_asset))
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<_>>();
-        //
-        println!("{:?}", tickers_online);
-        //
-
         let request_path = "/api/v5/market/tickers?instType=SPOT";
 
         let response = reqwest::get(format!("{}{}", OKX_BASE_HTTP_URL, request_path))
@@ -176,10 +149,6 @@ impl PublicHttpConnector for OkxSpotPublicData {
                     .unwrap_or(0.0);
 
                 if quote == "usdt" && volume > volume_threshold {
-                    //del
-                    println!("{}_{}", base, quote);
-                    //del
-
                     Some((base, quote))
                 } else {
                     None

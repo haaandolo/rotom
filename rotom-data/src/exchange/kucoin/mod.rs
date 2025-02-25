@@ -145,7 +145,8 @@ impl PublicHttpConnector for KuCoinSpotPublicData {
             .filter_map(|ticker| {
                 let base = ticker["baseCurrency"].as_str().unwrap().to_lowercase();
                 let quote = ticker["quoteCurrency"].as_str().unwrap().to_lowercase();
-                if quote == "usdt" {
+                let status = ticker["enableTrading"].as_bool().unwrap();
+                if quote == "usdt" && status {
                     Some((base, quote))
                 } else {
                     None

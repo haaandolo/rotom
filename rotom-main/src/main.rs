@@ -43,10 +43,10 @@ pub async fn main() {
     // let res = AscendExSpotPublicData::get_usdt_pair().await;
     // let res = HtxSpotPublicData::get_usdt_pair().await;
     // let res = BinanceSpotPublicData::get_usdt_pair().await;
-    let res = OkxSpotPublicData::get_usdt_pair().await;
+    // let res = OkxSpotPublicData::get_usdt_pair().await;
     // let res = CoinExSpotPublicData::get_usdt_pair().await;
     // let res = ExmoSpotPublicData::get_usdt_pair().await;
-    // let res = KuCoinSpotPublicData::get_usdt_pair().await;
+    let res = KuCoinSpotPublicData::get_usdt_pair().await;
     // let res = PhemexSpotPublicData::get_usdt_pair().await;
     // let res = WooxSpotPublicData::get_usdt_pair().await;
 
@@ -126,6 +126,8 @@ fn init_logging() {
 }
 
 // Todo:
+// Okx checkout bonk_usdt and agld_usdt to see if stream comes in
+// last update info for each stream
 // Ascendex too many requests, need something to stop sending too many requests
 // write test
 // Change coin in NetworkSpecData to be a type not string
