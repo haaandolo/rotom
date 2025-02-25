@@ -161,7 +161,6 @@ pub struct LatestSpreads {
     pub take_take: f64,
     pub take_make: f64,
     pub make_take: f64,
-    pub make_make: f64,
 }
 
 #[derive(Debug, Default, PartialEq, Clone, Serialize)]
@@ -170,55 +169,11 @@ pub struct SpreadHistory {
     pub take_take: VecDequeTime<f64>,
     pub take_make: VecDequeTime<f64>,
     pub make_take: VecDequeTime<f64>,
-    pub make_make: VecDequeTime<f64>,
 }
 
 impl SpreadHistory {
-    pub fn new_ask(take_take: f64, take_make: f64) -> Self {
-        let mut take_take_queue = VecDequeTime::default();
-        let mut take_make_queue = VecDequeTime::default();
 
-        take_take_queue.push(Utc::now(), take_take);
-        take_make_queue.push(Utc::now(), take_make);
-
-        let latest_spreads = LatestSpreads {
-            take_take,
-            take_make,
-            ..LatestSpreads::default()
-        };
-
-        Self {
-            latest_spreads,
-            take_take: take_take_queue,
-            take_make: take_make_queue,
-            make_take: VecDequeTime::default(),
-            make_make: VecDequeTime::default(),
-        }
-    }
-
-    pub fn new_bid(make_take: f64, make_make: f64) -> Self {
-        let mut make_take_queue = VecDequeTime::default();
-        let mut make_make_queue = VecDequeTime::default();
-
-        make_take_queue.push(Utc::now(), make_take);
-        make_make_queue.push(Utc::now(), make_make);
-
-        let latest_spreads = LatestSpreads {
-            make_take,
-            make_make,
-            ..LatestSpreads::default()
-        };
-
-        Self {
-            latest_spreads,
-            take_take: VecDequeTime::default(),
-            take_make: VecDequeTime::default(),
-            make_take: make_take_queue,
-            make_make: make_make_queue,
-        }
-    }
-
-    pub fn insert(&mut self, time: DateTime<Utc>, spread_array: [Option<f64>; 4]) {
+    pub fn insert(&mut self, time: DateTime<Utc>, spread_array: [Option<f64>; 3]) {
         if let Some(take_take) = spread_array[0] {
             self.latest_spreads.take_take = take_take;
             self.take_take.push(time, take_take);
@@ -232,11 +187,6 @@ impl SpreadHistory {
         if let Some(make_take) = spread_array[2] {
             self.latest_spreads.make_take = make_take;
             self.make_take.push(time, make_take);
-        }
-
-        if let Some(make_make) = spread_array[3] {
-            self.latest_spreads.make_make = make_make;
-            self.make_make.push(time, make_make);
         }
     }
 }

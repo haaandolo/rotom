@@ -70,7 +70,7 @@ pub struct SpreadsCalculated {
     pub sc_exchange: ExchangeId,
     pub other_exchange: ExchangeId,
     pub instrument: Instrument,
-    pub spread_array: [Option<f64>; 4],
+    pub spread_array: [Option<f64>; 3],
 }
 
 impl SpreadsCalculated {
@@ -78,7 +78,7 @@ impl SpreadsCalculated {
         sc_exchange: ExchangeId,
         other_exchange: ExchangeId,
         instrument: Instrument,
-        spread_array: [Option<f64>; 4],
+        spread_array: [Option<f64>; 3],
     ) -> Self {
         Self {
             sc_exchange,
@@ -311,7 +311,7 @@ impl SpotArbScanner {
         }
     }
 
-    fn sort_option_array(mut arr: [Option<f64>; 4]) -> [Option<f64>; 4] {
+    fn sort_option_array(mut arr: [Option<f64>; 3]) -> [Option<f64>; 3] {
         // Sort the array, placing None values at the end
         arr.sort_by(|a, b| match (a, b) {
             (None, None) => std::cmp::Ordering::Equal,
@@ -328,7 +328,7 @@ impl SpotArbScanner {
                 if let Some(market_data) = market_data_map.0.get(&spread_change.instrument) {
                     // We assume the exchange associated with the spread change is the buy exchange, so this is in the denominator.
                     // Hence, the sell exchange is the exchange correspoding to the market_data
-                    let mut spread_array = [None; 4];
+                    let mut spread_array = [None; 3];
 
                     if let Some(spread_change_ask) = spread_change.ask {
                         // Calculate the spreads if best ask level has changed
@@ -351,12 +351,6 @@ impl SpotArbScanner {
                             let make_take =
                                 (market_data.bids[0].price / spread_change_bid.price) - 1.0;
                             spread_array[2] = Some(make_take)
-                        }
-
-                        if !market_data.asks.is_empty() {
-                            let make_make =
-                                (market_data.asks[0].price / spread_change_bid.price) - 1.0;
-                            spread_array[3] = Some(make_make)
                         }
                     }
 
@@ -395,8 +389,8 @@ impl SpotArbScanner {
             }
         }
 
-        // Get max spread - index into 3 as it is the last value of the array
-        let max_spread = Self::sort_option_array(spreads.spread_array)[3];
+        // Get max spread - index into 2 as it is the last value of the array
+        let max_spread = Self::sort_option_array(spreads.spread_array)[2];
 
         // Insert into spreads_sorted
         if let Some(max_spread) = max_spread {
@@ -1296,12 +1290,10 @@ mod test {
         let binance_htx_btc_take_take = (13.5 / 15.12) - 1.0; // -0.107
         let binance_htx_btc_take_make = (14.5 / 15.12) - 1.0; // -0.0410
         let binance_htx_btc_make_take = (13.5 / 12.22) - 1.0; // 0.1047 --> doesn't get inserted as not the best spread for given instrument
-        let binance_htx_btc_make_make = (14.5 / 12.22) - 1.0; // 0.1866 --> 1
 
         let binance_htx_eth_take_take = (19.22 / 21.92) - 1.0; // -0.1231
         let binance_htx_eth_take_make = (20.11 / 21.92) - 1.0; // -0.0826
         let binance_htx_eth_make_take = (19.22 / 20.78) - 1.0; // -0.0751
-        let binance_htx_eth_make_make = (20.11 / 20.78) - 1.0; // -0.3224
 
         // Check Binance btc spread history
         let mut binance_btc_spread_history = SpreadHistory::default();
@@ -1320,11 +1312,6 @@ mod test {
         binance_btc_spread_history
             .make_take
             .push(time, binance_htx_btc_make_take);
-
-        binance_btc_spread_history.latest_spreads.make_make = binance_htx_btc_make_make;
-        binance_btc_spread_history
-            .make_make
-            .push(time, binance_htx_btc_make_make);
 
         let result = scanner
             .exchange_data
@@ -1358,11 +1345,6 @@ mod test {
         binance_eth_spread_history
             .make_take
             .push(time, binance_htx_eth_make_take);
-
-        binance_eth_spread_history.latest_spreads.make_make = binance_htx_eth_make_make;
-        binance_eth_spread_history
-            .make_make
-            .push(time, binance_htx_eth_make_make);
 
         let result = scanner
             .exchange_data
@@ -1464,12 +1446,10 @@ mod test {
         let htx_binance_btc_take_take = (12.22 / 18.02) - 1.0;
         let htx_binance_btc_take_make = (15.12 / 18.02) - 1.0;
         let htx_binance_btc_make_take = (12.22 / 13.12) - 1.0;
-        let htx_binance_btc_make_make = (15.12 / 13.12) - 1.0; // 0.1524
 
         let htx_binance_eth_take_take = (20.78 / 22.87) - 1.0;
         let htx_binance_eth_take_make = (21.92 / 22.87) - 1.0;
         let htx_binance_eth_make_take = (20.78 / 20.0) - 1.0;
-        let htx_binance_eth_make_make = (21.92 / 20.0) - 1.0; // 0.096
 
         // Check Htx btc spread history
         let mut htx_btc_spread_history = SpreadHistory::default();
@@ -1488,11 +1468,6 @@ mod test {
         htx_btc_spread_history
             .make_take
             .push(time, htx_binance_btc_make_take);
-
-        htx_btc_spread_history.latest_spreads.make_make = htx_binance_btc_make_make;
-        htx_btc_spread_history
-            .make_make
-            .push(time, htx_binance_btc_make_make);
 
         let result = scanner
             .exchange_data
@@ -1527,11 +1502,6 @@ mod test {
             .make_take
             .push(time, htx_binance_eth_make_take);
 
-        htx_eth_spread_history.latest_spreads.make_make = htx_binance_eth_make_make;
-        htx_eth_spread_history
-            .make_make
-            .push(time, htx_binance_eth_make_make);
-
         let result = scanner
             .exchange_data
             .0
@@ -1551,28 +1521,6 @@ mod test {
         // Expected spread
         /*----- */
         let mut expected_spread = SpreadsSorted::new();
-
-        let binance_htx_btc = SpreadKey::new(
-            ExchangeId::BinanceSpot,
-            ExchangeId::HtxSpot,
-            Instrument::new("btc", "usdt"),
-        );
-
-        let htx_binance_btc = SpreadKey::new(
-            ExchangeId::HtxSpot,
-            ExchangeId::BinanceSpot,
-            Instrument::new("btc", "usdt"),
-        );
-
-        let htx_binance_eth = SpreadKey::new(
-            ExchangeId::HtxSpot,
-            ExchangeId::BinanceSpot,
-            Instrument::new("eth", "usdt"),
-        );
-
-        expected_spread.insert(binance_htx_btc, binance_htx_btc_make_make);
-        expected_spread.insert(htx_binance_btc, htx_binance_btc_make_make);
-        expected_spread.insert(htx_binance_eth, htx_binance_eth_make_make);
 
         let result = scanner.spreads_sorted.snapshot();
         let expected = expected_spread.snapshot();
