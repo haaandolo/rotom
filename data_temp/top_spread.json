@@ -1,57 +1,11 @@
 {
     "GetTopSpreads": [
         {
-            "base_exchange": "HtxSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.000076,
-                "buy_sell_ratio": 0.0,
-                "cum_size": 136865.9079
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "ERC20",
-                    "fee_is_fixed": true,
-                    "fees": 62317.64832754
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "xno",
-                "quote": "usdt"
-            },
-            "quote_exchange": "KuCoinSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 1.1420636363636365,
-                "buy_sell_ratio": 0.45454545454545453,
-                "cum_size": 64.846
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "NANO",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 15453.054054054053,
-                "make_take": 15399.0,
-                "take_make": 14474.949367088608,
-                "take_take": 14424.316455696202
-            }
-        },
-        {
             "base_exchange": "KuCoinSpot",
             "base_exchange_avg_trade_info": {
-                "avg_price": 0.0015690158730158723,
-                "buy_sell_ratio": 0.3968253968253968,
-                "cum_size": 720382.5571999999
+                "avg_price": 0.001474321428571429,
+                "buy_sell_ratio": 0.4642857142857143,
+                "cum_size": 634409.8114000001
             },
             "base_exchange_network_info": [
                 {
@@ -86,18 +40,18 @@
             "quote_exchange_orderbook_ws_is_connected": true,
             "quote_exchange_trades_ws_is_connected": true,
             "spreads": {
-                "make_make": 622.9046391752578,
-                "make_take": 614.9149484536082,
-                "take_make": 621.0154043645699,
-                "take_take": 613.6341463414634
+                "make_make": 610.4887831407206,
+                "make_take": 606.8857919782461,
+                "take_make": 606.8484438430312,
+                "take_take": 602.9918809201624
             }
         },
         {
             "base_exchange": "KuCoinSpot",
             "base_exchange_avg_trade_info": {
-                "avg_price": 0.0015690158730158723,
-                "buy_sell_ratio": 0.3968253968253968,
-                "cum_size": 720382.5571999999
+                "avg_price": 0.001474321428571429,
+                "buy_sell_ratio": 0.4642857142857143,
+                "cum_size": 634409.8114000001
             },
             "base_exchange_network_info": [
                 {
@@ -116,9 +70,9 @@
             },
             "quote_exchange": "WooxSpot",
             "quote_exchange_avg_trade_info": {
-                "avg_price": 0.9632000000000001,
-                "buy_sell_ratio": 0.6363636363636364,
-                "cum_size": 1262.3
+                "avg_price": 0.8946000000000001,
+                "buy_sell_ratio": 0.5294117647058824,
+                "cum_size": 3870.8000000000006
             },
             "quote_exchange_network_info": [
                 {
@@ -132,177 +86,39 @@
             "quote_exchange_orderbook_ws_is_connected": true,
             "quote_exchange_trades_ws_is_connected": true,
             "spreads": {
-                "make_make": 618.2010309278351,
-                "make_take": 616.2680412371134,
-                "take_make": 617.1001283697047,
-                "take_take": 615.1745827984596
-            }
-        },
-        {
-            "base_exchange": "KuCoinSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.004206666666666667,
-                "buy_sell_ratio": 0.3333333333333333,
-                "cum_size": 55651.700000000004
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "ERC20",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "tst",
-                "quote": "usdt"
-            },
-            "quote_exchange": "WooxSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.08688580976863733,
-                "buy_sell_ratio": 0.5578406169665809,
-                "cum_size": 3157466.1999999895
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "BEP20",
-                    "fee_is_fixed": false,
-                    "fees": 80.0
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 19.8,
-                "make_take": 19.704761904761906,
-                "take_make": 19.701421800947866,
-                "take_take": 19.606635071090047
-            }
-        },
-        {
-            "base_exchange": "KuCoinSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.004206666666666667,
-                "buy_sell_ratio": 0.3333333333333333,
-                "cum_size": 55651.700000000004
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "ERC20",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "tst",
-                "quote": "usdt"
-            },
-            "quote_exchange": "HtxSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.08661805377720855,
-                "buy_sell_ratio": 0.5262483994878361,
-                "cum_size": 3533619.1319999928
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "BEP20",
-                    "fee_is_fixed": true,
-                    "fees": 3.95383337
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 19.714285714285715,
-                "make_take": 19.690476190476193,
-                "take_make": 19.61611374407583,
-                "take_take": 19.592417061611375
+                "make_make": 606.0700203942896,
+                "make_take": 604.7104010876955,
+                "take_make": 601.8416779431665,
+                "take_take": 599.8119079837619
             }
         },
         {
             "base_exchange": "HtxSpot",
             "base_exchange_avg_trade_info": {
-                "avg_price": 0.0013699999999999993,
-                "buy_sell_ratio": 0.4875,
-                "cum_size": 762095.5269000002
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "SOLANA",
-                    "fee_is_fixed": true,
-                    "fees": 1151.0579
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "neiro",
-                "quote": "usdt"
-            },
-            "quote_exchange": "KuCoinSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.021539999999999997,
-                "buy_sell_ratio": 0.6,
-                "cum_size": 53024.850000000006
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "ERC20",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 14.882352941176471,
-                "make_take": 14.808823529411763,
-                "take_make": 14.539568345323742,
-                "take_take": 14.39568345323741
-            }
-        },
-        {
-            "base_exchange": "HtxSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.0013699999999999993,
-                "buy_sell_ratio": 0.4875,
-                "cum_size": 762095.5269000002
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "SOLANA",
-                    "fee_is_fixed": true,
-                    "fees": 1151.0579
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "neiro",
-                "quote": "usdt"
-            },
-            "quote_exchange": "WooxSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.021526,
+                "avg_price": 0.00128,
                 "buy_sell_ratio": 0.0,
-                "cum_size": 13463.810000000001
+                "cum_size": 42783.6308
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "SOLANA",
+                    "fee_is_fixed": true,
+                    "fees": 1151.0579
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "neiro",
+                "quote": "usdt"
+            },
+            "quote_exchange": "WooxSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.023194333333333334,
+                "buy_sell_ratio": 0.8333333333333334,
+                "cum_size": 43414.17999999999
             },
             "quote_exchange_network_info": [
                 {
@@ -316,18 +132,18 @@
             "quote_exchange_orderbook_ws_is_connected": true,
             "quote_exchange_trades_ws_is_connected": true,
             "spreads": {
-                "make_make": 14.856617647058822,
-                "make_take": 14.77279411764706,
-                "take_make": 14.473381294964028,
-                "take_take": 14.405035971223024
+                "make_make": 17.276190476190475,
+                "make_take": 17.20079365079365,
+                "take_make": 16.836434108527133,
+                "take_take": 16.733333333333334
             }
         },
         {
             "base_exchange": "KuCoinSpot",
             "base_exchange_avg_trade_info": {
-                "avg_price": 0.0,
-                "buy_sell_ratio": 0.0,
-                "cum_size": 0.0
+                "avg_price": 0.002724777777777777,
+                "buy_sell_ratio": 0.3888888888888889,
+                "cum_size": 67592.0
             },
             "base_exchange_network_info": [
                 {
@@ -362,18 +178,18 @@
             "quote_exchange_orderbook_ws_is_connected": true,
             "quote_exchange_trades_ws_is_connected": true,
             "spreads": {
-                "make_make": 11.110058309037901,
-                "make_take": 11.029883381924197,
-                "take_make": 10.936063218390805,
-                "take_take": 10.857040229885056
+                "make_make": 10.216715976331361,
+                "make_take": 10.161242603550296,
+                "take_make": 10.065304633345495,
+                "take_take": 10.010580080262677
             }
         },
         {
             "base_exchange": "HtxSpot",
             "base_exchange_avg_trade_info": {
-                "avg_price": 0.004495393939393936,
-                "buy_sell_ratio": 0.48484848484848486,
-                "cum_size": 648317.0714
+                "avg_price": 0.004163185840707967,
+                "buy_sell_ratio": 0.5929203539823009,
+                "cum_size": 888445.0111000004
             },
             "base_exchange_network_info": [
                 {
@@ -408,87 +224,20 @@
             "quote_exchange_orderbook_ws_is_connected": true,
             "quote_exchange_trades_ws_is_connected": true,
             "spreads": {
-                "make_make": 6.424039320822163,
-                "make_take": 6.374888293118856,
-                "take_make": 6.356652645561214,
-                "take_take": 6.307947752933362
+                "make_make": 6.347383720930233,
+                "make_take": 6.311046511627907,
+                "take_make": 6.240391501551683,
+                "take_take": 6.204583432800191
             }
         },
         {
-            "base_exchange": "KuCoinSpot",
+            "base_exchange": "WooxSpot",
             "base_exchange_avg_trade_info": {
-                "avg_price": 0.0013905000000000007,
-                "buy_sell_ratio": 0.9375,
-                "cum_size": 435447.2883000001
+                "avg_price": 0.04170000000000001,
+                "buy_sell_ratio": 0.5833333333333334,
+                "cum_size": 323036.87
             },
             "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "NIM",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "nim",
-                "quote": "usdt"
-            },
-            "quote_exchange": "HtxSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.004570454545454545,
-                "buy_sell_ratio": 0.6136363636363636,
-                "cum_size": 516212.66920000024
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "NIM",
-                    "fee_is_fixed": true,
-                    "fees": 0.03
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 2.3280392723072483,
-                "make_take": 2.2775050534218884,
-                "take_make": 2.30306713376707,
-                "take_take": 2.2458711660827912
-            }
-        },
-        {
-            "base_exchange": "HtxSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.050038372093023226,
-                "buy_sell_ratio": 0.4511627906976744,
-                "cum_size": 939460.4927000001
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "SOLANA",
-                    "fee_is_fixed": true,
-                    "fees": 31.8082
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "avaai",
-                "quote": "usdt"
-            },
-            "quote_exchange": "WooxSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.0499217857142857,
-                "buy_sell_ratio": 0.40714285714285714,
-                "cum_size": 1287542.5800000008
-            },
-            "quote_exchange_network_info": [
                 {
                     "can_deposit": true,
                     "can_withdraw": true,
@@ -497,74 +246,134 @@
                     "fees": 90.0
                 }
             ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "avaai",
+                "quote": "usdt"
+            },
+            "quote_exchange": "HtxSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.04180456790123458,
+                "buy_sell_ratio": 0.48148148148148145,
+                "cum_size": 1035261.8849999999
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "SOLANA",
+                    "fee_is_fixed": true,
+                    "fees": 31.8082
+                }
+            ],
             "quote_exchange_orderbook_ws_is_connected": true,
             "quote_exchange_trades_ws_is_connected": true,
             "spreads": {
-                "make_make": 0.00991702084598245,
-                "make_take": -0.7773730014167173,
-                "take_make": -0.011553784860557803,
-                "take_take": -0.012549800796812671
+                "make_make": 2.7890909090909095,
+                "make_take": 2.752727272727273,
+                "take_make": 0.0009606147934677622,
+                "take_take": -0.008645533141210526
             }
         },
         {
-            "base_exchange": "KuCoinSpot",
+            "base_exchange": "WooxSpot",
             "base_exchange_avg_trade_info": {
-                "avg_price": 0.0027170000000000002,
-                "buy_sell_ratio": 0.0,
-                "cum_size": 13075.6854
+                "avg_price": 0.04170000000000001,
+                "buy_sell_ratio": 0.5833333333333334,
+                "cum_size": 323036.87
             },
             "base_exchange_network_info": [
                 {
                     "can_deposit": true,
                     "can_withdraw": true,
-                    "chain_name": "klv",
+                    "chain_name": "SOL",
                     "fee_is_fixed": false,
-                    "fees": 0.0
-                },
-                {
-                    "can_deposit": true,
-                    "can_withdraw": false,
-                    "chain_name": "TRC20",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
+                    "fees": 90.0
                 }
             ],
             "base_exchange_orderbook_ws_is_connected": true,
             "base_exchange_trades_ws_is_connected": true,
             "instrument": {
-                "base": "klv",
+                "base": "avaai",
                 "quote": "usdt"
             },
-            "quote_exchange": "HtxSpot",
+            "quote_exchange": "KuCoinSpot",
             "quote_exchange_avg_trade_info": {
-                "avg_price": 0.005008395061728394,
-                "buy_sell_ratio": 0.5061728395061729,
-                "cum_size": 568449.5277999999
+                "avg_price": 0.041651875,
+                "buy_sell_ratio": 0.25,
+                "cum_size": 126673.90000000001
             },
             "quote_exchange_network_info": [
                 {
-                    "can_deposit": false,
+                    "can_deposit": true,
                     "can_withdraw": true,
-                    "chain_name": "TRC20",
-                    "fee_is_fixed": true,
-                    "fees": 95.9957
+                    "chain_name": "SOL",
+                    "fee_is_fixed": false,
+                    "fees": 0.0
                 }
             ],
             "quote_exchange_orderbook_ws_is_connected": true,
             "quote_exchange_trades_ws_is_connected": true,
             "spreads": {
-                "make_make": 0.8454177401545824,
-                "make_take": 0.8406330511593672,
-                "take_make": 0.8366898571951664,
-                "take_take": 0.8311973636030758
+                "make_make": 2.7872727272727276,
+                "make_take": 2.780909090909091,
+                "take_make": 0.0004803073967338811,
+                "take_take": -0.0012007684918348138
+            }
+        },
+        {
+            "base_exchange": "HtxSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.01337409311740892,
+                "buy_sell_ratio": 0.5465587044534413,
+                "cum_size": 1485099.6799999997
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "RVN",
+                    "fee_is_fixed": true,
+                    "fees": 1.0
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "rvn",
+                "quote": "usdt"
+            },
+            "quote_exchange": "KuCoinSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.02155342872099129,
+                "buy_sell_ratio": 0.539172919211307,
+                "cum_size": 1919398.7636999555
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "RVN",
+                    "fee_is_fixed": false,
+                    "fees": 0.0
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.8561973525872442,
+                "make_take": 0.8546931407942238,
+                "take_make": 0.8536878473786993,
+                "take_take": 0.8521856692203698
             }
         },
         {
             "base_exchange": "KuCoinSpot",
             "base_exchange_avg_trade_info": {
-                "avg_price": 0.007542785714285715,
-                "buy_sell_ratio": 0.42857142857142855,
-                "cum_size": 257997.57450000005
+                "avg_price": 0.0073588,
+                "buy_sell_ratio": 0.4,
+                "cum_size": 1592.5688
             },
             "base_exchange_network_info": [
                 {
@@ -583,9 +392,9 @@
             },
             "quote_exchange": "HtxSpot",
             "quote_exchange_avg_trade_info": {
-                "avg_price": 0.013208258064516127,
-                "buy_sell_ratio": 0.6774193548387096,
-                "cum_size": 101418.30459999999
+                "avg_price": 0.013178261904761904,
+                "buy_sell_ratio": 0.47619047619047616,
+                "cum_size": 331690.07050000015
             },
             "quote_exchange_network_info": [
                 {
@@ -599,109 +408,10 @@
             "quote_exchange_orderbook_ws_is_connected": true,
             "quote_exchange_trades_ws_is_connected": true,
             "spreads": {
-                "make_make": 0.7630319148936171,
-                "make_take": 0.7539893617021278,
-                "take_make": 0.7611583421891606,
-                "take_take": 0.7521253985122212
-            }
-        },
-        {
-            "base_exchange": "KuCoinSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.0,
-                "buy_sell_ratio": 0.0,
-                "cum_size": 0.0
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": false,
-                    "can_withdraw": true,
-                    "chain_name": "ARBITRUM",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "game",
-                "quote": "usdt"
-            },
-            "quote_exchange": "HtxSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.004495393939393936,
-                "buy_sell_ratio": 0.48484848484848486,
-                "cum_size": 648317.0714
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "ERC20",
-                    "fee_is_fixed": true,
-                    "fees": 1026.64646402
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 0.6388483965014577,
-                "make_take": 0.6311953352769679,
-                "take_make": 0.6224856321839081,
-                "take_take": 0.6077586206896552
-            }
-        },
-        {
-            "base_exchange": "KuCoinSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.030733333333333335,
-                "buy_sell_ratio": 0.0,
-                "cum_size": 3795.6748
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "BEP20",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                },
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "ARBITRUM",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "rdnt",
-                "quote": "usdt"
-            },
-            "quote_exchange": "HtxSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.04806304347826088,
-                "buy_sell_ratio": 0.45652173913043476,
-                "cum_size": 19526.443
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": false,
-                    "can_withdraw": true,
-                    "chain_name": "ARBITRUMONE",
-                    "fee_is_fixed": true,
-                    "fees": 23.3546
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 0.5751633986928104,
-                "make_take": 0.565359477124183,
-                "take_make": 0.5649350649350648,
-                "take_take": 0.551948051948052
+                "make_make": 0.8083856869707728,
+                "make_take": 0.7906309751434033,
+                "take_make": 0.8074982958418542,
+                "take_take": 0.7874573960463529
             }
         },
         {
@@ -735,9 +445,9 @@
             },
             "quote_exchange": "HtxSpot",
             "quote_exchange_avg_trade_info": {
-                "avg_price": 0.20379000000000017,
-                "buy_sell_ratio": 0.5727272727272728,
-                "cum_size": 37522.49590000001
+                "avg_price": 0.20305483870967733,
+                "buy_sell_ratio": 0.49193548387096775,
+                "cum_size": 36155.9956
             },
             "quote_exchange_network_info": [
                 {
@@ -751,18 +461,64 @@
             "quote_exchange_orderbook_ws_is_connected": true,
             "quote_exchange_trades_ws_is_connected": true,
             "spreads": {
-                "make_make": 0.5308734939759037,
-                "make_take": 0.5075301204819276,
-                "take_make": 0.5239880059970017,
-                "take_take": 0.5007496251874064
+                "make_make": 0.6737184703010577,
+                "make_take": 0.6208299430431246,
+                "take_make": 0.6682887266828872,
+                "take_take": 0.6155717761557176
+            }
+        },
+        {
+            "base_exchange": "KuCoinSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.002724777777777777,
+                "buy_sell_ratio": 0.3888888888888889,
+                "cum_size": 67592.0
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": false,
+                    "can_withdraw": true,
+                    "chain_name": "ARBITRUM",
+                    "fee_is_fixed": false,
+                    "fees": 0.0
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "game",
+                "quote": "usdt"
+            },
+            "quote_exchange": "HtxSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.004163185840707967,
+                "buy_sell_ratio": 0.5929203539823009,
+                "cum_size": 888445.0111000004
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ERC20",
+                    "fee_is_fixed": true,
+                    "fees": 1026.64646402
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.5491863905325445,
+                "make_take": 0.5277366863905326,
+                "take_make": 0.5293688434877784,
+                "take_take": 0.5071141919007662
             }
         },
         {
             "base_exchange": "CoinExSpot",
             "base_exchange_avg_trade_info": {
-                "avg_price": 0.051708307692307685,
-                "buy_sell_ratio": 0.6153846153846154,
-                "cum_size": 1295.6378418900001
+                "avg_price": 0.041254117647058816,
+                "buy_sell_ratio": 0.4117647058823529,
+                "cum_size": 9207.007548369998
             },
             "base_exchange_network_info": [
                 {
@@ -770,7 +526,7 @@
                     "can_withdraw": true,
                     "chain_name": "BSC",
                     "fee_is_fixed": true,
-                    "fees": 1.2
+                    "fees": 1.4
                 }
             ],
             "base_exchange_orderbook_ws_is_connected": true,
@@ -781,9 +537,9 @@
             },
             "quote_exchange": "KuCoinSpot",
             "quote_exchange_avg_trade_info": {
-                "avg_price": 0.07041259718775834,
-                "buy_sell_ratio": 0.5078577336641853,
-                "cum_size": 245170.7000000009
+                "avg_price": 0.06009662337662337,
+                "buy_sell_ratio": 0.0,
+                "cum_size": 149565.79999999996
             },
             "quote_exchange_network_info": [
                 {
@@ -797,18 +553,18 @@
             "quote_exchange_orderbook_ws_is_connected": true,
             "quote_exchange_trades_ws_is_connected": true,
             "spreads": {
-                "make_make": 0.46073543159862873,
-                "make_take": 0.4583982549080712,
-                "take_make": 0.4573078562846402,
-                "take_take": 0.4511065462578969
+                "make_make": 0.48403117547267227,
+                "make_take": 0.4601824306050697,
+                "take_make": 0.4675375507608006,
+                "take_take": 0.4482117520426636
             }
         },
         {
             "base_exchange": "KuCoinSpot",
             "base_exchange_avg_trade_info": {
-                "avg_price": 0.019938399999999995,
+                "avg_price": 0.01902,
                 "buy_sell_ratio": 0.0,
-                "cum_size": 15314.170000000002
+                "cum_size": 25.1577
             },
             "base_exchange_network_info": [
                 {
@@ -827,9 +583,9 @@
             },
             "quote_exchange": "HtxSpot",
             "quote_exchange_avg_trade_info": {
-                "avg_price": 0.02746468277945618,
-                "buy_sell_ratio": 0.47583081570996977,
-                "cum_size": 672071.6199999996
+                "avg_price": 0.027717752281616714,
+                "buy_sell_ratio": 0.5280312907431551,
+                "cum_size": 768388.4800000001
             },
             "quote_exchange_network_info": [
                 {
@@ -843,163 +599,163 @@
             "quote_exchange_orderbook_ws_is_connected": true,
             "quote_exchange_trades_ws_is_connected": true,
             "spreads": {
-                "make_make": 0.39013026052104216,
-                "make_take": 0.35320641282565135,
-                "take_make": 0.3769230769230767,
-                "take_take": 0.34014888337468974
-            }
-        },
-        {
-            "base_exchange": "HtxSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.0,
-                "buy_sell_ratio": 0.0,
-                "cum_size": 0.0
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "BEP20",
-                    "fee_is_fixed": true,
-                    "fees": 28.71049955
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "pbux",
-                "quote": "usdt"
-            },
-            "quote_exchange": "KuCoinSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.0,
-                "buy_sell_ratio": 0.0,
-                "cum_size": 0.0
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "BEP20",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 0.32182490752157844,
-                "make_take": 0.2515413070283601,
-                "take_make": -0.16770186335403725,
-                "take_take": -0.21350931677018636
+                "make_make": 0.4701366982124082,
+                "make_take": 0.45436382754994753,
+                "take_make": 0.4450645994832043,
+                "take_take": 0.4246511627906977
             }
         },
         {
             "base_exchange": "KuCoinSpot",
             "base_exchange_avg_trade_info": {
-                "avg_price": 0.2988,
+                "avg_price": 0.002626,
                 "buy_sell_ratio": 0.6,
-                "cum_size": 1240.7667000000001
+                "cum_size": 47161.57459999999
             },
             "base_exchange_network_info": [
                 {
                     "can_deposit": true,
                     "can_withdraw": true,
-                    "chain_name": "ERC20",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "unfi",
-                "quote": "usdt"
-            },
-            "quote_exchange": "HtxSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.39116666666666666,
-                "buy_sell_ratio": 1.0,
-                "cum_size": 426.5071
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "ERC20",
-                    "fee_is_fixed": true,
-                    "fees": 13.03536151
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 0.3127516778523489,
-                "make_take": 0.001677852348993314,
-                "take_make": 0.6633333333333333,
-                "take_take": -0.0050000000000000044
-            }
-        },
-        {
-            "base_exchange": "HtxSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.0034306115107913663,
-                "buy_sell_ratio": 0.5539568345323741,
-                "cum_size": 1864028.7542999994
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "METACHAIN",
-                    "fee_is_fixed": true,
-                    "fees": 1.0
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "polc",
-                "quote": "usdt"
-            },
-            "quote_exchange": "KuCoinSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.0,
-                "buy_sell_ratio": 0.0,
-                "cum_size": 0.0
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "BEP20",
+                    "chain_name": "klv",
                     "fee_is_fixed": false,
                     "fees": 0.0
                 },
                 {
                     "can_deposit": true,
                     "can_withdraw": false,
-                    "chain_name": "ERC20",
+                    "chain_name": "TRC20",
                     "fee_is_fixed": false,
                     "fees": 0.0
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "klv",
+                "quote": "usdt"
+            },
+            "quote_exchange": "HtxSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.0037946041666666653,
+                "buy_sell_ratio": 0.5416666666666666,
+                "cum_size": 830392.3090000002
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": false,
+                    "can_withdraw": true,
+                    "chain_name": "TRC20",
+                    "fee_is_fixed": true,
+                    "fees": 95.9957
                 }
             ],
             "quote_exchange_orderbook_ws_is_connected": true,
             "quote_exchange_trades_ws_is_connected": true,
             "spreads": {
-                "make_make": 0.2757584860318414,
-                "make_take": 0.27485731450886175,
-                "take_make": 0.2310144927536233,
-                "take_take": 0.23014492753623195
+                "make_make": 0.44406392694063923,
+                "make_take": 0.4398782343987824,
+                "take_make": 0.4454165081780146,
+                "take_take": 0.44237352605553437
             }
         },
         {
             "base_exchange": "KuCoinSpot",
             "base_exchange_avg_trade_info": {
-                "avg_price": 1.5729999999999997,
-                "buy_sell_ratio": 0.6666666666666666,
-                "cum_size": 158.3511
+                "avg_price": 0.11035000000000002,
+                "buy_sell_ratio": 0.4166666666666667,
+                "cum_size": 1658.0834000000002
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "GLMR",
+                    "fee_is_fixed": false,
+                    "fees": 0.0
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "glmr",
+                "quote": "usdt"
+            },
+            "quote_exchange": "HtxSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.14500540540540538,
+                "buy_sell_ratio": 0.40540540540540543,
+                "cum_size": 18497.989800000007
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": false,
+                    "can_withdraw": false,
+                    "chain_name": "GLMR",
+                    "fee_is_fixed": true,
+                    "fees": 0.5
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.37761601455868976,
+                "make_take": 0.29299363057324856,
+                "take_make": 0.3472727272727272,
+                "take_take": 0.2936363636363637
+            }
+        },
+        {
+            "base_exchange": "KuCoinSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.0025840000000000004,
+                "buy_sell_ratio": 0.6,
+                "cum_size": 12877.834299999999
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": false,
+                    "can_withdraw": true,
+                    "chain_name": "ERC20",
+                    "fee_is_fixed": false,
+                    "fees": 0.0
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "bbl",
+                "quote": "usdt"
+            },
+            "quote_exchange": "HtxSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.003311136363636362,
+                "buy_sell_ratio": 0.5113636363636364,
+                "cum_size": 1048001.1434
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": false,
+                    "can_withdraw": true,
+                    "chain_name": "ERC20",
+                    "fee_is_fixed": true,
+                    "fees": 1424.43013954
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.3162055335968379,
+                "make_take": 0.30039525691699587,
+                "take_make": 0.2807692307692309,
+                "take_take": 0.26538461538461533
+            }
+        },
+        {
+            "base_exchange": "KuCoinSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.0,
+                "buy_sell_ratio": 0.0,
+                "cum_size": 0.0
             },
             "base_exchange_network_info": [
                 {
@@ -1041,18 +797,18 @@
             "quote_exchange_orderbook_ws_is_connected": true,
             "quote_exchange_trades_ws_is_connected": true,
             "spreads": {
-                "make_make": 0.21096239643084758,
-                "make_take": -0.011536010197578106,
-                "take_make": 0.20788302606484432,
-                "take_take": -0.014049586776859524
+                "make_make": 0.26920507682030714,
+                "make_take": -0.04923179692718782,
+                "take_make": 0.26582278481012667,
+                "take_take": -0.05176548967355088
             }
         },
         {
             "base_exchange": "KuCoinSpot",
             "base_exchange_avg_trade_info": {
-                "avg_price": 0.029395681818181817,
-                "buy_sell_ratio": 0.5454545454545454,
-                "cum_size": 76430.77879999999
+                "avg_price": 0.026794285714285715,
+                "buy_sell_ratio": 0.7142857142857143,
+                "cum_size": 2166.5058
             },
             "base_exchange_network_info": [
                 {
@@ -1071,9 +827,9 @@
             },
             "quote_exchange": "HtxSpot",
             "quote_exchange_avg_trade_info": {
-                "avg_price": 0.03382814186584411,
-                "buy_sell_ratio": 0.505011565150347,
-                "cum_size": 1563453.089200003
+                "avg_price": 0.03288618892508155,
+                "buy_sell_ratio": 0.5127035830618892,
+                "cum_size": 1616293.1533000004
             },
             "quote_exchange_network_info": [
                 {
@@ -1087,202 +843,248 @@
             "quote_exchange_orderbook_ws_is_connected": true,
             "quote_exchange_trades_ws_is_connected": true,
             "spreads": {
-                "make_make": 0.17848578280232963,
-                "make_take": 0.14422747516272683,
-                "take_make": 0.1712631937351039,
-                "take_take": 0.13721484508001347
-            }
-        },
-        {
-            "base_exchange": "KuCoinSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.11952499999999999,
-                "buy_sell_ratio": 0.0,
-                "cum_size": 3843.4113
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "GLMR",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "glmr",
-                "quote": "usdt"
-            },
-            "quote_exchange": "HtxSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.14025303030303027,
-                "buy_sell_ratio": 0.36363636363636365,
-                "cum_size": 16817.576999999997
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": false,
-                    "can_withdraw": false,
-                    "chain_name": "GLMR",
-                    "fee_is_fixed": true,
-                    "fees": 0.5
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 0.1767169179229482,
-                "make_take": 0.1733668341708543,
-                "take_make": 0.17573221757322188,
-                "take_take": 0.1723849372384938
-            }
-        },
-        {
-            "base_exchange": "KuCoinSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.1703,
-                "buy_sell_ratio": 1.0,
-                "cum_size": 174.4051
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "POLYMESH",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "polyx",
-                "quote": "usdt"
-            },
-            "quote_exchange": "HtxSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.0,
-                "buy_sell_ratio": 0.0,
-                "cum_size": 0.0
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "POLYX",
-                    "fee_is_fixed": true,
-                    "fees": 0.3
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 0.002350176263219872,
-                "make_take": -0.000587544065804857,
-                "take_make": 0.0005871990604815469,
-                "take_take": -0.0017615971814445297
-            }
-        },
-        {
-            "base_exchange": "CoinExSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.28193999999999986,
-                "buy_sell_ratio": 0.4666666666666667,
-                "cum_size": 8121.82387663
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "SEI",
-                    "fee_is_fixed": true,
-                    "fees": 0.43
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "sei",
-                "quote": "usdt"
-            },
-            "quote_exchange": "HtxSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.32447489451476735,
-                "buy_sell_ratio": 0.5084388185654009,
-                "cum_size": 41673.629099999984
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": false,
-                    "can_withdraw": false,
-                    "chain_name": "SEI",
-                    "fee_is_fixed": true,
-                    "fees": 0.5
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 0.1556267806267806,
-                "make_take": 0.15420227920227925,
-                "take_make": 0.15398293029871968,
-                "take_take": 0.1525604551920341
-            }
-        },
-        {
-            "base_exchange": "WooxSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.004357500000000003,
-                "buy_sell_ratio": 0.3235294117647059,
-                "cum_size": 431662.30000000005
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "ERC20",
-                    "fee_is_fixed": false,
-                    "fees": 850.0
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "ox",
-                "quote": "usdt"
-            },
-            "quote_exchange": "HtxSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.004500839285714285,
-                "buy_sell_ratio": 0.45535714285714285,
-                "cum_size": 1953236.745899999
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "ERC20",
-                    "fee_is_fixed": true,
-                    "fees": 439.30239754
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 0.13407688656858108,
-                "make_take": 0.061936402467963836,
-                "take_make": 0.12294311236483302,
-                "take_take": 0.0521861777150916
+                "make_make": 0.24068554396423258,
+                "make_take": 0.21087928464977646,
+                "take_make": 0.236998514115899,
+                "take_take": 0.2109955423476968
             }
         },
         {
             "base_exchange": "HtxSpot",
             "base_exchange_avg_trade_info": {
+                "avg_price": 893.2984375000001,
+                "buy_sell_ratio": 0.4895833333333333,
+                "cum_size": 4.201847000000002
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ERC404",
+                    "fee_is_fixed": true,
+                    "fees": 0.00521576
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "pandora",
+                "quote": "usdt"
+            },
+            "quote_exchange": "KuCoinSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 888.0,
+                "buy_sell_ratio": 0.0,
+                "cum_size": 0.0008
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ERC20",
+                    "fee_is_fixed": false,
+                    "fees": 0.001
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.16515815993281713,
+                "make_take": 0.03573761313800494,
+                "take_make": 0.07240931390967353,
+                "take_take": -0.04670910671919781
+            }
+        },
+        {
+            "base_exchange": "WooxSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.0933923664122138,
+                "buy_sell_ratio": 0.4351145038167939,
+                "cum_size": 1737771.3700000006
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ZK",
+                    "fee_is_fixed": false,
+                    "fees": 4.0
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "zk",
+                "quote": "usdt"
+            },
+            "quote_exchange": "HtxSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.10514107142857151,
+                "buy_sell_ratio": 0.4375,
+                "cum_size": 44891.969
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": false,
+                    "can_withdraw": false,
+                    "chain_name": "ZKSYNC",
+                    "fee_is_fixed": true,
+                    "fees": 1.2
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.14224137931034497,
+                "make_take": 0.13146551724137945,
+                "take_make": 0.13426423200859294,
+                "take_take": 0.12781954887218028
+            }
+        },
+        {
+            "base_exchange": "KuCoinSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.09338148148148148,
+                "buy_sell_ratio": 0.4444444444444444,
+                "cum_size": 39270.29
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ZKS20",
+                    "fee_is_fixed": false,
+                    "fees": 0.0
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "zk",
+                "quote": "usdt"
+            },
+            "quote_exchange": "HtxSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.10514107142857151,
+                "buy_sell_ratio": 0.4375,
+                "cum_size": 44891.969
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": false,
+                    "can_withdraw": false,
+                    "chain_name": "ZKSYNC",
+                    "fee_is_fixed": true,
+                    "fees": 1.2
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.13254310344827602,
+                "make_take": 0.13146551724137945,
+                "take_make": 0.132400430570506,
+                "take_take": 0.13024757804090425
+            }
+        },
+        {
+            "base_exchange": "KuCoinSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.010226,
+                "buy_sell_ratio": 0.0,
+                "cum_size": 61463.8
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "BEP20",
+                    "fee_is_fixed": false,
+                    "fees": 0.0
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "pbux",
+                "quote": "usdt"
+            },
+            "quote_exchange": "HtxSpot",
+            "quote_exchange_avg_trade_info": {
                 "avg_price": 0.0,
                 "buy_sell_ratio": 0.0,
                 "cum_size": 0.0
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "BEP20",
+                    "fee_is_fixed": true,
+                    "fees": 28.71049955
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.08947885939036371,
+                "make_take": -0.1347099311701081,
+                "take_make": 0.07677356656948486,
+                "take_take": -0.13605442176870752
+            }
+        },
+        {
+            "base_exchange": "WooxSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.3769371301775154,
+                "buy_sell_ratio": 0.39349112426035504,
+                "cum_size": 1959125.7099999972
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ERC20",
+                    "fee_is_fixed": false,
+                    "fees": 22.0
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "ena",
+                "quote": "usdt"
+            },
+            "quote_exchange": "ExmoSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.3993666666666667,
+                "buy_sell_ratio": 1.0,
+                "cum_size": 115.0
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "Ethena",
+                    "fee_is_fixed": true,
+                    "fees": 15.0
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.12149532710280364,
+                "make_take": 0.0040053671562083615,
+                "take_make": 0.118508655126498,
+                "take_take": 0.0013315845539281224
+            }
+        },
+        {
+            "base_exchange": "HtxSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.37664579185520375,
+                "buy_sell_ratio": 0.502262443438914,
+                "cum_size": 98663.29779999994
             },
             "base_exchange_network_info": [
                 {
@@ -1290,22 +1092,47 @@
                     "can_withdraw": true,
                     "chain_name": "ERC20",
                     "fee_is_fixed": true,
-                    "fees": 14499.0251498
+                    "fees": 11.31426447
                 }
             ],
             "base_exchange_orderbook_ws_is_connected": true,
             "base_exchange_trades_ws_is_connected": true,
             "instrument": {
-                "base": "1cat",
+                "base": "ena",
                 "quote": "usdt"
             },
-            "quote_exchange": "KuCoinSpot",
+            "quote_exchange": "ExmoSpot",
             "quote_exchange_avg_trade_info": {
-                "avg_price": 0.00038,
-                "buy_sell_ratio": 0.0,
-                "cum_size": 14914.4
+                "avg_price": 0.3993666666666667,
+                "buy_sell_ratio": 1.0,
+                "cum_size": 115.0
             },
             "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "Ethena",
+                    "fee_is_fixed": true,
+                    "fees": 15.0
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.1211660126531593,
+                "make_take": 0.003710552307733428,
+                "take_make": 0.11961186788579958,
+                "take_take": 0.0023192226694745965
+            }
+        },
+        {
+            "base_exchange": "KuCoinSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.3767072289156627,
+                "buy_sell_ratio": 0.3373493975903614,
+                "cum_size": 89694.78999999998
+            },
+            "base_exchange_network_info": [
                 {
                     "can_deposit": true,
                     "can_withdraw": true,
@@ -1314,21 +1141,226 @@
                     "fees": 0.0
                 }
             ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "ena",
+                "quote": "usdt"
+            },
+            "quote_exchange": "ExmoSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.3993666666666667,
+                "buy_sell_ratio": 1.0,
+                "cum_size": 115.0
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "Ethena",
+                    "fee_is_fixed": true,
+                    "fees": 15.0
+                }
+            ],
             "quote_exchange_orderbook_ws_is_connected": true,
             "quote_exchange_trades_ws_is_connected": true,
             "spreads": {
-                "make_make": 0.159159159159159,
-                "make_take": 0.14714714714714705,
-                "take_make": 0.00783289817232391,
-                "take_take": -0.0026109660574411553
+                "make_make": 0.11999999999999988,
+                "make_take": 0.0026666933333332477,
+                "take_make": 0.11910471622701824,
+                "take_take": 0.0018652011723954143
+            }
+        },
+        {
+            "base_exchange": "WooxSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 7.885198675496717e-6,
+                "buy_sell_ratio": 0.4552980132450331,
+                "cum_size": 73896767826.0
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ERC20",
+                    "fee_is_fixed": false,
+                    "fees": 900000.0
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "pepe",
+                "quote": "usdt"
+            },
+            "quote_exchange": "ExmoSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 7.93e-6,
+                "buy_sell_ratio": 1.0,
+                "cum_size": 148546.90799739
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "PEPE",
+                    "fee_is_fixed": true,
+                    "fees": 250000.0
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.10063694267515944,
+                "make_take": 0.001273885350318471,
+                "take_make": 0.09783989834815765,
+                "take_take": -0.0012706480304955914
+            }
+        },
+        {
+            "base_exchange": "CoinExSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 7.90417e-6,
+                "buy_sell_ratio": 0.475,
+                "cum_size": 361726222.53528
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ERC20",
+                    "fee_is_fixed": true,
+                    "fees": 210000.0
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "pepe",
+                "quote": "usdt"
+            },
+            "quote_exchange": "ExmoSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 7.93e-6,
+                "buy_sell_ratio": 1.0,
+                "cum_size": 148546.90799739
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "PEPE",
+                    "fee_is_fixed": true,
+                    "fees": 250000.0
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.09985233464025667,
+                "make_take": 0.0005601099852334812,
+                "take_make": 0.09732400269250796,
+                "take_take": -0.0017399697727880081
+            }
+        },
+        {
+            "base_exchange": "HtxSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 7.888202563303995e-6,
+                "buy_sell_ratio": 0.4813811780636425,
+                "cum_size": 71646214029.90993
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ERC20",
+                    "fee_is_fixed": true,
+                    "fees": 527905.3583919
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "pepe",
+                "quote": "usdt"
+            },
+            "quote_exchange": "ExmoSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 7.93e-6,
+                "buy_sell_ratio": 1.0,
+                "cum_size": 148546.90799739
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "PEPE",
+                    "fee_is_fixed": true,
+                    "fees": 250000.0
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.09932965066382837,
+                "make_take": 0.00008461275667714929,
+                "take_make": 0.09890249656910943,
+                "take_take": -0.0003039788156020684
+            }
+        },
+        {
+            "base_exchange": "HtxSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.1589269841269842,
+                "buy_sell_ratio": 0.5873015873015873,
+                "cum_size": 13501.2328
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": false,
+                    "can_withdraw": false,
+                    "chain_name": "KMD",
+                    "fee_is_fixed": true,
+                    "fees": 0.002
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "kmd",
+                "quote": "usdt"
+            },
+            "quote_exchange": "KuCoinSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.16985454545454542,
+                "buy_sell_ratio": 0.8181818181818182,
+                "cum_size": 2538.1382
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "KMD",
+                    "fee_is_fixed": false,
+                    "fees": 0.0
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.08455181182453919,
+                "make_take": 0.0801017164653528,
+                "take_make": 0.06959247648902811,
+                "take_take": 0.06520376175548592
             }
         },
         {
             "base_exchange": "KuCoinSpot",
             "base_exchange_avg_trade_info": {
-                "avg_price": 0.0007809090909090908,
-                "buy_sell_ratio": 0.6363636363636364,
-                "cum_size": 107784.1599
+                "avg_price": 0.0007153333333333332,
+                "buy_sell_ratio": 0.0,
+                "cum_size": 42987.0
             },
             "base_exchange_network_info": [
                 {
@@ -1354,9 +1386,9 @@
             },
             "quote_exchange": "HtxSpot",
             "quote_exchange_avg_trade_info": {
-                "avg_price": 0.0008545675057208338,
-                "buy_sell_ratio": 0.5003813882532419,
-                "cum_size": 96656749.93539988
+                "avg_price": 0.0007934316644113634,
+                "buy_sell_ratio": 0.4803788903924222,
+                "cum_size": 96767734.79484451
             },
             "quote_exchange_network_info": [
                 {
@@ -1377,18 +1409,623 @@
             "quote_exchange_orderbook_ws_is_connected": true,
             "quote_exchange_trades_ws_is_connected": true,
             "spreads": {
-                "make_make": 0.10682110682110668,
-                "make_take": 0.09523809523809512,
-                "take_make": 0.0968152866242038,
-                "take_take": 0.08407643312101909
+                "make_make": 0.0841514726507715,
+                "make_take": 0.07573632538569419,
+                "take_make": 0.07361111111111107,
+                "take_take": 0.06527777777777777
+            }
+        },
+        {
+            "base_exchange": "HtxSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.006026020689655172,
+                "buy_sell_ratio": 0.5310344827586206,
+                "cum_size": 1262249.4153999994
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ERC20",
+                    "fee_is_fixed": true,
+                    "fees": 439.30239754
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "ox",
+                "quote": "usdt"
+            },
+            "quote_exchange": "WooxSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.006205882352941178,
+                "buy_sell_ratio": 0.4117647058823529,
+                "cum_size": 186726.09999999998
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ERC20",
+                    "fee_is_fixed": false,
+                    "fees": 850.0
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.0748044882692962,
+                "make_take": 0.06460387623257402,
+                "take_make": 0.06862745098039214,
+                "take_take": 0.05848546315077763
+            }
+        },
+        {
+            "base_exchange": "HtxSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.0017348048192771062,
+                "buy_sell_ratio": 0.5228915662650603,
+                "cum_size": 8344492.714400006
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "SOLANA",
+                    "fee_is_fixed": true,
+                    "fees": 833.7281
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "gme",
+                "quote": "usdt"
+            },
+            "quote_exchange": "ExmoSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.0017763636363636365,
+                "buy_sell_ratio": 0.6363636363636364,
+                "cum_size": 13980.0
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "GME",
+                    "fee_is_fixed": true,
+                    "fees": 300.0
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.07060185185185186,
+                "make_take": -0.01619791666666659,
+                "take_make": 0.06628242074927959,
+                "take_take": -0.02016714697406341
+            }
+        },
+        {
+            "base_exchange": "HtxSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.0,
+                "buy_sell_ratio": 0.0,
+                "cum_size": 0.0
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ERC20",
+                    "fee_is_fixed": true,
+                    "fees": 24.73715801
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "prq",
+                "quote": "usdt"
+            },
+            "quote_exchange": "ExmoSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.1655490275,
+                "buy_sell_ratio": 0.5,
+                "cum_size": 3005.0
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "PRQ",
+                    "fee_is_fixed": true,
+                    "fees": 45.0
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.057179161372299836,
+                "make_take": 0.04828462515883092,
+                "take_make": -0.06883044208170119,
+                "take_take": -0.076664801343033
+            }
+        },
+        {
+            "base_exchange": "HtxSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.0,
+                "buy_sell_ratio": 0.0,
+                "cum_size": 0.0
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "BEP20",
+                    "fee_is_fixed": true,
+                    "fees": 28.71049955
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "pbux",
+                "quote": "usdt"
+            },
+            "quote_exchange": "KuCoinSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.010226,
+                "buy_sell_ratio": 0.0,
+                "cum_size": 61463.8
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "BEP20",
+                    "fee_is_fixed": false,
+                    "fees": 0.0
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.1693181818181817,
+                "make_take": 0.15568181818181803,
+                "take_make": -0.069620253164557,
+                "take_take": -0.08047016274864383
+            }
+        },
+        {
+            "base_exchange": "CoinExSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.25881999999999994,
+                "buy_sell_ratio": 0.32,
+                "cum_size": 6244.5352955299995
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "SEI",
+                    "fee_is_fixed": true,
+                    "fees": 0.46
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "sei",
+                "quote": "usdt"
+            },
+            "quote_exchange": "HtxSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.27129285714285706,
+                "buy_sell_ratio": 0.4714285714285714,
+                "cum_size": 167381.30989999993
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": false,
+                    "can_withdraw": false,
+                    "chain_name": "SEI",
+                    "fee_is_fixed": true,
+                    "fees": 0.5
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.06905969566913783,
+                "make_take": 0.03901677721420205,
+                "take_make": 0.06653696498054473,
+                "take_take": 0.040856031128404746
+            }
+        },
+        {
+            "base_exchange": "HtxSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.0821,
+                "buy_sell_ratio": 1.0,
+                "cum_size": 440.26509999999996
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ERC20",
+                    "fee_is_fixed": true,
+                    "fees": 52.86194002
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "dodo",
+                "quote": "usdt"
+            },
+            "quote_exchange": "KuCoinSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.08191250000000001,
+                "buy_sell_ratio": 0.625,
+                "cum_size": 5553.2027
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ERC20",
+                    "fee_is_fixed": false,
+                    "fees": 0.0
+                },
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "KCC",
+                    "fee_is_fixed": false,
+                    "fees": 0.0
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.014906832298136496,
+                "make_take": 0.013664596273291973,
+                "take_make": 0.0024420024420024333,
+                "take_take": 0.0
+            }
+        },
+        {
+            "base_exchange": "HtxSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.0013349274809160321,
+                "buy_sell_ratio": 0.5248091603053435,
+                "cum_size": 13087337.550699998
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "SOLANA",
+                    "fee_is_fixed": true,
+                    "fees": 1025.4484
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "maneki",
+                "quote": "usdt"
+            },
+            "quote_exchange": "ExmoSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.00137554,
+                "buy_sell_ratio": 0.8333333333333334,
+                "cum_size": 9780.0
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "MANEKI",
+                    "fee_is_fixed": true,
+                    "fees": 100.0
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.05820105820105814,
+                "make_take": 0.020408163265306145,
+                "take_make": 0.04947526236881572,
+                "take_take": 0.011994002998500841
+            }
+        },
+        {
+            "base_exchange": "HtxSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.014319285714285718,
+                "buy_sell_ratio": 0.48095238095238096,
+                "cum_size": 2180553.6927
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "SOLANA",
+                    "fee_is_fixed": true,
+                    "fees": 87.3561
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "grift",
+                "quote": "usdt"
+            },
+            "quote_exchange": "KuCoinSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.014405999999999999,
+                "buy_sell_ratio": 0.4,
+                "cum_size": 10635.699999999999
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "SOL",
+                    "fee_is_fixed": false,
+                    "fees": 0.0
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.05364806866952798,
+                "make_take": 0.012160228898426384,
+                "take_make": 0.02789400278940013,
+                "take_take": -0.01324965132496525
             }
         },
         {
             "base_exchange": "KuCoinSpot",
             "base_exchange_avg_trade_info": {
-                "avg_price": 0.00003366666666666667,
-                "buy_sell_ratio": 0.8333333333333334,
-                "cum_size": 18940688.0
+                "avg_price": 0.25807438016528916,
+                "buy_sell_ratio": 0.23140495867768596,
+                "cum_size": 100923.31509999998
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "SEI",
+                    "fee_is_fixed": false,
+                    "fees": 0.0
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "sei",
+                "quote": "usdt"
+            },
+            "quote_exchange": "HtxSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.27129285714285706,
+                "buy_sell_ratio": 0.4714285714285714,
+                "cum_size": 167381.30989999993
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": false,
+                    "can_withdraw": false,
+                    "chain_name": "SEI",
+                    "fee_is_fixed": true,
+                    "fees": 0.5
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.05414881184261788,
+                "make_take": 0.03622906116088842,
+                "take_make": 0.06892523364486003,
+                "take_take": 0.0401090342679129
+            }
+        },
+        {
+            "base_exchange": "KuCoinSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.00034225,
+                "buy_sell_ratio": 0.25,
+                "cum_size": 10865.3838
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ERC20",
+                    "fee_is_fixed": false,
+                    "fees": 0.0
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "1cat",
+                "quote": "usdt"
+            },
+            "quote_exchange": "HtxSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.0,
+                "buy_sell_ratio": 0.0,
+                "cum_size": 0.0
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ERC20",
+                    "fee_is_fixed": true,
+                    "fees": 14499.0251498
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.053097345132743445,
+                "make_take": 0.002949852507374784,
+                "take_make": -0.0027932960893853886,
+                "take_take": -0.05027932960893844
+            }
+        },
+        {
+            "base_exchange": "HtxSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.131869845410628,
+                "buy_sell_ratio": 0.4758454106280193,
+                "cum_size": 131906.1921
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "SOLANA",
+                    "fee_is_fixed": true,
+                    "fees": 11.23
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "ponke",
+                "quote": "usdt"
+            },
+            "quote_exchange": "WooxSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.13177906976744186,
+                "buy_sell_ratio": 0.4418604651162791,
+                "cum_size": 58450.92999999999
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "SOL",
+                    "fee_is_fixed": false,
+                    "fees": 35.0
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.05252682986573598,
+                "make_take": -0.014069413187587143,
+                "take_make": 0.0486257283182332,
+                "take_take": -0.017723681400811375
+            }
+        },
+        {
+            "base_exchange": "KuCoinSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.028522000000000002,
+                "buy_sell_ratio": 0.2,
+                "cum_size": 2637.6
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ERC20",
+                    "fee_is_fixed": false,
+                    "fees": 0.0
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "masa",
+                "quote": "usdt"
+            },
+            "quote_exchange": "HtxSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.02938621621621622,
+                "buy_sell_ratio": 0.4594594594594595,
+                "cum_size": 169892.01703923245
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ERC20",
+                    "fee_is_fixed": true,
+                    "fees": 137.04933354
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.05100246218782978,
+                "make_take": 0.0003517411185367525,
+                "take_make": 0.036700454386578096,
+                "take_take": 0.0157287661656762
+            }
+        },
+        {
+            "base_exchange": "KuCoinSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.000072466,
+                "buy_sell_ratio": 0.6,
+                "cum_size": 1864948.0
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "TON",
+                    "fee_is_fixed": false,
+                    "fees": 0.0
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "wat",
+                "quote": "usdt"
+            },
+            "quote_exchange": "HtxSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.00007255895522388062,
+                "buy_sell_ratio": 0.5298507462686567,
+                "cum_size": 88942940.69
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "TON",
+                    "fee_is_fixed": true,
+                    "fees": 1635.0
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.04649509455424439,
+                "make_take": 0.023745201194369514,
+                "take_make": 0.008230452674897082,
+                "take_take": -0.012345679012345623
+            }
+        },
+        {
+            "base_exchange": "KuCoinSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.1318375,
+                "buy_sell_ratio": 0.5625,
+                "cum_size": 9460.71
             },
             "base_exchange_network_info": [
                 {
@@ -1402,105 +2039,45 @@
             "base_exchange_orderbook_ws_is_connected": true,
             "base_exchange_trades_ws_is_connected": true,
             "instrument": {
-                "base": "smole",
+                "base": "ponke",
                 "quote": "usdt"
             },
-            "quote_exchange": "HtxSpot",
+            "quote_exchange": "WooxSpot",
             "quote_exchange_avg_trade_info": {
-                "avg_price": 0.000035015384615384615,
-                "buy_sell_ratio": 0.5,
-                "cum_size": 110281966.0
+                "avg_price": 0.13177906976744186,
+                "buy_sell_ratio": 0.4418604651162791,
+                "cum_size": 58450.92999999999
             },
             "quote_exchange_network_info": [
                 {
                     "can_deposit": true,
                     "can_withdraw": true,
-                    "chain_name": "SOLANA",
-                    "fee_is_fixed": true,
-                    "fees": 44963.2019
+                    "chain_name": "SOL",
+                    "fee_is_fixed": false,
+                    "fees": 35.0
                 }
             ],
             "quote_exchange_orderbook_ws_is_connected": true,
             "quote_exchange_trades_ws_is_connected": true,
             "spreads": {
-                "make_make": 0.08955223880597019,
-                "make_take": 0.0029850746268655914,
-                "take_make": 0.05882352941176472,
-                "take_take": -0.01176470588235301
+                "make_make": 0.050420168067227156,
+                "make_take": -0.016042780748663055,
+                "take_make": 0.048817696414950484,
+                "take_take": -0.01754385964912275
             }
         },
         {
             "base_exchange": "KuCoinSpot",
             "base_exchange_avg_trade_info": {
-                "avg_price": 0.09120232558139538,
-                "buy_sell_ratio": 0.7209302325581395,
-                "cum_size": 15903.654199999997
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": false,
-                    "chain_name": "BEP20",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                },
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "ERC20",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                },
-                {
-                    "can_deposit": false,
-                    "can_withdraw": false,
-                    "chain_name": "ZIL",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "xcad",
-                "quote": "usdt"
-            },
-            "quote_exchange": "HtxSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.0,
-                "buy_sell_ratio": 0.0,
-                "cum_size": 0.0
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "ERC20",
-                    "fee_is_fixed": true,
-                    "fees": 70.59903112
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 0.10011001100110017,
-                "make_take": -0.176017601760176,
-                "take_make": 0.09649122807017552,
-                "take_take": -0.17872807017543868
-            }
-        },
-        {
-            "base_exchange": "KuCoinSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.001325,
+                "avg_price": 0.004036666666666667,
                 "buy_sell_ratio": 1.0,
-                "cum_size": 12879.19
+                "cum_size": 8833.3
             },
             "base_exchange_network_info": [
                 {
                     "can_deposit": true,
                     "can_withdraw": true,
-                    "chain_name": "AVAX C-Chain",
+                    "chain_name": "Base",
                     "fee_is_fixed": false,
                     "fees": 0.0
                 }
@@ -1508,282 +2085,123 @@
             "base_exchange_orderbook_ws_is_connected": true,
             "base_exchange_trades_ws_is_connected": true,
             "instrument": {
-                "base": "xeta",
+                "base": "degen",
                 "quote": "usdt"
             },
-            "quote_exchange": "HtxSpot",
+            "quote_exchange": "ExmoSpot",
             "quote_exchange_avg_trade_info": {
-                "avg_price": 0.0013722222222222222,
-                "buy_sell_ratio": 0.4444444444444444,
-                "cum_size": 74441.24729999999
+                "avg_price": 0.004113,
+                "buy_sell_ratio": 1.0,
+                "cum_size": 1382.59
             },
             "quote_exchange_network_info": [
                 {
                     "can_deposit": true,
                     "can_withdraw": true,
-                    "chain_name": "AVAXCCHAIN",
+                    "chain_name": "DEGEN",
                     "fee_is_fixed": true,
-                    "fees": 388.3191
+                    "fees": 40.0
                 }
             ],
             "quote_exchange_orderbook_ws_is_connected": true,
             "quote_exchange_trades_ws_is_connected": true,
             "spreads": {
-                "make_make": 0.09000000000000008,
-                "make_take": -0.01692307692307682,
-                "take_make": 0.057462686567164134,
-                "take_take": -0.04626865671641789
+                "make_make": 0.047651741293532224,
+                "make_take": -0.00497512437810943,
+                "take_make": 0.04505210918114133,
+                "take_take": -0.007444168734491274
             }
         },
         {
-            "base_exchange": "KuCoinSpot",
+            "base_exchange": "WooxSpot",
             "base_exchange_avg_trade_info": {
-                "avg_price": 0.10124999999999999,
-                "buy_sell_ratio": 0.6666666666666666,
-                "cum_size": 8899.17
+                "avg_price": 0.004038120300751878,
+                "buy_sell_ratio": 0.5939849624060151,
+                "cum_size": 2661683.2299999995
             },
             "base_exchange_network_info": [
                 {
                     "can_deposit": true,
                     "can_withdraw": true,
-                    "chain_name": "ZKS20",
+                    "chain_name": "BASE",
                     "fee_is_fixed": false,
-                    "fees": 0.0
+                    "fees": 150.0
                 }
             ],
             "base_exchange_orderbook_ws_is_connected": true,
             "base_exchange_trades_ws_is_connected": true,
             "instrument": {
-                "base": "zk",
+                "base": "degen",
                 "quote": "usdt"
             },
-            "quote_exchange": "HtxSpot",
+            "quote_exchange": "ExmoSpot",
             "quote_exchange_avg_trade_info": {
-                "avg_price": 0.1096,
+                "avg_price": 0.004113,
                 "buy_sell_ratio": 1.0,
-                "cum_size": 105.0
+                "cum_size": 1382.59
             },
             "quote_exchange_network_info": [
                 {
-                    "can_deposit": false,
-                    "can_withdraw": false,
-                    "chain_name": "ZKSYNC",
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "DEGEN",
                     "fee_is_fixed": true,
-                    "fees": 1.2
+                    "fees": 40.0
                 }
             ],
             "quote_exchange_orderbook_ws_is_connected": true,
             "quote_exchange_trades_ws_is_connected": true,
             "spreads": {
-                "make_make": 0.08622398414271548,
-                "make_take": 0.0852329038652131,
-                "take_make": 0.085148514851485,
-                "take_take": 0.08415841584158401
+                "make_make": 0.047383735389206594,
+                "make_take": -0.005222581447401176,
+                "take_make": 0.04582319344425123,
+                "take_take": -0.006704742984852241
             }
         },
         {
             "base_exchange": "HtxSpot",
             "base_exchange_avg_trade_info": {
-                "avg_price": 0.17409444444444447,
-                "buy_sell_ratio": 0.5,
-                "cum_size": 14873.884499999996
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": false,
-                    "can_withdraw": false,
-                    "chain_name": "KMD",
-                    "fee_is_fixed": true,
-                    "fees": 0.002
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "kmd",
-                "quote": "usdt"
-            },
-            "quote_exchange": "KuCoinSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.18736153846153844,
-                "buy_sell_ratio": 0.9230769230769231,
-                "cum_size": 5097.492700000001
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "KMD",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 0.08175014392630975,
-                "make_take": 0.07772020725388606,
-                "take_make": 0.07310108509423197,
-                "take_take": 0.06910336950314111
-            }
-        },
-        {
-            "base_exchange": "HtxSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.00008257619047619042,
-                "buy_sell_ratio": 0.4421768707482993,
-                "cum_size": 150507415.19999993
+                "avg_price": 0.004042944761904767,
+                "buy_sell_ratio": 0.5276190476190477,
+                "cum_size": 6043295.7396
             },
             "base_exchange_network_info": [
                 {
                     "can_deposit": true,
                     "can_withdraw": true,
-                    "chain_name": "TON",
+                    "chain_name": "BASE",
                     "fee_is_fixed": true,
-                    "fees": 1635.0
+                    "fees": 200.0
                 }
             ],
             "base_exchange_orderbook_ws_is_connected": true,
             "base_exchange_trades_ws_is_connected": true,
             "instrument": {
-                "base": "wat",
+                "base": "degen",
                 "quote": "usdt"
             },
-            "quote_exchange": "KuCoinSpot",
+            "quote_exchange": "ExmoSpot",
             "quote_exchange_avg_trade_info": {
-                "avg_price": 0.000083497,
-                "buy_sell_ratio": 0.0,
-                "cum_size": 2004982.0
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "TON",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 0.08079385403329065,
-                "make_take": 0.06517285531370032,
-                "take_make": 0.02652068126520679,
-                "take_take": 0.01204379562043778
-            }
-        },
-        {
-            "base_exchange": "HtxSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.00026418823529411785,
-                "buy_sell_ratio": 0.49411764705882355,
-                "cum_size": 13453060.550899997
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "ERC20",
-                    "fee_is_fixed": true,
-                    "fees": 17694.3599449
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "zkf",
-                "quote": "usdt"
-            },
-            "quote_exchange": "KuCoinSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.00028,
+                "avg_price": 0.004113,
                 "buy_sell_ratio": 1.0,
-                "cum_size": 10000.0
+                "cum_size": 1382.59
             },
             "quote_exchange_network_info": [
                 {
                     "can_deposit": true,
                     "can_withdraw": true,
-                    "chain_name": "ERC20",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
+                    "chain_name": "DEGEN",
+                    "fee_is_fixed": true,
+                    "fees": 40.0
                 }
             ],
             "quote_exchange_orderbook_ws_is_connected": true,
             "quote_exchange_trades_ws_is_connected": true,
             "spreads": {
-                "make_make": 0.06870229007633566,
-                "make_take": 0.030534351145037997,
-                "take_make": 0.040892193308550207,
-                "take_take": 0.003717472118959231
-            }
-        },
-        {
-            "base_exchange": "KuCoinSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.05321666666666667,
-                "buy_sell_ratio": 1.0,
-                "cum_size": 403.59000000000003
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "ERC20",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                },
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "ALGO",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "opul",
-                "quote": "usdt"
-            },
-            "quote_exchange": "HtxSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.0,
-                "buy_sell_ratio": 0.0,
-                "cum_size": 0.0
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": false,
-                    "can_withdraw": false,
-                    "chain_name": "ALGOOPUL",
-                    "fee_is_fixed": true,
-                    "fees": 1.36
-                },
-                {
-                    "can_deposit": false,
-                    "can_withdraw": false,
-                    "chain_name": "ARC20OPUL",
-                    "fee_is_fixed": true,
-                    "fees": 43.9664
-                },
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "ERC20",
-                    "fee_is_fixed": true,
-                    "fees": 192.23486682
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 0.06585458698134761,
-                "make_take": -0.424057860677579,
-                "take_make": 0.05164319248826299,
-                "take_take": -0.4317370892018779
+                "make_make": 0.046082960755091884,
+                "make_take": -0.006458022851465461,
+                "take_make": 0.04426729481775338,
+                "take_take": -0.008182494421026587
             }
         },
         {
@@ -1810,9 +2228,9 @@
             },
             "quote_exchange": "HtxSpot",
             "quote_exchange_avg_trade_info": {
-                "avg_price": 0.03697912765957445,
-                "buy_sell_ratio": 0.5106382978723404,
-                "cum_size": 1097673.3166000003
+                "avg_price": 0.03582443159922926,
+                "buy_sell_ratio": 0.5240847784200385,
+                "cum_size": 1242418.0088000011
             },
             "quote_exchange_network_info": [
                 {
@@ -1826,393 +2244,18 @@
             "quote_exchange_orderbook_ws_is_connected": true,
             "quote_exchange_trades_ws_is_connected": true,
             "spreads": {
-                "make_make": 0.04597701149425304,
-                "make_take": 0.009251471825062918,
-                "take_make": 0.034321801208127445,
-                "take_take": 0.001098297638659984
-            }
-        },
-        {
-            "base_exchange": "KuCoinSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.016614999999999998,
-                "buy_sell_ratio": 0.2,
-                "cum_size": 15229.7
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "ERC20",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "ctrl",
-                "quote": "usdt"
-            },
-            "quote_exchange": "HtxSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.016646235294117642,
-                "buy_sell_ratio": 0.3411764705882353,
-                "cum_size": 245753.68979999996
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "ERC20",
-                    "fee_is_fixed": true,
-                    "fees": 264.73359117
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 0.0048367593712213,
-                "make_take": 0.0036275695284160303,
-                "take_make": 0.0,
-                "take_take": -0.001203369434416346
+                "make_make": 0.04364053976457072,
+                "make_take": 0.027849554981337787,
+                "take_make": 0.007040270346381217,
+                "take_take": -0.006758659532525968
             }
         },
         {
             "base_exchange": "HtxSpot",
             "base_exchange_avg_trade_info": {
-                "avg_price": 0.030222592334494803,
-                "buy_sell_ratio": 0.5261324041811847,
-                "cum_size": 339066.73649999994
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": false,
-                    "can_withdraw": false,
-                    "chain_name": "GLMR",
-                    "fee_is_fixed": true,
-                    "fees": 4.0
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "well",
-                "quote": "usdt"
-            },
-            "quote_exchange": "KuCoinSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.0,
-                "buy_sell_ratio": 0.0,
-                "cum_size": 0.0
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "GLMR",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 0.0557582592543453,
-                "make_take": 0.054962186546371194,
-                "take_make": 0.05049671606323658,
-                "take_take": 0.04970461071322485
-            }
-        },
-        {
-            "base_exchange": "KuCoinSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.004840769230769231,
-                "buy_sell_ratio": 0.3076923076923077,
-                "cum_size": 7345.3864
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "SOL",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "gari",
-                "quote": "usdt"
-            },
-            "quote_exchange": "HtxSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.0,
-                "buy_sell_ratio": 0.0,
-                "cum_size": 0.0
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "SOLANA",
-                    "fee_is_fixed": true,
-                    "fees": 323.563
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 0.052421052631578924,
-                "make_take": -0.010736842105263156,
-                "take_make": 0.037136929460581,
-                "take_take": -0.038589211618257124
-            }
-        },
-        {
-            "base_exchange": "HtxSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 955.4793442622952,
-                "buy_sell_ratio": 0.5573770491803278,
-                "cum_size": 2.5574289999999995
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "ERC404",
-                    "fee_is_fixed": true,
-                    "fees": 0.00521576
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "pandora",
-                "quote": "usdt"
-            },
-            "quote_exchange": "KuCoinSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.0,
-                "buy_sell_ratio": 0.0,
-                "cum_size": 0.0
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "ERC20",
-                    "fee_is_fixed": false,
-                    "fees": 0.001
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 0.0543646898648007,
-                "make_take": -0.060950511351043235,
-                "take_make": 0.033637181967739016,
-                "take_take": -0.07941106478080473
-            }
-        },
-        {
-            "base_exchange": "HtxSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.012003176991150442,
-                "buy_sell_ratio": 0.5221238938053098,
-                "cum_size": 669821.7887
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "BTF",
-                    "fee_is_fixed": true,
-                    "fees": 0.00001
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "btf",
-                "quote": "usdt"
-            },
-            "quote_exchange": "KuCoinSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.01229625,
-                "buy_sell_ratio": 1.0,
-                "cum_size": 24999.8
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": false,
-                    "can_withdraw": true,
-                    "chain_name": "Bitfinity Mainnet",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 0.06076122205154477,
-                "make_take": 0.045400238948626104,
-                "take_make": 0.011803011803011687,
-                "take_take": -0.002849002849002913
-            }
-        },
-        {
-            "base_exchange": "HtxSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.00006560357142857143,
-                "buy_sell_ratio": 0.21428571428571427,
-                "cum_size": 59947689.74413798
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": false,
-                    "can_withdraw": false,
-                    "chain_name": "LUNC",
-                    "fee_is_fixed": false,
-                    "fees": 0.025
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "lunc",
-                "quote": "usdt"
-            },
-            "quote_exchange": "KuCoinSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.00006797083333333333,
-                "buy_sell_ratio": 0.5,
-                "cum_size": 3478628.6833
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "LUNC",
-                    "fee_is_fixed": false,
-                    "fees": 0.005
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 0.04506998923242578,
-                "make_take": 0.044300876788186505,
-                "take_make": 0.03536585365853662,
-                "take_take": 0.03475609756097553
-            }
-        },
-        {
-            "base_exchange": "HtxSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 585.0802158273383,
-                "buy_sell_ratio": 0.5107913669064749,
-                "cum_size": 7.589137999999998
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "ARBITRUMONE",
-                    "fee_is_fixed": true,
-                    "fees": 0.0005
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "grail",
-                "quote": "usdt"
-            },
-            "quote_exchange": "KuCoinSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.0,
-                "buy_sell_ratio": 0.0,
-                "cum_size": 0.0
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "ARBITRUM",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 0.04488860910012926,
-                "make_take": 0.04046444934074778,
-                "take_make": 0.00008368480953335755,
-                "take_take": -0.0041507665528554005
-            }
-        },
-        {
-            "base_exchange": "KuCoinSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.08835000000000001,
-                "buy_sell_ratio": 0.5,
-                "cum_size": 1620.0
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "ERC20",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                },
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "KCC",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "dodo",
-                "quote": "usdt"
-            },
-            "quote_exchange": "HtxSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.0887,
-                "buy_sell_ratio": 0.0,
-                "cum_size": 112.8494
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "ERC20",
-                    "fee_is_fixed": true,
-                    "fees": 52.86194002
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 0.03530751708428226,
-                "make_take": -0.004555808656036442,
-                "take_make": 0.03295454545454546,
-                "take_take": -0.006818181818181723
-            }
-        },
-        {
-            "base_exchange": "HtxSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.0013722222222222222,
-                "buy_sell_ratio": 0.4444444444444444,
-                "cum_size": 74441.24729999999
+                "avg_price": 0.00126925,
+                "buy_sell_ratio": 0.75,
+                "cum_size": 32578.346599999997
             },
             "base_exchange_network_info": [
                 {
@@ -2231,9 +2274,9 @@
             },
             "quote_exchange": "KuCoinSpot",
             "quote_exchange_avg_trade_info": {
-                "avg_price": 0.001325,
-                "buy_sell_ratio": 1.0,
-                "cum_size": 12879.19
+                "avg_price": 0.001235,
+                "buy_sell_ratio": 0.5,
+                "cum_size": 49489.1046
             },
             "quote_exchange_network_info": [
                 {
@@ -2247,41 +2290,48 @@
             "quote_exchange_orderbook_ws_is_connected": true,
             "quote_exchange_trades_ws_is_connected": true,
             "spreads": {
-                "make_make": 0.04068857589984343,
-                "make_take": 0.009389671361502261,
-                "take_make": -0.06139731827805228,
-                "take_take": -0.08962597035991537
+                "make_make": 0.03993344425956735,
+                "make_take": 0.006655574043261225,
+                "take_make": -0.038461538461538436,
+                "take_take": -0.06153846153846154
             }
         },
         {
             "base_exchange": "HtxSpot",
             "base_exchange_avg_trade_info": {
-                "avg_price": 0.0023740769230769245,
-                "buy_sell_ratio": 0.47435897435897434,
-                "cum_size": 511070.0766000001
+                "avg_price": 0.010481081081081088,
+                "buy_sell_ratio": 0.5945945945945946,
+                "cum_size": 38813.4817
             },
             "base_exchange_network_info": [
                 {
                     "can_deposit": true,
                     "can_withdraw": true,
-                    "chain_name": "ERC20",
+                    "chain_name": "DFI",
                     "fee_is_fixed": true,
-                    "fees": 1879.84317479
+                    "fees": 0.1
                 }
             ],
             "base_exchange_orderbook_ws_is_connected": true,
             "base_exchange_trades_ws_is_connected": true,
             "instrument": {
-                "base": "rpk",
+                "base": "dfi",
                 "quote": "usdt"
             },
             "quote_exchange": "KuCoinSpot",
             "quote_exchange_avg_trade_info": {
-                "avg_price": 0.002415652173913044,
-                "buy_sell_ratio": 0.0,
-                "cum_size": 170321.0538
+                "avg_price": 0.010662499999999995,
+                "buy_sell_ratio": 0.625,
+                "cum_size": 11345.801900000006
             },
             "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "DFI",
+                    "fee_is_fixed": false,
+                    "fees": 0.0
+                },
                 {
                     "can_deposit": true,
                     "can_withdraw": true,
@@ -2293,102 +2343,10 @@
             "quote_exchange_orderbook_ws_is_connected": true,
             "quote_exchange_trades_ws_is_connected": true,
             "spreads": {
-                "make_make": 0.03642671292281019,
-                "make_take": 0.027753686036426917,
-                "take_make": -0.005823627287853461,
-                "take_take": -0.014143094841929993
-            }
-        },
-        {
-            "base_exchange": "HtxSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.015972857142857143,
-                "buy_sell_ratio": 0.4835164835164835,
-                "cum_size": 1851835.6040999996
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "SOLANA",
-                    "fee_is_fixed": true,
-                    "fees": 87.3561
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "grift",
-                "quote": "usdt"
-            },
-            "quote_exchange": "KuCoinSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.015983333333333332,
-                "buy_sell_ratio": 0.0,
-                "cum_size": 2697.3999999999996
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "SOL",
-                    "fee_is_fixed": false,
-                    "fees": 0.0
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 0.03510971786833861,
-                "make_take": 0.0,
-                "take_make": 0.008552229688454593,
-                "take_take": -0.025656689065363447
-            }
-        },
-        {
-            "base_exchange": "HtxSpot",
-            "base_exchange_avg_trade_info": {
-                "avg_price": 0.1403127434402333,
-                "buy_sell_ratio": 0.5247813411078717,
-                "cum_size": 105372.46799999995
-            },
-            "base_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "SOLANA",
-                    "fee_is_fixed": true,
-                    "fees": 11.23
-                }
-            ],
-            "base_exchange_orderbook_ws_is_connected": true,
-            "base_exchange_trades_ws_is_connected": true,
-            "instrument": {
-                "base": "ponke",
-                "quote": "usdt"
-            },
-            "quote_exchange": "WooxSpot",
-            "quote_exchange_avg_trade_info": {
-                "avg_price": 0.14015153846153852,
-                "buy_sell_ratio": 0.2923076923076923,
-                "cum_size": 186258.17000000004
-            },
-            "quote_exchange_network_info": [
-                {
-                    "can_deposit": true,
-                    "can_withdraw": true,
-                    "chain_name": "SOL",
-                    "fee_is_fixed": false,
-                    "fees": 35.0
-                }
-            ],
-            "quote_exchange_orderbook_ws_is_connected": true,
-            "quote_exchange_trades_ws_is_connected": true,
-            "spreads": {
-                "make_make": 0.034877607898773366,
-                "make_take": -0.00617181704919445,
-                "take_make": -0.001421413085615053,
-                "take_take": -0.00931815245014278
+                "make_make": 0.028846153846153744,
+                "make_take": 0.019230769230769384,
+                "take_make": 0.00943396226415083,
+                "take_take": 0.0
             }
         }
     ]
