@@ -91,10 +91,12 @@ pub struct InstrumentMarketData {
     pub spreads: SpreadHistoryMap,
     pub trades_ws_is_connected: bool,
     pub orderbook_ws_is_connected: bool,
+    pub trades_last_update_time: DateTime<Utc>,
+    pub orderbook_last_update_time: DateTime<Utc>,
 }
 
-impl Default for InstrumentMarketData {
-    fn default() -> Self {
+impl InstrumentMarketData {
+    pub fn new(update_time: DateTime<Utc>) -> Self {
         Self {
             bids: Vec::new(),
             asks: Vec::new(),
@@ -102,12 +104,12 @@ impl Default for InstrumentMarketData {
             spreads: SpreadHistoryMap(HashMap::with_capacity(10)),
             orderbook_ws_is_connected: false,
             trades_ws_is_connected: false,
+            trades_last_update_time: update_time,
+            orderbook_last_update_time: update_time,
         }
     }
-}
 
-impl InstrumentMarketData {
-    pub fn new_orderbook(bids: Vec<Level>, asks: Vec<Level>) -> Self {
+    pub fn new_orderbook(update_time: DateTime<Utc>, bids: Vec<Level>, asks: Vec<Level>) -> Self {
         Self {
             bids,
             asks,
@@ -115,17 +117,21 @@ impl InstrumentMarketData {
             spreads: SpreadHistoryMap(HashMap::with_capacity(10)),
             orderbook_ws_is_connected: true,
             trades_ws_is_connected: false,
+            trades_last_update_time: update_time,
+            orderbook_last_update_time: update_time,
         }
     }
 
-    pub fn new_trade(time: DateTime<Utc>, value: EventTrade) -> Self {
+    pub fn new_trade(update_time: DateTime<Utc>, value: EventTrade) -> Self {
         Self {
             bids: Vec::with_capacity(10),
             asks: Vec::with_capacity(10),
-            trades: VecDequeTime::new(time, value),
+            trades: VecDequeTime::new(update_time, value),
             spreads: SpreadHistoryMap(HashMap::with_capacity(10)),
             orderbook_ws_is_connected: false,
             trades_ws_is_connected: true,
+            trades_last_update_time: update_time,
+            orderbook_last_update_time: update_time,
         }
     }
 

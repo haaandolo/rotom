@@ -210,6 +210,7 @@ impl SpotArbScanner {
         instrument: Instrument,
         mut bids: Vec<Level>,
         mut asks: Vec<Level>,
+        update_time: DateTime<Utc>,
     ) {
         self.exchange_data
             .0
@@ -252,7 +253,7 @@ impl SpotArbScanner {
                     }
                 }
             })
-            .or_insert_with(|| InstrumentMarketData::new_orderbook(bids, asks));
+            .or_insert_with(|| InstrumentMarketData::new_orderbook(update_time, bids, asks));
     }
 
     fn process_trade(
@@ -278,7 +279,7 @@ impl SpotArbScanner {
         &mut self,
         exchange: ExchangeId,
         instrument: Instrument,
-        time: DateTime<Utc>,
+        update_time: DateTime<Utc>,
         trades: Vec<EventTrade>,
     ) {
         self.exchange_data
@@ -290,13 +291,13 @@ impl SpotArbScanner {
             .and_modify(|market_data_state| {
                 trades
                     .iter()
-                    .for_each(|trade| market_data_state.trades.push(time, trade.to_owned()));
+                    .for_each(|trade| market_data_state.trades.push(update_time, trade.to_owned()));
             })
             .or_insert_with(|| {
-                let mut instrument_map = InstrumentMarketData::default();
+                let mut instrument_map = InstrumentMarketData::new(update_time);
                 trades
                     .iter()
-                    .for_each(|trade| instrument_map.trades.push(time, trade.to_owned()));
+                    .for_each(|trade| instrument_map.trades.push(update_time, trade.to_owned()));
                 instrument_map
             });
     }
@@ -412,6 +413,7 @@ impl SpotArbScanner {
         exchange: ExchangeId,
         instrument: Instrument,
         ws_status: WsStatus,
+        update_time: DateTime<Utc>,
     ) {
         self.exchange_data
             .0
@@ -430,11 +432,11 @@ impl SpotArbScanner {
             .or_insert_with(|| match ws_status.get_event_kind() {
                 EventKind::OrderBook => InstrumentMarketData {
                     orderbook_ws_is_connected: ws_status.is_connected(),
-                    ..InstrumentMarketData::default()
+                    ..InstrumentMarketData::new(update_time)
                 },
                 EventKind::Trade => InstrumentMarketData {
                     trades_ws_is_connected: ws_status.is_connected(),
-                    ..InstrumentMarketData::default()
+                    ..InstrumentMarketData::new(update_time)
                 },
             });
     }
@@ -687,12 +689,14 @@ impl SpotArbScanner {
                             market_data.instrument,
                             orderbook.bids,
                             orderbook.asks,
+                            market_data.exchange_time,
                         ),
                         DataKind::OrderBookSnapshot(snapshot) => self.process_orderbook(
                             market_data.exchange,
                             market_data.instrument,
                             snapshot.bids,
                             snapshot.asks,
+                            market_data.exchange_time,
                         ),
                         DataKind::Trade(trade) => self.process_trade(
                             market_data.exchange,
@@ -710,6 +714,7 @@ impl SpotArbScanner {
                             market_data.exchange,
                             market_data.instrument,
                             ws_status,
+                            market_data.exchange_time,
                         ),
                     }
                 }
@@ -724,8 +729,6 @@ impl SpotArbScanner {
                 }
             };
 
-            // println!("######### \n {:#?}", self.market_data_stream.len());
-
             // Process spreads - Have to do queue with enums to avoid borrowing rule errors
             while let Some(spread_change_process) = self.spread_change_queue.pop_front() {
                 match spread_change_process {
@@ -736,8 +739,6 @@ impl SpotArbScanner {
                         self.process_calculated_spreads(Utc::now(), calculated_spreads);
                     }
                 }
-
-                // println!("{:#?}", self.spreads_sorted);
             }
         }
     }
@@ -854,12 +855,14 @@ mod test {
     fn test_ws_status() {
         // Init
         let mut scanner = test_utils::spot_arb_scanner();
+        let time = Utc::now();
 
         // New orderbook connection success notification arrives for new exchange instrument combo
         scanner.process_ws_status(
             ExchangeId::BinanceSpot,
             Instrument::new("btc", "usdt"),
             WsStatus::Connected(EventKind::OrderBook),
+            time,
         );
 
         let result = scanner
@@ -873,7 +876,7 @@ mod test {
 
         let expected = InstrumentMarketData {
             orderbook_ws_is_connected: true,
-            ..InstrumentMarketData::default()
+            ..InstrumentMarketData::new(time)
         };
 
         assert_eq!(result, &expected);
@@ -883,6 +886,7 @@ mod test {
             ExchangeId::BinanceSpot,
             Instrument::new("btc", "usdt"),
             WsStatus::Connected(EventKind::Trade),
+            time,
         );
 
         let result = scanner
@@ -897,7 +901,7 @@ mod test {
         let expected = InstrumentMarketData {
             orderbook_ws_is_connected: true,
             trades_ws_is_connected: true,
-            ..InstrumentMarketData::default()
+            ..InstrumentMarketData::new(time)
         };
 
         assert_eq!(result, &expected);
@@ -907,6 +911,7 @@ mod test {
             ExchangeId::BinanceSpot,
             Instrument::new("btc", "usdt"),
             WsStatus::Disconnected(EventKind::OrderBook),
+            time,
         );
 
         let result = scanner
@@ -921,7 +926,7 @@ mod test {
         let expected = InstrumentMarketData {
             orderbook_ws_is_connected: false,
             trades_ws_is_connected: true,
-            ..InstrumentMarketData::default()
+            ..InstrumentMarketData::new(time)
         };
 
         assert_eq!(result, &expected);
@@ -931,6 +936,7 @@ mod test {
             ExchangeId::HtxSpot,
             Instrument::new("eth", "usdt"),
             WsStatus::Connected(EventKind::Trade),
+            time,
         );
 
         let result = scanner
@@ -944,7 +950,7 @@ mod test {
 
         let expected = InstrumentMarketData {
             trades_ws_is_connected: true,
-            ..InstrumentMarketData::default()
+            ..InstrumentMarketData::new(time)
         };
 
         assert_eq!(result, &expected);
@@ -954,6 +960,7 @@ mod test {
             ExchangeId::HtxSpot,
             Instrument::new("eth", "usdt"),
             WsStatus::Connected(EventKind::OrderBook),
+            time,
         );
 
         let result = scanner
@@ -968,7 +975,7 @@ mod test {
         let expected = InstrumentMarketData {
             orderbook_ws_is_connected: true,
             trades_ws_is_connected: true,
-            ..InstrumentMarketData::default()
+            ..InstrumentMarketData::new(time)
         };
 
         assert_eq!(result, &expected);
@@ -1159,6 +1166,7 @@ mod test {
             binance_btc_ob.instrument,
             binance_btc_ob.event_data.get_orderbook().unwrap().bids,
             binance_btc_ob.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         let binance_eth_ob = test_utils::market_event_orderbook2(
@@ -1173,6 +1181,7 @@ mod test {
             binance_eth_ob.instrument,
             binance_eth_ob.event_data.get_orderbook().unwrap().bids,
             binance_eth_ob.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         /*----- */
@@ -1190,6 +1199,7 @@ mod test {
             htx_btc_ob.instrument,
             htx_btc_ob.event_data.get_orderbook().unwrap().bids,
             htx_btc_ob.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         let htx_eth_ob = test_utils::market_event_orderbook2(
@@ -1204,6 +1214,7 @@ mod test {
             htx_eth_ob.instrument,
             htx_eth_ob.event_data.get_orderbook().unwrap().bids,
             htx_eth_ob.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         /*----- */
@@ -1229,6 +1240,7 @@ mod test {
                 .get_orderbook()
                 .unwrap()
                 .asks,
+            time,
         );
 
         let binance_eth_spread_change = test_utils::market_event_orderbook2(
@@ -1251,6 +1263,7 @@ mod test {
                 .get_orderbook()
                 .unwrap()
                 .asks,
+            time,
         );
 
         // Manually trigger SpreadChangeProcess for Binance
@@ -1385,6 +1398,7 @@ mod test {
                 .get_orderbook()
                 .unwrap()
                 .asks,
+            time,
         );
 
         let htx_eth_spread_change = test_utils::market_event_orderbook2(
@@ -1407,6 +1421,7 @@ mod test {
                 .get_orderbook()
                 .unwrap()
                 .asks,
+            time,
         );
 
         // Manually trigger SpreadChangeProcess for Htx
@@ -1449,7 +1464,7 @@ mod test {
 
         let htx_binance_eth_take_take = (20.78 / 22.87) - 1.0;
         let htx_binance_eth_take_make = (21.92 / 22.87) - 1.0;
-        let htx_binance_eth_make_take = (20.78 / 20.0) - 1.0;
+        let htx_binance_eth_make_take = (20.78 / 20.0) - 1.0; // 0.039
 
         // Check Htx btc spread history
         let mut htx_btc_spread_history = SpreadHistory::default();
@@ -1520,7 +1535,21 @@ mod test {
         /*----- */
         // Expected spread
         /*----- */
-        let expected_spread = SpreadsSorted::new();
+        let mut expected_spread = SpreadsSorted::new();
+
+        let htx_binance_eth_spread_key = SpreadKey::new(
+            ExchangeId::HtxSpot,
+            ExchangeId::BinanceSpot,
+            Instrument::new("eth", "usdt"),
+        );
+        let binance_htx_btc_spread_key = SpreadKey::new(
+            ExchangeId::BinanceSpot,
+            ExchangeId::HtxSpot,
+            Instrument::new("btc", "usdt"),
+        );
+        expected_spread.insert(htx_binance_eth_spread_key,htx_binance_eth_make_take);
+        expected_spread.insert(binance_htx_btc_spread_key,binance_htx_btc_make_take);
+
         let result = scanner.spreads_sorted.snapshot();
         let expected = expected_spread.snapshot();
         assert_eq!(result, expected);
@@ -1530,6 +1559,7 @@ mod test {
     fn test_scanner_swap_existing_data() {
         let mut scanner = test_utils::spot_arb_scanner();
         let mut exchange_data_map = ExchangeMarketDataMap::default();
+        let time = Utc::now();
 
         // First orderbook update
         let binance_btc_ob = test_utils::market_event_orderbook(
@@ -1542,6 +1572,7 @@ mod test {
             binance_btc_ob.instrument,
             binance_btc_ob.event_data.get_orderbook().unwrap().bids,
             binance_btc_ob.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         // Second orderbook update
@@ -1560,11 +1591,12 @@ mod test {
             binance_btc_ob2.instrument,
             binance_btc_ob2.event_data.get_orderbook().unwrap().bids,
             binance_btc_ob2.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         // Expect swapped data
         let mut binance_instrument_map = InstrumentMarketDataMap::default();
-        let binance_instrument_data = InstrumentMarketData::new_orderbook(new_bids, new_asks);
+        let binance_instrument_data = InstrumentMarketData::new_orderbook(time, new_bids, new_asks);
 
         binance_instrument_map
             .0
@@ -1589,6 +1621,7 @@ mod test {
             binance_btc_ob3.instrument,
             binance_btc_ob3.event_data.get_orderbook().unwrap().bids,
             binance_btc_ob3.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         assert_eq!(scanner.exchange_data, exchange_data_map);
@@ -1607,6 +1640,7 @@ mod test {
             binance_btc_ob4.instrument,
             binance_btc_ob4.event_data.get_orderbook().unwrap().bids,
             binance_btc_ob4.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         let binance_market_data = exchange_data_map
@@ -1635,6 +1669,7 @@ mod test {
             binance_btc_ob5.instrument,
             binance_btc_ob5.event_data.get_orderbook().unwrap().bids,
             binance_btc_ob5.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         let binance_market_data = exchange_data_map
@@ -1655,6 +1690,7 @@ mod test {
         // Init
         let mut scanner = test_utils::spot_arb_scanner();
         let mut exchange_data_map = ExchangeMarketDataMap::default();
+        let time = Utc::now();
 
         // Binance
         let binance_btc_ob = test_utils::market_event_orderbook(
@@ -1667,12 +1703,13 @@ mod test {
             binance_btc_ob.instrument,
             binance_btc_ob.event_data.get_orderbook().unwrap().bids,
             binance_btc_ob.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         let mut binance_instrument_map = InstrumentMarketDataMap::default();
 
         let binance_instrument_data =
-            InstrumentMarketData::new_orderbook(test_utils::bids(), test_utils::asks());
+            InstrumentMarketData::new_orderbook(time, test_utils::bids(), test_utils::asks());
 
         binance_instrument_map
             .0
@@ -1695,12 +1732,13 @@ mod test {
             exmo_arb_ob.instrument,
             exmo_arb_ob.event_data.get_orderbook().unwrap().bids,
             exmo_arb_ob.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         let mut exmo_instrument_map = InstrumentMarketDataMap::default();
 
         let exmo_instrument_data =
-            InstrumentMarketData::new_orderbook(test_utils::bids(), test_utils::asks());
+            InstrumentMarketData::new_orderbook(time, test_utils::bids(), test_utils::asks());
 
         exmo_instrument_map
             .0
@@ -1721,12 +1759,13 @@ mod test {
             htx_op_ob.instrument,
             htx_op_ob.event_data.get_orderbook().unwrap().bids,
             htx_op_ob.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         let mut htx_instrument_map = InstrumentMarketDataMap::default();
 
         let htx_instrument_data =
-            InstrumentMarketData::new_orderbook(test_utils::bids(), test_utils::asks());
+            InstrumentMarketData::new_orderbook(time, test_utils::bids(), test_utils::asks());
 
         htx_instrument_map
             .0
