@@ -1520,8 +1520,7 @@ mod test {
         /*----- */
         // Expected spread
         /*----- */
-        let mut expected_spread = SpreadsSorted::new();
-
+        let expected_spread = SpreadsSorted::new();
         let result = scanner.spreads_sorted.snapshot();
         let expected = expected_spread.snapshot();
         assert_eq!(result, expected);

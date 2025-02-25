@@ -79,6 +79,7 @@ impl<T> VecDequeTime<T> {
 pub struct AverageTradeInfo {
     pub avg_price: f64,
     pub cum_size: f64,
+    pub notional_amount: f64,
     pub buy_sell_ratio: f64,
 }
 
@@ -145,9 +146,12 @@ impl InstrumentMarketData {
             },
         );
 
+        let avg_price = total_price / count;
+
         AverageTradeInfo {
-            avg_price: total_price / count,
+            avg_price,
             cum_size: total_size,
+            notional_amount: avg_price * total_size,
             buy_sell_ratio: buy_count as f64 / count,
         }
     }
@@ -172,7 +176,6 @@ pub struct SpreadHistory {
 }
 
 impl SpreadHistory {
-
     pub fn insert(&mut self, time: DateTime<Utc>, spread_array: [Option<f64>; 3]) {
         if let Some(take_take) = spread_array[0] {
             self.latest_spreads.take_take = take_take;
