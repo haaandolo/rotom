@@ -13,7 +13,7 @@ use rotom_data::{
 };
 use tokio::sync::mpsc;
 
-use super::{network_status_stream::NetworkStatusStream, stream_init_builder::StreamChunks};
+use super::{network_status_stream::NetworkStatusStream, stream_chunk::StreamChunks};
 
 pub async fn get_spot_arb_data_streams() -> (
     mpsc::UnboundedReceiver<MarketEvent<DataKind>>,
