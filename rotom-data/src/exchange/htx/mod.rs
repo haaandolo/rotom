@@ -13,7 +13,7 @@ use crate::{
     error::SocketError,
     model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trades},
     protocols::ws::{PingInterval, WsMessage},
-    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
+    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument, StreamKind},
     transformer::stateless_transformer::StatelessTransformer,
 };
 
@@ -26,6 +26,8 @@ pub struct HtxSpotPublicData;
 
 impl PublicStreamConnector for HtxSpotPublicData {
     const ID: ExchangeId = ExchangeId::HtxSpot;
+    const ORDERBOOK: StreamKind = StreamKind::Snapshot;
+    const TRADE: StreamKind = StreamKind::Trades;
 
     type Channel = HtxChannel;
     type Market = HtxMarket;

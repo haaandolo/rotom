@@ -28,7 +28,7 @@ use crate::{
         network_info::{ChainSpecs, NetworkSpecData, NetworkSpecs},
     },
     protocols::ws::{PingInterval, WsMessage},
-    shared::subscription_models::{Coin, ExchangeId, ExchangeSubscription, Instrument},
+    shared::subscription_models::{Coin, ExchangeId, ExchangeSubscription, Instrument, StreamKind},
     transformer::{book::MultiBookTransformer, stateless_transformer::StatelessTransformer},
 };
 
@@ -44,6 +44,8 @@ const PHEMEX_SPOT_WS_URL: &str = "wss://ws.phemex.com";
 
 impl PublicStreamConnector for PhemexSpotPublicData {
     const ID: ExchangeId = ExchangeId::PhemexSpot;
+    const ORDERBOOK: StreamKind = StreamKind::L2;
+    const TRADE: StreamKind = StreamKind::Trades;
 
     type SubscriptionResponse = PhemexSubscriptionResponse;
     type Channel = PhemexChannel;

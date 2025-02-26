@@ -9,7 +9,7 @@ use crate::{
     error::SocketError,
     model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trades},
     protocols::ws::WsMessage,
-    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
+    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument, StreamKind},
     transformer::stateless_transformer::StatelessTransformer,
 };
 
@@ -26,6 +26,8 @@ pub struct ExmoSpotPublicData;
 
 impl PublicStreamConnector for ExmoSpotPublicData {
     const ID: ExchangeId = ExchangeId::ExmoSpot;
+    const ORDERBOOK: StreamKind = StreamKind::Snapshot;
+    const TRADE: StreamKind = StreamKind::Trades;
 
     type Channel = ExmoChannel;
     type Market = ExmoMarket;

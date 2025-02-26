@@ -16,7 +16,7 @@ use crate::{
     error::SocketError,
     model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trade},
     protocols::ws::{PingInterval, WsMessage},
-    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
+    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument, StreamKind},
     transformer::stateless_transformer::StatelessTransformer,
 };
 
@@ -28,6 +28,8 @@ const OKX_SPOT_WS_URL: &str = "wss://wseea.okx.com:8443/ws/v5/public";
 
 impl PublicStreamConnector for OkxSpotPublicData {
     const ID: ExchangeId = ExchangeId::OkxSpot;
+    const ORDERBOOK: StreamKind = StreamKind::Snapshot;
+    const TRADE: StreamKind = StreamKind::Trade;
 
     type Channel = OkxChannel;
     type Market = OkxMarket;
@@ -68,7 +70,7 @@ pub const OKX_BASE_HTTP_URL: &str = "https://www.okx.com";
 
 #[async_trait]
 impl PublicHttpConnector for OkxSpotPublicData {
-    const ID: ExchangeId = ExchangeId::HtxSpot;
+    const ID: ExchangeId = ExchangeId::OkxSpot;
 
     type BookSnapShot = serde_json::Value;
     type ExchangeTickerInfo = serde_json::Value;

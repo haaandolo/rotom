@@ -9,7 +9,7 @@ use crate::{
     error::SocketError,
     model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trades},
     protocols::ws::WsMessage,
-    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
+    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument, StreamKind},
     transformer::stateless_transformer::StatelessTransformer,
 };
 
@@ -26,6 +26,8 @@ const COINEX_SPOT_WS_URL: &str = "wss://socket.coinex.com/v2/spot";
 
 impl PublicStreamConnector for CoinExSpotPublicData {
     const ID: ExchangeId = ExchangeId::CoinExSpot;
+    const ORDERBOOK: StreamKind = StreamKind::Snapshot;
+    const TRADE: StreamKind = StreamKind::Trades;
 
     type Channel = CoinExChannel;
     type Market = CoinExMarket;

@@ -17,7 +17,7 @@ use crate::{
     error::SocketError,
     model::{event_book::OrderBookL2, event_trade::Trades},
     protocols::ws::{PingInterval, WsMessage},
-    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
+    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument, StreamKind},
     transformer::{book::MultiBookTransformer, stateless_transformer::StatelessTransformer},
 };
 
@@ -33,6 +33,8 @@ pub struct AscendExSpotPublicData;
 
 impl PublicStreamConnector for AscendExSpotPublicData {
     const ID: ExchangeId = ExchangeId::AscendExSpot;
+    const ORDERBOOK: StreamKind = StreamKind::L2;
+    const TRADE: StreamKind = StreamKind::Trades;
 
     type Channel = AscendExChannel;
     type Market = AscendExMarket;

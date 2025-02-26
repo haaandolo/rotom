@@ -264,7 +264,7 @@ impl SpreadsSorted {
         self.by_value
             .iter()
             .rev()
-            .take(50)
+            .take(150)
             .map(|(spread, spread_key)| (spread.0, spread_key.clone()))
             .collect::<Vec<_>>()
     }

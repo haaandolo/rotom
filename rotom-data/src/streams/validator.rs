@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use futures::StreamExt;
 use std::fmt::Debug;
-use tracing::{debug, error, info};
+use tracing::{debug, error};
 
 use crate::{
     error::SocketError,
@@ -57,7 +57,7 @@ impl SubscriptionValidator for WebSocketValidator {
         let expected_responses = Exchange::expected_responses(subscriptions);
         let mut success_responses: usize = 0;
 
-        info!(
+        debug!(
             message = "Validating ws stream",
             exchange = %exchange_id,
         );

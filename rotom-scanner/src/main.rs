@@ -26,7 +26,7 @@ async fn main() -> std::io::Result<()> {
     let (scanner_channel, server_channel) = make_http_channels();
     let server_channel = web::Data::new(Mutex::new(server_channel));
 
-    // Init streams
+    // // Init streams
     let (market_data_stream, network_status_stream) = get_spot_arb_data_streams().await;
 
     // Scanner

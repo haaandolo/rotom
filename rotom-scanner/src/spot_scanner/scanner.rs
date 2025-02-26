@@ -254,6 +254,8 @@ impl SpotArbScanner {
                             .push_back(SpreadChangeProcess::SpreadChange(new_bba));
                     }
                 }
+
+                market_data_state.orderbook_last_update_time = update_time;
             })
             .or_insert_with(|| InstrumentMarketData::new_orderbook(update_time, bids, asks));
     }
@@ -273,6 +275,7 @@ impl SpotArbScanner {
             .entry(instrument)
             .and_modify(|market_data_state| {
                 market_data_state.trades.push(time, trade.clone());
+                market_data_state.trades_last_update_time = time;
             })
             .or_insert_with(|| InstrumentMarketData::new_trade(time, trade));
     }
@@ -449,7 +452,7 @@ impl SpotArbScanner {
             .spreads_sorted
             .snapshot()
             .into_iter()
-            .map(|(_, spread_key)| {
+            .filter_map(|(_, spread_key)| {
                 // Note: unwraps here should never fail as before this step everything should have a value
                 let (base_exchange, quote_exchange) = spread_key.exchanges;
                 let instrument = spread_key.instrument;
@@ -518,18 +521,16 @@ impl SpotArbScanner {
                     quote_exchange_orderbook_ws_is_connected,
                 };
 
-                response
-
-                // // Filter out responses that are less than threshold
-                // if response.quote_exchange_avg_trade_info.notional_amount
-                //     < CUMULATIVE_TRADES_THRESHOLD
-                //     || response.base_exchange_avg_trade_info.notional_amount
-                //         < CUMULATIVE_TRADES_THRESHOLD
-                // {
-                //     None
-                // } else {
-                //     Some(response)
-                // }
+                // Filter out responses that are less than threshold
+                if response.quote_exchange_avg_trade_info.notional_amount
+                    < CUMULATIVE_TRADES_THRESHOLD
+                    || response.base_exchange_avg_trade_info.notional_amount
+                        < CUMULATIVE_TRADES_THRESHOLD
+                {
+                    None
+                } else {
+                    Some(response)
+                }
             })
             .collect::<Vec<_>>();
 
@@ -621,7 +622,7 @@ impl SpotArbScanner {
         let mut trade_time_based: u32 = 0;
         let mut snapshot_ws_based: u32 = 0;
         let mut trade_ws_based: u32 = 0;
-        let time_threshold = Utc::now() - Duration::minutes(1);
+        let time_threshold = Utc::now() - Duration::minutes(2);
 
         for (_, instrument_data_map) in self.exchange_data.0.iter() {
             for (_, instrument_data) in instrument_data_map.0.iter() {
@@ -706,7 +707,7 @@ impl SpotArbScanner {
                 Ok(market_data) => {
                     // Del
                     if !self.market_data_stream.is_empty() {
-                        // println!("{}", self.market_data_stream.len());
+                        println!("{}", self.market_data_stream.len());
                     }
                     // println!("{:?}", market_data);
                     // Del

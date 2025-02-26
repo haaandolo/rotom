@@ -15,7 +15,7 @@ use crate::{
     error::SocketError,
     model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trade},
     protocols::ws::{PingInterval, WsMessage},
-    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
+    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument, StreamKind},
     transformer::stateless_transformer::StatelessTransformer,
 };
 
@@ -26,6 +26,8 @@ pub struct KuCoinSpotPublicData;
 
 impl PublicStreamConnector for KuCoinSpotPublicData {
     const ID: ExchangeId = ExchangeId::KuCoinSpot;
+    const ORDERBOOK: StreamKind = StreamKind::Snapshot;
+    const TRADE: StreamKind = StreamKind::Trade;
 
     type Channel = KuCoinChannel;
     type Market = KuCoinMarket;

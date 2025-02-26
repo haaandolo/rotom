@@ -13,7 +13,7 @@ use crate::{
     error::SocketError,
     model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trade},
     protocols::ws::{PingInterval, WsMessage},
-    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
+    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument, StreamKind},
     transformer::stateless_transformer::StatelessTransformer,
 };
 
@@ -26,6 +26,8 @@ const WOOX_SPOT_WS_URL: &str = "wss://wss.woox.io/ws/stream/8a6152d8-3f34-42fa-9
 
 impl PublicStreamConnector for WooxSpotPublicData {
     const ID: ExchangeId = ExchangeId::WooxSpot;
+    const ORDERBOOK: StreamKind = StreamKind::Snapshot;
+    const TRADE: StreamKind = StreamKind::Trade;
 
     type Channel = WooxChannel;
     type Market = WooxMarket;
@@ -59,6 +61,10 @@ impl PublicStreamConnector for WooxSpotPublicData {
             message: json!({ "event": "ping" }),
         })
     }
+
+    fn ws_chunk_size() -> usize {
+        1
+    }
 }
 
 /*----- */
@@ -68,7 +74,7 @@ pub const WOOX_BASE_HTTP_URL: &str = "https://api.woox.io";
 
 #[async_trait]
 impl PublicHttpConnector for WooxSpotPublicData {
-    const ID: ExchangeId = ExchangeId::HtxSpot;
+    const ID: ExchangeId = ExchangeId::WooxSpot;
 
     type BookSnapShot = serde_json::Value;
     type ExchangeTickerInfo = serde_json::Value;

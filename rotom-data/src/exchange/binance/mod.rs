@@ -24,7 +24,7 @@ use crate::{
         event_trade::{AggTrades, Trade},
     },
     protocols::ws::WsMessage,
-    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
+    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument, StreamKind},
     transformer::{book::MultiBookTransformer, stateless_transformer::StatelessTransformer},
 };
 
@@ -38,6 +38,8 @@ pub struct BinanceSpotPublicData;
 
 impl PublicStreamConnector for BinanceSpotPublicData {
     const ID: ExchangeId = ExchangeId::BinanceSpot;
+    const ORDERBOOK: StreamKind = StreamKind::L2;
+    const TRADE: StreamKind = StreamKind::Trade;
 
     type SubscriptionResponse = BinanceSubscriptionResponse;
     type Channel = BinanceChannel;

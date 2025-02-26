@@ -13,7 +13,7 @@ use tokio::{net::TcpStream, time::sleep, time::Duration};
 use tokio_tungstenite::{
     connect_async, tungstenite::client::IntoClientRequest, MaybeTlsStream, WebSocketStream,
 };
-use tracing::{debug, info};
+use tracing::debug;
 
 use crate::{
     error::SocketError,
@@ -92,7 +92,7 @@ impl WebSocketClient {
         let transformer = Exchange::StreamTransformer::new(&exchange_subs).await?;
 
         // Log connection success message
-        info!(
+        debug!(
             exchange = %exchange_id,
             message = "Subscribed to WebSocket",
             instruments = ?instruments,
