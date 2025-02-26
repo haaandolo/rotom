@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use rotom_data::{
     assets::level::Level,
     model::{
@@ -22,6 +22,8 @@ use super::core_types::{
     AverageTradeInfo, ExchangeMarketDataMap, InstrumentMarketData, LatestSpreads, NetworkStatusMap,
     SpreadHistory, SpreadKey, SpreadsSorted,
 };
+
+const CUMULATIVE_TRADES_THRESHOLD: f64 = 1000.0;
 
 /*----- */
 // Spread Change
@@ -501,7 +503,7 @@ impl SpotArbScanner {
                     quote_exchange_data.orderbook_ws_is_connected;
                 let quote_exchange_avg_trade_info = quote_exchange_data.get_average_trades();
 
-                SpreadResponse {
+                let response = SpreadResponse {
                     base_exchange,
                     quote_exchange,
                     instrument,
@@ -514,9 +516,22 @@ impl SpotArbScanner {
                     base_exchange_orderbook_ws_is_connected,
                     quote_exchange_trades_ws_is_connected,
                     quote_exchange_orderbook_ws_is_connected,
-                }
+                };
+
+                response
+
+                // // Filter out responses that are less than threshold
+                // if response.quote_exchange_avg_trade_info.notional_amount
+                //     < CUMULATIVE_TRADES_THRESHOLD
+                //     || response.base_exchange_avg_trade_info.notional_amount
+                //         < CUMULATIVE_TRADES_THRESHOLD
+                // {
+                //     None
+                // } else {
+                //     Some(response)
+                // }
             })
-            .collect::<Vec<SpreadResponse>>();
+            .collect::<Vec<_>>();
 
         // Send response via channel
         let _ = self
@@ -602,25 +617,38 @@ impl SpotArbScanner {
     }
 
     fn process_get_ws_connection_status(&mut self) {
-        let mut snapshot_successful_ws_connection_count: u32 = 0;
-        let mut trade_successful_ws_connection_count: u32 = 0;
+        let mut snapshot_time_based: u32 = 0;
+        let mut trade_time_based: u32 = 0;
+        let mut snapshot_ws_based: u32 = 0;
+        let mut trade_ws_based: u32 = 0;
+        let time_threshold = Utc::now() - Duration::minutes(1);
 
         for (_, instrument_data_map) in self.exchange_data.0.iter() {
             for (_, instrument_data) in instrument_data_map.0.iter() {
+                if instrument_data.orderbook_last_update_time > time_threshold {
+                    snapshot_time_based += 1;
+                }
+
+                if instrument_data.trades_last_update_time > time_threshold {
+                    trade_time_based += 1;
+                }
+
                 if instrument_data.orderbook_ws_is_connected {
-                    snapshot_successful_ws_connection_count += 1;
+                    snapshot_ws_based += 1;
                 }
 
                 if instrument_data.trades_ws_is_connected {
-                    trade_successful_ws_connection_count += 1;
+                    trade_ws_based += 1;
                 }
             }
         }
 
         let _ = self.http_channel.http_response_tx.send(
             SpotArbScannerHttpResponse::GetWsConnectionStatus {
-                snapshot: snapshot_successful_ws_connection_count,
-                trade: trade_successful_ws_connection_count,
+                snapshot_time_based,
+                trade_time_based,
+                snapshot_ws_based,
+                trade_ws_based,
             },
         );
     }
@@ -678,7 +706,7 @@ impl SpotArbScanner {
                 Ok(market_data) => {
                     // Del
                     if !self.market_data_stream.is_empty() {
-                        println!("{}", self.market_data_stream.len());
+                        // println!("{}", self.market_data_stream.len());
                     }
                     // println!("{:?}", market_data);
                     // Del
@@ -1547,8 +1575,8 @@ mod test {
             ExchangeId::HtxSpot,
             Instrument::new("btc", "usdt"),
         );
-        expected_spread.insert(htx_binance_eth_spread_key,htx_binance_eth_make_take);
-        expected_spread.insert(binance_htx_btc_spread_key,binance_htx_btc_make_take);
+        expected_spread.insert(htx_binance_eth_spread_key, htx_binance_eth_make_take);
+        expected_spread.insert(binance_htx_btc_spread_key, binance_htx_btc_make_take);
 
         let result = scanner.spreads_sorted.snapshot();
         let expected = expected_spread.snapshot();

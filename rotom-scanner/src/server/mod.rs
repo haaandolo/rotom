@@ -18,8 +18,10 @@ pub enum SpotArbScannerHttpResponse {
     GetTopSpreads(Vec<SpreadResponse>),
     GetSpreadHistory(Box<SpreadHistoryResponse>),
     GetWsConnectionStatus {
-        snapshot: u32,
-        trade: u32,
+        snapshot_time_based: u32,
+        trade_time_based: u32,
+        snapshot_ws_based: u32,
+        trade_ws_based: u32,
     },
     CouldNotFindSpreadHistory {
         base_exchange: ExchangeId,
