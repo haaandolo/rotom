@@ -19,8 +19,8 @@ use crate::server::{
 };
 
 use super::core_types::{
-    AverageTradeInfo, ExchangeMarketDataMap, InstrumentMarketData, LatestSpreads, NetworkStatusMap,
-    SpreadHistory, SpreadKey, SpreadsSorted,
+    AverageTradeInfo, ExchangeMarketDataMap, InstrumentMarketData, NetworkStatusMap, SpreadHistory,
+    SpreadKey, SpreadsSorted,
 };
 
 const CUMULATIVE_TRADES_THRESHOLD: f64 = 1000.0;
@@ -105,7 +105,7 @@ pub struct SpreadResponse {
     pub base_exchange: ExchangeId,
     pub quote_exchange: ExchangeId,
     pub instrument: Instrument,
-    pub spreads: LatestSpreads,
+    pub spread: f64,
     pub base_exchange_avg_trade_info: AverageTradeInfo,
     pub quote_exchange_avg_trade_info: AverageTradeInfo,
     pub base_exchange_network_info: Option<NetworkSpecData>,
@@ -129,6 +129,8 @@ pub struct SpreadHistoryResponse {
     pub base_exchange_asks: Option<Vec<Level>>,
     pub quote_exchange_bids: Option<Vec<Level>>,
     pub quote_exchange_asks: Option<Vec<Level>>,
+    pub base_exchange_network_info: Option<NetworkSpecData>,
+    pub quote_exchange_network_info: Option<NetworkSpecData>,
 }
 
 impl SpreadHistoryResponse {
@@ -146,6 +148,8 @@ impl SpreadHistoryResponse {
             base_exchange_asks: None,
             quote_exchange_bids: None,
             quote_exchange_asks: None,
+            base_exchange_network_info: None,
+            quote_exchange_network_info: None,
         }
     }
 }
@@ -452,7 +456,7 @@ impl SpotArbScanner {
             .spreads_sorted
             .snapshot()
             .into_iter()
-            .filter_map(|(_, spread_key)| {
+            .filter_map(|(spread, spread_key)| {
                 // Note: unwraps here should never fail as before this step everything should have a value
                 let (base_exchange, quote_exchange) = spread_key.exchanges;
                 let instrument = spread_key.instrument;
@@ -467,13 +471,6 @@ impl SpotArbScanner {
                     .0
                     .get(&instrument)
                     .unwrap(); // Should never fail
-
-                let spreads = base_exchange_data
-                    .spreads
-                    .0
-                    .get(&quote_exchange)
-                    .unwrap() // Should never fail
-                    .latest_spreads;
 
                 let base_exchange_network_info = self
                     .network_status
@@ -510,7 +507,7 @@ impl SpotArbScanner {
                     base_exchange,
                     quote_exchange,
                     instrument,
-                    spreads,
+                    spread,
                     base_exchange_avg_trade_info,
                     quote_exchange_avg_trade_info,
                     base_exchange_network_info,
@@ -550,6 +547,7 @@ impl SpotArbScanner {
         // Init response
         let mut response =
             SpreadHistoryResponse::new(base_exchange, quote_exchange, instrument.clone());
+        let coin = Coin::new(instrument.base.as_str());
 
         // Try get base instrument market data info
         let base_exchange_instrument_data = self.exchange_data.0.get(&base_exchange).and_then(
@@ -564,6 +562,14 @@ impl SpotArbScanner {
                 // Set bid and ask for base exchange
                 response.base_exchange_bids = Some(instrument_data.bids.clone());
                 response.base_exchange_asks = Some(instrument_data.asks.clone());
+
+                // Set network info
+                let base_exchange_network_info = self
+                    .network_status
+                    .0
+                    .get(&(base_exchange, coin.clone()))
+                    .cloned();
+                response.base_exchange_network_info = base_exchange_network_info;
 
                 // Set spread history
                 if let Some(spread_history) = instrument_data.spreads.0.get(&quote_exchange) {
@@ -595,6 +601,11 @@ impl SpotArbScanner {
                 // Set bid and ask for base exchange
                 response.quote_exchange_bids = Some(instrument_data.bids.clone());
                 response.quote_exchange_asks = Some(instrument_data.asks.clone());
+
+                // Set network info
+                let quote_exchange_network_info =
+                    self.network_status.0.get(&(quote_exchange, coin)).cloned();
+                response.quote_exchange_network_info = quote_exchange_network_info;
             }
             None => {
                 let _ = self.http_channel.http_response_tx.send(
@@ -707,7 +718,7 @@ impl SpotArbScanner {
                 Ok(market_data) => {
                     // Del
                     if !self.market_data_stream.is_empty() {
-                        println!("{}", self.market_data_stream.len());
+                        // println!("{}", self.market_data_stream.len());
                     }
                     // println!("{:?}", market_data);
                     // Del

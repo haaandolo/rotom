@@ -48,6 +48,8 @@ pub async fn get_spot_arb_data_streams() -> (
     // Stream chunk builder - todo change these awaits
     /*----- */
     let stream_init = StreamChunks::default()
+        .add_exchange::<WooxSpotPublicData>()
+        .await
         .add_exchange::<HtxSpotPublicData>()
         .await
         .add_exchange::<CoinExSpotPublicData>()
@@ -57,8 +59,6 @@ pub async fn get_spot_arb_data_streams() -> (
         .add_exchange::<KuCoinSpotPublicData>()
         .await
         .add_exchange::<OkxSpotPublicData>()
-        .await
-        .add_exchange::<WooxSpotPublicData>()
         .await
         .build();
 
