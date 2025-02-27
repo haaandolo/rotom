@@ -42,12 +42,14 @@ impl DynamicStreams {
         subscription_batchs: SubBatchIter,
     ) -> Result<Self, SocketError>
     where
-        SubBatchIter: IntoIterator<Item = SubIter>,
+        SubBatchIter: IntoIterator<Item = SubIter> + Debug,
         SubIter: IntoIterator<Item = Sub> + Debug,
         Sub: Into<Subscription<ExchangeId, StreamKind>>,
     {
         let mut channels = Channels::default();
         for batch in subscription_batchs {
+            std::thread::sleep(std::time::Duration::from_millis(100));
+
             // Convert to Subscriptions struct
             let mut exchange_sub = batch
                 .into_iter()

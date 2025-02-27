@@ -13,7 +13,7 @@ use crate::{
     error::SocketError,
     model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trade},
     protocols::ws::{PingInterval, WsMessage},
-    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
+    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument, StreamKind},
     transformer::stateless_transformer::StatelessTransformer,
 };
 
@@ -26,6 +26,8 @@ const WOOX_SPOT_WS_URL: &str = "wss://wss.woox.io/ws/stream/8a6152d8-3f34-42fa-9
 
 impl PublicStreamConnector for WooxSpotPublicData {
     const ID: ExchangeId = ExchangeId::WooxSpot;
+    const ORDERBOOK: StreamKind = StreamKind::Snapshot;
+    const TRADE: StreamKind = StreamKind::Trade;
 
     type Channel = WooxChannel;
     type Market = WooxMarket;
@@ -59,6 +61,10 @@ impl PublicStreamConnector for WooxSpotPublicData {
             message: json!({ "event": "ping" }),
         })
     }
+
+    fn ws_chunk_size() -> usize {
+        1
+    }
 }
 
 /*----- */
@@ -68,7 +74,7 @@ pub const WOOX_BASE_HTTP_URL: &str = "https://api.woox.io";
 
 #[async_trait]
 impl PublicHttpConnector for WooxSpotPublicData {
-    const ID: ExchangeId = ExchangeId::HtxSpot;
+    const ID: ExchangeId = ExchangeId::WooxSpot;
 
     type BookSnapShot = serde_json::Value;
     type ExchangeTickerInfo = serde_json::Value;
@@ -99,7 +105,37 @@ impl PublicHttpConnector for WooxSpotPublicData {
     }
 
     async fn get_usdt_pair() -> Result<Vec<(String, String)>, SocketError> {
-        unimplemented!()
+        let request_path = "/v1/public/info";
+
+        let response = reqwest::get(format!("{}{}", WOOX_BASE_HTTP_URL, request_path))
+            .await
+            .map_err(SocketError::Http)?
+            .json::<serde_json::Value>()
+            .await
+            .map_err(SocketError::Http)?;
+
+        let tickers = response["rows"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|ticker| {
+                let status = ticker["status"].as_str().unwrap().to_string();
+                let symbol = ticker["symbol"].as_str().unwrap().to_lowercase();
+
+                let mut ticker_split = symbol.split("_"); // comes like SPOT_BTC_USDT or PERP_BTC_USDT
+                let ticker_kind = ticker_split.next().unwrap_or("").to_string();
+                let base = ticker_split.next().unwrap_or("").to_string();
+                let quote = ticker_split.next().unwrap_or("").to_string();
+
+                if ticker_kind == "spot" && status == "TRADING" && quote == "usdt" {
+                    Some((base, quote))
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        Ok(tickers)
     }
 }
 

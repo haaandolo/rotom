@@ -2,7 +2,7 @@ use futures::StreamExt;
 use std::fmt::Debug;
 use tokio::sync::mpsc::UnboundedSender;
 use tokio::{time::sleep, time::Duration};
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, warn};
 
 use crate::error::SocketError;
 use crate::exchange::Identifier;
@@ -41,7 +41,7 @@ where
     let mut connection_attempt: u32 = 0;
     let mut backoff_ms: u64 = START_RECONNECTION_BACKOFF_MS;
 
-    info!(
+    debug!(
         exchange = %exchange_id,
         ?exchange_sub,
         instrument = ?instruments,

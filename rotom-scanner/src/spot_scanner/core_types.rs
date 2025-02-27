@@ -79,6 +79,7 @@ impl<T> VecDequeTime<T> {
 pub struct AverageTradeInfo {
     pub avg_price: f64,
     pub cum_size: f64,
+    pub notional_amount: f64,
     pub buy_sell_ratio: f64,
 }
 
@@ -90,10 +91,12 @@ pub struct InstrumentMarketData {
     pub spreads: SpreadHistoryMap,
     pub trades_ws_is_connected: bool,
     pub orderbook_ws_is_connected: bool,
+    pub trades_last_update_time: DateTime<Utc>,
+    pub orderbook_last_update_time: DateTime<Utc>,
 }
 
-impl Default for InstrumentMarketData {
-    fn default() -> Self {
+impl InstrumentMarketData {
+    pub fn new(update_time: DateTime<Utc>) -> Self {
         Self {
             bids: Vec::new(),
             asks: Vec::new(),
@@ -101,12 +104,12 @@ impl Default for InstrumentMarketData {
             spreads: SpreadHistoryMap(HashMap::with_capacity(10)),
             orderbook_ws_is_connected: false,
             trades_ws_is_connected: false,
+            trades_last_update_time: update_time,
+            orderbook_last_update_time: update_time,
         }
     }
-}
 
-impl InstrumentMarketData {
-    pub fn new_orderbook(bids: Vec<Level>, asks: Vec<Level>) -> Self {
+    pub fn new_orderbook(update_time: DateTime<Utc>, bids: Vec<Level>, asks: Vec<Level>) -> Self {
         Self {
             bids,
             asks,
@@ -114,17 +117,21 @@ impl InstrumentMarketData {
             spreads: SpreadHistoryMap(HashMap::with_capacity(10)),
             orderbook_ws_is_connected: true,
             trades_ws_is_connected: false,
+            trades_last_update_time: update_time,
+            orderbook_last_update_time: update_time,
         }
     }
 
-    pub fn new_trade(time: DateTime<Utc>, value: EventTrade) -> Self {
+    pub fn new_trade(update_time: DateTime<Utc>, value: EventTrade) -> Self {
         Self {
             bids: Vec::with_capacity(10),
             asks: Vec::with_capacity(10),
-            trades: VecDequeTime::new(time, value),
+            trades: VecDequeTime::new(update_time, value),
             spreads: SpreadHistoryMap(HashMap::with_capacity(10)),
             orderbook_ws_is_connected: false,
             trades_ws_is_connected: true,
+            trades_last_update_time: update_time,
+            orderbook_last_update_time: update_time,
         }
     }
 
@@ -145,9 +152,12 @@ impl InstrumentMarketData {
             },
         );
 
+        let avg_price = total_price / count;
+
         AverageTradeInfo {
-            avg_price: total_price / count,
+            avg_price,
             cum_size: total_size,
+            notional_amount: avg_price * total_size,
             buy_sell_ratio: buy_count as f64 / count,
         }
     }
@@ -161,7 +171,6 @@ pub struct LatestSpreads {
     pub take_take: f64,
     pub take_make: f64,
     pub make_take: f64,
-    pub make_make: f64,
 }
 
 #[derive(Debug, Default, PartialEq, Clone, Serialize)]
@@ -170,55 +179,10 @@ pub struct SpreadHistory {
     pub take_take: VecDequeTime<f64>,
     pub take_make: VecDequeTime<f64>,
     pub make_take: VecDequeTime<f64>,
-    pub make_make: VecDequeTime<f64>,
 }
 
 impl SpreadHistory {
-    pub fn new_ask(take_take: f64, take_make: f64) -> Self {
-        let mut take_take_queue = VecDequeTime::default();
-        let mut take_make_queue = VecDequeTime::default();
-
-        take_take_queue.push(Utc::now(), take_take);
-        take_make_queue.push(Utc::now(), take_make);
-
-        let latest_spreads = LatestSpreads {
-            take_take,
-            take_make,
-            ..LatestSpreads::default()
-        };
-
-        Self {
-            latest_spreads,
-            take_take: take_take_queue,
-            take_make: take_make_queue,
-            make_take: VecDequeTime::default(),
-            make_make: VecDequeTime::default(),
-        }
-    }
-
-    pub fn new_bid(make_take: f64, make_make: f64) -> Self {
-        let mut make_take_queue = VecDequeTime::default();
-        let mut make_make_queue = VecDequeTime::default();
-
-        make_take_queue.push(Utc::now(), make_take);
-        make_make_queue.push(Utc::now(), make_make);
-
-        let latest_spreads = LatestSpreads {
-            make_take,
-            make_make,
-            ..LatestSpreads::default()
-        };
-
-        Self {
-            latest_spreads,
-            take_take: VecDequeTime::default(),
-            take_make: VecDequeTime::default(),
-            make_take: make_take_queue,
-            make_make: make_make_queue,
-        }
-    }
-
-    pub fn insert(&mut self, time: DateTime<Utc>, spread_array: [Option<f64>; 4]) {
+    pub fn insert(&mut self, time: DateTime<Utc>, spread_array: [Option<f64>; 3]) {
         if let Some(take_take) = spread_array[0] {
             self.latest_spreads.take_take = take_take;
             self.take_take.push(time, take_take);
@@ -232,11 +196,6 @@ impl SpreadHistory {
         if let Some(make_take) = spread_array[2] {
             self.latest_spreads.make_take = make_take;
             self.make_take.push(time, make_take);
-        }
-
-        if let Some(make_make) = spread_array[3] {
-            self.latest_spreads.make_make = make_make;
-            self.make_make.push(time, make_make);
         }
     }
 }
@@ -305,7 +264,7 @@ impl SpreadsSorted {
         self.by_value
             .iter()
             .rev()
-            .take(10)
+            .take(150)
             .map(|(spread, spread_key)| (spread.0, spread_key.clone()))
             .collect::<Vec<_>>()
     }

@@ -6,7 +6,7 @@ use serde_json::json;
 use crate::{
     model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trade},
     protocols::ws::WsMessage,
-    shared::subscription_models::{ExchangeId, ExchangeSubscription},
+    shared::subscription_models::{ExchangeId, ExchangeSubscription, StreamKind},
     transformer::stateless_transformer::StatelessTransformer,
 };
 
@@ -23,6 +23,8 @@ const BITSTAMP_SPOT_WS_URL: &str = "wss://ws.bitstamp.net";
 
 impl PublicStreamConnector for BitstampSpotPublicData {
     const ID: ExchangeId = ExchangeId::BitstampSpot;
+    const ORDERBOOK: StreamKind = StreamKind::L2;
+    const TRADE: StreamKind = StreamKind::Trade;
 
     type Channel = BitstampChannel;
     type Market = BitstampMarket;

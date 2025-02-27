@@ -50,6 +50,40 @@ pub async fn get_top_spreads_handler(
     }
 }
 
+#[get("/ws-status")]
+pub async fn get_ws_connection_status_handler(
+    channel_data: Data<Mutex<ServerHttpChannel>>,
+) -> impl Responder {
+    let mut http_channel = channel_data.lock().await;
+
+    // Send the request
+    if http_channel
+        .http_request_tx
+        .send(SpotArbScannerHttpRequests::GetWsConnectionStatus)
+        .is_err()
+    {
+        return HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": "Failed to send request to scanner"
+        }));
+    }
+
+    // Wait for response with timeout
+    match timeout(
+        Duration::from_millis(100),
+        http_channel.http_response_rx.recv(),
+    )
+    .await
+    {
+        Ok(Some(response)) => HttpResponse::Ok().json(serde_json::to_value(&response).unwrap()),
+        Ok(None) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": "Scanner channel closed unexpectedly"
+        })),
+        Err(_) => HttpResponse::RequestTimeout().json(serde_json::json!({
+            "error": "Request timed out after 5 seconds"
+        })),
+    }
+}
+
 #[derive(Deserialize)]
 // #[serde(rename_all = "snake_case")]
 struct SpreadHistoryQueryParams {

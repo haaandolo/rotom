@@ -24,7 +24,7 @@ use crate::{
         event_trade::{AggTrades, Trade},
     },
     protocols::ws::WsMessage,
-    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
+    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument, StreamKind},
     transformer::{book::MultiBookTransformer, stateless_transformer::StatelessTransformer},
 };
 
@@ -38,6 +38,8 @@ pub struct BinanceSpotPublicData;
 
 impl PublicStreamConnector for BinanceSpotPublicData {
     const ID: ExchangeId = ExchangeId::BinanceSpot;
+    const ORDERBOOK: StreamKind = StreamKind::L2;
+    const TRADE: StreamKind = StreamKind::Trade;
 
     type SubscriptionResponse = BinanceSubscriptionResponse;
     type Channel = BinanceChannel;
@@ -160,7 +162,32 @@ impl PublicHttpConnector for BinanceSpotPublicData {
     }
 
     async fn get_usdt_pair() -> Result<Vec<(String, String)>, SocketError> {
-        unimplemented!()
+        let request_path = "/api/v3/exchangeInfo";
+
+        let response = reqwest::get(format!("{}{}", BINANCE_BASE_HTTP_URL, request_path))
+            .await
+            .map_err(SocketError::Http)?
+            .json::<serde_json::Value>()
+            .await
+            .map_err(SocketError::Http)?;
+
+        let tickers = response["symbols"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|ticker| {
+                let base = ticker["baseAsset"].as_str().unwrap().to_lowercase();
+                let quote = ticker["quoteAsset"].as_str().unwrap().to_lowercase();
+                let status = ticker["status"].as_str().unwrap().to_string();
+                if quote == "usdt" && status == "TRADING" {
+                    Some((base, quote))
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        Ok(tickers)
     }
 }
 

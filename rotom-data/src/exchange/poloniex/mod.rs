@@ -13,7 +13,7 @@ use crate::exchange::{PublicHttpConnector, PublicStreamConnector, StreamSelector
 use crate::model::event_book::OrderBookL2;
 use crate::model::event_trade::Trade;
 use crate::protocols::ws::{PingInterval, WsMessage};
-use crate::shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument};
+use crate::shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument, StreamKind};
 use crate::transformer::book::MultiBookTransformer;
 use crate::transformer::stateless_transformer::StatelessTransformer;
 use channel::PoloniexChannel;
@@ -31,6 +31,8 @@ pub struct PoloniexSpotPublicData;
 
 impl PublicStreamConnector for PoloniexSpotPublicData {
     const ID: ExchangeId = ExchangeId::PoloniexSpot;
+    const ORDERBOOK: StreamKind = StreamKind::L2;
+    const TRADE: StreamKind = StreamKind::Trade;
 
     type SubscriptionResponse = PoloniexSubscriptionResponse;
     type Channel = PoloniexChannel;

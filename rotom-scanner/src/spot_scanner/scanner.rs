@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use rotom_data::{
     assets::level::Level,
     model::{
@@ -19,9 +19,11 @@ use crate::server::{
 };
 
 use super::core_types::{
-    AverageTradeInfo, ExchangeMarketDataMap, InstrumentMarketData, LatestSpreads, NetworkStatusMap,
-    SpreadHistory, SpreadKey, SpreadsSorted,
+    AverageTradeInfo, ExchangeMarketDataMap, InstrumentMarketData, NetworkStatusMap, SpreadHistory,
+    SpreadKey, SpreadsSorted,
 };
+
+const CUMULATIVE_TRADES_THRESHOLD: f64 = 1000.0;
 
 /*----- */
 // Spread Change
@@ -70,7 +72,7 @@ pub struct SpreadsCalculated {
     pub sc_exchange: ExchangeId,
     pub other_exchange: ExchangeId,
     pub instrument: Instrument,
-    pub spread_array: [Option<f64>; 4],
+    pub spread_array: [Option<f64>; 3],
 }
 
 impl SpreadsCalculated {
@@ -78,7 +80,7 @@ impl SpreadsCalculated {
         sc_exchange: ExchangeId,
         other_exchange: ExchangeId,
         instrument: Instrument,
-        spread_array: [Option<f64>; 4],
+        spread_array: [Option<f64>; 3],
     ) -> Self {
         Self {
             sc_exchange,
@@ -103,7 +105,7 @@ pub struct SpreadResponse {
     pub base_exchange: ExchangeId,
     pub quote_exchange: ExchangeId,
     pub instrument: Instrument,
-    pub spreads: LatestSpreads,
+    pub spread: f64,
     pub base_exchange_avg_trade_info: AverageTradeInfo,
     pub quote_exchange_avg_trade_info: AverageTradeInfo,
     pub base_exchange_network_info: Option<NetworkSpecData>,
@@ -122,7 +124,34 @@ pub struct SpreadHistoryResponse {
     pub base_exchange: ExchangeId,
     pub quote_exchange: ExchangeId,
     pub instrument: Instrument,
-    pub spread_history: SpreadHistory,
+    pub spread_history: Option<SpreadHistory>,
+    pub base_exchange_bids: Option<Vec<Level>>,
+    pub base_exchange_asks: Option<Vec<Level>>,
+    pub quote_exchange_bids: Option<Vec<Level>>,
+    pub quote_exchange_asks: Option<Vec<Level>>,
+    pub base_exchange_network_info: Option<NetworkSpecData>,
+    pub quote_exchange_network_info: Option<NetworkSpecData>,
+}
+
+impl SpreadHistoryResponse {
+    pub fn new(
+        base_exchange: ExchangeId,
+        quote_exchange: ExchangeId,
+        instrument: Instrument,
+    ) -> Self {
+        Self {
+            base_exchange,
+            quote_exchange,
+            instrument,
+            spread_history: None,
+            base_exchange_bids: None,
+            base_exchange_asks: None,
+            quote_exchange_bids: None,
+            quote_exchange_asks: None,
+            base_exchange_network_info: None,
+            quote_exchange_network_info: None,
+        }
+    }
 }
 
 /*----- */
@@ -187,6 +216,7 @@ impl SpotArbScanner {
         instrument: Instrument,
         mut bids: Vec<Level>,
         mut asks: Vec<Level>,
+        update_time: DateTime<Utc>,
     ) {
         self.exchange_data
             .0
@@ -228,8 +258,10 @@ impl SpotArbScanner {
                             .push_back(SpreadChangeProcess::SpreadChange(new_bba));
                     }
                 }
+
+                market_data_state.orderbook_last_update_time = update_time;
             })
-            .or_insert_with(|| InstrumentMarketData::new_orderbook(bids, asks));
+            .or_insert_with(|| InstrumentMarketData::new_orderbook(update_time, bids, asks));
     }
 
     fn process_trade(
@@ -247,6 +279,7 @@ impl SpotArbScanner {
             .entry(instrument)
             .and_modify(|market_data_state| {
                 market_data_state.trades.push(time, trade.clone());
+                market_data_state.trades_last_update_time = time;
             })
             .or_insert_with(|| InstrumentMarketData::new_trade(time, trade));
     }
@@ -255,7 +288,7 @@ impl SpotArbScanner {
         &mut self,
         exchange: ExchangeId,
         instrument: Instrument,
-        time: DateTime<Utc>,
+        update_time: DateTime<Utc>,
         trades: Vec<EventTrade>,
     ) {
         self.exchange_data
@@ -267,13 +300,13 @@ impl SpotArbScanner {
             .and_modify(|market_data_state| {
                 trades
                     .iter()
-                    .for_each(|trade| market_data_state.trades.push(time, trade.to_owned()));
+                    .for_each(|trade| market_data_state.trades.push(update_time, trade.to_owned()));
             })
             .or_insert_with(|| {
-                let mut instrument_map = InstrumentMarketData::default();
+                let mut instrument_map = InstrumentMarketData::new(update_time);
                 trades
                     .iter()
-                    .for_each(|trade| instrument_map.trades.push(time, trade.to_owned()));
+                    .for_each(|trade| instrument_map.trades.push(update_time, trade.to_owned()));
                 instrument_map
             });
     }
@@ -288,7 +321,7 @@ impl SpotArbScanner {
         }
     }
 
-    fn sort_option_array(mut arr: [Option<f64>; 4]) -> [Option<f64>; 4] {
+    fn sort_option_array(mut arr: [Option<f64>; 3]) -> [Option<f64>; 3] {
         // Sort the array, placing None values at the end
         arr.sort_by(|a, b| match (a, b) {
             (None, None) => std::cmp::Ordering::Equal,
@@ -305,7 +338,7 @@ impl SpotArbScanner {
                 if let Some(market_data) = market_data_map.0.get(&spread_change.instrument) {
                     // We assume the exchange associated with the spread change is the buy exchange, so this is in the denominator.
                     // Hence, the sell exchange is the exchange correspoding to the market_data
-                    let mut spread_array = [None; 4];
+                    let mut spread_array = [None; 3];
 
                     if let Some(spread_change_ask) = spread_change.ask {
                         // Calculate the spreads if best ask level has changed
@@ -328,12 +361,6 @@ impl SpotArbScanner {
                             let make_take =
                                 (market_data.bids[0].price / spread_change_bid.price) - 1.0;
                             spread_array[2] = Some(make_take)
-                        }
-
-                        if !market_data.asks.is_empty() {
-                            let make_make =
-                                (market_data.asks[0].price / spread_change_bid.price) - 1.0;
-                            spread_array[3] = Some(make_make)
                         }
                     }
 
@@ -372,8 +399,8 @@ impl SpotArbScanner {
             }
         }
 
-        // Get max spread - index into 3 as it is the last value of the array
-        let max_spread = Self::sort_option_array(spreads.spread_array)[3];
+        // Get max spread - index into 2 as it is the last value of the array
+        let max_spread = Self::sort_option_array(spreads.spread_array)[2];
 
         // Insert into spreads_sorted
         if let Some(max_spread) = max_spread {
@@ -395,6 +422,7 @@ impl SpotArbScanner {
         exchange: ExchangeId,
         instrument: Instrument,
         ws_status: WsStatus,
+        update_time: DateTime<Utc>,
     ) {
         self.exchange_data
             .0
@@ -413,11 +441,11 @@ impl SpotArbScanner {
             .or_insert_with(|| match ws_status.get_event_kind() {
                 EventKind::OrderBook => InstrumentMarketData {
                     orderbook_ws_is_connected: ws_status.is_connected(),
-                    ..InstrumentMarketData::default()
+                    ..InstrumentMarketData::new(update_time)
                 },
                 EventKind::Trade => InstrumentMarketData {
                     trades_ws_is_connected: ws_status.is_connected(),
-                    ..InstrumentMarketData::default()
+                    ..InstrumentMarketData::new(update_time)
                 },
             });
     }
@@ -428,7 +456,7 @@ impl SpotArbScanner {
             .spreads_sorted
             .snapshot()
             .into_iter()
-            .map(|(_, spread_key)| {
+            .filter_map(|(spread, spread_key)| {
                 // Note: unwraps here should never fail as before this step everything should have a value
                 let (base_exchange, quote_exchange) = spread_key.exchanges;
                 let instrument = spread_key.instrument;
@@ -443,13 +471,6 @@ impl SpotArbScanner {
                     .0
                     .get(&instrument)
                     .unwrap(); // Should never fail
-
-                let spreads = base_exchange_data
-                    .spreads
-                    .0
-                    .get(&quote_exchange)
-                    .unwrap() // Should never fail
-                    .latest_spreads;
 
                 let base_exchange_network_info = self
                     .network_status
@@ -482,11 +503,11 @@ impl SpotArbScanner {
                     quote_exchange_data.orderbook_ws_is_connected;
                 let quote_exchange_avg_trade_info = quote_exchange_data.get_average_trades();
 
-                SpreadResponse {
+                let response = SpreadResponse {
                     base_exchange,
                     quote_exchange,
                     instrument,
-                    spreads,
+                    spread,
                     base_exchange_avg_trade_info,
                     quote_exchange_avg_trade_info,
                     base_exchange_network_info,
@@ -495,9 +516,20 @@ impl SpotArbScanner {
                     base_exchange_orderbook_ws_is_connected,
                     quote_exchange_trades_ws_is_connected,
                     quote_exchange_orderbook_ws_is_connected,
+                };
+
+                // Filter out responses that are less than threshold
+                if response.quote_exchange_avg_trade_info.notional_amount
+                    < CUMULATIVE_TRADES_THRESHOLD
+                    || response.base_exchange_avg_trade_info.notional_amount
+                        < CUMULATIVE_TRADES_THRESHOLD
+                {
+                    None
+                } else {
+                    Some(response)
                 }
             })
-            .collect::<Vec<SpreadResponse>>();
+            .collect::<Vec<_>>();
 
         // Send response via channel
         let _ = self
@@ -512,27 +544,37 @@ impl SpotArbScanner {
         quote_exchange: ExchangeId,
         instrument: Instrument,
     ) {
-        let base_exchange_spread_history = self
-            .exchange_data
-            .0
-            .get(&base_exchange)
-            .and_then(|base_exchange_instrument_market_data| {
-                base_exchange_instrument_market_data.0.get(&instrument)
-            })
-            .and_then(|base_exchange_spread_history| {
-                base_exchange_spread_history.spreads.0.get(&quote_exchange)
-            });
+        // Init response
+        let mut response =
+            SpreadHistoryResponse::new(base_exchange, quote_exchange, instrument.clone());
+        let coin = Coin::new(instrument.base.as_str());
 
-        match base_exchange_spread_history {
-            Some(base_exchange_spread_history_response) => {
-                let _ = self.http_channel.http_response_tx.send(
-                    SpotArbScannerHttpResponse::GetSpreadHistory(Box::new(SpreadHistoryResponse {
-                        base_exchange,
-                        quote_exchange,
-                        instrument,
-                        spread_history: base_exchange_spread_history_response.clone(),
-                    })),
-                );
+        // Try get base instrument market data info
+        let base_exchange_instrument_data = self.exchange_data.0.get(&base_exchange).and_then(
+            |base_exchange_instrument_market_data| {
+                base_exchange_instrument_market_data.0.get(&instrument)
+            },
+        );
+
+        // Else send error message and return or update response info
+        match base_exchange_instrument_data {
+            Some(instrument_data) => {
+                // Set bid and ask for base exchange
+                response.base_exchange_bids = Some(instrument_data.bids.clone());
+                response.base_exchange_asks = Some(instrument_data.asks.clone());
+
+                // Set network info
+                let base_exchange_network_info = self
+                    .network_status
+                    .0
+                    .get(&(base_exchange, coin.clone()))
+                    .cloned();
+                response.base_exchange_network_info = base_exchange_network_info;
+
+                // Set spread history
+                if let Some(spread_history) = instrument_data.spreads.0.get(&quote_exchange) {
+                    response.spread_history = Some(spread_history.clone());
+                }
             }
             None => {
                 let _ = self.http_channel.http_response_tx.send(
@@ -542,8 +584,85 @@ impl SpotArbScanner {
                         instrument,
                     },
                 );
+                return;
             }
         }
+
+        // Try get quote instrument market data info
+        let quote_exchange_instrument_data = self.exchange_data.0.get(&quote_exchange).and_then(
+            |base_exchange_instrument_market_data| {
+                base_exchange_instrument_market_data.0.get(&instrument)
+            },
+        );
+
+        // Else send error message and return or update response info
+        match quote_exchange_instrument_data {
+            Some(instrument_data) => {
+                // Set bid and ask for base exchange
+                response.quote_exchange_bids = Some(instrument_data.bids.clone());
+                response.quote_exchange_asks = Some(instrument_data.asks.clone());
+
+                // Set network info
+                let quote_exchange_network_info =
+                    self.network_status.0.get(&(quote_exchange, coin)).cloned();
+                response.quote_exchange_network_info = quote_exchange_network_info;
+            }
+            None => {
+                let _ = self.http_channel.http_response_tx.send(
+                    SpotArbScannerHttpResponse::CouldNotFindSpreadHistory {
+                        base_exchange,
+                        quote_exchange,
+                        instrument,
+                    },
+                );
+                return;
+            }
+        }
+
+        // If successful, send response back
+        let _ =
+            self.http_channel
+                .http_response_tx
+                .send(SpotArbScannerHttpResponse::GetSpreadHistory(Box::new(
+                    response,
+                )));
+    }
+
+    fn process_get_ws_connection_status(&mut self) {
+        let mut snapshot_time_based: u32 = 0;
+        let mut trade_time_based: u32 = 0;
+        let mut snapshot_ws_based: u32 = 0;
+        let mut trade_ws_based: u32 = 0;
+        let time_threshold = Utc::now() - Duration::minutes(2);
+
+        for (_, instrument_data_map) in self.exchange_data.0.iter() {
+            for (_, instrument_data) in instrument_data_map.0.iter() {
+                if instrument_data.orderbook_last_update_time > time_threshold {
+                    snapshot_time_based += 1;
+                }
+
+                if instrument_data.trades_last_update_time > time_threshold {
+                    trade_time_based += 1;
+                }
+
+                if instrument_data.orderbook_ws_is_connected {
+                    snapshot_ws_based += 1;
+                }
+
+                if instrument_data.trades_ws_is_connected {
+                    trade_ws_based += 1;
+                }
+            }
+        }
+
+        let _ = self.http_channel.http_response_tx.send(
+            SpotArbScannerHttpResponse::GetWsConnectionStatus {
+                snapshot_time_based,
+                trade_time_based,
+                snapshot_ws_based,
+                trade_ws_based,
+            },
+        );
     }
 
     pub fn run(mut self) {
@@ -579,6 +698,9 @@ impl SpotArbScanner {
                         quote_exchange,
                         instrument,
                     ),
+                    SpotArbScannerHttpRequests::GetWsConnectionStatus => {
+                        self.process_get_ws_connection_status()
+                    }
                 },
                 Err(error) => {
                     if error == mpsc::error::TryRecvError::Disconnected {
@@ -596,8 +718,9 @@ impl SpotArbScanner {
                 Ok(market_data) => {
                     // Del
                     if !self.market_data_stream.is_empty() {
-                        println!("{}", self.market_data_stream.len());
+                        // println!("{}", self.market_data_stream.len());
                     }
+                    // println!("{:?}", market_data);
                     // Del
 
                     match market_data.event_data {
@@ -606,12 +729,14 @@ impl SpotArbScanner {
                             market_data.instrument,
                             orderbook.bids,
                             orderbook.asks,
+                            market_data.exchange_time,
                         ),
                         DataKind::OrderBookSnapshot(snapshot) => self.process_orderbook(
                             market_data.exchange,
                             market_data.instrument,
                             snapshot.bids,
                             snapshot.asks,
+                            market_data.exchange_time,
                         ),
                         DataKind::Trade(trade) => self.process_trade(
                             market_data.exchange,
@@ -629,6 +754,7 @@ impl SpotArbScanner {
                             market_data.exchange,
                             market_data.instrument,
                             ws_status,
+                            market_data.exchange_time,
                         ),
                     }
                 }
@@ -643,8 +769,6 @@ impl SpotArbScanner {
                 }
             };
 
-            // println!("######### \n {:#?}", self.market_data_stream.len());
-
             // Process spreads - Have to do queue with enums to avoid borrowing rule errors
             while let Some(spread_change_process) = self.spread_change_queue.pop_front() {
                 match spread_change_process {
@@ -655,8 +779,6 @@ impl SpotArbScanner {
                         self.process_calculated_spreads(Utc::now(), calculated_spreads);
                     }
                 }
-
-                // println!("{:#?}", self.spreads_sorted);
             }
         }
     }
@@ -773,12 +895,14 @@ mod test {
     fn test_ws_status() {
         // Init
         let mut scanner = test_utils::spot_arb_scanner();
+        let time = Utc::now();
 
         // New orderbook connection success notification arrives for new exchange instrument combo
         scanner.process_ws_status(
             ExchangeId::BinanceSpot,
             Instrument::new("btc", "usdt"),
             WsStatus::Connected(EventKind::OrderBook),
+            time,
         );
 
         let result = scanner
@@ -792,7 +916,7 @@ mod test {
 
         let expected = InstrumentMarketData {
             orderbook_ws_is_connected: true,
-            ..InstrumentMarketData::default()
+            ..InstrumentMarketData::new(time)
         };
 
         assert_eq!(result, &expected);
@@ -802,6 +926,7 @@ mod test {
             ExchangeId::BinanceSpot,
             Instrument::new("btc", "usdt"),
             WsStatus::Connected(EventKind::Trade),
+            time,
         );
 
         let result = scanner
@@ -816,7 +941,7 @@ mod test {
         let expected = InstrumentMarketData {
             orderbook_ws_is_connected: true,
             trades_ws_is_connected: true,
-            ..InstrumentMarketData::default()
+            ..InstrumentMarketData::new(time)
         };
 
         assert_eq!(result, &expected);
@@ -826,6 +951,7 @@ mod test {
             ExchangeId::BinanceSpot,
             Instrument::new("btc", "usdt"),
             WsStatus::Disconnected(EventKind::OrderBook),
+            time,
         );
 
         let result = scanner
@@ -840,7 +966,7 @@ mod test {
         let expected = InstrumentMarketData {
             orderbook_ws_is_connected: false,
             trades_ws_is_connected: true,
-            ..InstrumentMarketData::default()
+            ..InstrumentMarketData::new(time)
         };
 
         assert_eq!(result, &expected);
@@ -850,6 +976,7 @@ mod test {
             ExchangeId::HtxSpot,
             Instrument::new("eth", "usdt"),
             WsStatus::Connected(EventKind::Trade),
+            time,
         );
 
         let result = scanner
@@ -863,7 +990,7 @@ mod test {
 
         let expected = InstrumentMarketData {
             trades_ws_is_connected: true,
-            ..InstrumentMarketData::default()
+            ..InstrumentMarketData::new(time)
         };
 
         assert_eq!(result, &expected);
@@ -873,6 +1000,7 @@ mod test {
             ExchangeId::HtxSpot,
             Instrument::new("eth", "usdt"),
             WsStatus::Connected(EventKind::OrderBook),
+            time,
         );
 
         let result = scanner
@@ -887,7 +1015,7 @@ mod test {
         let expected = InstrumentMarketData {
             orderbook_ws_is_connected: true,
             trades_ws_is_connected: true,
-            ..InstrumentMarketData::default()
+            ..InstrumentMarketData::new(time)
         };
 
         assert_eq!(result, &expected);
@@ -1078,6 +1206,7 @@ mod test {
             binance_btc_ob.instrument,
             binance_btc_ob.event_data.get_orderbook().unwrap().bids,
             binance_btc_ob.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         let binance_eth_ob = test_utils::market_event_orderbook2(
@@ -1092,6 +1221,7 @@ mod test {
             binance_eth_ob.instrument,
             binance_eth_ob.event_data.get_orderbook().unwrap().bids,
             binance_eth_ob.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         /*----- */
@@ -1109,6 +1239,7 @@ mod test {
             htx_btc_ob.instrument,
             htx_btc_ob.event_data.get_orderbook().unwrap().bids,
             htx_btc_ob.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         let htx_eth_ob = test_utils::market_event_orderbook2(
@@ -1123,6 +1254,7 @@ mod test {
             htx_eth_ob.instrument,
             htx_eth_ob.event_data.get_orderbook().unwrap().bids,
             htx_eth_ob.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         /*----- */
@@ -1148,6 +1280,7 @@ mod test {
                 .get_orderbook()
                 .unwrap()
                 .asks,
+            time,
         );
 
         let binance_eth_spread_change = test_utils::market_event_orderbook2(
@@ -1170,6 +1303,7 @@ mod test {
                 .get_orderbook()
                 .unwrap()
                 .asks,
+            time,
         );
 
         // Manually trigger SpreadChangeProcess for Binance
@@ -1209,12 +1343,10 @@ mod test {
         let binance_htx_btc_take_take = (13.5 / 15.12) - 1.0; // -0.107
         let binance_htx_btc_take_make = (14.5 / 15.12) - 1.0; // -0.0410
         let binance_htx_btc_make_take = (13.5 / 12.22) - 1.0; // 0.1047 --> doesn't get inserted as not the best spread for given instrument
-        let binance_htx_btc_make_make = (14.5 / 12.22) - 1.0; // 0.1866 --> 1
 
         let binance_htx_eth_take_take = (19.22 / 21.92) - 1.0; // -0.1231
         let binance_htx_eth_take_make = (20.11 / 21.92) - 1.0; // -0.0826
         let binance_htx_eth_make_take = (19.22 / 20.78) - 1.0; // -0.0751
-        let binance_htx_eth_make_make = (20.11 / 20.78) - 1.0; // -0.3224
 
         // Check Binance btc spread history
         let mut binance_btc_spread_history = SpreadHistory::default();
@@ -1233,11 +1365,6 @@ mod test {
         binance_btc_spread_history
             .make_take
             .push(time, binance_htx_btc_make_take);
-
-        binance_btc_spread_history.latest_spreads.make_make = binance_htx_btc_make_make;
-        binance_btc_spread_history
-            .make_make
-            .push(time, binance_htx_btc_make_make);
 
         let result = scanner
             .exchange_data
@@ -1271,11 +1398,6 @@ mod test {
         binance_eth_spread_history
             .make_take
             .push(time, binance_htx_eth_make_take);
-
-        binance_eth_spread_history.latest_spreads.make_make = binance_htx_eth_make_make;
-        binance_eth_spread_history
-            .make_make
-            .push(time, binance_htx_eth_make_make);
 
         let result = scanner
             .exchange_data
@@ -1316,6 +1438,7 @@ mod test {
                 .get_orderbook()
                 .unwrap()
                 .asks,
+            time,
         );
 
         let htx_eth_spread_change = test_utils::market_event_orderbook2(
@@ -1338,6 +1461,7 @@ mod test {
                 .get_orderbook()
                 .unwrap()
                 .asks,
+            time,
         );
 
         // Manually trigger SpreadChangeProcess for Htx
@@ -1377,12 +1501,10 @@ mod test {
         let htx_binance_btc_take_take = (12.22 / 18.02) - 1.0;
         let htx_binance_btc_take_make = (15.12 / 18.02) - 1.0;
         let htx_binance_btc_make_take = (12.22 / 13.12) - 1.0;
-        let htx_binance_btc_make_make = (15.12 / 13.12) - 1.0; // 0.1524
 
         let htx_binance_eth_take_take = (20.78 / 22.87) - 1.0;
         let htx_binance_eth_take_make = (21.92 / 22.87) - 1.0;
-        let htx_binance_eth_make_take = (20.78 / 20.0) - 1.0;
-        let htx_binance_eth_make_make = (21.92 / 20.0) - 1.0; // 0.096
+        let htx_binance_eth_make_take = (20.78 / 20.0) - 1.0; // 0.039
 
         // Check Htx btc spread history
         let mut htx_btc_spread_history = SpreadHistory::default();
@@ -1401,11 +1523,6 @@ mod test {
         htx_btc_spread_history
             .make_take
             .push(time, htx_binance_btc_make_take);
-
-        htx_btc_spread_history.latest_spreads.make_make = htx_binance_btc_make_make;
-        htx_btc_spread_history
-            .make_make
-            .push(time, htx_binance_btc_make_make);
 
         let result = scanner
             .exchange_data
@@ -1440,11 +1557,6 @@ mod test {
             .make_take
             .push(time, htx_binance_eth_make_take);
 
-        htx_eth_spread_history.latest_spreads.make_make = htx_binance_eth_make_make;
-        htx_eth_spread_history
-            .make_make
-            .push(time, htx_binance_eth_make_make);
-
         let result = scanner
             .exchange_data
             .0
@@ -1465,27 +1577,18 @@ mod test {
         /*----- */
         let mut expected_spread = SpreadsSorted::new();
 
-        let binance_htx_btc = SpreadKey::new(
-            ExchangeId::BinanceSpot,
-            ExchangeId::HtxSpot,
-            Instrument::new("btc", "usdt"),
-        );
-
-        let htx_binance_btc = SpreadKey::new(
-            ExchangeId::HtxSpot,
-            ExchangeId::BinanceSpot,
-            Instrument::new("btc", "usdt"),
-        );
-
-        let htx_binance_eth = SpreadKey::new(
+        let htx_binance_eth_spread_key = SpreadKey::new(
             ExchangeId::HtxSpot,
             ExchangeId::BinanceSpot,
             Instrument::new("eth", "usdt"),
         );
-
-        expected_spread.insert(binance_htx_btc, binance_htx_btc_make_make);
-        expected_spread.insert(htx_binance_btc, htx_binance_btc_make_make);
-        expected_spread.insert(htx_binance_eth, htx_binance_eth_make_make);
+        let binance_htx_btc_spread_key = SpreadKey::new(
+            ExchangeId::BinanceSpot,
+            ExchangeId::HtxSpot,
+            Instrument::new("btc", "usdt"),
+        );
+        expected_spread.insert(htx_binance_eth_spread_key, htx_binance_eth_make_take);
+        expected_spread.insert(binance_htx_btc_spread_key, binance_htx_btc_make_take);
 
         let result = scanner.spreads_sorted.snapshot();
         let expected = expected_spread.snapshot();
@@ -1496,6 +1599,7 @@ mod test {
     fn test_scanner_swap_existing_data() {
         let mut scanner = test_utils::spot_arb_scanner();
         let mut exchange_data_map = ExchangeMarketDataMap::default();
+        let time = Utc::now();
 
         // First orderbook update
         let binance_btc_ob = test_utils::market_event_orderbook(
@@ -1508,6 +1612,7 @@ mod test {
             binance_btc_ob.instrument,
             binance_btc_ob.event_data.get_orderbook().unwrap().bids,
             binance_btc_ob.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         // Second orderbook update
@@ -1526,11 +1631,12 @@ mod test {
             binance_btc_ob2.instrument,
             binance_btc_ob2.event_data.get_orderbook().unwrap().bids,
             binance_btc_ob2.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         // Expect swapped data
         let mut binance_instrument_map = InstrumentMarketDataMap::default();
-        let binance_instrument_data = InstrumentMarketData::new_orderbook(new_bids, new_asks);
+        let binance_instrument_data = InstrumentMarketData::new_orderbook(time, new_bids, new_asks);
 
         binance_instrument_map
             .0
@@ -1555,6 +1661,7 @@ mod test {
             binance_btc_ob3.instrument,
             binance_btc_ob3.event_data.get_orderbook().unwrap().bids,
             binance_btc_ob3.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         assert_eq!(scanner.exchange_data, exchange_data_map);
@@ -1573,6 +1680,7 @@ mod test {
             binance_btc_ob4.instrument,
             binance_btc_ob4.event_data.get_orderbook().unwrap().bids,
             binance_btc_ob4.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         let binance_market_data = exchange_data_map
@@ -1601,6 +1709,7 @@ mod test {
             binance_btc_ob5.instrument,
             binance_btc_ob5.event_data.get_orderbook().unwrap().bids,
             binance_btc_ob5.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         let binance_market_data = exchange_data_map
@@ -1621,6 +1730,7 @@ mod test {
         // Init
         let mut scanner = test_utils::spot_arb_scanner();
         let mut exchange_data_map = ExchangeMarketDataMap::default();
+        let time = Utc::now();
 
         // Binance
         let binance_btc_ob = test_utils::market_event_orderbook(
@@ -1633,12 +1743,13 @@ mod test {
             binance_btc_ob.instrument,
             binance_btc_ob.event_data.get_orderbook().unwrap().bids,
             binance_btc_ob.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         let mut binance_instrument_map = InstrumentMarketDataMap::default();
 
         let binance_instrument_data =
-            InstrumentMarketData::new_orderbook(test_utils::bids(), test_utils::asks());
+            InstrumentMarketData::new_orderbook(time, test_utils::bids(), test_utils::asks());
 
         binance_instrument_map
             .0
@@ -1661,12 +1772,13 @@ mod test {
             exmo_arb_ob.instrument,
             exmo_arb_ob.event_data.get_orderbook().unwrap().bids,
             exmo_arb_ob.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         let mut exmo_instrument_map = InstrumentMarketDataMap::default();
 
         let exmo_instrument_data =
-            InstrumentMarketData::new_orderbook(test_utils::bids(), test_utils::asks());
+            InstrumentMarketData::new_orderbook(time, test_utils::bids(), test_utils::asks());
 
         exmo_instrument_map
             .0
@@ -1687,12 +1799,13 @@ mod test {
             htx_op_ob.instrument,
             htx_op_ob.event_data.get_orderbook().unwrap().bids,
             htx_op_ob.event_data.get_orderbook().unwrap().asks,
+            time,
         );
 
         let mut htx_instrument_map = InstrumentMarketDataMap::default();
 
         let htx_instrument_data =
-            InstrumentMarketData::new_orderbook(test_utils::bids(), test_utils::asks());
+            InstrumentMarketData::new_orderbook(time, test_utils::bids(), test_utils::asks());
 
         htx_instrument_map
             .0

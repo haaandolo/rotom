@@ -69,11 +69,7 @@ impl OrderBookUpdater for AscendExSpotBookUpdater {
         // )?;
 
         let ticker_infos = AscendExSpotPublicData::get_ticker_info(instrument.clone()).await?;
-        std::thread::sleep(std::time::Duration::from_millis(500));
-
         let snapshot = AscendExSpotPublicData::get_book_snapshot(instrument.clone()).await?;
-        std::thread::sleep(std::time::Duration::from_millis(500));
-
         let ticker_formatted = AssetFormatted::from((&ExchangeId::AscendExSpot, instrument));
 
         // Note: we cannot get ticker info for one pair we have to get for every single one

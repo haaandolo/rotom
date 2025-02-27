@@ -15,7 +15,7 @@ use crate::{
     error::SocketError,
     model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trade},
     protocols::ws::{PingInterval, WsMessage},
-    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
+    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument, StreamKind},
     transformer::stateless_transformer::StatelessTransformer,
 };
 
@@ -26,6 +26,8 @@ pub struct KuCoinSpotPublicData;
 
 impl PublicStreamConnector for KuCoinSpotPublicData {
     const ID: ExchangeId = ExchangeId::KuCoinSpot;
+    const ORDERBOOK: StreamKind = StreamKind::Snapshot;
+    const TRADE: StreamKind = StreamKind::Trade;
 
     type Channel = KuCoinChannel;
     type Market = KuCoinMarket;
@@ -129,7 +131,32 @@ impl PublicHttpConnector for KuCoinSpotPublicData {
     }
 
     async fn get_usdt_pair() -> Result<Vec<(String, String)>, SocketError> {
-        unimplemented!()
+        let request_path = "/api/v2/symbols";
+
+        let response = reqwest::get(format!("{}{}", KUCOIN_BASE_HTTP_URL, request_path))
+            .await
+            .map_err(SocketError::Http)?
+            .json::<serde_json::Value>()
+            .await
+            .map_err(SocketError::Http)?;
+
+        let tickers = response["data"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|ticker| {
+                let base = ticker["baseCurrency"].as_str().unwrap().to_lowercase();
+                let quote = ticker["quoteCurrency"].as_str().unwrap().to_lowercase();
+                let status = ticker["enableTrading"].as_bool().unwrap();
+                if quote == "usdt" && status {
+                    Some((base, quote))
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        Ok(tickers)
     }
 }
 

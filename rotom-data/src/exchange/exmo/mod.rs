@@ -9,7 +9,7 @@ use crate::{
     error::SocketError,
     model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trades},
     protocols::ws::WsMessage,
-    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
+    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument, StreamKind},
     transformer::stateless_transformer::StatelessTransformer,
 };
 
@@ -26,6 +26,8 @@ pub struct ExmoSpotPublicData;
 
 impl PublicStreamConnector for ExmoSpotPublicData {
     const ID: ExchangeId = ExchangeId::ExmoSpot;
+    const ORDERBOOK: StreamKind = StreamKind::Snapshot;
+    const TRADE: StreamKind = StreamKind::Trades;
 
     type Channel = ExmoChannel;
     type Market = ExmoMarket;
@@ -97,7 +99,35 @@ impl PublicHttpConnector for ExmoSpotPublicData {
     }
 
     async fn get_usdt_pair() -> Result<Vec<(String, String)>, SocketError> {
-        unimplemented!()
+        let request_path = "/pair_settings";
+
+        let response = reqwest::Client::new()
+            .post(format!("{}{}", EXMO_BASE_HTTP_URL, request_path))
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .send()
+            .await
+            .map_err(SocketError::Http)?
+            .json::<serde_json::Value>()
+            .await
+            .map_err(SocketError::Http)?;
+
+        let tickers = response
+            .as_object()
+            .unwrap()
+            .iter()
+            .filter_map(|(ticker, _)| {
+                let mut ticker_split = ticker.split("_");
+                let base = ticker_split.next().unwrap_or("").to_lowercase();
+                let quote = ticker_split.next().unwrap_or("").to_lowercase();
+                if quote == "usdt" {
+                    Some((base, quote))
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        Ok(tickers)
     }
 }
 

@@ -9,7 +9,7 @@ use crate::{
     error::SocketError,
     model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trades},
     protocols::ws::WsMessage,
-    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
+    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument, StreamKind},
     transformer::stateless_transformer::StatelessTransformer,
 };
 
@@ -26,6 +26,8 @@ const COINEX_SPOT_WS_URL: &str = "wss://socket.coinex.com/v2/spot";
 
 impl PublicStreamConnector for CoinExSpotPublicData {
     const ID: ExchangeId = ExchangeId::CoinExSpot;
+    const ORDERBOOK: StreamKind = StreamKind::Snapshot;
+    const TRADE: StreamKind = StreamKind::Trades;
 
     type Channel = CoinExChannel;
     type Market = CoinExMarket;
@@ -124,7 +126,49 @@ impl PublicHttpConnector for CoinExSpotPublicData {
     }
 
     async fn get_usdt_pair() -> Result<Vec<(String, String)>, SocketError> {
-        unimplemented!()
+        // Get tickers that meet volume threshold
+        let request_path = "/spot/ticker";
+        let response = reqwest::get(format!("{}{}", COINEX_BASE_HTTP_URL, request_path))
+            .await
+            .map_err(SocketError::Http)?
+            .json::<serde_json::Value>()
+            .await
+            .map_err(SocketError::Http)?;
+
+        let volume_threshold = Self::get_volume_threshold() as f64;
+        let tickers = response["data"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|ticker| {
+                let quote = String::from("usdt");
+                let symbol = ticker["market"].as_str().unwrap().to_lowercase();
+                let volume = ticker["volume"]
+                    .as_str()
+                    .unwrap_or("0.0")
+                    .trim_matches('"') // This removes quotation marks
+                    .parse::<f64>()
+                    .unwrap_or(0.0);
+
+                let last_price = ticker["last"]
+                    .as_str()
+                    .unwrap_or("0.0")
+                    .trim_matches('"') // This removes quotation marks
+                    .parse::<f64>()
+                    .unwrap_or(0.0);
+
+                let volume_in_usdt = volume * last_price;
+
+                if symbol.contains(quote.as_str()) && volume_in_usdt > volume_threshold {
+                    let base = symbol.replace(quote.as_str(), "");
+                    Some((base, quote))
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        Ok(tickers)
     }
 }
 

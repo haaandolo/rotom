@@ -16,7 +16,7 @@ use crate::{
     error::SocketError,
     model::{event_book_snapshot::OrderBookSnapshot, event_trade::Trade},
     protocols::ws::{PingInterval, WsMessage},
-    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument},
+    shared::subscription_models::{ExchangeId, ExchangeSubscription, Instrument, StreamKind},
     transformer::stateless_transformer::StatelessTransformer,
 };
 
@@ -24,10 +24,12 @@ use super::{PublicHttpConnector, PublicStreamConnector, StreamSelector};
 #[derive(Debug, Default, Eq, PartialEq, Hash, Ord, PartialOrd, Clone)]
 pub struct OkxSpotPublicData;
 
-const OKX_SPOT_WS_URL: &str = "wss://wspap.okx.com:8443/ws/v5/public";
+const OKX_SPOT_WS_URL: &str = "wss://wseea.okx.com:8443/ws/v5/public";
 
 impl PublicStreamConnector for OkxSpotPublicData {
     const ID: ExchangeId = ExchangeId::OkxSpot;
+    const ORDERBOOK: StreamKind = StreamKind::Snapshot;
+    const TRADE: StreamKind = StreamKind::Trade;
 
     type Channel = OkxChannel;
     type Market = OkxMarket;
@@ -68,7 +70,7 @@ pub const OKX_BASE_HTTP_URL: &str = "https://www.okx.com";
 
 #[async_trait]
 impl PublicHttpConnector for OkxSpotPublicData {
-    const ID: ExchangeId = ExchangeId::HtxSpot;
+    const ID: ExchangeId = ExchangeId::OkxSpot;
 
     type BookSnapShot = serde_json::Value;
     type ExchangeTickerInfo = serde_json::Value;
@@ -120,7 +122,7 @@ impl PublicHttpConnector for OkxSpotPublicData {
     }
 
     async fn get_usdt_pair() -> Result<Vec<(String, String)>, SocketError> {
-        let request_path = "/api/v5/public/instruments?instType=SPOT"; 
+        let request_path = "/api/v5/market/tickers?instType=SPOT";
 
         let response = reqwest::get(format!("{}{}", OKX_BASE_HTTP_URL, request_path))
             .await
@@ -134,12 +136,24 @@ impl PublicHttpConnector for OkxSpotPublicData {
             .unwrap()
             .iter()
             .filter_map(|ticker| {
-                let base_asset = ticker["baseCcy"].as_str().unwrap().to_lowercase();
-                let quote_asset = ticker["quoteCcy"].as_str().unwrap().to_lowercase();
-                if quote_asset == "usdt" {
-                    Some((base_asset, quote_asset))
+                let symbol = ticker["instId"].as_str().unwrap().to_lowercase();
+                let mut symbol_split = symbol.split("-");
+
+                let base = symbol_split.next().unwrap_or("").to_string();
+                let quote = symbol_split.next().unwrap_or("").to_string();
+
+                let volume_threshold = Self::get_volume_threshold() as f64;
+                let volume = ticker["volCcy24h"]
+                    .as_str()
+                    .unwrap_or("0.0")
+                    .trim_matches('"') // This removes quotation marks
+                    .parse::<f64>()
+                    .unwrap_or(0.0);
+
+                if quote == "usdt" && volume > volume_threshold {
+                    Some((base, quote))
                 } else {
-                    None 
+                    None
                 }
             })
             .collect::<Vec<_>>();

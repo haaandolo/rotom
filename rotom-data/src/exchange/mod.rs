@@ -15,7 +15,7 @@ use serde::de::DeserializeOwned;
 use std::{fmt::Debug, time::Duration};
 
 use crate::{
-    error::SocketError, model::ticker_info::TickerInfo, shared::subscription_models::Instrument,
+    error::SocketError, model::ticker_info::TickerInfo, shared::subscription_models::{Instrument, StreamKind},
 };
 
 use super::{
@@ -26,6 +26,8 @@ use super::{
     transformer::Transformer,
 };
 
+const VOLUME_THRESHOLD: u64 = 100000;
+const DEFAULT_WS_STREAM_CHUNK: usize = 50;
 pub const DEFAULT_SUBSCRIPTION_TIMEOUT: Duration = Duration::from_secs(10);
 
 /*----- */
@@ -33,6 +35,8 @@ pub const DEFAULT_SUBSCRIPTION_TIMEOUT: Duration = Duration::from_secs(10);
 /*----- */
 pub trait PublicStreamConnector {
     const ID: ExchangeId;
+    const ORDERBOOK: StreamKind;
+    const TRADE: StreamKind;
 
     type Channel: Send + Sync;
     type Market: Send + Sync;
@@ -62,6 +66,10 @@ pub trait PublicStreamConnector {
     fn subscription_validation_timeout() -> Duration {
         DEFAULT_SUBSCRIPTION_TIMEOUT
     }
+
+    fn ws_chunk_size() -> usize {
+        DEFAULT_WS_STREAM_CHUNK
+    }
 }
 
 /*----- */
@@ -69,11 +77,10 @@ pub trait PublicStreamConnector {
 /*----- */
 #[async_trait]
 pub trait PublicHttpConnector {
+    const ID: ExchangeId;
     type BookSnapShot: Send + Debug;
     type ExchangeTickerInfo: Into<TickerInfo> + Send + Debug;
     type NetworkInfo: Send + Debug;
-
-    const ID: ExchangeId;
 
     async fn get_book_snapshot(instrument: Instrument) -> Result<Self::BookSnapShot, SocketError>;
 
@@ -86,6 +93,10 @@ pub trait PublicHttpConnector {
     ) -> Result<Self::NetworkInfo, SocketError>;
 
     async fn get_usdt_pair() -> Result<Vec<(String, String)>, SocketError>;
+
+    fn get_volume_threshold() -> u64 {
+        VOLUME_THRESHOLD
+    }
 }
 
 /*----- */
