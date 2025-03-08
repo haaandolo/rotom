@@ -1,14 +1,15 @@
 use futures::StreamExt;
 use rotom_data::{
     exchange::{
-        coinex::CoinExSpotPublicData, exmo::ExmoSpotPublicData, htx::HtxSpotPublicData,
-        kucoin::KuCoinSpotPublicData, okx::OkxSpotPublicData, woox::WooxSpotPublicData,
+        binance::BinanceSpotPublicData, coinex::CoinExSpotPublicData, exmo::ExmoSpotPublicData,
+        htx::HtxSpotPublicData, kucoin::KuCoinSpotPublicData, okx::OkxSpotPublicData,
+        woox::WooxSpotPublicData,
     },
     model::{
         market_event::{DataKind, MarketEvent},
         network_info::NetworkSpecs,
     },
-    shared::subscription_models::Instrument,
+    shared::subscription_models::{ExchangeId, Instrument, StreamKind},
     streams::dynamic_stream::DynamicStreams,
 };
 use tokio::sync::mpsc;
@@ -74,6 +75,38 @@ pub async fn get_spot_arb_data_streams() -> (
     // Exmo - (Trades, Snapshot) <--- 50 chunks
     // Ascendex - (Trades, L2)
     // Phemex (one ws conn per ticker) - (Trades, L2)
+
+    // network status - woox, kucoin, 
+    
+    /*------ */
+    // Testing streams
+    /*------ */
+    // let streams = DynamicStreams::init([vec![
+    //     // Binance
+    //     (ExchangeId::OkxSpot, "ada", "usdt", StreamKind::Trade),
+    //     (ExchangeId::OkxSpot, "ada", "usdt", StreamKind::Snapshot),
+    //     (ExchangeId::OkxSpot, "icp", "usdt", StreamKind::Trade),
+    //     (ExchangeId::OkxSpot, "icp", "usdt", StreamKind::Snapshot),
+    //     (ExchangeId::OkxSpot, "sol", "usdt", StreamKind::Trade),
+    //     (ExchangeId::OkxSpot, "sol", "usdt", StreamKind::Snapshot),
+    //     // Htx
+    //     (ExchangeId::HtxSpot, "ada", "usdt", StreamKind::Trades),
+    //     (ExchangeId::HtxSpot, "ada", "usdt", StreamKind::Snapshot),
+    //     (ExchangeId::HtxSpot, "icp", "usdt", StreamKind::Trades),
+    //     (ExchangeId::HtxSpot, "icp", "usdt", StreamKind::Snapshot),
+    //     (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Trades),
+    //     (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Snapshot),
+    //     // CoinEx
+    //     (ExchangeId::KuCoinSpot, "ada", "usdt", StreamKind::Trade),
+    //     (ExchangeId::KuCoinSpot, "ada", "usdt", StreamKind::Snapshot),
+    //     (ExchangeId::KuCoinSpot, "icp", "usdt", StreamKind::Trade),
+    //     (ExchangeId::KuCoinSpot, "icp", "usdt", StreamKind::Snapshot),
+    //     (ExchangeId::KuCoinSpot, "sol", "usdt", StreamKind::Trade),
+    //     (ExchangeId::KuCoinSpot, "sol", "usdt", StreamKind::Snapshot),
+    // ]])
+    // .await
+    // .unwrap();
+
     let streams = DynamicStreams::init(stream_init).await.unwrap();
     let mut data = streams.select_all::<MarketEvent<DataKind>>();
     let (market_data_tx, market_data_rx) = mpsc::unbounded_channel();

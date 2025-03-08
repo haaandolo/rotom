@@ -77,9 +77,10 @@ impl<T> VecDequeTime<T> {
 /*----- */
 #[derive(Debug, Serialize, Default)]
 pub struct AverageTradeInfo {
-    pub avg_price: f64,
-    pub cum_size: f64,
-    pub notional_amount: f64,
+    pub avg_price: f64, // avg price in last 10min
+    pub avg_notional: f64,
+    pub avg_buy_notional: f64,
+    pub avg_sell_notional: f64,
     pub buy_sell_ratio: f64,
 }
 
@@ -140,24 +141,40 @@ impl InstrumentMarketData {
             return AverageTradeInfo::default();
         }
 
-        let (total_price, total_size, buy_count, count) = self.trades.data.iter().fold(
-            (0.0, 0.0, 0, 0.0),
-            |(price_sum, size_sum, buy_count, count), (_, trade)| {
-                (
-                    price_sum + trade.trade.price,
-                    size_sum + trade.trade.size,
-                    buy_count + trade.is_buy as usize,
-                    count + 1.0,
-                )
-            },
-        );
+        let (price_sum, total_volume, buy_count, count, buy_volume, sell_volume) =
+            self.trades.data.iter().fold(
+                (0.0, 0.0, 0, 0.0, 0.0, 0.0),
+                |(price_sum, size_sum, buy_count, count, buy_volume, sell_volume), (_, trade)| {
+                    let new_buy_volume = if trade.is_buy {
+                        buy_volume + trade.trade.size
+                    } else {
+                        buy_volume
+                    };
 
-        let avg_price = total_price / count;
+                    let new_sell_volume = if !trade.is_buy {
+                        sell_volume + trade.trade.size
+                    } else {
+                        sell_volume
+                    };
+
+                    (
+                        price_sum + trade.trade.price,
+                        size_sum + trade.trade.size,
+                        buy_count + trade.is_buy as usize,
+                        count + 1.0,
+                        new_buy_volume,
+                        new_sell_volume,
+                    )
+                },
+            );
+
+        let avg_price = price_sum / count;
 
         AverageTradeInfo {
             avg_price,
-            cum_size: total_size,
-            notional_amount: avg_price * total_size,
+            avg_notional: avg_price * total_volume,
+            avg_buy_notional: avg_price * buy_volume,
+            avg_sell_notional: avg_price * sell_volume,
             buy_sell_ratio: buy_count as f64 / count,
         }
     }
