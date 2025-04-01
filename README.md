@@ -43,4 +43,11 @@ The scanner functions as a lightweight Redis-like instance with built-in monitor
 Built on an Actix web framework foundation, the system leverages Tokio channels for efficient request-response handling. While the current implementation uses a single-producer model optimized for individual user access, this design choice was intentional to maintain simplicity and performance for the primary use case.
 
 ### Implementation Details
-For a complete understanding of the scanner's operation and API usage patterns, refer to the test suite located at rotom-scanner/spot_scanner/scanner/mod_test.rs. These tests demonstrate the full request lifecycle and expected responses.RetryClaude can make mistakes. Please double-check responses.
+For a complete understanding of the scanner's operation and API usage patterns, refer to the test suite located at `rotom-scanner/spot_scanner/scanner/mod_test`. These tests demonstrate the full request lifecycle and expected responses.
+
+### Endpoints
+After the cargo run we can use these endpoints from postman or a front end web app to get the current top spreads. Please refer to `example_responses` for return responses
+
+Health of scanner: `http://localhost:8080/ws-status`
+Get top spreads: `http://localhost:8080/`
+Get spread history of specific currency pair: `http://localhost:8080/spread-history?base_exchange=WooxSpot&quote_exchange=KuCoinSpot&base_instrument=kaito&quote_instrument=usdt`

@@ -1,0 +1,499 @@
+{
+    "GetTopSpreads": [
+        {
+            "base_exchange": "OkxSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.0,
+                "buy_sell_ratio": 0.0,
+                "cum_size": 0.0
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ICP-Dfinity",
+                    "fee_is_fixed": true,
+                    "fees": 0.00024
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "icp",
+                "quote": "usdt"
+            },
+            "quote_exchange": "HtxSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.0,
+                "buy_sell_ratio": 0.0,
+                "cum_size": 0.0
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ICP",
+                    "fee_is_fixed": true,
+                    "fees": 0.0003
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.0009953078344944188,
+                "make_take": -0.0004265605004977191,
+                "take_make": 0.000710732054015617,
+                "take_take": -0.000710732054015617
+            }
+        },
+        {
+            "base_exchange": "OkxSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 170.5936842105263,
+                "buy_sell_ratio": 0.5789473684210527,
+                "cum_size": 611.385769
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "SOL-Solana",
+                    "fee_is_fixed": true,
+                    "fees": 0.003
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "sol",
+                "quote": "usdt"
+            },
+            "quote_exchange": "HtxSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 170.63799999999998,
+                "buy_sell_ratio": 0.21621621621621623,
+                "cum_size": 293.65600000000006
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "SOLANA",
+                    "fee_is_fixed": true,
+                    "fees": 0.01
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.0004450829766022846,
+                "make_take": 0.0002199026564240203,
+                "take_make": 0.00038641960830299027,
+                "take_take": 0.0001612524920839853
+            }
+        },
+        {
+            "base_exchange": "BinanceSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 7.0335,
+                "buy_sell_ratio": 0.5,
+                "cum_size": 197.59000000000003
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ICP",
+                    "fee_is_fixed": true,
+                    "fees": 0.0003
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "icp",
+                "quote": "usdt"
+            },
+            "quote_exchange": "OkxSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.0,
+                "buy_sell_ratio": 0.0,
+                "cum_size": 0.0
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ICP-Dfinity",
+                    "fee_is_fixed": true,
+                    "fees": 0.00024
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.0004265605004976081,
+                "make_take": -0.0002843736669985164,
+                "take_make": 0.0002843332385555897,
+                "take_take": -0.0004264998578333845
+            }
+        },
+        {
+            "base_exchange": "BinanceSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 170.5893859649124,
+                "buy_sell_ratio": 0.6842105263157895,
+                "cum_size": 767.8989999999997
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "BSC",
+                    "fee_is_fixed": true,
+                    "fees": 0.0038
+                },
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "SOL",
+                    "fee_is_fixed": true,
+                    "fees": 0.001
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "sol",
+                "quote": "usdt"
+            },
+            "quote_exchange": "HtxSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 170.63799999999998,
+                "buy_sell_ratio": 0.21621621621621623,
+                "cum_size": 293.65600000000006
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "SOLANA",
+                    "fee_is_fixed": true,
+                    "fees": 0.01
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.00034701055099661815,
+                "make_take": 0.0001494724501758249,
+                "take_make": 0.00028837700017581014,
+                "take_take": 0.00009085047769752386
+            }
+        },
+        {
+            "base_exchange": "BinanceSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.7671533333333332,
+                "buy_sell_ratio": 0.6,
+                "cum_size": 32298.499999999996
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "BSC",
+                    "fee_is_fixed": true,
+                    "fees": 0.84
+                },
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ADA",
+                    "fee_is_fixed": true,
+                    "fees": 0.8
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "ada",
+                "quote": "usdt"
+            },
+            "quote_exchange": "OkxSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.0,
+                "buy_sell_ratio": 0.0,
+                "cum_size": 0.0
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ADA-Cardano",
+                    "fee_is_fixed": true,
+                    "fees": 0.8
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.00026072220049533357,
+                "make_take": 0.00013036110024766678,
+                "take_make": 0.00013034410844636746,
+                "take_take": 0.0
+            }
+        },
+        {
+            "base_exchange": "HtxSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.7670612590361442,
+                "buy_sell_ratio": 0.4939759036144578,
+                "cum_size": 37877.88750000001
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ADA",
+                    "fee_is_fixed": true,
+                    "fees": 1.0
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "ada",
+                "quote": "usdt"
+            },
+            "quote_exchange": "BinanceSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.7671533333333332,
+                "buy_sell_ratio": 0.6,
+                "cum_size": 32298.499999999996
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "BSC",
+                    "fee_is_fixed": true,
+                    "fees": 0.84
+                },
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ADA",
+                    "fee_is_fixed": true,
+                    "fees": 0.8
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.00022945826988451934,
+                "make_take": 0.00009908425290472422,
+                "take_make": 0.00005865828939377593,
+                "take_take": -0.00007169346481483707
+            }
+        },
+        {
+            "base_exchange": "BinanceSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.7671533333333332,
+                "buy_sell_ratio": 0.6,
+                "cum_size": 32298.499999999996
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "BSC",
+                    "fee_is_fixed": true,
+                    "fees": 0.84
+                },
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ADA",
+                    "fee_is_fixed": true,
+                    "fees": 0.8
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "ada",
+                "quote": "usdt"
+            },
+            "quote_exchange": "HtxSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 0.7670612590361442,
+                "buy_sell_ratio": 0.4939759036144578,
+                "cum_size": 37877.88750000001
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ADA",
+                    "fee_is_fixed": true,
+                    "fees": 1.0
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.0002111849824011358,
+                "make_take": -0.00020075609438141573,
+                "take_make": 0.00008081334723675226,
+                "take_take": -0.00033107403545351577
+            }
+        },
+        {
+            "base_exchange": "HtxSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 170.63799999999998,
+                "buy_sell_ratio": 0.21621621621621623,
+                "cum_size": 293.65600000000006
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "SOLANA",
+                    "fee_is_fixed": true,
+                    "fees": 0.01
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "sol",
+                "quote": "usdt"
+            },
+            "quote_exchange": "OkxSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 170.5936842105263,
+                "buy_sell_ratio": 0.5789473684210527,
+                "cum_size": 611.385769
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "SOL-Solana",
+                    "fee_is_fixed": true,
+                    "fees": 0.003
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": -0.0005040263500287745,
+                "make_take": -0.0005626340651483375,
+                "take_make": -0.0006984680579775748,
+                "take_take": -0.0007570643715661962
+            }
+        },
+        {
+            "base_exchange": "OkxSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 170.5936842105263,
+                "buy_sell_ratio": 0.5789473684210527,
+                "cum_size": 611.385769
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "SOL-Solana",
+                    "fee_is_fixed": true,
+                    "fees": 0.003
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "sol",
+                "quote": "usdt"
+            },
+            "quote_exchange": "BinanceSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 170.5893859649124,
+                "buy_sell_ratio": 0.6842105263157895,
+                "cum_size": 767.8989999999997
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "BSC",
+                    "fee_is_fixed": true,
+                    "fees": 0.0038
+                },
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "SOL",
+                    "fee_is_fixed": true,
+                    "fees": 0.001
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.00017592212513917183,
+                "make_take": 0.00011728141675959591,
+                "take_make": 0.00011727453969756496,
+                "take_take": 0.00005863726984878248
+            }
+        },
+        {
+            "base_exchange": "OkxSpot",
+            "base_exchange_avg_trade_info": {
+                "avg_price": 0.0,
+                "buy_sell_ratio": 0.0,
+                "cum_size": 0.0
+            },
+            "base_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ICP-Dfinity",
+                    "fee_is_fixed": true,
+                    "fees": 0.00024
+                }
+            ],
+            "base_exchange_orderbook_ws_is_connected": true,
+            "base_exchange_trades_ws_is_connected": true,
+            "instrument": {
+                "base": "icp",
+                "quote": "usdt"
+            },
+            "quote_exchange": "BinanceSpot",
+            "quote_exchange_avg_trade_info": {
+                "avg_price": 7.0335,
+                "buy_sell_ratio": 0.5,
+                "cum_size": 197.59000000000003
+            },
+            "quote_exchange_network_info": [
+                {
+                    "can_deposit": true,
+                    "can_withdraw": true,
+                    "chain_name": "ICP",
+                    "fee_is_fixed": true,
+                    "fees": 0.0003
+                }
+            ],
+            "quote_exchange_orderbook_ws_is_connected": true,
+            "quote_exchange_trades_ws_is_connected": true,
+            "spreads": {
+                "make_make": 0.0001421868334992027,
+                "make_take": 0.0,
+                "take_make": -0.0001421464108031234,
+                "take_take": -0.0002842928216062468
+            }
+        }
+    ]
+}
