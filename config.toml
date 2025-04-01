@@ -1,0 +1,17 @@
+[env]
+# Binance
+BINANCE_API_KEY = ""
+BINANCE_API_SECRET = ""
+
+# Poloniex
+POLONIEX_API_KEY = ""
+POLONIEX_API_SECRET = ""
+
+# Okx
+OKX_API_KEY = ""
+OKX_API_SECRET = ""
+OKX_PASSPHRASE = ""
+
+# Phemex
+PHEMEX_API_KEY = ""
+PHEMEX_API_SECRET = ""

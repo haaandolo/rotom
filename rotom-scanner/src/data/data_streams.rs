@@ -62,18 +62,6 @@ pub async fn get_spot_arb_data_streams() -> (
         .await
         .build();
 
-    /*----- */
-    // Market data stream
-    /*----- */
-    // Binance - (trade, l2)
-    // Htx - (trades, snapshot) <--- 50 chunks
-    // Woo X (one ws conn per ticker) - (trade, snapshot) <--- 1 chunk
-    // Coinex - (trades, snapshot) <--- 50 chunks
-    // Okx - (trade,  snapshot)  <--- 50 chunks
-    // Kucoin - (trade, snaphshot) <--- 50 chunks
-    // Exmo - (Trades, Snapshot) <--- 50 chunks
-    // Ascendex - (Trades, L2)
-    // Phemex (one ws conn per ticker) - (Trades, L2)
     let streams = DynamicStreams::init(stream_init).await.unwrap();
     let mut data = streams.select_all::<MarketEvent<DataKind>>();
     let (market_data_tx, market_data_rx) = mpsc::unbounded_channel();

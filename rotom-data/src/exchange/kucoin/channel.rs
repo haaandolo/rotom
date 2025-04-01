@@ -11,7 +11,7 @@ pub struct KuCoinChannel(pub &'static str);
 
 impl KuCoinChannel {
     pub const TRADES: Self = Self("/market/match:");
-    pub const ORDERBOOKSNAPSHOT: Self = Self("/spotMarket/level2Depth5:");
+    pub const ORDERBOOKSNAPSHOT: Self = Self("/spotMarket/level2Depth50:");
 }
 
 impl AsRef<str> for KuCoinChannel {

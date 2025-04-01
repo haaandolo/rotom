@@ -106,14 +106,14 @@ pub struct SpreadResponse {
     pub quote_exchange: ExchangeId,
     pub instrument: Instrument,
     pub spread: f64,
-    pub base_exchange_avg_trade_info: AverageTradeInfo,
-    pub quote_exchange_avg_trade_info: AverageTradeInfo,
-    pub base_exchange_network_info: Option<NetworkSpecData>,
-    pub quote_exchange_network_info: Option<NetworkSpecData>,
-    pub base_exchange_trades_ws_is_connected: bool,
-    pub base_exchange_orderbook_ws_is_connected: bool,
-    pub quote_exchange_trades_ws_is_connected: bool,
-    pub quote_exchange_orderbook_ws_is_connected: bool,
+    pub base_avg_trade_info: AverageTradeInfo,
+    pub quote_avg_trade_info: AverageTradeInfo,
+    pub base_network_info: Option<NetworkSpecData>,
+    pub quote_network_info: Option<NetworkSpecData>,
+    pub base_trades_ws: bool,
+    pub base_orderbook_ws: bool,
+    pub quote_trades_ws: bool,
+    pub quote_orderbook_ws: bool,
 }
 
 /*----- */
@@ -125,12 +125,14 @@ pub struct SpreadHistoryResponse {
     pub quote_exchange: ExchangeId,
     pub instrument: Instrument,
     pub spread_history: Option<SpreadHistory>,
-    pub base_exchange_bids: Option<Vec<Level>>,
-    pub base_exchange_asks: Option<Vec<Level>>,
-    pub quote_exchange_bids: Option<Vec<Level>>,
-    pub quote_exchange_asks: Option<Vec<Level>>,
-    pub base_exchange_network_info: Option<NetworkSpecData>,
-    pub quote_exchange_network_info: Option<NetworkSpecData>,
+    pub base_bids: Option<Vec<Level>>,
+    pub base_asks: Option<Vec<Level>>,
+    pub quote_bids: Option<Vec<Level>>,
+    pub quote_asks: Option<Vec<Level>>,
+    pub base_network_info: Option<NetworkSpecData>,
+    pub quote_network_info: Option<NetworkSpecData>,
+    pub base_avg_trade_info: AverageTradeInfo,
+    pub quote_avg_trade_info: AverageTradeInfo,
 }
 
 impl SpreadHistoryResponse {
@@ -144,12 +146,14 @@ impl SpreadHistoryResponse {
             quote_exchange,
             instrument,
             spread_history: None,
-            base_exchange_bids: None,
-            base_exchange_asks: None,
-            quote_exchange_bids: None,
-            quote_exchange_asks: None,
-            base_exchange_network_info: None,
-            quote_exchange_network_info: None,
+            base_bids: None,
+            base_asks: None,
+            quote_bids: None,
+            quote_asks: None,
+            base_network_info: None,
+            quote_network_info: None,
+            base_avg_trade_info: AverageTradeInfo::default(),
+            quote_avg_trade_info: AverageTradeInfo::default(),
         }
     }
 }
@@ -472,17 +476,15 @@ impl SpotArbScanner {
                     .get(&instrument)
                     .unwrap(); // Should never fail
 
-                let base_exchange_network_info = self
+                let base_network_info = self
                     .network_status
                     .0
                     .get(&(base_exchange, coin.clone()))
                     .cloned();
 
-                let base_exchange_trades_ws_is_connected =
-                    base_exchange_data.trades_ws_is_connected;
-                let base_exchange_orderbook_ws_is_connected =
-                    base_exchange_data.orderbook_ws_is_connected;
-                let base_exchange_avg_trade_info = base_exchange_data.get_average_trades();
+                let base_trades_ws = base_exchange_data.trades_ws_is_connected;
+                let base_orderbook_ws = base_exchange_data.orderbook_ws_is_connected;
+                let base_avg_trade_info = base_exchange_data.get_average_trades();
 
                 // Get relevant quote exchange info
                 let quote_exchange_data = self
@@ -494,35 +496,31 @@ impl SpotArbScanner {
                     .get(&instrument)
                     .unwrap(); // Should never fail
 
-                let quote_exchange_network_info =
+                let quote_network_info =
                     self.network_status.0.get(&(quote_exchange, coin)).cloned();
 
-                let quote_exchange_trades_ws_is_connected =
-                    quote_exchange_data.trades_ws_is_connected;
-                let quote_exchange_orderbook_ws_is_connected =
-                    quote_exchange_data.orderbook_ws_is_connected;
-                let quote_exchange_avg_trade_info = quote_exchange_data.get_average_trades();
+                let quote_trades_ws = quote_exchange_data.trades_ws_is_connected;
+                let quote_orderbook_ws = quote_exchange_data.orderbook_ws_is_connected;
+                let quote_avg_trade_info = quote_exchange_data.get_average_trades();
 
                 let response = SpreadResponse {
                     base_exchange,
                     quote_exchange,
                     instrument,
                     spread,
-                    base_exchange_avg_trade_info,
-                    quote_exchange_avg_trade_info,
-                    base_exchange_network_info,
-                    quote_exchange_network_info,
-                    base_exchange_trades_ws_is_connected,
-                    base_exchange_orderbook_ws_is_connected,
-                    quote_exchange_trades_ws_is_connected,
-                    quote_exchange_orderbook_ws_is_connected,
+                    base_avg_trade_info,
+                    quote_avg_trade_info,
+                    base_network_info,
+                    quote_network_info,
+                    base_trades_ws,
+                    base_orderbook_ws,
+                    quote_trades_ws,
+                    quote_orderbook_ws,
                 };
 
                 // Filter out responses that are less than threshold
-                if response.quote_exchange_avg_trade_info.notional_amount
-                    < CUMULATIVE_TRADES_THRESHOLD
-                    || response.base_exchange_avg_trade_info.notional_amount
-                        < CUMULATIVE_TRADES_THRESHOLD
+                if response.quote_avg_trade_info.avg_notional < CUMULATIVE_TRADES_THRESHOLD
+                    || response.base_avg_trade_info.avg_notional < CUMULATIVE_TRADES_THRESHOLD
                 {
                     None
                 } else {
@@ -560,8 +558,8 @@ impl SpotArbScanner {
         match base_exchange_instrument_data {
             Some(instrument_data) => {
                 // Set bid and ask for base exchange
-                response.base_exchange_bids = Some(instrument_data.bids.clone());
-                response.base_exchange_asks = Some(instrument_data.asks.clone());
+                response.base_bids = Some(instrument_data.bids.clone());
+                response.base_asks = Some(instrument_data.asks.clone());
 
                 // Set network info
                 let base_exchange_network_info = self
@@ -569,12 +567,15 @@ impl SpotArbScanner {
                     .0
                     .get(&(base_exchange, coin.clone()))
                     .cloned();
-                response.base_exchange_network_info = base_exchange_network_info;
+                response.base_network_info = base_exchange_network_info;
 
                 // Set spread history
                 if let Some(spread_history) = instrument_data.spreads.0.get(&quote_exchange) {
                     response.spread_history = Some(spread_history.clone());
                 }
+
+                // Set trade info
+                response.base_avg_trade_info = instrument_data.get_average_trades();
             }
             None => {
                 let _ = self.http_channel.http_response_tx.send(
@@ -599,13 +600,16 @@ impl SpotArbScanner {
         match quote_exchange_instrument_data {
             Some(instrument_data) => {
                 // Set bid and ask for base exchange
-                response.quote_exchange_bids = Some(instrument_data.bids.clone());
-                response.quote_exchange_asks = Some(instrument_data.asks.clone());
+                response.quote_bids = Some(instrument_data.bids.clone());
+                response.quote_asks = Some(instrument_data.asks.clone());
 
                 // Set network info
                 let quote_exchange_network_info =
                     self.network_status.0.get(&(quote_exchange, coin)).cloned();
-                response.quote_exchange_network_info = quote_exchange_network_info;
+                response.quote_network_info = quote_exchange_network_info;
+
+                // Set trade info
+                response.quote_avg_trade_info = instrument_data.get_average_trades();
             }
             None => {
                 let _ = self.http_channel.http_response_tx.send(
