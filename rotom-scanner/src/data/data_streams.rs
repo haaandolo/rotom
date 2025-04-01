@@ -1,15 +1,14 @@
 use futures::StreamExt;
 use rotom_data::{
     exchange::{
-        binance::BinanceSpotPublicData, coinex::CoinExSpotPublicData, exmo::ExmoSpotPublicData,
-        htx::HtxSpotPublicData, kucoin::KuCoinSpotPublicData, okx::OkxSpotPublicData,
-        woox::WooxSpotPublicData,
+        coinex::CoinExSpotPublicData, exmo::ExmoSpotPublicData, htx::HtxSpotPublicData,
+        kucoin::KuCoinSpotPublicData, okx::OkxSpotPublicData, woox::WooxSpotPublicData,
     },
     model::{
         market_event::{DataKind, MarketEvent},
         network_info::NetworkSpecs,
     },
-    shared::subscription_models::{ExchangeId, Instrument, StreamKind},
+    shared::subscription_models::Instrument,
     streams::dynamic_stream::DynamicStreams,
 };
 use tokio::sync::mpsc;
@@ -62,50 +61,6 @@ pub async fn get_spot_arb_data_streams() -> (
         .add_exchange::<OkxSpotPublicData>()
         .await
         .build();
-
-    /*----- */
-    // Market data stream
-    /*----- */
-    // Binance - (trade, l2)
-    // Htx - (trades, snapshot) <--- 50 chunks
-    // Woo X (one ws conn per ticker) - (trade, snapshot) <--- 1 chunk
-    // Coinex - (trades, snapshot) <--- 50 chunks
-    // Okx - (trade,  snapshot)  <--- 50 chunks
-    // Kucoin - (trade, snaphshot) <--- 50 chunks
-    // Exmo - (Trades, Snapshot) <--- 50 chunks
-    // Ascendex - (Trades, L2)
-    // Phemex (one ws conn per ticker) - (Trades, L2)
-
-    // network status - woox, kucoin, 
-    
-    /*------ */
-    // Testing streams
-    /*------ */
-    // let streams = DynamicStreams::init([vec![
-    //     // Binance
-    //     (ExchangeId::OkxSpot, "ada", "usdt", StreamKind::Trade),
-    //     (ExchangeId::OkxSpot, "ada", "usdt", StreamKind::Snapshot),
-    //     (ExchangeId::OkxSpot, "icp", "usdt", StreamKind::Trade),
-    //     (ExchangeId::OkxSpot, "icp", "usdt", StreamKind::Snapshot),
-    //     (ExchangeId::OkxSpot, "sol", "usdt", StreamKind::Trade),
-    //     (ExchangeId::OkxSpot, "sol", "usdt", StreamKind::Snapshot),
-    //     // Htx
-    //     (ExchangeId::HtxSpot, "ada", "usdt", StreamKind::Trades),
-    //     (ExchangeId::HtxSpot, "ada", "usdt", StreamKind::Snapshot),
-    //     (ExchangeId::HtxSpot, "icp", "usdt", StreamKind::Trades),
-    //     (ExchangeId::HtxSpot, "icp", "usdt", StreamKind::Snapshot),
-    //     (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Trades),
-    //     (ExchangeId::HtxSpot, "sol", "usdt", StreamKind::Snapshot),
-    //     // CoinEx
-    //     (ExchangeId::KuCoinSpot, "ada", "usdt", StreamKind::Trade),
-    //     (ExchangeId::KuCoinSpot, "ada", "usdt", StreamKind::Snapshot),
-    //     (ExchangeId::KuCoinSpot, "icp", "usdt", StreamKind::Trade),
-    //     (ExchangeId::KuCoinSpot, "icp", "usdt", StreamKind::Snapshot),
-    //     (ExchangeId::KuCoinSpot, "sol", "usdt", StreamKind::Trade),
-    //     (ExchangeId::KuCoinSpot, "sol", "usdt", StreamKind::Snapshot),
-    // ]])
-    // .await
-    // .unwrap();
 
     let streams = DynamicStreams::init(stream_init).await.unwrap();
     let mut data = streams.select_all::<MarketEvent<DataKind>>();
